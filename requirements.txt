@@ -7,6 +7,9 @@ certifi==2024.6.2
 charset-normalizer==3.3.2
 Django==5.0.6
 django-allauth==0.63.3
+django-appconf==1.0.6
+django-cachebuster==0.2.1
+django-compressor==4.4
 django-crispy-forms==2.1
 django-storages==1.14.3
 flatbuffers==24.3.25
@@ -33,8 +36,10 @@ packaging==24.0
 protobuf==4.25.3
 Pygments==2.18.0
 python-dateutil==2.9.0.post0
+rcssmin==1.1.1
 requests==2.32.3
 rich==13.7.1
+rjsmin==1.2.1
 s3transfer==0.10.1
 setuptools==70.0.0
 six==1.16.0
