@@ -28,7 +28,7 @@ The following behaviors are considered unacceptable and will not be tolerated wi
 
 If you witness or experience any behavior that violates this Code of Conduct, please report it to the project maintainers immediately. All reports will be handled with confidentiality and will be promptly investigated and addressed.
 
-You can report violations by contacting [maintainer_name](mailto:kcpersonalacc@gmail.com).
+You can report violations by contacting [KCprsnlcc](mailto:kcpersonalacc@gmail.com).
 
 ## Enforcement
 
