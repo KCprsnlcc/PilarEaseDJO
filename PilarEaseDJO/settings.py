@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pilareasedjo',
+        'NAME': 'pilarease_db',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',  # Or the hostname where your MySQL server is running
