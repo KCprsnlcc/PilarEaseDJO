@@ -1,0 +1,22 @@
+{
+    "name": "pilareasedjo",
+    "displayName": "PilarEaseDJO",
+    "version": "0.0.1",
+    "publisher": "KCprsnlcc",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/your_username/your_repository.git"
+    },
+    "engines": {
+      "vscode": "^1.0.0"
+    },
+    "categories": ["Other"],
+    "contributes": {
+      "commands": [],
+      "configuration": {},
+      "keybindings": [],
+      "menus": {},
+      "views": {}
+    }
+  }
+  
