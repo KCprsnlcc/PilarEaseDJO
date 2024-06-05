@@ -57,7 +57,7 @@ The `contact` directory is an app that handles user contact messages.
 ## Data App
 The `data` directory manages data-related functionalities such as scripts and custom management commands.
 
-- `data\management\commands`: Custom management commands for data operations.
+- `data\management\commands`: Custom management commands for data operations.   
 - `data\scripts`: Scripts for data processing and management.
 
 ## Emotion App
