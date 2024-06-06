@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <link rel="stylesheet" href="{% static 'css/custom-footer.css' %}">
+</head>
+<body>
+    <div id="loader" class="loader"></div>
+    <header>
+        <div class="v1_119">
+            <span class="v1_120">PilarEase</span>
+            <div class="v1_122"></div>
+            <div class="v1_123"></div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}?next={{ request.path }}" class="v1_121">Logout</a>
+            {% else %}
+                <a href="#" id="loginLink" class="v1_121">Login</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <div class="container2">
+            <div class="footer">
+                <div class="logo">
+                    <img src="{% static 'images/Earth.png' %}" alt="Earth">
+                </div>
+                <div class="website">www.pilarease.com</div>
+            </div>
+            <button class="join-us">
+                JOIN US!
+            </button>
+            <div class="icon"></div>
+            <div class="intro">
+                PilarEase is a dedicated online platform designed to provide a safe haven for expressing your emotions. We understand the importance of having a space where you can freely share your thoughts and feelings without inhibition.
+            </div>
+            <div class="actions">
+                Share your Feelings<br/>Submit an Appointment<br/>Become a Pilarist<br/>Contact Us
+            </div>
+            <div class="connect">
+                CONNECT
+            </div>
+            <div class="learn-more">
+                Learn More...
+            </div>
+            <div class="about-us">
+                ABOUT US
+            </div>
+            <div class="links">
+                LINKS
+            </div>
+        </div>
+    </footer>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+            <h2>Login</h2>
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/custom.js' %}"></script>
+    <script>
+        // Modal functionality
+        var modal = document.getElementById("loginModal");
+        var loginLink = document.getElementById("loginLink");
+        var closeModal = document.getElementById("closeModal");
+
+        loginLink.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        closeModal.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+    <script>
+        // Modal functionality
+        var modal = document.getElementById("loginModal");
+        var loginLink = document.getElementById("loginLink");
+        var closeModal = document.getElementById("closeModal");
+
+        loginLink.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        closeModal.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Hide the loader when the page is fully loaded
+        window.addEventListener('load', function() {
+            document.getElementById('loader').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
