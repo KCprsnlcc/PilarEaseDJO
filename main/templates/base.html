@@ -1,4 +1,7 @@
 {% load static %}
+Change the fade in and out animation to pop in and pop out animation
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,11 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Epilogue&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
     <link rel="stylesheet" href="{% static 'css/custom-footer.css' %}">
 </head>
 <body>
     <div id="loader" class="loader"></div>
+    <div id="overlay" class="overlay"></div>
     <header>
         <div class="v1_119">
             <span class="v1_120">PilarEase</span>
@@ -19,15 +25,38 @@
             {% if user.is_authenticated %}
                 <a href="{% url 'logout' %}?next={{ request.path }}" class="v1_121">Logout</a>
             {% else %}
-                <a href="#" id="loginLink" class="v1_121">Login</a>
+                <a href="#" id="loginLink" class="v1_121">Login</a> <!-- Trigger the modal -->
             {% endif %}
         </div>
     </header>
-
     <div class="content">
         {% block content %}{% endblock %}
     </div>
-
+        <!-- Login Modal -->
+        <div class="v53_168 modal" id="loginModal">
+            <div class="v53_169"></div>
+            <div class="v53_170"></div>
+            <span class="v53_171">Don't have an Account?</span>
+            <span class="v53_172">OR</span>
+            <span class="v53_173">Join our exclusive, confidential Emotional Expression Portal.</span>
+            <span class="v53_174">Sign In.</span>
+            <div class="v53_178"></div>
+            <a class="v53_179">Register</a> <!-- Update with correct registration URL -->
+            <span class="v53_180">Username</span>
+            <div class="v53_181">
+                <input type="text" class="input-field" placeholder="Enter your Username">
+            </div>
+            <span class="v53_183">Password</span>
+            <div class="v53_184">
+                <input type="password" class="input-field" placeholder="*******">
+            </div>
+            <div class="v53_186" id="loginButton">
+                <span class="v53_187">Login</span>
+            </div>
+            <div class="v53_190" id="closeModal">
+                <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close"> <!-- Update with correct path -->
+            </div>
+        </div>
     <footer>
         <div class="container2">
             <div class="footer">
@@ -60,68 +89,68 @@
             </div>
         </div>
     </footer>
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span id="closeModal" class="close">&times;</span>
-            <h2>Login</h2>
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-    </div>
 
-    <!-- Scripts -->
-    <script src="{% static 'js/custom.js' %}"></script>
-    <script>
-        // Modal functionality
-        var modal = document.getElementById("loginModal");
-        var loginLink = document.getElementById("loginLink");
-        var closeModal = document.getElementById("closeModal");
 
-        loginLink.onclick = function() {
-            modal.style.display = "block";
-        }
+   <!-- Scripts -->
+   <script src="{% static 'js/custom.js' %}"></script>
+   <script>
+       // Modal functionality
+       var modal = document.getElementById("loginModal");
+       var overlay = document.getElementById("overlay");
+       var loginLink = document.getElementById("loginLink");
+       var closeModal = document.getElementById("closeModal");
 
-        closeModal.onclick = function() {
-            modal.style.display = "none";
-        }
+       // Show modal and overlay on login link click
+       if (loginLink) {
+           loginLink.onclick = function(event) {
+               event.preventDefault(); // Prevent the default anchor behavior
+               overlay.style.display = "block";
+               setTimeout(() => {
+                   overlay.classList.add("show"); // Add the show class to fade in the overlay
+                   modal.classList.add("show"); // Ensure modal is displayed
+                   setTimeout(() => {
+                       modal.classList.add("pop-in");
+                   }, 10); // Delay to trigger CSS animations
+               }, 10); // Delay to allow for the initial state
+           }
+       }
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-    </script>
-    <script>
-        // Modal functionality
-        var modal = document.getElementById("loginModal");
-        var loginLink = document.getElementById("loginLink");
-        var closeModal = document.getElementById("closeModal");
+       // Hide modal and overlay on close button click
+       if (closeModal) {
+           closeModal.onclick = function() {
+               modal.classList.remove("pop-in"); // Remove the pop-in animation class
+               modal.classList.add("pop-out"); // Add the pop-out animation class
+               overlay.classList.remove("show"); // Remove show class
+               overlay.classList.add("hide"); // Add fade-out animation
+               setTimeout(() => {
+                   modal.classList.remove("show"); // Ensure modal is hidden
+                   modal.classList.remove("pop-out"); // Ensure pop-out class is removed
+                   overlay.classList.remove("hide"); // Ensure fade-out class is removed
+                   overlay.style.display = "none"; // Hide the overlay after fade-out animation
+               }, 300); // Match the duration of the fade-out animation
+           }
+       }
 
-        loginLink.onclick = function() {
-            modal.style.display = "block";
-        }
+       // Hide modal and overlay when clicking outside of the modal content
+       window.onclick = function(event) {
+           if (event.target == overlay) {
+               modal.classList.remove("pop-in"); // Remove the pop-in animation class
+               modal.classList.add("pop-out"); // Add the pop-out animation class
+               overlay.classList.remove("show"); // Remove show class
+               overlay.classList.add("hide"); // Add fade-out animation
+               setTimeout(() => {
+                   modal.classList.remove("show"); // Ensure modal is hidden
+                   modal.classList.remove("pop-out"); // Ensure pop-out class is removed
+                   overlay.classList.remove("hide"); // Ensure fade-out class is removed
+                   overlay.style.display = "none"; // Hide the overlay after fade-out animation
+               }, 300); // Match the duration of the fade-out animation
+           }
+       }
 
-        closeModal.onclick = function() {
-            modal.style.display = "none";
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-
-        // Hide the loader when the page is fully loaded
-        window.addEventListener('load', function() {
-            document.getElementById('loader').style.display = 'none';
-        });
-    </script>
+       // Hide the loader when the page is fully loaded
+       window.addEventListener('load', function() {
+           document.getElementById('loader').style.display = 'none';
+       });
+   </script>
 </body>
 </html>

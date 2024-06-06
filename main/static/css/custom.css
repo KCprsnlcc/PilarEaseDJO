@@ -29,6 +29,108 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+@keyframes popAnimation {
+  0% {
+      transform: scale(0);
+  }
+  50% {
+      transform: scale(1.1);
+  }
+  100% {
+      transform: scale(1);
+  }
+}
+ /* Pop In and Out Animations */
+ @keyframes popIn {
+  0% {
+      transform: scale(0);
+      opacity: 0;
+  }
+  100% {
+      transform: scale(1);
+      opacity: 1;
+  }
+}
+
+@keyframes popOut {
+  0% {
+      transform: scale(1);
+      opacity: 1;
+  }
+  100% {
+      transform: scale(0);
+      opacity: 0;
+  }
+}
+
+.pop-in {
+  animation: popIn 0.3s ease-in-out forwards;
+}
+
+.pop-out {
+  animation: popOut 0.3s ease-in-out forwards;
+}
+
+/* Overlay and Modal Styling */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7); /* Slightly darker for better contrast */
+  z-index: 100000; /* Ensure it is below the modal but above other content */
+  opacity: 0; /* Start hidden */
+  transition: opacity 0.3s;
+  display: none; /* Initially hide the overlay */
+}
+
+.overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+.overlay.hide {
+  opacity: 0;
+  transition: opacity 0.3s; /* Match the modal fade-out duration */
+}
+
+.modal {
+  background: white; /* Ensure the modal has a solid background */
+  border-radius: 10px; /* Optional: for a nice rounded border */
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Add a shadow to make it pop */
+  padding: 20px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+  z-index: 100001; /* Higher than overlay's z-index */
+  position: sticky;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the modal */
+  opacity: 0; /* Initially hidden */
+  display: none; /* Initially hide the modal */
+}
+
+.modal.show {
+  display: block; /* Ensure modal is displayed for animation */
+}
+
+.modal.hide {
+  display: none; /* Hide the modal after animation */
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    border-radius: 10px;
+    text-align: center;
+}
+
 .container {
   position: flex;
   width: 100%;
@@ -181,7 +283,7 @@ body {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  z-index: 9999;
+  z-index: 100000;
 }
 
 #dialogBox {
@@ -193,7 +295,7 @@ body {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 10000;
+  z-index: 100001;
 }
 
 #dialogContent {
@@ -213,19 +315,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-@keyframes popAnimation {
-  0% {
-      transform: scale(0);
-  }
-  50% {
-      transform: scale(1.1);
-  }
-  100% {
-      transform: scale(1);
-  }
-}
-
 nav{
   position: fixed;
   top: 475px;
@@ -408,7 +497,7 @@ nav.open .nav-content span{
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
   margin: 0 auto; /* Center the element horizontally */
-  z-index: 99999;
+  z-index: 99999999;
 }
 
 .v53_190 {
@@ -429,7 +518,6 @@ nav.open .nav-content span{
 
 .v53_169 {
   width: 219px;
-  background: url("../images/v53_169.png");
   opacity: 1;
   position: absolute;
   top: 418px;
@@ -438,7 +526,6 @@ nav.open .nav-content span{
 }
 .v53_170 {
   width: 221px;
-  background: url("../images/v53_170.png");
   opacity: 1;
   position: absolute;
   top: 418px;
@@ -1563,34 +1650,6 @@ nav.open .nav-content span{
   border: 2.057142972946167px solid rgba(86,94,108,1);
 }
 
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-    justify-content: center;
-    align-items: center;
-    display: flex;
-    z-index: 999999;
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 400px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    border-radius: 10px;
-    text-align: center;
-}
-
 .close {
     color: #aaa;
     float: right;
@@ -1604,25 +1663,18 @@ nav.open .nav-content span{
     text-decoration: none;
     cursor: pointer;
 }
-
-input[type="text"], input[type="password"] {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
 button {
-    width: 100%;
-    padding: 10px;
-    background-color: #689E4B;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  width: 100%;
+  padding: 12px;
+  background-color: #689E4B;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif; /* Match font family */
+  font-size: 14px; /* Match font size */
 }
 
 button:hover {
-    background-color: #557838;
+  background-color: #557838;
 }
