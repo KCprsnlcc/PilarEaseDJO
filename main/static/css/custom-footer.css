@@ -2,7 +2,7 @@ footer {
     position: absolute; /* Stick to the bottom of the viewport */
     bottom: 0;
     width: 100%;
-    z-index: 99999; /* Set the z-index to 99999 */
+    z-index: 9999; /* Set the z-index to 99999 */
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Add a drop box shadow */
   }
   
@@ -59,7 +59,7 @@ footer {
       padding-top: 10.50px;
       padding-bottom: 10.50px;
       left: 875px;
-      top: 38px; /* Adjusted top position */
+      top: 40px; /* Adjusted top position */
       position: absolute;
       background: #689E4B;
       border-radius: 4px;
@@ -102,7 +102,7 @@ footer {
   
     .intro {
       width: 356px;
-      left: 375px;
+      left: 434px;
       top: 37px;
       position: absolute;
       text-align: center;
@@ -117,7 +117,7 @@ footer {
     .actions {
       width: 125px;
       height: 65px;
-      left: 1050px;
+      left: 1075px;
       top: 38px;
       position: absolute;
       text-align: center;
@@ -144,7 +144,7 @@ footer {
     }
     
     .learn-more {
-      left: 477px;
+      left: 585px;
       top: 80px;
       position: absolute;
       color: #9095A0;
@@ -157,7 +157,7 @@ footer {
     
     .about-us {
       width: 80px;
-      left: 468px;
+      left: 581px;
       top: 13px;
       position: absolute;
       color: #BCC1CA;
@@ -169,7 +169,7 @@ footer {
     }
     
     .links {
-      left: 1021px;
+      left: 1120px;
       top: 14px;
       position: absolute;
       color: #BCC1CA;
