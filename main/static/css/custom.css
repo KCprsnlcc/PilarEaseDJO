@@ -155,7 +155,7 @@ button:hover {
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
-  z-index: 100001; /* Higher than overlay's z-index */
+  z-index: 100005; /* Higher than overlay's z-index */
 }
 
 .modal-content {
@@ -348,7 +348,7 @@ button:hover {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 100001;
+  z-index: 100010;
 }
 
 #dialogContent {
@@ -361,7 +361,17 @@ button:hover {
   top: 10px;
   right: 10px;
   cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  color: #aaa;
 }
+
+#dialogClose:hover,
+#dialogClose:focus {
+  color: black;
+  text-decoration: none;
+}
+
 
 .content {
   flex: 1;
@@ -550,7 +560,7 @@ nav.open .nav-content span{
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
   margin: 0 auto; 
-  z-index: 100001;
+  z-index: 100008;
 }
 
 .v53_190 {
@@ -964,7 +974,7 @@ nav.open .nav-content span{
   border-bottom-right-radius: 8px;
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
-  z-index: 100001; 
+  z-index: 100008; 
 }
 .v74_802 {
   width: 302px;
