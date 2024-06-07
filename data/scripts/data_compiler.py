@@ -5,11 +5,12 @@ import requests
 from tqdm import tqdm
 import time
 import logging
+from datasets import load_dataset
 
 # Updated URLs of the datasets
 urls = {
     'crowdflower': 'https://query.data.world/s/cx25qqyvwdn4os2ljtbs2tm6p3apr5?dws=00000',
-    'elvis': 'https://example.com/valid_elvis_url.csv',  # Placeholder, needs a valid URL
+    'elvis': None,  # Will use Hugging Face datasets
     'goemotions': 'https://example.com/valid_goemotions_url.tsv',  # Placeholder, needs a valid URL
     'isear': 'https://example.com/valid_isear_url.csv',  # Placeholder, needs a valid URL
     'meld': 'https://raw.githubusercontent.com/declare-lab/MELD/master/data/MELD/train_sent_emo.csv',
@@ -26,7 +27,10 @@ def download_and_load_datasets(urls):
     dfs = {}
     for name, url in tqdm(urls.items(), desc="Downloading"):
         try:
-            if name in ['meld', 'goemotions']:
+            if name == 'elvis':
+                dataset = load_dataset("dair-ai/emotion")
+                dfs[name] = dataset['train'].to_pandas()
+            elif name in ['meld', 'goemotions']:
                 sep = ',' if name == 'meld' else '\t'
                 dfs[name] = pd.read_csv(url, sep=sep)
             else:
