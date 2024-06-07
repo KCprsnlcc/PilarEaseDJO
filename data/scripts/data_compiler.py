@@ -11,7 +11,7 @@ from datasets import load_dataset
 urls = {
     'crowdflower': 'https://query.data.world/s/cx25qqyvwdn4os2ljtbs2tm6p3apr5?dws=00000',
     'elvis': None,  # Will use Hugging Face datasets
-    'goemotions': 'https://example.com/valid_goemotions_url.tsv',  # Placeholder, needs a valid URL
+    'goemotions': None,  # Will use Hugging Face datasets
     'isear': 'https://example.com/valid_isear_url.csv',  # Placeholder, needs a valid URL
     'meld': 'https://raw.githubusercontent.com/declare-lab/MELD/master/data/MELD/train_sent_emo.csv',
     'semeval': 'https://example.com/valid_semeval_url.csv'  # Placeholder, needs a valid URL
@@ -29,6 +29,9 @@ def download_and_load_datasets(urls):
         try:
             if name == 'elvis':
                 dataset = load_dataset("dair-ai/emotion")
+                dfs[name] = dataset['train'].to_pandas()
+            elif name == 'goemotions':
+                dataset = load_dataset("google-research-datasets/go_emotions")
                 dfs[name] = dataset['train'].to_pandas()
             elif name in ['meld', 'goemotions']:
                 sep = ',' if name == 'meld' else '\t'
