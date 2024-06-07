@@ -8,28 +8,98 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Add this to your CSS file or within a <style> tag in your HTML */
+button {
+  width: 100%;
+  padding: 12px;
+  background-color: #689E4B;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif; /* Match font family */
+  font-size: 14px; /* Match font size */
+}
 
-.loader {
+button:hover {
+  background-color: #3b5a2b;
+}
+
+.loader-5 {
   position: fixed;
-  z-index: 100000;
-  left: 50%;
   top: 50%;
-  width: 50px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: rotate 2s infinite;
   height: 50px;
-  margin: -25px 0 0 -25px; /* Center the loader */
-  border: 5px solid rgba(0,0,0,0.1);
+  width: 50px;
+  z-index: 100000;
+}
+
+.loader-5:before,
+.loader-5:after {
   border-radius: 50%;
-  border-top: 5px solid #0F2326; /* The color of the loader */
-  animation: spin 1s linear infinite;
+  content: "";
+  display: block;
+  height: 20px;
+  width: 20px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loader-5:before {
+  animation: ball1 2s infinite;
+  background-color: rgb(255 255 255 / 16%);
+  box-shadow: 30px 0 0 #0F2326;
+  margin-bottom: 10px;
 }
 
-@keyframes popAnimation {
+.loader-5:after {
+  animation: ball2 2s infinite;
+  background-color: #0F2326;
+  box-shadow: 30px 0 0 rgb(255 255 255 / 16%);
+}
+
+@keyframes rotate {
+  0% {
+      transform: rotate(0deg) scale(0.8);
+  }
+  50% {
+      transform: rotate(360deg) scale(1.2);
+  }
+  100% {
+      transform: rotate(720deg) scale(0.8);
+  }
+}
+
+@keyframes ball1 {
+  0% {
+      box-shadow: 30px 0 0 #0F2326;
+  }
+  50% {
+      box-shadow: 0 0 0 #0F2326;
+      margin-bottom: 0;
+      transform: translate(15px, 15px);
+  }
+  100% {
+      box-shadow: 30px 0 0 #0F2326;
+      margin-bottom: 10px;
+  }
+}
+
+@keyframes ball2 {
+  0% {
+      box-shadow: 30px 0 0 rgb(255 255 255 / 32%);
+  }
+  50% {
+      box-shadow: 0 0 0 rgb(255 255 255 / 32%);
+      margin-top: -20px;
+      transform: translate(15px, 15px);
+  }
+  100% {
+      box-shadow: 30px 0 0 rgb(255 255 255 / 32%);
+      margin-top: 0;
+  }
+}
+ /* Add CSS for pop animations */
+ @keyframes popIn {
   0% {
       transform: scale(0);
   }
@@ -40,26 +110,13 @@ body {
       transform: scale(1);
   }
 }
- /* Pop In and Out Animations */
- @keyframes popIn {
-  0% {
-      transform: scale(0);
-      opacity: 0;
-  }
-  100% {
-      transform: scale(1);
-      opacity: 1;
-  }
-}
 
 @keyframes popOut {
   0% {
       transform: scale(1);
-      opacity: 1;
   }
   100% {
       transform: scale(0);
-      opacity: 0;
   }
 }
 
@@ -71,28 +128,23 @@ body {
   animation: popOut 0.3s ease-in-out forwards;
 }
 
-/* Overlay and Modal Styling */
 .overlay {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7); /* Slightly darker for better contrast */
-  z-index: 100000; /* Ensure it is below the modal but above other content */
-  opacity: 0; /* Start hidden */
-  transition: opacity 0.3s;
-  display: none; /* Initially hide the overlay */
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
 }
 
 .overlay.show {
-  display: block;
   opacity: 1;
 }
 
 .overlay.hide {
   opacity: 0;
-  transition: opacity 0.3s; /* Match the modal fade-out duration */
 }
 
 .modal {
@@ -104,21 +156,8 @@ body {
   max-height: 90%;
   overflow: auto;
   z-index: 100001; /* Higher than overlay's z-index */
-  position: sticky;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* Center the modal */
-  opacity: 0; /* Initially hidden */
-  display: none; /* Initially hide the modal */
 }
 
-.modal.show {
-  display: block; /* Ensure modal is displayed for animation */
-}
-
-.modal.hide {
-  display: none; /* Hide the modal after animation */
-}
 .modal-content {
     background-color: #fefefe;
     margin: auto;
@@ -130,6 +169,8 @@ body {
     border-radius: 10px;
     text-align: center;
 }
+
+
 
 .container {
   position: flex;
@@ -208,6 +249,18 @@ body {
   border: none;
 }
 
+/* Define the pop animation for the modal */
+@keyframes popAnimation {
+  0% {
+      transform: scale(0);
+  }
+  60% {
+      transform: scale(1.2);
+  }
+  100% {
+      transform: scale(1);
+  }
+}
 
 .circle-avatar-placeholder {
   width: 50px;
@@ -487,17 +540,17 @@ nav.open .nav-content span{
   height: 479px;
   background: rgba(255,255,255,1);
   opacity: 1;
-  position: relative;
-  top: 0px;
-  left: 0px;
+  position: fixed; 
+  top: 45px; 
+  left: 640px;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
   border-bottom-left-radius: 4px;
   border-bottom-right-radius: 4px;
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
-  margin: 0 auto; /* Center the element horizontally */
-  z-index: 99999999;
+  margin: 0 auto; 
+  z-index: 100001;
 }
 
 .v53_190 {
@@ -605,6 +658,7 @@ nav.open .nav-content span{
   opacity: 1;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
 }
 .v53_180 {
   width: 187px;
@@ -769,7 +823,7 @@ nav.open .nav-content span{
   width: 150px;
   color: rgba(255,255,255,1);
   position: absolute;
-  top: 8px;
+  top: 10px;
   left: 10px;
   font-family: Inter;
   font-weight: Regular;
@@ -778,6 +832,7 @@ nav.open .nav-content span{
   text-align: left;
   cursor: pointer;
 }
+
 .v1_119 {
   width: 100%;
   height: 45px;
@@ -900,15 +955,16 @@ nav.open .nav-content span{
   height: 624px;
   background: rgba(255,255,255,1);
   opacity: 1;
-  position: relative;
-  top: 0px;
+  position: fixed;
+  top: 45px; 
+  left: 375px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
-  z-index: 9999; 
+  z-index: 100001; 
 }
 .v74_802 {
   width: 302px;
@@ -1340,6 +1396,7 @@ nav.open .nav-content span{
   font-size: 14px;
   opacity: 1;
   text-align: left;
+  text-decoration: none;
 }
 .v78_839 {
   width: 216px;
@@ -1662,19 +1719,4 @@ nav.open .nav-content span{
     color: black;
     text-decoration: none;
     cursor: pointer;
-}
-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #689E4B;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif; /* Match font family */
-  font-size: 14px; /* Match font size */
-}
-
-button:hover {
-  background-color: #557838;
 }
