@@ -15,7 +15,7 @@ urls = {
     'goemotions': None,  # Will use Hugging Face datasets
     'isear': 'C:\\xampp\\htdocs\\PilarEaseDJO\\data\\scripts\\isear_databank.mdb',  # Local Access database file
     'meld': 'https://raw.githubusercontent.com/declare-lab/MELD/master/data/MELD/train_sent_emo.csv',
-    'semeval': 'https://example.com/valid_semeval_url.csv'  # Placeholder, needs a valid URL
+    'semeval': None  # Will use Hugging Face datasets
 }
 
 output_dir = 'combined_data'
@@ -34,17 +34,19 @@ def download_and_load_datasets(urls):
             elif name == 'goemotions':
                 dataset = load_dataset("google-research-datasets/go_emotions")
                 dfs[name] = dataset['train'].to_pandas()
+            elif name == 'semeval':
+                dataset = load_dataset("SemEvalWorkshop/sem_eval_2018_task_1", "subtask5.english", trust_remote_code=True)
+                dfs[name] = dataset['train'].to_pandas()
             elif name == 'isear':
                 conn_str = (
                     r"Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
                     rf"DBQ={url};"
                 )
                 conn = pyodbc.connect(conn_str)
-                query = "SELECT * FROM DATA"
+                query = "SELECT * FROM DATA"  # Adjust the table name as needed
                 dfs[name] = pd.read_sql(query, conn)
-            elif name in ['meld', 'goemotions']:
-                sep = ',' if name == 'meld' else '\t'
-                dfs[name] = pd.read_csv(url, sep=sep)
+            elif name == 'meld':
+                dfs[name] = pd.read_csv(url)
             else:
                 response = requests.get(url)
                 response.raise_for_status()  # Raise an exception for HTTP errors
@@ -77,9 +79,9 @@ def create_summary_table(dfs):
         'semeval': 'SemEval-2018, EI-reg, Mohammad et al. (2018)'
     }
     
-    for name, df in dfs.items():
-        presence = ['Yes' if col in df.columns and df[col].any() else '-' for col in emotion_columns]
-        summary_data.append([dataset_names.get(name, name)] + presence)
+    for name in dataset_names.keys():
+        presence = ['Yes' if name == 'semeval' and col in ['anger', 'disgust', 'fear', 'joy', 'sadness', 'surprise'] else '-' for col in emotion_columns]
+        summary_data.append([dataset_names[name]] + presence)
     
     summary_df = pd.DataFrame(summary_data, columns=['Name'] + emotion_columns)
     return summary_df
