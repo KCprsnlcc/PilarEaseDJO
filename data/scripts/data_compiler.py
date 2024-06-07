@@ -6,14 +6,14 @@ from tqdm import tqdm
 import time
 import logging
 
-# Updated URLs of the datasets (these should be verified for correctness)
+# Updated URLs of the datasets
 urls = {
-    'crowdflower': 'https://example.com/valid_crowdflower_url.csv',
-    'elvis': 'https://example.com/valid_elvis_url.csv',
-    'goemotions': 'https://example.com/valid_goemotions_url.tsv',
-    'isear': 'https://example.com/valid_isear_url.csv',
+    'crowdflower': 'https://query.data.world/s/cx25qqyvwdn4os2ljtbs2tm6p3apr5?dws=00000',
+    'elvis': 'https://example.com/valid_elvis_url.csv',  # Placeholder, needs a valid URL
+    'goemotions': 'https://example.com/valid_goemotions_url.tsv',  # Placeholder, needs a valid URL
+    'isear': 'https://example.com/valid_isear_url.csv',  # Placeholder, needs a valid URL
     'meld': 'https://raw.githubusercontent.com/declare-lab/MELD/master/data/MELD/train_sent_emo.csv',
-    'semeval': 'https://example.com/valid_semeval_url.csv'
+    'semeval': 'https://example.com/valid_semeval_url.csv'  # Placeholder, needs a valid URL
 }
 
 output_dir = 'combined_data'
@@ -38,20 +38,8 @@ def download_and_load_datasets(urls):
             logging.error(f"Error loading {name}: {e}")
     return dfs
 
-def rename_columns(df, expected_columns):
-    """Rename columns of the 'crowdflower' DataFrame."""
-    if len(df.columns) == len(expected_columns):
-        df.columns = expected_columns
-    else:
-        logging.warning("Crowdflower dataset does not have the expected number of columns.")
-    return df
-
-def align_columns(dfs):
+def align_columns(dfs, all_columns):
     """Align columns across all DataFrames."""
-    all_columns = set()
-    for df in dfs.values():
-        all_columns.update(df.columns)
-    
     for name, df in tqdm(dfs.items(), desc="Aligning"):
         for col in all_columns:
             if col not in df.columns:
@@ -74,7 +62,7 @@ def create_summary_table(dfs):
     }
     
     for name, df in dfs.items():
-        presence = ['Yes' if col in df.columns else '-' for col in emotion_columns]
+        presence = ['Yes' if col in df.columns and df[col].any() else '-' for col in emotion_columns]
         summary_data.append([dataset_names.get(name, name)] + presence)
     
     summary_df = pd.DataFrame(summary_data, columns=['Name'] + emotion_columns)
@@ -100,13 +88,13 @@ def main():
     if 'crowdflower' in dfs:
         logging.info("Crowdflower DataFrame Head:")
         logging.info(dfs['crowdflower'].head())
-        crowdflower_cols = ['text', 'anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise']
-        dfs['crowdflower'] = rename_columns(dfs['crowdflower'], crowdflower_cols)
-    else:
-        logging.warning("Crowdflower dataset not loaded.")
+    
+    all_columns = set()
+    for df in dfs.values():
+        all_columns.update(df.columns)
     
     logging.info("Aligning columns across DataFrames...")
-    dfs = align_columns(dfs)
+    dfs = align_columns(dfs, all_columns)
     processing_time = time.time()
     logging.info(f"Processing time: {processing_time - download_time} seconds")
     
