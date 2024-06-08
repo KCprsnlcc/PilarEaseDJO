@@ -1,0 +1,52 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css?family=Beau+Rivage&display=swap" rel="stylesheet" />
+<link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}"> <!-- Update with correct static path -->
+
+<div class="container">
+    <svg class="curved-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M0,0 C20,40 40,40 60,0" />
+    </svg>
+    <svg class="curved-line bottom-left" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg class="curved-line bottom-right" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg class="curved-line top-left" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M0,0 C30,30 70,30 100,0" />
+    </svg>
+    <div class="content">
+        <span class="v1_118">Express your Emotion</span>
+        <span class="v1_28">Welcome to a space where your emotions matter, and your voice is valued. Welcome to the PilarEase's Portal at Pilar College of Zamboanga City, Inc.</span>
+        <div class="image">
+            <img src="{% static 'images/map.png' %}" alt="Map"> <!-- Update with correct static path -->
+        </div>
+        <button class="v1_29" id="loginButton">
+            <span class="v1_30">EXPRESS YOUR FEELINGS</span>
+        </button>
+    </div>
+</div>
+<div class="v1_124">
+    <div class="v1_126"><span class="v1_127 active">Popular</span></div>
+    <div class="v1_128"><span class="v1_129">New</span></div>
+    <div class="v1_130"><span class="v1_131">Sadness</span></div>
+    <div class="v1_132"><span class="v1_133">Happiness</span></div>
+    <div class="v1_134"><span class="v1_135">Fear</span></div>
+    <div class="v1_136"><span class="v1_137">Anger</span></div>
+    <div class="v1_138"><span class="v1_139">Surprise</span></div>
+    <div class="v1_140"><span class="v1_141">Disgust</span></div>
+</div>
+<div id="dialogOverlay" style="display: none;"></div> <!-- Ensure initially hidden -->
+<div id="dialogBox" style="display: none;"> <!-- Ensure initially hidden -->
+    <div id="dialogContent">
+        <span id="dialogClose">&times;</span>
+        <h2>You must login to continue.</h2>
+    </div>
+</div>
+{% endblock %}
