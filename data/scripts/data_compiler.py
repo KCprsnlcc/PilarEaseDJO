@@ -10,7 +10,7 @@ import pyodbc
 
 # Updated URLs of the datasets
 urls = {
-    'crowdflower': 'https://query.data.world/s/cx25qqyvwdn4os2ljtbs2tm6p3apr5?dws=00000',
+    'crowdflower': 'crowdflower.csv',
     'elvis': None,  # Will use Hugging Face datasets
     'goemotions': None,  # Will use Hugging Face datasets
     'isear': 'C:\\xampp\\htdocs\\PilarEaseDJO\\data\\scripts\\isear_databank.mdb',  # Local Access database file

@@ -1,7 +1,6 @@
 import pandas as pd
 import random
 from tqdm import tqdm
-import itertools
 
 # Base phrases for each emotion
 base_phrases = {
@@ -63,16 +62,16 @@ synonyms = {
     "taken aback": ["stunned", "shocked"]
 }
 
-# Function to generate variations
-def generate_variations(phrase, synonyms):
+# Function to generate a fixed number of unique variations
+def generate_fixed_variations(phrase, synonyms, max_variations=500):
     words = phrase.split()
     variations = set()
-    for i, word in enumerate(words):
-        if word in synonyms:
-            for synonym in synonyms[word]:
-                new_words = words.copy()
-                new_words[i] = synonym
-                variations.add(" ".join(new_words))
+    while len(variations) < max_variations:
+        new_words = words.copy()
+        for i, word in enumerate(words):
+            if word in synonyms and random.random() > 0.5:
+                new_words[i] = random.choice(synonyms[word])
+        variations.add(" ".join(new_words))
     return list(variations)
 
 # Generate unique phrases for each emotion
@@ -81,17 +80,18 @@ n_phrases_per_emotion = 1500
 
 for emotion, phrases in base_phrases.items():
     emotion_phrases = set()
-    variations_set = set()
-    for phrase in phrases:
-        variations = generate_variations(phrase, synonyms)
-        variations_set.update(variations)
     with tqdm(total=n_phrases_per_emotion, desc=f"Generating phrases for {emotion}") as pbar:
-        for variation in itertools.cycle(variations_set):
+        for phrase in phrases:
+            variations = generate_fixed_variations(phrase, synonyms, max_variations=n_phrases_per_emotion)
+            random.shuffle(variations)
+            for variation in variations:
+                if len(emotion_phrases) < n_phrases_per_emotion:
+                    emotion_phrases.add(variation)
+                    pbar.update(1)
+                if len(emotion_phrases) >= n_phrases_per_emotion:
+                    break
             if len(emotion_phrases) >= n_phrases_per_emotion:
                 break
-            if variation not in emotion_phrases:
-                emotion_phrases.add(variation)
-                pbar.update(1)
     unique_phrases["text"].extend(emotion_phrases)
     unique_phrases["label"].extend([emotion] * n_phrases_per_emotion)
 
