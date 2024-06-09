@@ -1,0 +1,5 @@
+2024-06-09 10:26:07,945:INFO:Starting emotion validation process
+2024-06-09 10:26:22,905:WARNING:From C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+2024-06-09 10:34:46,069:INFO:Number of mismatches in the subset: 0
+2024-06-09 10:34:46,069:INFO:Emotion validation process completed
