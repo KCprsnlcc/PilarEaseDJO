@@ -1,0 +1,117 @@
+2024-06-09 18:44:55,947 INFO:Checkpoint loaded successfully.
+2024-06-09 18:45:01,673 INFO:Starting translation...
+2024-06-09 18:51:04,216 INFO:Checkpoint loaded successfully.
+2024-06-09 18:51:08,618 INFO:Starting translation...
+2024-06-09 18:51:14,239 ERROR:An error occurred: 0
+2024-06-09 18:53:35,715 INFO:Checkpoint loaded successfully.
+2024-06-09 18:53:39,899 INFO:Starting translation...
+2024-06-09 18:53:44,637 ERROR:Chunk 0 is missing from return_dict.
+2024-06-09 18:53:44,638 ERROR:Chunk 1 is missing from return_dict.
+2024-06-09 18:53:44,638 ERROR:Chunk 2 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 3 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 4 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 5 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 6 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 7 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:Chunk 8 is missing from return_dict.
+2024-06-09 18:53:44,639 ERROR:An error occurred: Length of values (0) does not match length of index (133113)
+2024-06-09 18:54:49,057 INFO:Checkpoint loaded successfully.
+2024-06-09 18:54:53,865 INFO:Starting translation...
+2024-06-09 18:54:58,585 ERROR:Chunk 0 is missing from return_dict.
+2024-06-09 18:54:58,585 ERROR:Chunk 1 is missing from return_dict.
+2024-06-09 18:54:58,585 ERROR:Chunk 2 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 3 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 4 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 5 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 6 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 7 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:Chunk 8 is missing from return_dict.
+2024-06-09 18:54:58,586 ERROR:An error occurred: Length of translated texts (0) does not match length of original texts (133113)
+2024-06-09 18:56:10,811 INFO:Checkpoint loaded successfully.
+2024-06-09 18:56:15,106 INFO:Starting translation...
+2024-06-09 18:56:19,872 ERROR:Chunk 0 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 1 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 2 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 3 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 4 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 5 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 6 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 7 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:Chunk 8 is missing from return_dict.
+2024-06-09 18:56:19,872 ERROR:An error occurred: Length of translated texts (0) does not match length of original texts (133113)
+2024-06-09 18:57:56,419 INFO:Checkpoint loaded successfully.
+2024-06-09 18:58:01,114 INFO:Starting translation...
+2024-06-09 18:58:06,100 ERROR:Chunk 0 is missing from return_dict.
+2024-06-09 18:58:06,100 ERROR:Chunk 1 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 2 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 3 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 4 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 5 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 6 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 7 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:Chunk 8 is missing from return_dict.
+2024-06-09 18:58:06,101 ERROR:An error occurred: Length of translated texts (0) does not match length of original texts (133113)
+ERROR:root:An error occurred: [Errno 2] No such file or directory: '/mnt/data/emotion_datasets_predicted.csv'
+2024-06-09 19:04:26,092:INFO:Checkpoint loaded successfully.
+2024-06-09 19:04:30,769:ERROR:An error occurred: 0
+2024-06-09 19:05:33,117:INFO:Checkpoint loaded successfully.
+2024-06-09 19:05:37,576:ERROR:An error occurred: 0
+2024-06-09 19:05:50,782:INFO:Checkpoint loaded successfully.
+2024-06-09 19:05:55,082:ERROR:An error occurred: 0
+2024-06-09 19:08:23,875:INFO:Checkpoint loaded successfully.
+2024-06-09 19:08:32,788:ERROR:An error occurred: 0
+2024-06-09 19:09:33,163:INFO:Checkpoint saved: 1 chunks processed.
+2024-06-09 19:09:38,032:INFO:Checkpoint saved: 2 chunks processed.
+2024-06-09 19:09:47,967:INFO:Checkpoint saved: 3 chunks processed.
+2024-06-09 19:10:00,312:INFO:Checkpoint saved: 4 chunks processed.
+2024-06-09 19:10:11,999:INFO:Checkpoint saved: 5 chunks processed.
+2024-06-09 19:10:31,042:INFO:Checkpoint saved: 6 chunks processed.
+2024-06-09 19:10:44,464:INFO:Checkpoint saved: 7 chunks processed.
+2024-06-09 19:11:00,261:INFO:Checkpoint saved: 8 chunks processed.
+2024-06-09 19:11:00,269:INFO:Checkpoint saved: 9 chunks processed.
+2024-06-09 19:13:47,092:INFO:Checkpoint loaded successfully.
+2024-06-09 19:13:56,749:ERROR:An error occurred: 0
+2024-06-09 19:17:00,652:INFO:Checkpoint saved: 1 chunks processed.
+2024-06-09 19:17:05,494:INFO:Checkpoint saved: 2 chunks processed.
+2024-06-09 19:17:14,382:INFO:Checkpoint saved: 3 chunks processed.
+2024-06-09 19:17:15,102:INFO:Chunk 1 completed.
+2024-06-09 19:17:28,828:INFO:Checkpoint saved: 4 chunks processed.
+2024-06-09 19:17:30,016:INFO:Chunk 2 completed.
+2024-06-09 19:18:30,010:INFO:Checkpoint loaded successfully.
+2024-06-09 19:18:38,704:INFO:Checkpoint saved: 5 chunks processed.
+2024-06-09 19:18:43,317:INFO:Checkpoint saved: 6 chunks processed.
+2024-06-09 19:18:53,486:INFO:Checkpoint saved: 7 chunks processed.
+2024-06-09 19:19:05,632:INFO:Checkpoint saved: 8 chunks processed.
+2024-06-09 19:19:05,640:INFO:Checkpoint saved: 9 chunks processed.
+2024-06-09 19:22:06,029:INFO:Checkpoint loaded successfully.
+2024-06-09 19:22:15,666:ERROR:An error occurred: 0
+2024-06-09 19:23:20,125:INFO:Checkpoint loaded successfully.
+2024-06-09 19:23:29,019:ERROR:Chunk 0 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 1 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 2 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 3 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 4 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 5 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 6 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 7 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:Chunk 8 missing in return_dict.
+2024-06-09 19:23:29,020:ERROR:An error occurred: Length of translated texts (0) does not match length of original texts (133113)
+2024-06-09 19:25:11,488:INFO:Checkpoint saved: 1 chunks processed.
+2024-06-09 19:25:16,035:INFO:Checkpoint saved: 2 chunks processed.
+2024-06-09 19:25:24,779:INFO:Chunk 1 completed.
+2024-06-09 19:25:24,906:INFO:Checkpoint saved: 3 chunks processed.
+2024-06-09 19:25:37,421:INFO:Checkpoint saved: 4 chunks processed.
+2024-06-09 19:25:39,873:INFO:Chunk 2 completed.
+2024-06-09 19:25:49,070:INFO:Checkpoint saved: 5 chunks processed.
+2024-06-09 19:26:01,015:INFO:Checkpoint saved: 6 chunks processed.
+2024-06-09 19:26:03,684:INFO:Chunk 0 completed.
+2024-06-09 19:26:06,242:INFO:Chunk 4 completed.
+2024-06-09 19:26:09,223:INFO:Chunk 3 completed.
+2024-06-09 19:26:13,235:INFO:Checkpoint saved: 7 chunks processed.
+2024-06-09 19:26:16,714:INFO:Chunk 5 completed.
+2024-06-09 19:26:51,564:INFO:Checkpoint loaded successfully.
+2024-06-09 19:26:57,474:INFO:Resuming translation from checkpoint: 7 chunks processed.
+2024-06-09 19:27:04,585:INFO:Checkpoint saved: 8 chunks processed.
+2024-06-09 19:27:04,591:INFO:Checkpoint saved: 9 chunks processed.
+2024-06-09 19:27:13,233:INFO:Chunk 7 completed.
+2024-06-09 19:27:23,475:INFO:Chunk 8 completed.

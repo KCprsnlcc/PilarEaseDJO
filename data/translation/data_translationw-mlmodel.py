@@ -4,9 +4,32 @@ from tqdm import tqdm
 import logging
 import multiprocessing
 import os
+import pickle
 
 # Configure logging
-logging.basicConfig(filename='translation_errors.log', level=logging.ERROR)
+logging.basicConfig(filename='translation_errors.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+
+# Checkpoint file path
+CHECKPOINT_FILE = 'translation_checkpoint.pkl'
+
+def save_checkpoint(return_dict, processed_chunks):
+    temp_file = CHECKPOINT_FILE + '.tmp'
+    with open(temp_file, 'wb') as f:
+        pickle.dump((dict(return_dict), processed_chunks), f)
+    os.replace(temp_file, CHECKPOINT_FILE)
+    logging.info(f"Checkpoint saved: {len(processed_chunks)} chunks processed.")
+
+def load_checkpoint():
+    if os.path.exists(CHECKPOINT_FILE) and os.path.getsize(CHECKPOINT_FILE) > 0:
+        try:
+            with open(CHECKPOINT_FILE, 'rb') as f:
+                checkpoint = pickle.load(f)
+                logging.info("Checkpoint loaded successfully.")
+                return checkpoint
+        except (EOFError, pickle.UnpicklingError) as e:
+            logging.error(f"Checkpoint file is corrupted: {e}")
+            return None, []
+    return None, []
 
 def translate_batch(texts, model, tokenizer):
     try:
@@ -18,76 +41,109 @@ def translate_batch(texts, model, tokenizer):
         return [None] * len(texts)
 
 def translate_chunk(chunk, model_name, return_dict, index, progress_queue):
-    tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
-    translated_texts = []
-    for text in chunk:
-        translated_text = translate_batch([text], model, tokenizer)
-        translated_texts.append(translated_text)
-        progress_queue.put(1)  # Indicate that one more text has been processed
-    return_dict[index] = translated_texts
+    try:
+        tokenizer = MarianTokenizer.from_pretrained(model_name)
+        model = MarianMTModel.from_pretrained(model_name)
+        translated_texts = []
+        for text in chunk:
+            translated_text = translate_batch([text], model, tokenizer)
+            translated_texts.append(translated_text[0])
+            progress_queue.put((index, 1))
+        return_dict[index] = translated_texts
+    except Exception as e:
+        logging.error(f"Error in translate_chunk for index {index}: {e}")
+        return_dict[index] = [None] * len(chunk)
+        for _ in chunk:
+            progress_queue.put((index, 1))
 
 def update_progress_bar(total_texts, progress_queue):
     with tqdm(total=total_texts, desc="Translating", unit=" texts") as pbar:
-        for _ in range(total_texts):
-            progress_queue.get()
-            pbar.update(1)
+        completed_chunks = set()
+        while True:
+            item = progress_queue.get()
+            if item is None:
+                break
+            index, count = item
+            if index not in completed_chunks:
+                pbar.update(count)
+                completed_chunks.add(index)
+                logging.info(f"Chunk {index} completed.")
 
 def main():
     try:
-        # Create a warning message in a text file
         with open('translation_in_progress.txt', 'w') as f:
             f.write("Warning: Translation process is in progress. This might take a while, feel free to leave this running while you sleep.")
 
-        # Load the dataset from the specified file path
-        dataset_path = r"C:\xampp\htdocs\PilarEaseDJO\data\scripts\combined_data\emotion_datasets_predicted.csv"
+        dataset_path = r'C:\xampp\htdocs\PilarEaseDJO\data\scripts\combined_data\emotion_datasets_predicted.csv'
         df = pd.read_csv(dataset_path)
 
-        # Load the translation model and tokenizer
         model_name = 'Helsinki-NLP/opus-mt-en-tl'
         num_processes = multiprocessing.cpu_count()
         chunk_size = len(df) // num_processes
         chunks = [df['text'][i:i + chunk_size].tolist() for i in range(0, len(df), chunk_size)]
 
-        manager = multiprocessing.Manager()
-        return_dict = manager.dict()
-        progress_queue = manager.Queue()
+        return_dict, processed_chunks = load_checkpoint()
+        if return_dict is None:
+            manager = multiprocessing.Manager()
+            return_dict = manager.dict()
+            progress_queue = manager.Queue()
+            processed_chunks = []
+        else:
+            manager = multiprocessing.Manager()
+            progress_queue = manager.Queue()
+            logging.info(f"Resuming translation from checkpoint: {len(processed_chunks)} chunks processed.")
+
         processes = []
 
-        print("Starting translation...")
+        total_processed_texts = len(processed_chunks) * chunk_size
 
-        # Start a separate process for updating the progress bar
         pbar_process = multiprocessing.Process(target=update_progress_bar, args=(len(df), progress_queue))
         pbar_process.start()
 
+        print("Starting translation...")
+
         for index, chunk in enumerate(chunks):
-            p = multiprocessing.Process(target=translate_chunk, args=(chunk, model_name, return_dict, index, progress_queue))
-            p.start()
-            processes.append(p)
+            if index in processed_chunks:
+                continue
+            try:
+                p = multiprocessing.Process(target=translate_chunk, args=(chunk, model_name, return_dict, index, progress_queue))
+                p.start()
+                processes.append(p)
+                processed_chunks.append(index)
+                save_checkpoint(return_dict, processed_chunks)
+                total_processed_texts += len(chunk)
+            except Exception as e:
+                logging.error(f"Error starting process for chunk {index}: {e}")
 
         for p in processes:
             p.join()
 
-        # Signal the progress bar process to finish
-        progress_queue.put(None)
-        pbar_process.join()
+        if pbar_process:
+            progress_queue.put(None)
+            pbar_process.join()
 
         translated_texts = []
         for index in range(len(chunks)):
-            translated_texts.extend(return_dict[index])
+            if index in return_dict:
+                translated_texts.extend(return_dict[index])
+            else:
+                logging.error(f"Chunk {index} missing in return_dict.")
 
-        df['text'] = [text[0] if text is not None else None for text in translated_texts]
+        if len(translated_texts) != len(df):
+            raise ValueError(f"Length of translated texts ({len(translated_texts)}) does not match length of original texts ({len(df)})")
 
-        # Keep only the translated text and label columns
+        df['text'] = translated_texts
+
         df = df[['text', 'label']]
 
-        export_path = r"C:\xampp\htdocs\PilarEaseDJO\data\scripts\combined_data\emotion_datasets_tagalog-predicted.csv"
+        export_path = r'C:\xampp\htdocs\PilarEaseDJO\data\scripts\combined_data\emotion_datasets_tagalog-predicted.csv'
         df.to_csv(export_path, index=False)
 
         print(f"Dataset has been successfully translated and exported to {export_path}")
 
-        # Remove the warning message file after completion
         os.remove('translation_in_progress.txt')
+        if os.path.exists(CHECKPOINT_FILE):
+            os.remove(CHECKPOINT_FILE)
 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
