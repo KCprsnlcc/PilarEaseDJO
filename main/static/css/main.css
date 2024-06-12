@@ -342,22 +342,8 @@ button:hover {
   transition: opacity 0.3s ease;
 }
 
-#registerDialogBox {
-  top: 310px; 
-  left: 610px;
-  width: 400px;
-  display: none;
-  text-align: center;
-  position: fixed;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 100010;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-#successBox{
+#registerDialogBox,
+#registerSuccessBox {
   top: 310px; 
   left: 610px;
   width: 400px;
@@ -373,10 +359,10 @@ button:hover {
   transition: opacity 0.3s ease;
 }
 
- #successContent{
-  padding: 20px;
-  text-align: center;
+#registerDialogBox {
+  top: 310px;
 }
+
 #dialogOverlay {
   display: none;
   position: fixed;
