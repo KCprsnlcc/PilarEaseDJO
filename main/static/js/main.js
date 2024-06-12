@@ -1,8 +1,42 @@
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('loader').style.display = 'none';
+
+    // Start session timeout timer
+    startSessionTimer();
 });
 
-// Get CSRF token
+function startSessionTimer() {
+    document.addEventListener('mousemove', resetTimer);
+    document.addEventListener('keypress', resetTimer);
+
+    const sessionTimeout = 30 * 60 * 1000;
+
+    let timeout;
+
+    function resetTimer() {
+        clearTimeout(timeout);
+        timeout = setTimeout(endSession, sessionTimeout);
+    }
+
+    function endSession() {
+        showError("Session Expired, Please log in again.", 'session');
+        fetch('/logout/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            }
+        });
+    }
+
+    resetTimer();
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -20,7 +54,6 @@ function getCookie(name) {
 
 const csrftoken = getCookie('csrftoken');
 
-// Modal functionality
 var loginModal = document.getElementById("loginModal");
 var registerModal = document.getElementById("registerModal");
 var overlay = document.getElementById("overlay");
@@ -30,7 +63,6 @@ var closeLoginModal = document.getElementById("closeLoginModal");
 var closeRegisterModal = document.getElementById("closeRegisterModal");
 var loginLinkFromRegister = document.getElementById("loginLinkFromRegister");
 
-// Show login modal and overlay
 if (loginLink) {
     loginLink.onclick = function(event) {
         event.preventDefault();
@@ -43,7 +75,6 @@ if (loginLink) {
     }
 }
 
-// Show register modal and overlay
 if (registerLink) {
     registerLink.onclick = function(event) {
         event.preventDefault();
@@ -56,7 +87,6 @@ if (registerLink) {
     }
 }
 
-// Show login modal from register modal
 if (loginLinkFromRegister) {
     loginLinkFromRegister.onclick = function(event) {
         event.preventDefault();
@@ -73,43 +103,41 @@ if (loginLinkFromRegister) {
     }
 }
 
-// Hide login modal and overlay
 if (closeLoginModal) {
     closeLoginModal.onclick = function() {
         loginModal.classList.add("pop-out");
         overlay.classList.add("hide");
         setTimeout(() => {
-            loginModal.style.display = "none";
-            overlay.style.display = "none";
-            loginModal.classList.remove("pop-in", "pop-out");
-            overlay.classList.remove("show", "hide");
+            loginModal.style.display = 'none';
+            overlay.style.display = 'none';
+            loginModal.classList.remove('pop-in', 'pop-out');
+            overlay.classList.remove('show', 'hide');
         }, 300);
     }
 }
 
-// Hide register modal and overlay
 if (closeRegisterModal) {
     closeRegisterModal.onclick = function() {
         registerModal.classList.add("pop-out");
         overlay.classList.add("hide");
         setTimeout(() => {
-            registerModal.style.display = "none";
-            overlay.style.display = "none";
-            registerModal.classList.remove("pop-in", "pop-out");
-            overlay.classList.remove("show", "hide");
+            registerModal.style.display = 'none';
+            overlay.style.display = 'none';
+            registerModal.classList.remove('pop-in', 'pop-out');
+            overlay.classList.remove('show', 'hide');
         }, 300);
     }
 }
 
 function showError(message, type) {
-    console.error(type + " error:", message);  // Log error message for debugging
-    const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : 'registerDialogBox');
-    const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : 'registerDialogContent');
+    console.error(type + " error:", message);
+    const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : type === 'register' ? 'registerDialogBox' : 'sessionDialogBox');
+    const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : type === 'register' ? 'registerDialogContent' : 'sessionDialogContent');
 
     dialogContent.innerHTML = message;
     dialogBox.style.display = 'block';
-
-    dialogBox.classList.remove('pop-out'); // Ensure pop-out is removed if previously applied
+    dialogBox.classList.add('error');
+    dialogBox.classList.remove('pop-out');
     dialogBox.classList.add('pop-in');
 
     setTimeout(() => {
@@ -118,19 +146,19 @@ function showError(message, type) {
         setTimeout(() => {
             dialogBox.style.display = 'none';
             dialogBox.classList.remove('pop-out');
-        }, 300); // Duration of pop-out animation
-    }, 3000); // 3 seconds display time
+        }, 300);
+    }, 3000);
 }
 
 function showSuccess(message, type) {
-    console.log(type + " success:", message);  // Log success message for debugging
-    const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : 'registerSuccessBox');
-    const successContent = document.getElementById(type === 'login' ? 'loginSuccessContent' : 'registerSuccessContent');
+    console.log(type + " success:", message);
+    const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : type === 'register' ? 'registerSuccessBox' : 'logoutSuccessBox');
+    const successContent = document.getElementById(type === 'login' ? 'loginSuccessContent' : type === 'register' ? 'registerSuccessContent' : 'logoutSuccessContent');
 
     successContent.innerHTML = message;
     successBox.style.display = 'block';
-
-    successBox.classList.remove('pop-out'); // Ensure pop-out is removed if previously applied
+    successBox.classList.add('success');
+    successBox.classList.remove('pop-out');
     successBox.classList.add('pop-in');
 
     setTimeout(() => {
@@ -139,14 +167,14 @@ function showSuccess(message, type) {
         setTimeout(() => {
             successBox.style.display = 'none';
             successBox.classList.remove('pop-out');
-        }, 300); // Duration of pop-out animation
-    }, 3000); // 3 seconds display time
+        }, 300);
+    }, 3000);
 }
 
 function parseErrorMessages(errors) {
     for (let field in errors) {
         if (errors.hasOwnProperty(field)) {
-            return errors[field][0].message; // Return only the first error message
+            return errors[field][0].message;
         }
     }
     return "An error occurred. Please try again.";
@@ -176,7 +204,7 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     })
     .then(response => response.json())
     .then(data => {
-        console.log("Register response:", data);  // Log server response for debugging
+        console.log("Register response:", data);
         if (data.success) {
             showSuccess("Registration successful!", 'register');
             setTimeout(() => {
@@ -189,9 +217,9 @@ document.getElementById('registerForm').addEventListener('submit', function(even
                         loginModal.classList.add("pop-in");
                         overlay.classList.add("show");
                     }, 10);
-                }, 300); // Duration of pop-out animation
+                }, 300);
 
-                document.getElementById('registerForm').reset(); // Clear the registration form
+                document.getElementById('registerForm').reset();
             }, 1500);
         } else {
             let errorMessage = parseErrorMessages(data.error_message);
@@ -199,7 +227,7 @@ document.getElementById('registerForm').addEventListener('submit', function(even
         }
     })
     .catch(error => {
-        console.error("Registration error:", error);  // Log error for debugging
+        console.error("Registration error:", error);
         showError("An error occurred. Please try again.", 'register');
     });
 });
@@ -225,20 +253,20 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
     })
     .then(response => response.json())
     .then(data => {
-        console.log("Login response:", data);  // Log server response for debugging
+        console.log("Login response:", data);
         if (data.success) {
             showSuccess("Login successful!", 'login');
             setTimeout(() => {
-                document.getElementById('loginForm').reset(); // Clear the login form
+                document.getElementById('loginForm').reset();
                 loginModal.classList.add("pop-out");
                 overlay.classList.add("hide");
                 setTimeout(() => {
                     loginModal.style.display = "none";
                     overlay.style.display = "none";
-                    loginModal.classList.remove("pop-in", "pop-out");
-                    overlay.classList.remove("show", "hide");
+                    loginModal.classList.remove('pop-in', 'pop-out');
+                    overlay.classList.remove('show', 'hide');
                     window.location.href = data.redirect_url;
-                }, 300); // Duration of pop-out animation
+                }, 300);
             }, 1500);
         } else {
             let errorMessage = parseErrorMessages(data.error_message);
@@ -251,6 +279,30 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
     });
 });
 
+document.querySelectorAll('.logout-link').forEach(item => {
+    item.addEventListener('click', function(event) {
+        event.preventDefault();
+        fetch(this.href, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess("Logout successful!", 'logout');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
+            }
+        })
+        .catch(error => {
+            console.error("Logout error:", error);  // Log error for debugging
+            showError("An error occurred during logout. Please try again.", 'logout');
+        });
+    });
+});
 
 function checkEmptyFields(formData, fields) {
     let emptyFields = [];

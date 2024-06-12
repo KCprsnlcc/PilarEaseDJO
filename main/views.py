@@ -2,6 +2,9 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
 CustomUser = get_user_model()  # Get the custom user model
@@ -48,8 +51,9 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
-
 @login_required
 def logout_view(request):
-    logout(request)
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'success': True, 'message': 'Logout successful!', 'redirect_url': '/'})
     return redirect('home')

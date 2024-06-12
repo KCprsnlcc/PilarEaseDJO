@@ -13,6 +13,12 @@
     <title>PilarEase | A Portal for Guidance Counseling Support System</title>
     <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
 </head>
+<div id="sessionDialogBox" class="flat-ui-dialog" style="display:none;">
+    <div id="sessionDialogContent"></div>
+</div>
+<div id="logoutSuccessBox" class="flat-ui-dialog" style="display:none;">
+    <div id="logoutSuccessContent"></div>
+</div>
 <body>
     <div id="loader" class="loader-5"></div>
     <div id="overlay" class="overlay" style="display: none;"></div>
@@ -22,7 +28,7 @@
             <div class="v1_122"></div>
             <div class="v1_123"></div>
             {% if user.is_authenticated %}
-                <a href="{% url 'logout' %}?next={{ request.path }}" class="v1_121">Logout</a>
+                <a href="{% url 'logout' %}" class="v1_121 logout-link">Logout</a>
             {% else %}
                 <a href="#" id="loginLink" class="v1_121">Login</a>
             {% endif %}
@@ -55,42 +61,43 @@
             <div class="links">LINKS</div>
         </div>
     </footer>
-<!-- Login Modal -->
-<div class="v53_168 modal" id="loginModal" style="display: none;">
-    <div class="v53_169"></div>
-    <div class="v53_170"></div>
-    <span class="v53_171">Don't have an Account?</span>
-    <span class="v53_172">OR</span>
-    <span class="v53_173">Join our exclusive, confidential Emotional Expression Portal.</span>
-    <span class="v53_174">Sign In.</span>
-    <div class="v53_178"></div>
-    <a href="#" id="registerLink" class="v53_179">Register</a>
-    <form id="loginForm" action="{% url 'login' %}" method="post">
-        {% csrf_token %}
-        <span class="v53_180">Username</span>
-        <div class="v53_181">
-            <input type="text" name="username" class="input-field" placeholder="Username">
+
+    <!-- Login Modal -->
+    <div class="v53_168 modal" id="loginModal" style="display: none;">
+        <div class="v53_169"></div>
+        <div class="v53_170"></div>
+        <span class="v53_171">Don't have an Account?</span>
+        <span class="v53_172">OR</span>
+        <span class="v53_173">Join our exclusive, confidential Emotional Expression Portal.</span>
+        <span class="v53_174">Sign In.</span>
+        <div class="v53_178"></div>
+        <a href="#" id="registerLink" class="v53_179">Register</a>
+        <form id="loginForm" action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            <span class="v53_180">Username</span>
+            <div class="v53_181">
+                <input type="text" name="username" class="input-field" placeholder="Username">
+            </div>
+            <span class="v53_183">Password</span>
+            <div class="v53_184">
+                <input type="password" name="password" class="input-field" placeholder="********">
+            </div>
+            <button type="submit" class="v53_186" id="loginButton">
+                <span class="v53_187">Login</span>
+            </button>
+        </form>
+        <div class="v53_190" id="closeLoginModal">
+            <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
         </div>
-        <span class="v53_183">Password</span>
-        <div class="v53_184">
-            <input type="password" name="password" class="input-field" placeholder="********">
+        <!-- Login Error Notification Dialog -->
+        <div id="loginDialogBox" class="flat-ui-dialog error" style="display:none;">
+            <div id="loginDialogContent"></div>
         </div>
-        <button type="submit" class="v53_186" id="loginButton">
-            <span class="v53_187">Login</span>
-        </button>
-    </form>
-    <div class="v53_190" id="closeLoginModal">
-        <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
+        <!-- Login Success Notification Dialog -->
+        <div id="loginSuccessBox" class="flat-ui-dialog success" style="display:none;">
+            <div id="loginSuccessContent"></div>
+        </div>
     </div>
-    <!-- Login Error Notification Dialog -->
-    <div id="loginDialogBox" class="flat-ui-dialog" style="display:none;">
-        <div id="loginDialogContent"></div>
-    </div>
-    <!-- Login Success Notification Dialog -->
-    <div id="loginSuccessBox" class="flat-ui-dialog" style="display:none;">
-        <div id="loginSuccessContent"></div>
-    </div>
-</div>
 
     <!-- Register Modal -->
     <div class="v74_801 modal" id="registerModal" style="display: none;">
@@ -144,17 +151,16 @@
             <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
         </div>
         <!-- Register Error Notification Dialog -->
-        <div id="registerDialogBox" class="flat-ui-dialog" style="display:none;">
+        <div id="registerDialogBox" class="flat-ui-dialog error" style="display:none;">
             <div id="registerDialogContent"></div>
         </div>
         <!-- Register Success Notification Dialog -->
-        <div id="registerSuccessBox" class="flat-ui-dialog" style="display:none;">
+        <div id="registerSuccessBox" class="flat-ui-dialog success" style="display:none;">
             <div id="registerSuccessContent"></div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
-    <script></script>
 </body>
 </html>
