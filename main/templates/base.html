@@ -83,6 +83,10 @@
         <div class="v53_190" id="closeLoginModal">
             <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
         </div>
+        <!-- Login Error Notification Dialog -->
+        <div id="loginDialogBox" class="flat-ui-dialog" style="display:none;">
+            <div id="loginDialogContent"></div>
+        </div>
     </div>
 
     <!-- Register Modal -->
@@ -135,25 +139,19 @@
         <div class="v53_190" id="closeRegisterModal">
             <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
         </div>
+        <!-- Success Notification Dialog -->
+        <div id="successBox" class="flat-ui-dialog" style="display:none;">
+            <div id="successContent"></div>
+        <!-- Register Error Notification Dialog -->
+        <div id="registerDialogBox" class="flat-ui-dialog" style="display:none;">
+            <div id="registerDialogContent"></div>
+        </div>
     </div>
-
-    <!-- Error Notification Dialog -->
-    <div id="dialogOverlay" class="dialogOverlay" style="display:none;"></div>
-    <div id="dialogBox" class="flat-ui-dialog" style="display:none;">
-        <div id="dialogContent"></div>
-        <button id="dialogClose" class="close-button">x</button>
-    </div>
-
-    <!-- Success Notification Dialog -->
-    <div id="successOverlay" class="dialogOverlay" style="display:none;"></div>
-    <div id="successBox" class="flat-ui-dialog" style="display:none;">
-        <div id="successContent"></div>
-        <button id="successClose" class="close-button">x</button>
     </div>
 
     <!-- Scripts -->
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
+    <script></script>
 </body>
 </html>
-
 
