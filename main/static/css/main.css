@@ -326,7 +326,8 @@ button:hover {
 .delete-button:hover {
   color: #689E4B;
 }
-#loginDialogBox {
+#loginDialogBox, 
+#loginSuccessBox {
   top: 230px; 
   left: 110px;
   width: 400px;
@@ -357,10 +358,6 @@ button:hover {
   z-index: 100010;
   opacity: 1;
   transition: opacity 0.3s ease;
-}
-
-#registerDialogBox {
-  top: 310px;
 }
 
 #dialogOverlay {

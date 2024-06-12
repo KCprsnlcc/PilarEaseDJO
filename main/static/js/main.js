@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Hide the loader when the DOM content is fully loaded
     document.getElementById('loader').style.display = 'none';
 });
 
@@ -70,7 +69,7 @@ if (loginLinkFromRegister) {
                 loginModal.classList.add("pop-in");
                 overlay.classList.add("show");
             }, 10);
-        }, 300); // Duration of pop-out animation
+        }, 300);
     }
 }
 
@@ -103,6 +102,7 @@ if (closeRegisterModal) {
 }
 
 function showError(message, type) {
+    console.error(type + " error:", message);  // Log error message for debugging
     const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : 'registerDialogBox');
     const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : 'registerDialogContent');
 
@@ -122,9 +122,10 @@ function showError(message, type) {
     }, 3000); // 3 seconds display time
 }
 
-function showSuccess(message) {
-    const successBox = document.getElementById('registerSuccessBox');
-    const successContent = document.getElementById('registerSuccessContent');
+function showSuccess(message, type) {
+    console.log(type + " success:", message);  // Log success message for debugging
+    const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : 'registerSuccessBox');
+    const successContent = document.getElementById(type === 'login' ? 'loginSuccessContent' : 'registerSuccessContent');
 
     successContent.innerHTML = message;
     successBox.style.display = 'block';
@@ -175,8 +176,9 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     })
     .then(response => response.json())
     .then(data => {
+        console.log("Register response:", data);  // Log server response for debugging
         if (data.success) {
-            showSuccess("Registration successful!");
+            showSuccess("Registration successful!", 'register');
             setTimeout(() => {
                 registerModal.classList.add("pop-out");
                 setTimeout(() => {
@@ -197,6 +199,7 @@ document.getElementById('registerForm').addEventListener('submit', function(even
         }
     })
     .catch(error => {
+        console.error("Registration error:", error);  // Log error for debugging
         showError("An error occurred. Please try again.", 'register');
     });
 });
@@ -214,16 +217,28 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
     }
     fetch(this.action, {
         method: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
-        body: formData
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams(formData).toString()
     })
     .then(response => response.json())
     .then(data => {
+        console.log("Login response:", data);  // Log server response for debugging
         if (data.success) {
-            showSuccess("Login successful!");
+            showSuccess("Login successful!", 'login');
             setTimeout(() => {
                 document.getElementById('loginForm').reset(); // Clear the login form
-                window.location.href = data.redirect_url;
+                loginModal.classList.add("pop-out");
+                overlay.classList.add("hide");
+                setTimeout(() => {
+                    loginModal.style.display = "none";
+                    overlay.style.display = "none";
+                    loginModal.classList.remove("pop-in", "pop-out");
+                    overlay.classList.remove("show", "hide");
+                    window.location.href = data.redirect_url;
+                }, 300); // Duration of pop-out animation
             }, 1500);
         } else {
             let errorMessage = parseErrorMessages(data.error_message);
@@ -231,9 +246,11 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
         }
     })
     .catch(error => {
+        console.error("Login error:", error);  // Log error for debugging
         showError("An error occurred. Please try again.", 'login');
     });
 });
+
 
 function checkEmptyFields(formData, fields) {
     let emptyFields = [];
@@ -256,16 +273,13 @@ function checkEmptyFields(formData, fields) {
 
 document.querySelectorAll('.v1_124 div').forEach(item => {
     item.addEventListener('click', function() {
-        // Remove 'active' class from all spans
         document.querySelectorAll('.v1_127, .v1_129, .v1_131, .v1_133, .v1_135, .v1_137, .v1_139, .v1_141').forEach(span => {
             span.classList.remove('active');
         });
-        // Add 'active' class to clicked span
         this.querySelector('span').classList.add('active');
     });
 });
 
-// Randomize curves
 document.querySelectorAll('.curved-line path').forEach(function(path) {
     var controlPointX1 = Math.random() * 50; // Random control point X1
     var controlPointY1 = Math.random() * 50; // Random control point Y1
@@ -276,4 +290,3 @@ document.querySelectorAll('.curved-line path').forEach(function(path) {
     var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`; // Construct path data
     path.setAttribute('d', d); // Set path data
 });
-

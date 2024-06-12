@@ -55,44 +55,48 @@
             <div class="links">LINKS</div>
         </div>
     </footer>
-
-    <!-- Login Modal -->
-    <div class="v53_168 modal" id="loginModal" style="display: none;">
-        <div class="v53_169"></div>
-        <div class="v53_170"></div>
-        <span class="v53_171">Don't have an Account?</span>
-        <span class="v53_172">OR</span>
-        <span class="v53_173">Join our exclusive, confidential Emotional Expression Portal.</span>
-        <span class="v53_174">Sign In.</span>
-        <div class="v53_178"></div>
-        <a href="#" id="registerLink" class="v53_179">Register</a>
-        <form id="loginForm" action="{% url 'login' %}" method="post">
-            {% csrf_token %}
-            <span class="v53_180">Username</span>
-            <div class="v53_181">
-                <input type="text" name="username" class="input-field" placeholder="Username">
-            </div>
-            <span class="v53_183">Password</span>
-            <div class="v53_184">
-                <input type="password" name="password" class="input-field" placeholder="********">
-            </div>
-            <button type="submit" class="v53_186" id="loginButton">
-                <span class="v53_187">Login</span>
-            </button>
-        </form>
-        <div class="v53_190" id="closeLoginModal">
-            <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
+<!-- Login Modal -->
+<div class="v53_168 modal" id="loginModal" style="display: none;">
+    <div class="v53_169"></div>
+    <div class="v53_170"></div>
+    <span class="v53_171">Don't have an Account?</span>
+    <span class="v53_172">OR</span>
+    <span class="v53_173">Join our exclusive, confidential Emotional Expression Portal.</span>
+    <span class="v53_174">Sign In.</span>
+    <div class="v53_178"></div>
+    <a href="#" id="registerLink" class="v53_179">Register</a>
+    <form id="loginForm" action="{% url 'login' %}" method="post">
+        {% csrf_token %}
+        <span class="v53_180">Username</span>
+        <div class="v53_181">
+            <input type="text" name="username" class="input-field" placeholder="Username">
         </div>
-        <!-- Login Error Notification Dialog -->
-        <div id="loginDialogBox" class="flat-ui-dialog" style="display:none;">
-            <div id="loginDialogContent"></div>
+        <span class="v53_183">Password</span>
+        <div class="v53_184">
+            <input type="password" name="password" class="input-field" placeholder="********">
         </div>
+        <button type="submit" class="v53_186" id="loginButton">
+            <span class="v53_187">Login</span>
+        </button>
+    </form>
+    <div class="v53_190" id="closeLoginModal">
+        <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
     </div>
+    <!-- Login Error Notification Dialog -->
+    <div id="loginDialogBox" class="flat-ui-dialog" style="display:none;">
+        <div id="loginDialogContent"></div>
+    </div>
+    <!-- Login Success Notification Dialog -->
+    <div id="loginSuccessBox" class="flat-ui-dialog" style="display:none;">
+        <div id="loginSuccessContent"></div>
+    </div>
+</div>
 
     <!-- Register Modal -->
     <div class="v74_801 modal" id="registerModal" style="display: none;">
         <span class="v74_802">"Embrace the art of cooking, where flavors come alive!"</span>
         <span class="v74_806">Get Started.</span>
+        <div class="v74_835"></div>
         <a href="#" id="loginLinkFromRegister" class="v74_838">Login</a>
         <div class="v74_812"></div>
         <form id="registerForm" action="{% url 'register' %}" method="post">
