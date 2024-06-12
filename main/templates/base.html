@@ -8,10 +8,10 @@
     <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Epilogue&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
-    <link rel="stylesheet" href="{% static 'css/custom-footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0">
+    <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0">
     <title>PilarEase | A Portal for Guidance Counseling Support System</title>
-    <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}"> 
+    <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
 </head>
 <body>
     <div id="loader" class="loader-5"></div>
@@ -66,17 +66,20 @@
         <span class="v53_174">Sign In.</span>
         <div class="v53_178"></div>
         <a href="#" id="registerLink" class="v53_179">Register</a>
-        <span class="v53_180">Username</span>
-        <div class="v53_181">
-            <input type="text" class="input-field" placeholder="Username">
-        </div>
-        <span class="v53_183">Password</span>
-        <div class="v53_184">
-            <input type="password" class="input-field" placeholder="********">
-        </div>
-        <button class="v53_186" id="loginButton">
-            <span class="v53_187">Login</span>
-        </button>
+        <form id="loginForm" action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            <span class="v53_180">Username</span>
+            <div class="v53_181">
+                <input type="text" name="username" class="input-field" placeholder="Username">
+            </div>
+            <span class="v53_183">Password</span>
+            <div class="v53_184">
+                <input type="password" name="password" class="input-field" placeholder="********">
+            </div>
+            <button type="submit" class="v53_186" id="loginButton">
+                <span class="v53_187">Login</span>
+            </button>
+        </form>
         <div class="v53_190" id="closeLoginModal">
             <img src="{% static 'images/close2.png' %}" class="close-button" alt="Close">
         </div>
@@ -88,24 +91,44 @@
         <span class="v74_806">Get Started.</span>
         <a href="#" id="loginLinkFromRegister" class="v74_838">Login</a>
         <div class="v74_812"></div>
-        <span class="v74_807">Student ID No.</span>
-        <div class="v74_808"><input type="text" class="input-field" placeholder="ex. C****77"></div>
-        <span class="v74_813">Username</span>
-        <div class="v74_814"><input type="text" class="input-field" placeholder="ex. KCprsnlcc"></div>
-        <span class="v74_816">Full Name</span>
-        <div class="v74_817"><input type="text" class="input-field" placeholder="ex. Last name, First Name A."></div>
-        <span class="v74_819">Academic Year Level</span>
-        <div class="v74_820"><input type="text" class="input-field" placeholder="ex. First Year, Grade 12, etc."></div>
-        <span class="v74_823">Contact Number</span>
-        <div class="v74_824"><input type="tel" class="input-field" placeholder="Ex. +639949953785"></div>
-        <span class="v74_826">Email</span>
-        <div class="v74_827"><input type="email" class="input-field" placeholder="ex. name@email.com"></div>
-        <span class="v74_829">Password</span>
-        <div class="v74_830"><input type="password" class="input-field" placeholder="********"></div>
-        <span class="v74_832">Confirm Password</span>
-        <div class="v74_833"><input type="password" class="input-field" placeholder="********"></div>
-        <div class="v74_835"></div>
-        <button class="v74_810" id="signupButton"><span class="v74_811">Sign Up</span></button>
+        <form id="registerForm" action="{% url 'register' %}" method="post">
+            {% csrf_token %}
+            <span class="v74_807">Student ID No.</span>
+            <div class="v74_808">
+                <input type="text" name="student_id" class="input-field" placeholder="ex. C****77">
+            </div>
+            <span class="v74_813">Username</span>
+            <div class="v74_814">
+                <input type="text" name="username" class="input-field" placeholder="ex. KCprsnlcc">
+            </div>
+            <span class="v74_816">Full Name</span>
+            <div class="v74_817">
+                <input type="text" name="full_name" class="input-field" placeholder="ex. Last name, First Name A.">
+            </div>
+            <span class="v74_819">Academic Year Level</span>
+            <div class="v74_820">
+                <input type="text" name="academic_year_level" class="input-field" placeholder="ex. First Year, Grade 12, etc.">
+            </div>
+            <span class="v74_823">Contact Number</span>
+            <div class="v74_824">
+                <input type="tel" name="contact_number" class="input-field" placeholder="Ex. +639949953785">
+            </div>
+            <span class="v74_826">Email</span>
+            <div class="v74_827">
+                <input type="email" name="email" class="input-field" placeholder="ex. name@email.com">
+            </div>
+            <span class="v74_829">Password</span>
+            <div class="v74_830">
+                <input type="password" name="password1" class="input-field" placeholder="********">
+            </div>
+            <span class="v74_832">Confirm Password</span>
+            <div class="v74_833">
+                <input type="password" name="password2" class="input-field" placeholder="********">
+            </div>
+            <button type="submit" class="v74_810" id="signupButton">
+                <span class="v74_811">Sign Up</span>
+            </button>
+        </form>
         <span class="v74_822">Privacy Policy and Terms of Service apply</span>
         <span class="v74_836">Join us at the PilarEase's Portal!</span>
         <span class="v74_837">An existing account?</span>
@@ -114,111 +137,23 @@
         </div>
     </div>
 
+    <!-- Error Notification Dialog -->
+    <div id="dialogOverlay" class="dialogOverlay" style="display:none;"></div>
+    <div id="dialogBox" class="flat-ui-dialog" style="display:none;">
+        <div id="dialogContent"></div>
+        <button id="dialogClose" class="close-button">x</button>
+    </div>
+
+    <!-- Success Notification Dialog -->
+    <div id="successOverlay" class="dialogOverlay" style="display:none;"></div>
+    <div id="successBox" class="flat-ui-dialog" style="display:none;">
+        <div id="successContent"></div>
+        <button id="successClose" class="close-button">x</button>
+    </div>
+
     <!-- Scripts -->
-    <script src="{% static 'js/custom.js' %}"></script>
-    <script>
-        // Modal functionality
-        var loginModal = document.getElementById("loginModal");
-        var registerModal = document.getElementById("registerModal");
-        var overlay = document.getElementById("overlay");
-        var loginLink = document.getElementById("loginLink");
-        var registerLink = document.getElementById("registerLink");
-        var closeLoginModal = document.getElementById("closeLoginModal");
-        var closeRegisterModal = document.getElementById("closeRegisterModal");
-        var loginLinkFromRegister = document.getElementById("loginLinkFromRegister");
-
-        // Show login modal and overlay
-        if (loginLink) {
-            loginLink.onclick = function(event) {
-                event.preventDefault();
-                loginModal.style.display = "block";
-                overlay.style.display = "flex";
-                setTimeout(() => {
-                    loginModal.classList.add("pop-in");
-                    overlay.classList.add("show");
-                }, 10);
-            }
-        }
-
-        // Show register modal and overlay
-        if (registerLink) {
-            registerLink.onclick = function(event) {
-                event.preventDefault();
-                loginModal.style.display = "none";
-                registerModal.style.display = "block";
-                setTimeout(() => {
-                    registerModal.classList.add("pop-in");
-                    overlay.classList.add("show");
-                }, 10);
-            }
-        }
-
-        // Show login modal from register modal
-        if (loginLinkFromRegister) {
-            loginLinkFromRegister.onclick = function(event) {
-                event.preventDefault();
-                registerModal.style.display = "none";
-                loginModal.style.display = "block";
-                setTimeout(() => {
-                    loginModal.classList.add("pop-in");
-                    overlay.classList.add("show");
-                }, 10);
-            }
-        }
-
-        // Hide login modal and overlay
-        if (closeLoginModal) {
-            closeLoginModal.onclick = function() {
-                loginModal.classList.add("pop-out");
-                overlay.classList.add("hide");
-                setTimeout(() => {
-                    loginModal.style.display = "none";
-                    overlay.style.display = "none";
-                    loginModal.classList.remove("pop-in", "pop-out");
-                    overlay.classList.remove("show", "hide");
-                }, 300);
-            }
-        }
-
-        // Hide register modal and overlay
-        if (closeRegisterModal) {
-            closeRegisterModal.onclick = function() {
-                registerModal.classList.add("pop-out");
-                overlay.classList.add("hide");
-                setTimeout(() => {
-                    registerModal.style.display = "none";
-                    overlay.style.display = "none";
-                    registerModal.classList.remove("pop-in", "pop-out");
-                    overlay.classList.remove("show", "hide");
-                }, 300);
-            }
-        }
-
-        // Hide modals and overlay when clicking outside
-        window.onclick = function(event) {
-            if (event.target == overlay) {
-                if (loginModal.style.display === "block") {
-                    loginModal.classList.add("pop-out");
-                }
-                if (registerModal.style.display === "block") {
-                    registerModal.classList.add("pop-out");
-                }
-                overlay.classList.add("hide");
-                setTimeout(() => {
-                    loginModal.style.display = "none";
-                    registerModal.style.display = "none";
-                    overlay.style.display = "none";
-                    loginModal.classList.remove("pop-in", "pop-out");
-                    registerModal.classList.remove("pop-in", "pop-out");
-                    overlay.classList.remove("show", "hide");
-                }, 300);
-            }
-        }
-
-        // Hide the loader when the page is fully loaded
-        window.addEventListener('load', function() {
-            document.getElementById('loader').style.display = 'none';
-        });
-    </script>
+    <script src="{% static 'js/main.js' %}?v=1.0"></script>
 </body>
 </html>
+
+

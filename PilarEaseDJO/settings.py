@@ -113,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'GMT+8'
 
 USE_I18N = True
 
@@ -134,6 +134,20 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+# Function to get the latest CSS files with hashes
+def get_hashed_css_files():
+    css_dir = os.path.join(BASE_DIR, 'static/css')
+    hashed_files = []
+    for file_name in os.listdir(css_dir):
+        if file_name.startswith('style1.') and file_name.endswith('.css'):
+            hashed_files.append(f'css/{file_name}')
+        elif file_name.startswith('style2.') and file_name.endswith('.css'):
+            hashed_files.append(f'css/{file_name}')
+    return hashed_files
+
+# Set hashed CSS files to be used in templates
+HASHED_CSS_FILES = get_hashed_css_files()
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
