@@ -11,7 +11,7 @@ function startSessionTimer() {
     document.addEventListener('mousemove', resetTimer);
     document.addEventListener('keypress', resetTimer);
 
-    const sessionTimeout = 2000; // 30 minutes
+    const sessionTimeout = 30 * 60 * 1000;
 
     let timeout;
 
@@ -318,6 +318,11 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
 document.querySelectorAll('.logout-link').forEach(item => {
     item.addEventListener('click', function(event) {
         event.preventDefault();
+        
+        // Disable the logout button to prevent multiple clicks
+        this.style.pointerEvents = 'none';
+
+        // Send the logout request
         fetch(this.href, {
             method: 'POST',
             headers: {
@@ -339,11 +344,22 @@ document.querySelectorAll('.logout-link').forEach(item => {
                         window.location.href = data.redirect_url;
                     }, 300);
                 }, 1500);
+
+                // Set a timeout to re-enable the button and show error if not redirected
+                setTimeout(() => {
+                    if (!document.hidden) { // Check if the page is still visible
+                        showError("Please wait, the logout process is taking longer than expected.", 'logout');
+                        this.style.pointerEvents = 'auto'; // Re-enable the logout button
+                    }
+                }, 2500); // Timeout after animations
+            } else {
+                // Handle failure silently
+                window.location.reload(); // Refresh the page on failure
             }
         })
         .catch(error => {
-            console.error("Logout error:", error);
-            showError("An error occurred during logout. Please try again.", 'logout');
+            // Handle network errors silently
+            window.location.reload(); // Refresh the page on error
         });
     });
 });
