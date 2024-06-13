@@ -43,7 +43,7 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
 - **Emotion Management**: Filter statuses based on emotions and perform sentiment analysis.
 - **Chatbot Integration**: Interface for chatbot interaction.
 - **Contact & Support**: Provide a contact form for user queries.
-- **Administrative Tools**: Manage user profiles, view queries, and export analysis data.
+- **Administrative Tools**: Manage user profiles, view queries and analysis, and export analysis data.
 
 ## Contributing
 
