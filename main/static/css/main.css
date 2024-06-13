@@ -23,16 +23,25 @@ button {
 button:hover {
   background-color: #3b5a2b;
 }
+#loader-overlay {
+  display: flex; /* Changed from none to flex */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9999999;
+  justify-content: center;
+  align-items: center;
+}
 
 .loader-5 {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative; /* Changed from fixed to relative */
   animation: rotate 2s infinite;
   height: 50px;
   width: 50px;
-  z-index: 100000;
+  z-index: 10000000;
 }
 
 .loader-5:before,

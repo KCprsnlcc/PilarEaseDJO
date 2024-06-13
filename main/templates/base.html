@@ -14,7 +14,9 @@
     <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
 </head>
 <body class="{% if user.is_authenticated %}authenticated{% endif %}">
-    <div id="loader" class="loader-5"></div>
+    <div id="loader-overlay">
+        <div id="loader" class="loader-5"></div>
+    </div>    
     <div id="overlay" class="overlay" style="display: none;"></div>
     <header>
         <div class="v1_119">

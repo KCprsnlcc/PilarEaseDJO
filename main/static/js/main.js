@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('loader').style.display = 'none';
+    document.getElementById('loader-overlay').style.display = 'none';
 
     // Start session timeout timer only if the user is authenticated
     if (document.body.classList.contains('authenticated')) {
