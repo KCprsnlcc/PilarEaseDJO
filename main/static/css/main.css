@@ -209,8 +209,6 @@ button:hover {
 .flat-ui-dialog {
   display: none;
   position: fixed;
-  top: 50%;
-  left: 50%;
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 20px;
@@ -326,14 +324,35 @@ button:hover {
 .delete-button:hover {
   color: #689E4B;
 }
+/* Error Message Style */
+.flat-ui-dialog.error {
+  border: 2px solid #e74c3c;
+  color: #e74c3c;
+}
+
+/* Success Message Style */
+.flat-ui-dialog.success {
+  border: 2px solid #689E4B;
+  color: #689E4B;
+}
+/* Success Message Style */
+.flat-ui-dialog.logout {
+  border: 2px solid #0F2326;
+  color: #0F2326;
+}
+/* Session Expiry Message Style */
+.flat-ui-dialog.session {
+  border: 2px solid #e67e22;
+  color: #e67e22;
+}
 
 #logoutSuccessBox{
-  top: 50%; 
-  left: 50%;
-  width: 400px;
+  top: 45%; /* Adjusted top position */
+  left: 810px;
+  width: 250px;
   display: none;
   text-align: center;
-  position: fixed;
+  position: absolute;
   transform: translate(-50%, -50%);
   background-color: #fff;
   border-radius: 8px;
@@ -344,12 +363,12 @@ button:hover {
 }
 
 #sessionDialogBox{
-  top: 50%; 
-  left: 50%;
+  top: 45%; /* Adjusted top position */
+  left: 735px;
   width: 400px;
   display: none;
   text-align: center;
-  position: fixed;
+  position: absolute;
   transform: translate(-50%, -50%);
   background-color: #fff;
   border-radius: 8px;

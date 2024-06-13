@@ -1,13 +1,19 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
+import pytz
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 
 CustomUser = get_user_model()  # Get the custom user model
+
+def current_time_view(request):
+    tz = pytz.timezone('Asia/Manila')
+    current_time = datetime.now(tz)
+    return HttpResponse(f"The current time in Manila is: {current_time}")
 
 def home(request):
     return render(request, 'home.html')

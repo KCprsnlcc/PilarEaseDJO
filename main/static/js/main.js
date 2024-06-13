@@ -9,7 +9,7 @@ function startSessionTimer() {
     document.addEventListener('mousemove', resetTimer);
     document.addEventListener('keypress', resetTimer);
 
-    const sessionTimeout = 30 * 60 * 1000;
+    const sessionTimeout = 1 * 60 * 1000; // 30 minutes
 
     let timeout;
 
@@ -27,9 +27,7 @@ function startSessionTimer() {
             }
         }).then(response => response.json()).then(data => {
             if (data.success) {
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1500);
+                // No redirect here, just show the session expired message
             }
         });
     }
@@ -119,18 +117,21 @@ if (closeLoginModal) {
 if (closeRegisterModal) {
     closeRegisterModal.onclick = function() {
         registerModal.classList.add("pop-out");
+        loginModal.classList.add("pop-out"); // Add this line
         overlay.classList.add("hide");
         setTimeout(() => {
             registerModal.style.display = 'none';
+            loginModal.style.display = 'none'; // Add this line
             overlay.style.display = 'none';
             registerModal.classList.remove('pop-in', 'pop-out');
+            loginModal.classList.remove('pop-in', 'pop-out'); // Add this line
             overlay.classList.remove('show', 'hide');
         }, 300);
     }
 }
 
+
 function showError(message, type) {
-    console.error(type + " error:", message);
     const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : type === 'register' ? 'registerDialogBox' : 'sessionDialogBox');
     const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : type === 'register' ? 'registerDialogContent' : 'sessionDialogContent');
 
@@ -139,19 +140,40 @@ function showError(message, type) {
     dialogBox.classList.add('error');
     dialogBox.classList.remove('pop-out');
     dialogBox.classList.add('pop-in');
+    
+    if (type === 'session') {
+        overlay.style.display = 'flex';
+        overlay.classList.add('pop-in');  // Add pop-in animation to overlay
+        // Add click event to overlay to close the dialog and refresh the page
+        overlay.addEventListener('click', function handleOverlayClick() {
+            dialogBox.classList.add('pop-out');
+            overlay.classList.add('hide');
+            setTimeout(() => {
+                dialogBox.style.display = 'none';
+                dialogBox.classList.remove('pop-out');
+                overlay.style.display = 'none';
+                overlay.classList.remove('show', 'hide');
+                overlay.removeEventListener('click', handleOverlayClick);
+                window.location.reload(); // Refresh the page
+            }, 300);
+        });
+    }
+    
 
-    setTimeout(() => {
-        dialogBox.classList.remove('pop-in');
-        dialogBox.classList.add('pop-out');
+    // Do not hide the session expired message automatically
+    if (type !== 'session') {
         setTimeout(() => {
-            dialogBox.style.display = 'none';
-            dialogBox.classList.remove('pop-out');
-        }, 300);
-    }, 3000);
+            dialogBox.classList.remove('pop-in');
+            dialogBox.classList.add('pop-out');
+            setTimeout(() => {
+                dialogBox.style.display = 'none';
+                dialogBox.classList.remove('pop-out');
+            }, 300);
+        }, 3000);
+    }
 }
 
 function showSuccess(message, type) {
-    console.log(type + " success:", message);
     const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : type === 'register' ? 'registerSuccessBox' : 'logoutSuccessBox');
     const successContent = document.getElementById(type === 'login' ? 'loginSuccessContent' : type === 'register' ? 'registerSuccessContent' : 'logoutSuccessContent');
 
@@ -169,6 +191,22 @@ function showSuccess(message, type) {
             successBox.classList.remove('pop-out');
         }, 300);
     }, 3000);
+
+    // Add click event to overlay to close the dialog and refresh the page
+    if (type === 'logout') {
+        overlay.addEventListener('click', function handleOverlayClick() {
+            successBox.classList.add('pop-out');
+            overlay.classList.add('hide');
+            setTimeout(() => {
+                successBox.style.display = 'none';
+                successBox.classList.remove('pop-out');
+                overlay.style.display = 'none';
+                overlay.classList.remove('show', 'hide');
+                overlay.removeEventListener('click', handleOverlayClick);
+                window.location.reload();
+            }, 300);
+        });
+    }
 }
 
 function parseErrorMessages(errors) {
@@ -204,7 +242,6 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     })
     .then(response => response.json())
     .then(data => {
-        console.log("Register response:", data);
         if (data.success) {
             showSuccess("Registration successful!", 'register');
             setTimeout(() => {
@@ -227,7 +264,6 @@ document.getElementById('registerForm').addEventListener('submit', function(even
         }
     })
     .catch(error => {
-        console.error("Registration error:", error);
         showError("An error occurred. Please try again.", 'register');
     });
 });
@@ -253,7 +289,6 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
     })
     .then(response => response.json())
     .then(data => {
-        console.log("Login response:", data);
         if (data.success) {
             showSuccess("Login successful!", 'login');
             setTimeout(() => {
@@ -274,7 +309,6 @@ document.getElementById('loginForm').addEventListener('submit', function(event) 
         }
     })
     .catch(error => {
-        console.error("Login error:", error);  // Log error for debugging
         showError("An error occurred. Please try again.", 'login');
     });
 });
@@ -293,12 +327,20 @@ document.querySelectorAll('.logout-link').forEach(item => {
             if (data.success) {
                 showSuccess("Logout successful!", 'logout');
                 setTimeout(() => {
-                    window.location.href = data.redirect_url;
+                    document.getElementById('logoutSuccessBox').classList.add("pop-out");
+                    overlay.classList.add("hide");
+                    setTimeout(() => {
+                        document.getElementById('logoutSuccessBox').style.display = "none";
+                        overlay.style.display = "none";
+                        document.getElementById('logoutSuccessBox').classList.remove('pop-in', 'pop-out');
+                        overlay.classList.remove('show', 'hide');
+                        window.location.href = data.redirect_url;
+                    }, 300);
                 }, 1500);
             }
         })
         .catch(error => {
-            console.error("Logout error:", error);  // Log error for debugging
+            console.error("Logout error:", error);
             showError("An error occurred during logout. Please try again.", 'logout');
         });
     });
@@ -333,12 +375,12 @@ document.querySelectorAll('.v1_124 div').forEach(item => {
 });
 
 document.querySelectorAll('.curved-line path').forEach(function(path) {
-    var controlPointX1 = Math.random() * 50; // Random control point X1
-    var controlPointY1 = Math.random() * 50; // Random control point Y1
-    var controlPointX2 = 100 - Math.random() * 50; // Random control point X2
-    var controlPointY2 = Math.random() * 50; // Random control point Y2
-    var endPointX = Math.random() * 100; // Random end point X
-    var endPointY = Math.random() * 100; // Random end point Y
-    var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`; // Construct path data
-    path.setAttribute('d', d); // Set path data
+    var controlPointX1 = Math.random() * 50;
+    var controlPointY1 = Math.random() * 50;
+    var controlPointX2 = 100 - Math.random() * 50;
+    var controlPointY2 = Math.random() * 50;
+    var endPointX = Math.random() * 100;
+    var endPointY = Math.random() * 100;
+    var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`;
+    path.setAttribute('d', d);
 });

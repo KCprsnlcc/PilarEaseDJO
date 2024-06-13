@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'main.middleware.TimezoneMiddleware'
 ]
 # Session settings
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -124,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'GMT+8'
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 

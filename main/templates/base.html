@@ -13,12 +13,6 @@
     <title>PilarEase | A Portal for Guidance Counseling Support System</title>
     <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
 </head>
-<div id="sessionDialogBox" class="flat-ui-dialog" style="display:none;">
-    <div id="sessionDialogContent"></div>
-</div>
-<div id="logoutSuccessBox" class="flat-ui-dialog" style="display:none;">
-    <div id="logoutSuccessContent"></div>
-</div>
 <body>
     <div id="loader" class="loader-5"></div>
     <div id="overlay" class="overlay" style="display: none;"></div>
@@ -159,6 +153,15 @@
             <div id="registerSuccessContent"></div>
         </div>
     </div>
+<!-- Session Expiry Notification Dialog -->
+<div id="sessionDialogBox" class="flat-ui-dialog session" style="display:none;">
+    <div id="sessionDialogContent">Session Expired, Please log in again.</div>
+</div>
+
+<!-- Logout Success Notification Dialog -->
+<div id="logoutSuccessBox" class="flat-ui-dialog logout" style="display:none;">
+    <div id="logoutSuccessContent">Logout successful!</div>
+</div>
 
     <!-- Scripts -->
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
