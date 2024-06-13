@@ -6,7 +6,6 @@
 <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css?family=Beau+Rivage&display=swap" rel="stylesheet" />
-<link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}"> <!-- Update with correct static path -->
 
 <div class="container">
     <svg class="curved-line" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -27,9 +26,15 @@
         <div class="image">
             <img src="{% static 'images/map.png' %}" alt="Map"> <!-- Update with correct static path -->
         </div>
+        {% if user.is_authenticated %}
+        <button class="v1_29">
+            <span class="v1_30">EXPRESS YOUR FEELINGS</span>
+        </button>
+        {% else %}
         <button class="v1_29" id="loginButton">
             <span class="v1_30">EXPRESS YOUR FEELINGS</span>
         </button>
+        {% endif %}
     </div>
 </div>
 <div class="v1_124">
@@ -42,11 +47,22 @@
     <div class="v1_138"><span class="v1_139">Surprise</span></div>
     <div class="v1_140"><span class="v1_141">Disgust</span></div>
 </div>
-<div id="dialogOverlay" style="display: none;"></div> <!-- Ensure initially hidden -->
-<div id="dialogBox" style="display: none;"> <!-- Ensure initially hidden -->
-    <div id="dialogContent">
-        <img src="{% static 'images/close2.png' %}" class="close" alt="Close">
-        <h2>You must login to continue.</h2>
+{% if user.is_authenticated %}
+<nav>
+    <div class="nav-content">
+        <div class="toggle-btn">
+            <i class='bx bx-plus'></i>
+        </div>
+        <span style="--i:3;">
+            <a href="#"><i class='bx bxs-time'></i></a>
+        </span>
+        <span style="--i:4;">
+            <a href="#"><i class='bx bxs-message'></i></a>
+        </span>
+        <span style="--i:5;">
+            <a href="#"><i class='bx bxs-user'></i></a>
+        </span>
     </div>
-</div>
+</nav>
+{% endif %}
 {% endblock %}

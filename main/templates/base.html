@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Epilogue&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0">
     <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0">
@@ -158,6 +159,11 @@
             <div id="registerSuccessContent"></div>
         </div>
     </div>
+    <!-- Login Required Modal -->
+<div id="loginRequiredModal" class="flat-ui-dialog required" style="display:none;">
+    <p>You need to log in to compose a status.</p>
+    <button id="openLoginModal">Login</button>
+</div>
 <!-- Session Expiry Notification Dialog -->
 <div id="sessionDialogBox" class="flat-ui-dialog session" style="display:none;">
     <div id="sessionDialogContent">Session Expired, Please log in again.</div>
@@ -167,8 +173,10 @@
 <div id="logoutSuccessBox" class="flat-ui-dialog logout" style="display:none;">
     <div id="logoutSuccessContent">Logout successful!</div>
 </div>
+
     {% compress js %}
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
+    <script src="{% static 'js/modal.js' %}?v=1.0"></script>
     {% endcompress %}
 </body>
 </html>

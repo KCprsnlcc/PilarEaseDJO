@@ -56,6 +56,8 @@ const csrftoken = getCookie('csrftoken');
 
 var loginModal = document.getElementById("loginModal");
 var registerModal = document.getElementById("registerModal");
+var loginRequiredModal = document.getElementById("loginRequiredModal");
+var openLoginModalButton = document.getElementById("openLoginModal");
 var overlay = document.getElementById("overlay");
 var loginLink = document.getElementById("loginLink");
 var registerLink = document.getElementById("registerLink");
@@ -63,6 +65,7 @@ var closeLoginModal = document.getElementById("closeLoginModal");
 var closeRegisterModal = document.getElementById("closeRegisterModal");
 var loginLinkFromRegister = document.getElementById("loginLinkFromRegister");
 
+// Show login modal and overlay
 if (loginLink) {
     loginLink.onclick = function(event) {
         event.preventDefault();
@@ -75,6 +78,7 @@ if (loginLink) {
     }
 }
 
+// Show register modal and overlay
 if (registerLink) {
     registerLink.onclick = function(event) {
         event.preventDefault();
@@ -87,6 +91,7 @@ if (registerLink) {
     }
 }
 
+// Show login modal from register modal
 if (loginLinkFromRegister) {
     loginLinkFromRegister.onclick = function(event) {
         event.preventDefault();
@@ -103,6 +108,7 @@ if (loginLinkFromRegister) {
     }
 }
 
+// Hide login modal and overlay
 if (closeLoginModal) {
     closeLoginModal.onclick = function() {
         loginModal.classList.add("pop-out");
@@ -116,22 +122,84 @@ if (closeLoginModal) {
     }
 }
 
+// Hide register modal and overlay
 if (closeRegisterModal) {
     closeRegisterModal.onclick = function() {
         registerModal.classList.add("pop-out");
-        loginModal.classList.add("pop-out"); // Add this line
+        loginModal.classList.add("pop-out");
         overlay.classList.add("hide");
         setTimeout(() => {
             registerModal.style.display = 'none';
-            loginModal.style.display = 'none'; // Add this line
+            loginModal.style.display = 'none';
             overlay.style.display = 'none';
             registerModal.classList.remove('pop-in', 'pop-out');
-            loginModal.classList.remove('pop-in', 'pop-out'); // Add this line
+            loginModal.classList.remove('pop-in', 'pop-out');
             overlay.classList.remove('show', 'hide');
         }, 300);
     }
 }
 
+// Show login required modal and overlay
+var expressFeelingsButton = document.getElementById("loginButton");
+if (expressFeelingsButton) {
+    expressFeelingsButton.onclick = function(event) {
+        event.preventDefault();
+        loginRequiredModal.style.display = "block";
+        overlay.style.display = "flex";
+        setTimeout(() => {
+            loginRequiredModal.classList.add("pop-in");
+            overlay.classList.add("show");
+        }, 10);
+    }
+}
+
+// Close modal and overlay when clicking outside
+window.onclick = function(event) {
+    if (event.target == overlay) {
+        if (loginRequiredModal.style.display === "block" || document.querySelector('.flat-ui-dialog.session').style.display === "block") {
+            closeModals();
+        }
+    }
+}
+
+function closeModals() {
+    if (loginRequiredModal.style.display === "block") {
+        loginRequiredModal.classList.add("pop-out");
+        overlay.classList.add("hide");
+        setTimeout(() => {
+            loginRequiredModal.style.display = "none";
+            overlay.style.display = "none";
+            loginRequiredModal.classList.remove("pop-in", "pop-out");
+            overlay.classList.remove('show', 'hide');
+        }, 300);
+    } else if (document.querySelector('.flat-ui-dialog.session').style.display === "block") {
+        const sessionDialogBox = document.querySelector('.flat-ui-dialog.session');
+        sessionDialogBox.classList.add("pop-out");
+        overlay.classList.add("hide");
+        setTimeout(() => {
+            sessionDialogBox.style.display = "none";
+            overlay.style.display = "none";
+            sessionDialogBox.classList.remove("pop-in", "pop-out");
+            overlay.classList.remove('show', 'hide');
+            window.location.reload();
+        }, 300);
+    }
+}
+
+// Close login required modal and show login modal
+if (openLoginModalButton) {
+    openLoginModalButton.onclick = function() {
+        loginRequiredModal.classList.add("pop-out");
+        setTimeout(() => {
+            loginRequiredModal.style.display = "none";
+            loginRequiredModal.classList.remove("pop-out");
+            loginModal.style.display = "block";
+            setTimeout(() => {
+                loginModal.classList.add("pop-in");
+            }, 10);
+        }, 300);
+    }
+}
 
 function showError(message, type) {
     const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : type === 'register' ? 'registerDialogBox' : 'sessionDialogBox');
@@ -143,7 +211,7 @@ function showError(message, type) {
     dialogBox.classList.remove('pop-out');
     dialogBox.classList.add('pop-in');
     
-    if (type === 'session') {  // Add this block
+    if (type === 'session') {
         overlay.style.display = 'flex';
         overlay.classList.add('pop-in');
         overlay.addEventListener('click', function handleOverlayClick() {
@@ -155,7 +223,7 @@ function showError(message, type) {
                 overlay.style.display = 'none';
                 overlay.classList.remove('show', 'hide');
                 overlay.removeEventListener('click', handleOverlayClick);
-                window.location.reload(); // Refresh the page
+                window.location.reload();
             }, 300);
         });
     }
@@ -171,45 +239,6 @@ function showError(message, type) {
         }, 3000);
     }
 }
-function showError(message, type) {
-    const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : type === 'register' ? 'registerDialogBox' : 'sessionDialogBox');
-    const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : type === 'register' ? 'registerDialogContent' : 'sessionDialogContent');
-
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = 'block';
-    dialogBox.classList.add('error');
-    dialogBox.classList.remove('pop-out');
-    dialogBox.classList.add('pop-in');
-    
-    if (type === 'session') {  // Add this block
-        overlay.style.display = 'flex';
-        overlay.classList.add('pop-in');
-        overlay.addEventListener('click', function handleOverlayClick() {
-            dialogBox.classList.add('pop-out');
-            overlay.classList.add('hide');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-                overlay.style.display = 'none';
-                overlay.classList.remove('show', 'hide');
-                overlay.removeEventListener('click', handleOverlayClick);
-                window.location.reload(); // Refresh the page
-            }, 300);
-        });
-    }
-
-    if (type !== 'session') {
-        setTimeout(() => {
-            dialogBox.classList.remove('pop-in');
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
-}
-
 
 function showSuccess(message, type) {
     const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : type === 'register' ? 'registerSuccessBox' : 'logoutSuccessBox');
@@ -230,7 +259,6 @@ function showSuccess(message, type) {
         }, 300);
     }, 3000);
 
-    // Add click event to overlay to close the dialog and refresh the page
     if (type === 'logout') {
         overlay.addEventListener('click', function handleOverlayClick() {
             successBox.classList.add('pop-out');
@@ -281,7 +309,7 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showSuccess("Registration successful!", 'register');  // Adjust the message
+            showSuccess("Registration successful!", 'register');
             setTimeout(() => {
                 registerModal.classList.add("pop-out");
                 setTimeout(() => {
@@ -380,14 +408,6 @@ document.querySelectorAll('.logout-link').forEach(item => {
                         window.location.href = data.redirect_url;
                     }, 300);
                 }, 1500);
-
-                // Set a timeout to re-enable the button and show error if not redirected
-                setTimeout(() => {
-                    if (!document.hidden) { // Check if the page is still visible
-                        showError("Please wait, the logout process is taking longer than expected.", 'logout');
-                        this.style.pointerEvents = 'auto'; // Re-enable the logout button
-                    }
-                }, 2500); // Timeout after animations
             } else {
                 // Handle failure silently
                 window.location.reload(); // Refresh the page on failure
