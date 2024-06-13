@@ -22,15 +22,15 @@ def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return JsonResponse({'success': True, 'redirect_url': '/'})
+            form.save()  # Remove login(request, user)
+            return JsonResponse({'success': True, 'redirect_url': '/login/'})  # Adjust redirect URL
         else:
             errors = form.errors.get_json_data()
             return JsonResponse({'success': False, 'error_message': errors})
     else:
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
+
 
 def login_view(request):
     if request.method == 'POST':

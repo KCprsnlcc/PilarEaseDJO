@@ -1,15 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('loader').style.display = 'none';
 
-    // Start session timeout timer
-    startSessionTimer();
+    // Start session timeout timer only if the user is authenticated
+    if (document.body.classList.contains('authenticated')) {
+        startSessionTimer();
+    }
 });
 
 function startSessionTimer() {
     document.addEventListener('mousemove', resetTimer);
     document.addEventListener('keypress', resetTimer);
 
-    const sessionTimeout = 1 * 60 * 1000; // 30 minutes
+    const sessionTimeout = 2000; // 30 minutes
 
     let timeout;
 
@@ -158,7 +160,6 @@ function showError(message, type) {
             }, 300);
         });
     }
-    
 
     // Do not hide the session expired message automatically
     if (type !== 'session') {
@@ -172,6 +173,7 @@ function showError(message, type) {
         }, 3000);
     }
 }
+
 
 function showSuccess(message, type) {
     const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : type === 'register' ? 'registerSuccessBox' : 'logoutSuccessBox');
@@ -243,7 +245,7 @@ document.getElementById('registerForm').addEventListener('submit', function(even
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showSuccess("Registration successful!", 'register');
+            showSuccess("Registration successful!", 'register');  // Adjust the message
             setTimeout(() => {
                 registerModal.classList.add("pop-out");
                 setTimeout(() => {

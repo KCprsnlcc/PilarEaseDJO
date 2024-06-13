@@ -13,7 +13,7 @@
     <title>PilarEase | A Portal for Guidance Counseling Support System</title>
     <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
 </head>
-<body>
+<body class="{% if user.is_authenticated %}authenticated{% endif %}">
     <div id="loader" class="loader-5"></div>
     <div id="overlay" class="overlay" style="display: none;"></div>
     <header>
