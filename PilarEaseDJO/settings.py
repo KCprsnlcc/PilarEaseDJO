@@ -144,7 +144,7 @@ STATICFILES_FINDERS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'main', 'static'),
 ]
 
 COMPRESS_ENABLED = True
@@ -152,16 +152,19 @@ COMPRESS_URL = STATIC_URL
 COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_OFFLINE = True
 
-# Function to get the latest CSS files with hashes
 def get_hashed_css_files():
-    css_dir = os.path.join(BASE_DIR, 'static/css')
+    css_dir = os.path.join(BASE_DIR, 'main', 'static', 'css')
     hashed_files = []
-    for file_name in os.listdir(css_dir):
-        if file_name.startswith('style1.') and file_name.endswith('.css'):
-            hashed_files.append(f'css/{file_name}')
-        elif file_name.startswith('style2.') and file_name.endswith('.css'):
-            hashed_files.append(f'css/{file_name}')
+    if os.path.exists(css_dir):
+        for file_name in os.listdir(css_dir):
+            if file_name.startswith('main.') and file_name.endswith('.css'):
+                hashed_files.append(f'css/{file_name}')
+            elif file_name.startswith('custom.') and file_name.endswith('.css'):
+                hashed_files.append(f'css/{file_name}')
+    else:
+        print(f"Directory does not exist: {css_dir}")
     return hashed_files
+
 
 # Set hashed CSS files to be used in templates
 HASHED_CSS_FILES = get_hashed_css_files()

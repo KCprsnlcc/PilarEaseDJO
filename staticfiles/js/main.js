@@ -11,7 +11,7 @@ function startSessionTimer() {
     document.addEventListener('mousemove', resetTimer);
     document.addEventListener('keypress', resetTimer);
 
-    const sessionTimeout = 30 * 60 * 1000;
+    const sessionTimeout = 1000;
 
     let timeout;
 
@@ -57,7 +57,6 @@ const csrftoken = getCookie('csrftoken');
 var loginModal = document.getElementById("loginModal");
 var registerModal = document.getElementById("registerModal");
 var loginRequiredModal = document.getElementById("loginRequiredModal");
-var closeLoginRequiredModal = document.getElementById("closeLoginRequiredModal");
 var openLoginModalButton = document.getElementById("openLoginModal");
 var overlay = document.getElementById("overlay");
 var loginLink = document.getElementById("loginLink");
@@ -154,39 +153,51 @@ if (expressFeelingsButton) {
     }
 }
 
-// Close login required modal and overlay when clicking outside
+// Close modal and overlay when clicking outside
 window.onclick = function(event) {
     if (event.target == overlay) {
-        closeModals();
+        if (loginRequiredModal.style.display === "block" || document.querySelector('.flat-ui-dialog.session').style.display === "block") {
+            closeModals();
+        }
     }
 }
 
 function closeModals() {
-    loginRequiredModal.classList.add("pop-out");
-    overlay.classList.add("hide");
-    setTimeout(() => {
-        loginRequiredModal.style.display = "none";
-        overlay.style.display = "none";
-        loginRequiredModal.classList.remove("pop-in", "pop-out");
-        overlay.classList.remove("show", "hide");
-    }, 300);
-}
-
-if (closeLoginRequiredModal) {
-    closeLoginRequiredModal.onclick = function() {
-        closeModals();
+    if (loginRequiredModal.style.display === "block") {
+        loginRequiredModal.classList.add("pop-out");
+        overlay.classList.add("hide");
+        setTimeout(() => {
+            loginRequiredModal.style.display = "none";
+            overlay.style.display = "none";
+            loginRequiredModal.classList.remove("pop-in", "pop-out");
+            overlay.classList.remove('show', 'hide');
+        }, 300);
+    } else if (document.querySelector('.flat-ui-dialog.session').style.display === "block") {
+        const sessionDialogBox = document.querySelector('.flat-ui-dialog.session');
+        sessionDialogBox.classList.add("pop-out");
+        overlay.classList.add("hide");
+        setTimeout(() => {
+            sessionDialogBox.style.display = "none";
+            overlay.style.display = "none";
+            sessionDialogBox.classList.remove("pop-in", "pop-out");
+            overlay.classList.remove('show', 'hide');
+            window.location.reload();
+        }, 300);
     }
 }
 
+// Close login required modal and show login modal
 if (openLoginModalButton) {
     openLoginModalButton.onclick = function() {
-        closeModals();
-        loginModal.style.display = "block";
-        overlay.style.display = "flex";
+        loginRequiredModal.classList.add("pop-out");
         setTimeout(() => {
-            loginModal.classList.add("pop-in");
-            overlay.classList.add("show");
-        }, 10);
+            loginRequiredModal.style.display = "none";
+            loginRequiredModal.classList.remove("pop-out");
+            loginModal.style.display = "block";
+            setTimeout(() => {
+                loginModal.classList.add("pop-in");
+            }, 10);
+        }, 300);
     }
 }
 

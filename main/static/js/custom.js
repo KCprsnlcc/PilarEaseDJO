@@ -1,5 +1,4 @@
 // Floating Nav Button Logic
-
 const nav = document.querySelector("nav"),
     toggleBtn = nav?.querySelector(".toggle-btn");
 

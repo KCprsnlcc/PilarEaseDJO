@@ -215,17 +215,6 @@ button:hover {
   position: relative;
 }
 
-.flat-ui-dialog {
-  display: none;
-  position: fixed;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0px 8px 17px #0F2326, 0px 0px 2px #0F2326;
-  z-index: 10000;
-}
-
 .dialog-buttons {
   display: flex;
   justify-content: space-between;
@@ -354,7 +343,34 @@ button:hover {
   border: 2px solid #e67e22;
   color: #e67e22;
 }
+/* Session Expiry Message Style */
+.flat-ui-dialog.required {
+  color: #0F2326;
+}
+.flat-ui-dialog {
+  display: none;
+  position: absolute;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 8px 17px #0F2326,0px 0px 2px #0F2326;
+  z-index: 10000
+}
 
+#loginRequiredModal {
+  top: 140px;
+  left: 790px;
+  width: 315px;
+  display: none;
+  text-align: center;
+  position: flex;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease
+}
 #logoutSuccessBox{
   top: 45%; /* Adjusted top position */
   left: 810px;
