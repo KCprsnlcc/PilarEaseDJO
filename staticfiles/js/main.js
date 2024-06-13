@@ -11,7 +11,7 @@ function startSessionTimer() {
     document.addEventListener('mousemove', resetTimer);
     document.addEventListener('keypress', resetTimer);
 
-    const sessionTimeout = 1000;
+    const sessionTimeout = 30 * 60 * 1000;
 
     let timeout;
 
