@@ -23,16 +23,25 @@ button {
 button:hover {
   background-color: #3b5a2b;
 }
+#loader-overlay {
+  display: flex; /* Changed from none to flex */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 9999999;
+  justify-content: center;
+  align-items: center;
+}
 
 .loader-5 {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative; /* Changed from fixed to relative */
   animation: rotate 2s infinite;
   height: 50px;
   width: 50px;
-  z-index: 100000;
+  z-index: 10000000;
 }
 
 .loader-5:before,
@@ -155,7 +164,7 @@ button:hover {
   max-width: 90%;
   max-height: 90%;
   overflow: auto;
-  z-index: 100001; /* Higher than overlay's z-index */
+  z-index: 100005; /* Higher than overlay's z-index */
 }
 
 .modal-content {
@@ -209,8 +218,6 @@ button:hover {
 .flat-ui-dialog {
   display: none;
   position: fixed;
-  top: 50%;
-  left: 50%;
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 20px;
@@ -326,7 +333,92 @@ button:hover {
 .delete-button:hover {
   color: #689E4B;
 }
+/* Error Message Style */
+.flat-ui-dialog.error {
+  border: 2px solid #e74c3c;
+  color: #e74c3c;
+}
 
+/* Success Message Style */
+.flat-ui-dialog.success {
+  border: 2px solid #689E4B;
+  color: #689E4B;
+}
+/* Success Message Style */
+.flat-ui-dialog.logout {
+  border: 2px solid #0F2326;
+  color: #0F2326;
+}
+/* Session Expiry Message Style */
+.flat-ui-dialog.session {
+  border: 2px solid #e67e22;
+  color: #e67e22;
+}
+
+#logoutSuccessBox{
+  top: 45%; /* Adjusted top position */
+  left: 810px;
+  width: 250px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#sessionDialogBox{
+  top: 45%; /* Adjusted top position */
+  left: 735px;
+  width: 400px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+#loginDialogBox, 
+#loginSuccessBox {
+  top: 230px; 
+  left: 110px;
+  width: 400px;
+  display: none;
+  text-align: center;
+  position: fixed;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 100010;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#registerDialogBox,
+#registerSuccessBox {
+  top: 310px; 
+  left: 610px;
+  width: 400px;
+  display: none;
+  text-align: center;
+  position: fixed;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 100010;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
 
 #dialogOverlay {
   display: none;
@@ -339,29 +431,50 @@ button:hover {
   z-index: 100000;
 }
 
+#dialogOverlay.show {
+  opacity: 1;
+}
+
 #dialogBox {
   display: none;
   position: fixed;
-  top: 50%;
+  top: 30%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 100001;
+  z-index: 100010;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+#dialogBox.pop-in {
+  opacity: 1;
+}
+
+#dialogBox.pop-out {
+  opacity: 1;
 }
 
 #dialogContent {
   padding: 20px;
   text-align: center;
 }
-
-#dialogClose {
+.close-button {
   position: absolute;
-  top: 10px;
+  top: 10px; 
   right: 10px;
-  cursor: pointer;
+  width: 30px; 
+  height: 30px; 
+  cursor: pointer; 
+  opacity: 1;
 }
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+}
+
 
 .content {
   flex: 1;
@@ -550,22 +663,12 @@ nav.open .nav-content span{
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
   margin: 0 auto; 
-  z-index: 100001;
+  z-index: 100008;
 }
 
 .v53_190 {
   /* Existing styles */
   position: relative; /* Make sure the container is positioned relatively */
-}
-
-.close-button {
-  position: absolute;
-  top: 10px; /* Adjust top position as needed */
-  right: 10px; /* Adjust right position as needed */
-  width: 20px; /* Adjust width of the image */
-  height: 20px; /* Adjust height of the image */
-  cursor: pointer; /* Add cursor pointer to indicate it's clickable */
-  opacity: 1;
 }
 
 
@@ -844,6 +947,7 @@ nav.open .nav-content span{
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3); /* Adjust the shadow values as needed */
   overflow: hidden;
   z-index: 7000; 
+  display: flex;
 }
 
 .v1_120 {
@@ -964,7 +1068,7 @@ nav.open .nav-content span{
   border-bottom-right-radius: 8px;
   box-shadow: 0px 17px 35px rgba(0.09019608050584793, 0.10196078568696976, 0.12156862765550613, 0.23999999463558197);
   overflow: hidden;
-  z-index: 100001; 
+  z-index: 100008; 
 }
 .v74_802 {
   width: 302px;
@@ -1189,7 +1293,7 @@ nav.open .nav-content span{
   color: rgba(23,26,31,1);
   position: absolute;
   top: 580px;
-  left: 677px;
+  left: 669px;
   font-family: Inter;
   font-weight: Regular;
   font-size: 14px;
@@ -1708,10 +1812,13 @@ nav.open .nav-content span{
 }
 
 .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
+  position: absolute;
+  top: 10px; 
+  right: 10px;
+  width: 30px; 
+  height: 30px; 
+  cursor: pointer; 
+  opacity: 1;
 }
 
 .close:hover,
