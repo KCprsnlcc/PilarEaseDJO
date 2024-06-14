@@ -36,9 +36,9 @@
                 <nav class="dropdown">
                   <ul>
                     <li><a href="#" id="profileLink"><i class='bx bxs-user'></i> Profile </a></li>
-                    <li><a href="#"><i class='bx bxs-heart'></i> Feelings </a></li>
-                    <li><a href="#"><i class='bx bxs-image'></i> Upload Avatar </a></li>
-                    <li><a href="#"><i class='bx bxs-key'></i> Password Manager </a></li>
+                    <li><a href="#" ><i class='bx bxs-heart'></i> Feelings </a></li>
+                    <li><a href="#" id="avatarLink"><i class='bx bxs-image'></i> Upload Avatar </a></li>
+                    <li><a href="#" id="passwordLink"><i class='bx bxs-key'></i> Password Manager </a></li>
                     <li><a href="{% url 'logout' %}" class="logout-link"><i class='bx bxs-log-out'></i> Logout </a></li>
                   </ul>
                 </nav>
@@ -171,11 +171,22 @@
             <div id="registerSuccessContent"></div>
         </div>
     </div>
+        <!-- Login Required Modal -->
+<div id="loginRequiredModal" class="flat-ui-dialog required" style="display:none;">
+    <p>You need to log in to compose a status.</p>
+    <button id="openLoginModal">Login</button>
+</div>
        <!-- Profile Modal -->
 <div id="profileModal" style="display: none;">
         <span class="close" id="closeProfileModal">&times;</span>
         <h2>Profile</h2>
         <p>Your profile information goes here.</p>
+</div>
+       <!-- Upload Avatar Modal -->
+<div id="avatarModal" style="display: none;">
+        <span class="close" id="closeAvatarModal">&times;</span>
+        <h2>Upload Avatar</h2>
+        <p>Your upload avatar goes here.</p>
 </div>
        <!-- Password Manager Modal -->
 <div id="passwordModal" style="display: none;">
@@ -183,25 +194,13 @@
         <h2>Password Manager</h2>
         <p>Your password manager goes here.</p>
 </div>
-       <!-- Upload Avatar Modal -->
-<div id="uploadavatarModal" style="display: none;">
-        <span class="close" id="closeUploadAvatarModal">&times;</span>
-        <h2>Upload Avatar</h2>
-        <p>Your upload avatar goes here.</p>
-</div>
-
-    <!-- Login Required Modal -->
-<div id="loginRequiredModal" class="flat-ui-dialog required" style="display:none;">
-    <p>You need to log in to compose a status.</p>
-    <button id="openLoginModal">Login</button>
+<!-- Logout Success Notification Dialog -->
+<div id="logoutSuccessBox" class="flat-ui-dialog logout" style="display:none;">
+    <div id="logoutSuccessContent">Logout successful!</div>
 </div>
 <!-- Session Expiry Notification Dialog -->
 <div id="sessionDialogBox" class="flat-ui-dialog session" style="display:none;">
     <div id="sessionDialogContent">Session Expired, Please log in again.</div>
-</div>
-<!-- Logout Success Notification Dialog -->
-<div id="logoutSuccessBox" class="flat-ui-dialog logout" style="display:none;">
-    <div id="logoutSuccessContent">Logout successful!</div>
 </div>
     {% compress js %}
     <script src="{% static 'js/main.js' %}?v=1.0"></script>

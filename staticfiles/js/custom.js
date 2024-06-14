@@ -35,18 +35,58 @@ document.querySelectorAll('.dropdown a').forEach(link => {
 profileLink.addEventListener('click', (e) => {
     e.preventDefault();
     profileModal.style.display = 'block';
-    profileModal.classList.add('slide-down');
-    profileModal.classList.remove('slide-up');
+    profileModal.classList.add('slide-downOp');
+    profileModal.classList.remove('slide-upOp');
 });
 
 // Close profile modal when the close button is clicked
 closeProfileModal.addEventListener('click', () => {
-    profileModal.classList.add('slide-up');
-    profileModal.classList.remove('slide-down');
+    profileModal.classList.add('slide-upOp');
+    profileModal.classList.remove('slide-downOp');
 });
 
 profileModal.addEventListener('animationend', (event) => {
-    if (event.animationName === 'slideUp') {
+    if (event.animationName === 'slideUpOp') {
         profileModal.style.display = 'none';
+    }
+});
+
+// Show profile modal when profile link is clicked
+avatarLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    avatarModal.style.display = 'block';
+    avatarModal.classList.add('slide-downOp');
+    avatarModal.classList.remove('slide-upOp');
+});
+
+// Close profile modal when the close button is clicked
+closeAvatarModal.addEventListener('click', () => {
+    avatarModal.classList.add('slide-upOp');
+    avatarModal.classList.remove('slide-downOp');
+});
+
+avatarModal.addEventListener('animationend', (event) => {
+    if (event.animationName === 'slideUpOp') {
+        avatarModal.style.display = 'none';
+    }
+});
+
+// Show profile modal when profile link is clicked
+passwordLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    passwordModal.style.display = 'block';
+    passwordModal.classList.add('slide-downOp');
+    passwordModal.classList.remove('slide-upOp');
+});
+
+// Close profile modal when the close button is clicked
+closePasswordModal.addEventListener('click', () => {
+    passwordModal.classList.add('slide-upOp');
+    passwordModal.classList.remove('slide-downOp');
+});
+
+passwordModal.addEventListener('animationend', (event) => {
+    if (event.animationName === 'slideUpOp') {
+        passwordModal.style.display = 'none';
     }
 });

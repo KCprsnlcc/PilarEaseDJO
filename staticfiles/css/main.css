@@ -510,6 +510,38 @@ button:hover {
   z-index: 10000
 }
 
+@keyframes slideDownOp {
+  0% {
+      max-height: 0;
+      opacity: 1
+  }
+
+  100% {
+      max-height: 500px;
+      opacity: 1
+  }
+}
+
+@keyframes slideUpOp {
+  0% {
+      max-height: 500px;
+      opacity: 1
+  }
+
+  100% {
+      max-height: 0;
+      opacity: 1
+  }
+}
+
+.slide-downOp {
+  animation: slideDown 1s forwards
+}
+
+.slide-upOp {
+  animation: slideUp 1s forwards
+}
+
 #profileModal {
   display: none; /* Hidden by default */
   position: relative;
@@ -535,6 +567,56 @@ button:hover {
   cursor: pointer;
 }
 
+#passwordModal {
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1000100; /* Sit on top */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* Full width */
+  max-width: 500px; /* Could be more or less, depending on screen size */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326; /* Add border */
+}
+
+#passwordModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+
+#avatarModal {
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1000100; /* Sit on top */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* Full width */
+  max-width: 500px; /* Could be more or less, depending on screen size */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326; /* Add border */
+}
+
+#avatarModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+}
 #loginRequiredModal {
   top: 140px;
   left: 790px;
