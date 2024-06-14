@@ -510,6 +510,31 @@ button:hover {
   z-index: 10000
 }
 
+#profileModal {
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1000100; /* Sit on top */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* Full width */
+  max-width: 500px; /* Could be more or less, depending on screen size */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326; /* Add border */
+}
+
+#profileModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+}
+
 #loginRequiredModal {
   top: 140px;
   left: 790px;
@@ -1136,16 +1161,17 @@ nav.open .nav-content span{
 .v1_121 {
   width: 50px;
   color: rgba(255,255,255,1);
-  position: absolute;
+  position: fixed;
   top: 10px;
   right: 450px;
   font-family: Gothic A1;
   font-weight: Regular;
   font-size: 20px;
   opacity: 1;
+  left: 1370px;
   text-align: left;
   text-decoration: none;
-  cursor: pointer; 
+  cursor: pointer
 }
 .v1_122 {
   width: 32px;

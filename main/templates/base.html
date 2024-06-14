@@ -2,21 +2,21 @@
 {% load compress %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Epilogue&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    {% compress css %}
-    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0">
-    <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0">
-    {% endcompress %}
-    <title>PilarEase | A Portal for Guidance Counseling Support System</title>
-    <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Inter&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Epilogue&display=swap" rel="stylesheet">
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+        {% compress css %}
+        <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0">
+        <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0">
+        {% endcompress %}
+        <title>PilarEase | A Portal for Guidance Counseling Support System</title>
+        <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}">
+    </head>
 <body class="{% if user.is_authenticated %}authenticated{% endif %}">
     <div id="loader-overlay">
         <div id="loader" class="loader-5"></div>
@@ -35,7 +35,7 @@
                 <span></span>
                 <nav class="dropdown">
                   <ul>
-                    <li><a href="#"><i class='bx bxs-user'></i> Profile </a></li>
+                    <li><a href="#" id="profileLink"><i class='bx bxs-user'></i> Profile </a></li>
                     <li><a href="#"><i class='bx bxs-heart'></i> Feelings </a></li>
                     <li><a href="#"><i class='bx bxs-image'></i> Upload Avatar </a></li>
                     <li><a href="#"><i class='bx bxs-key'></i> Password Manager </a></li>
@@ -171,6 +171,25 @@
             <div id="registerSuccessContent"></div>
         </div>
     </div>
+       <!-- Profile Modal -->
+<div id="profileModal" style="display: none;">
+        <span class="close" id="closeProfileModal">&times;</span>
+        <h2>Profile</h2>
+        <p>Your profile information goes here.</p>
+</div>
+       <!-- Password Manager Modal -->
+<div id="passwordModal" style="display: none;">
+        <span class="close" id="closePasswordModal">&times;</span>
+        <h2>Password Manager</h2>
+        <p>Your password manager goes here.</p>
+</div>
+       <!-- Upload Avatar Modal -->
+<div id="uploadavatarModal" style="display: none;">
+        <span class="close" id="closeUploadAvatarModal">&times;</span>
+        <h2>Upload Avatar</h2>
+        <p>Your upload avatar goes here.</p>
+</div>
+
     <!-- Login Required Modal -->
 <div id="loginRequiredModal" class="flat-ui-dialog required" style="display:none;">
     <p>You need to log in to compose a status.</p>
@@ -180,12 +199,10 @@
 <div id="sessionDialogBox" class="flat-ui-dialog session" style="display:none;">
     <div id="sessionDialogContent">Session Expired, Please log in again.</div>
 </div>
-
 <!-- Logout Success Notification Dialog -->
 <div id="logoutSuccessBox" class="flat-ui-dialog logout" style="display:none;">
     <div id="logoutSuccessContent">Logout successful!</div>
 </div>
-
     {% compress js %}
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
     <script src="{% static 'js/custom.js' %}?v=1.0"></script>
