@@ -29,6 +29,25 @@ processed_chunks_queue = None
 return_dict = None
 processed_chunks = None
 total_translated_texts = 0
+error_log = []
+terminate_signal_received = multiprocessing.Event()
+
+def validate_checkpoint(checkpoint):
+    """ Validate the checkpoint structure and content. """
+    try:
+        if not isinstance(checkpoint, tuple) or len(checkpoint) != 3:
+            raise ValueError("Checkpoint is not a valid tuple of length 3.")
+        return_dict, processed_chunks, total_translated_texts = checkpoint
+        if not isinstance(return_dict, dict):
+            raise ValueError("return_dict is not a dictionary.")
+        if not isinstance(processed_chunks, list):
+            raise ValueError("processed_chunks is not a list.")
+        if not isinstance(total_translated_texts, int):
+            raise ValueError("total_translated_texts is not an integer.")
+        return True
+    except Exception as e:
+        logging.error(f"Checkpoint validation failed: {e}")
+        return False
 
 def save_checkpoint(return_dict, processed_chunks, total_translated_texts):
     try:
@@ -48,36 +67,46 @@ def load_checkpoint():
         if os.path.exists(CHECKPOINT_FILE) and os.path.getsize(CHECKPOINT_FILE) > 0:
             with open(CHECKPOINT_FILE, 'rb') as f:
                 checkpoint = pickle.load(f)
-                logging.info("Checkpoint loaded successfully.")
-                logging.info(f"Total texts loaded from checkpoint: {checkpoint[2]}")
-                logging.debug(f"Checkpoint content loaded: {checkpoint}")
-                return checkpoint
+                if validate_checkpoint(checkpoint):
+                    logging.info("Checkpoint loaded successfully.")
+                    logging.info(f"Total texts loaded from checkpoint: {checkpoint[2]}")
+                    logging.debug(f"Checkpoint content loaded: {checkpoint}")
+                    return checkpoint
+                else:
+                    raise ValueError("Invalid checkpoint structure.")
         logging.warning("Checkpoint file does not exist or is empty.")
         return None, [], 0
-    except (EOFError, pickle.UnpicklingError) as e:
-        logging.error(f"Primary checkpoint file is corrupted: {e}\nTrying to load backup checkpoint.")
+    except (EOFError, pickle.UnpicklingError, ValueError) as e:
+        logging.error(f"Primary checkpoint file is corrupted or invalid: {e}\nTrying to load backup checkpoint.")
         if os.path.exists(BACKUP_CHECKPOINT_FILE) and os.path.getsize(BACKUP_CHECKPOINT_FILE) > 0:
             try:
                 with open(BACKUP_CHECKPOINT_FILE, 'rb') as f:
                     checkpoint = pickle.load(f)
-                    logging.info("Backup checkpoint loaded successfully.")
-                    logging.info(f"Total texts loaded from backup checkpoint: {checkpoint[2]}")
-                    logging.debug(f"Backup checkpoint content loaded: {checkpoint}")
-                    return checkpoint
-            except (EOFError, pickle.UnpicklingError) as e:
-                logging.error(f"Backup checkpoint file is also corrupted: {e}")
+                    if validate_checkpoint(checkpoint):
+                        logging.info("Backup checkpoint loaded successfully.")
+                        logging.info(f"Total texts loaded from backup checkpoint: {checkpoint[2]}")
+                        logging.debug(f"Backup checkpoint content loaded: {checkpoint}")
+                        return checkpoint
+                    else:
+                        raise ValueError("Invalid backup checkpoint structure.")
+            except (EOFError, pickle.UnpicklingError, ValueError) as e:
+                logging.error(f"Backup checkpoint file is also corrupted or invalid: {e}")
         return None, [], 0
 
 def translate_batch(texts, model, tokenizer, return_dict, processed_chunks, total_translated_texts):
     try:
+        if texts is None:
+            raise ValueError("Input texts are None.")
+        
         inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True)
         translated = model.generate(**inputs)
         translations = tokenizer.batch_decode(translated, skip_special_tokens=True)
         logging.info(f"Translated batch: {translations}")
         
         for text in translations:
-            total_translated_texts += 1
-            return_dict[total_translated_texts] = text
+            if text is not None:  # Check for None before adding to return_dict
+                total_translated_texts += 1
+                return_dict[total_translated_texts] = text
         
         logging.debug(f"Batch translated: {translations}")
         logging.debug(f"Total translated texts after batch: {total_translated_texts}")
@@ -86,10 +115,12 @@ def translate_batch(texts, model, tokenizer, return_dict, processed_chunks, tota
         logging.debug(f"Checkpoint saved after batch with total translated texts: {total_translated_texts}")
         
         return translations
+    except ValueError as ve:
+        logging.error(f"ValueError in translate_batch: {ve}")
+        return [None] * len(texts)
     except Exception as e:
         logging.error(f"Error translating texts: {texts}\nException: {e}\nTraceback: {traceback.format_exc()}")
         return [None] * len(texts)
-
 
 def translate_chunk(chunk, model_name, return_dict, index, progress_queue, processed_chunks, total_translated_texts):
     try:
@@ -98,13 +129,17 @@ def translate_chunk(chunk, model_name, return_dict, index, progress_queue, proce
         batch_size = 32  # Adjust batch size based on performance needs
         translated_texts = []
         for i in range(0, len(chunk), batch_size):
+            if terminate_signal_received.is_set():
+                logging.info(f"Termination signal received. Stopping translation for chunk {index}.")
+                return
             batch = chunk[i:i + batch_size]
             translated_text = translate_batch(batch, model, tokenizer, return_dict, processed_chunks, total_translated_texts)
             translated_texts.extend(translated_text)
             for _ in batch:
                 progress_queue.put(1)
                 logging.debug(f"Text processed: {translated_text}")
-        return_dict[index] = translated_texts
+        if translated_texts:  # Ensure we don't add empty or None values
+            return_dict[index] = translated_texts
         processed_chunks.append(index)
         logging.info(f"Chunk {index} translated successfully.")
     except Exception as e:
@@ -141,7 +176,7 @@ def update_chunk_progress_bar(total_chunks, processed_chunks_queue, processed_ch
         pbar.close()
 
 def regular_checkpoint_saving(return_dict, processed_chunks, processed_chunks_queue, total_translated_texts):
-    while True:
+    while not terminate_signal_received.is_set():
         try:
             time.sleep(CHECKPOINT_INTERVAL)
             save_checkpoint(return_dict, processed_chunks, total_translated_texts)
@@ -152,13 +187,15 @@ def regular_checkpoint_saving(return_dict, processed_chunks, processed_chunks_qu
         except Exception as e:
             logging.error(f"Error in regular_checkpoint_saving: {e}\nTraceback: {traceback.format_exc()}")
 
-
 def finalize_progress_bars(progress_queue, processed_chunks_queue):
-    progress_queue.put(None)
-    processed_chunks_queue.put(None)
+    if progress_queue:
+        progress_queue.put(None)
+    if processed_chunks_queue:
+        processed_chunks_queue.put(None)
 
 def signal_handler(signum, frame):
-    global checkpoint_process, pbar_process, chunk_pbar_process, progress_queue, processed_chunks_queue, return_dict, processed_chunks, total_translated_texts
+    global terminate_signal_received
+    terminate_signal_received.set()
     logging.info("Termination signal received. Saving current state and exiting gracefully...")
     save_checkpoint(return_dict, processed_chunks, total_translated_texts)
     finalize_progress_bars(progress_queue, processed_chunks_queue)
@@ -169,20 +206,13 @@ def signal_handler(signum, frame):
     if chunk_pbar_process:
         chunk_pbar_process.terminate()
     logging.info("Graceful termination complete.")
-    exit(0)
-
-def input_listener():
-    input("Press Enter to terminate gracefully...\n")
-    signal_handler(signal.SIGINT, None)
+    os._exit(0)
 
 def main():
-    global checkpoint_process, pbar_process, chunk_pbar_process, progress_queue, processed_chunks_queue, return_dict, processed_chunks, total_translated_texts
+    global checkpoint_process, pbar_process, chunk_pbar_process, progress_queue, processed_chunks_queue, return_dict, processed_chunks, total_translated_texts, error_log
 
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-
-    listener_thread = threading.Thread(target=input_listener, daemon=True)
-    listener_thread.start()
 
     try:
         with open('translation_in_progress.txt', 'w') as f:
@@ -208,7 +238,7 @@ def main():
             progress_queue = manager.Queue()
             processed_chunks = manager.list(processed_chunks)
             # Calculate processed_count from the loaded return_dict
-            processed_count = sum([len(return_dict[key]) for key in return_dict])
+            processed_count = sum([len(return_dict[key]) for key in return_dict if return_dict[key] is not None])
             total_translated_texts = processed_count
             logging.info(f"Resuming translation from checkpoint: {len(processed_chunks)} chunks processed.")
             logging.info(f"Total texts processed so far: {processed_count}")
@@ -239,6 +269,7 @@ def main():
                 p.start()
                 processes.append(p)
             except Exception as e:
+                error_log.append(f"Error starting process for chunk {index}: {e}\nTraceback: {traceback.format_exc()}")
                 logging.error(f"Error starting process for chunk {index}: {e}\nTraceback: {traceback.format_exc()}")
 
         for p in processes:
@@ -246,6 +277,7 @@ def main():
                 p.join()
                 logging.info(f"Process {p.pid} joined successfully.")
             except Exception as e:
+                error_log.append(f"Error joining process {p.pid}: {e}\nTraceback: {traceback.format_exc()}")
                 logging.error(f"Error joining process {p.pid}: {e}\nTraceback: {traceback.format_exc()}")
 
         finalize_progress_bars(progress_queue, processed_chunks_queue)
@@ -264,18 +296,33 @@ def main():
         untranslated_texts = []
         for index in range(len(chunks)):
             if index in return_dict:
-                translated_texts.extend(return_dict[index])
-                if None in return_dict[index]:
-                    untranslated_texts.extend([chunks[index][i] for i, text in enumerate(return_dict[index]) if text is None])
+                if return_dict[index] is not None:
+                    try:
+                        chunk_texts = return_dict[index]
+                        if chunk_texts is not None and isinstance(chunk_texts, list):
+                            if None in chunk_texts:
+                                untranslated_texts.extend([chunks[index][i] for i, text in enumerate(chunk_texts) if text is None])
+                            translated_texts.extend([text for text in chunk_texts if text is not None])
+                        else:
+                            logging.error(f"Chunk {index} in return_dict is not a list or is None. Skipping.")
+                            missing_chunks.append(index)
+                    except TypeError as e:
+                        error_log.append(f"Error processing chunk {index} in return_dict: {e}\nTraceback: {traceback.format_exc()}")
+                        logging.error(f"Error processing chunk {index} in return_dict: {e}\nTraceback: {traceback.format_exc()}")
+                        missing_chunks.append(index)
+                else:
+                    logging.error(f"Chunk {index} in return_dict is None. Skipping.")
+                    missing_chunks.append(index)
             else:
                 logging.error(f"Chunk {index} missing in return_dict. Skipping.")
                 missing_chunks.append(index)
 
-        if len(translated_texts) != len(df):
-            logging.error(f"Length of translated texts ({len(translated_texts)}) does not match length of original texts ({len(df)})")
-            raise ValueError(f"Length of translated texts ({len(translated_texts)}) does not match length of original texts ({len(df)})")
+        if len(translated_texts) + len(untranslated_texts) != len(df):
+            error_log.append(f"Length of translated texts ({len(translated_texts)}) + untranslated texts ({len(untranslated_texts)}) does not match length of original texts ({len(df)})")
+            logging.error(f"Length of translated texts ({len(translated_texts)}) + untranslated texts ({len(untranslated_texts)}) does not match length of original texts ({len(df)})")
+            raise ValueError(f"Length of translated texts ({len(translated_texts)}) + untranslated texts ({len(untranslated_texts)}) does not match length of original texts ({len(df)})")
 
-        df['translated_text'] = translated_texts
+        df['translated_text'] = translated_texts + [''] * (len(df) - len(translated_texts))
 
         df = df[['text', 'translated_text', 'label']]
 
@@ -292,8 +339,10 @@ def main():
 
         logging.info(f"Missing chunks: {missing_chunks}")
         logging.info(f"Untranslated texts: {untranslated_texts}")
+        logging.info(f"Errors encountered during translation: {error_log}")
 
     except Exception as e:
+        error_log.append(f"An error occurred in main: {e}\nTraceback: {traceback.format_exc()}")
         logging.error(f"An error occurred in main: {e}\nTraceback: {traceback.format_exc()}")
         print(f"An error occurred: {e}")
 

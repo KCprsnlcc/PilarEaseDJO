@@ -178,8 +178,161 @@ button:hover {
     border-radius: 10px;
     text-align: center;
 }
+.burger {
+  position: relative;
+  width: 40px;
+  height: 25px;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+  top: 10px;
+  z-index: 2
+}
 
+.burger input {
+  display: none
+}
 
+.burger span {
+  display: block;
+  position: absolute;
+  height: 3px;
+  width: 80%;
+  background: white;
+  border-radius: 9px;
+  opacity: 1;
+  left: 1380px;
+  transform: rotate(0deg);
+  transition: .25s ease-in-out
+}
+
+.burger span:nth-of-type(1) {
+  top: 0px;
+  transform-origin: left center
+}
+
+.burger span:nth-of-type(2) {
+  top: 50%;
+  transform: translateY(-50%);
+  transform-origin: left center
+}
+
+.burger span:nth-of-type(3) {
+  top: 100%;
+  transform-origin: left center;
+  transform: translateY(-100%)
+}
+
+.burger input:checked ~ span:nth-of-type(1) {
+  transform: rotate(45deg);
+  top: -2px;
+  width:100%;
+  left: 1380px
+}
+
+.burger input:checked ~ span:nth-of-type(2) {
+  width: 0%;
+  opacity: 0
+}
+
+.burger input:checked ~ span:nth-of-type(3) {
+  transform: rotate(-45deg);
+  top: 26px;
+  width:100%;
+  left: 1380px
+}
+
+.dropdown {
+  display: none;
+  position: fixed;
+  top: 50px;
+  left: 1476px;
+  transform: translateX(-50%);
+  background: #fff;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  z-index: 1;
+  max-height: 0;
+  width: 205px;
+  height: 210px;
+  transition: max-height 0.5s ease-in-out
+}
+
+.dropdown::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid #fff;
+  position: absolute;
+  top: -10px;
+  left: 10%;
+  transform: translateX(-50%);
+  z-index: 1
+}
+
+.dropdown ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0
+}
+
+.dropdown ul li {
+  border-bottom: 1px solid #ddd
+}
+
+.dropdown ul li:last-child {
+  border-bottom: none
+}
+
+.dropdown ul li a {
+  display: block;
+  padding: 12px 16px;
+  color: #000;
+  text-decoration: none;
+  transition: background 0.3s ease
+}
+
+.dropdown ul li a i {
+  margin-right: 8px
+}
+
+.dropdown ul li a:hover {
+  background: #f0f0f0
+}
+
+@keyframes slideDown {
+  0% {
+      max-height: 0;
+      opacity: 0
+  }
+
+  100% {
+      max-height: 500px;
+      opacity: 1
+  }
+}
+
+@keyframes slideUp {
+  0% {
+      max-height: 500px;
+      opacity: 1
+  }
+
+  100% {
+      max-height: 0;
+      opacity: 0
+  }
+}
+
+.slide-down {
+  animation: slideDown 0.5s forwards
+}
+
+.slide-up {
+  animation: slideUp 0.5s forwards
+}
 
 .container {
   position: flex;
