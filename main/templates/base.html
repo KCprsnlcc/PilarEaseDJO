@@ -171,19 +171,21 @@
             <div id="registerSuccessContent"></div>
         </div>
     </div>
- <!-- Profile Modal -->
- <div id="profileModal" class="modal-content profile">
+ 
+   <!-- Profile Modal -->
+<div id="profileModal" class="modal-content profile">
     <span class="close" id="closeProfileModal">&times;</span>
-    <h2>Profile settings</h2>
-    <div class="profile-icon" id="profileIcon">
-        <img src="{% static 'images/avatar.png' %}" alt="Profile Icon">
-    </div>
-    <form id="profileForm" action>
+    <h2>Profile Settings</h2>
+    <div class="profile-icon tooltip" id="profileIcon">
+        <img src="{% static 'images/avatar.png' %}" alt="Profile Icon" id="profileIconImage">
+        <span class="tooltiptext" id="profileTooltip">Click to change avatar.</span>
+    </div>    
+    <form id="profileForm">
         <label for="student-id">Student ID No.</label>
-        <input type="text" id="student-id" name="student-id" placeholder="ex. C210077">
+        <input type="text" id="student-id" name="student-id" placeholder="ex. C210077" disabled>
         
         <label for="full-name">Full Name</label>
-        <input type="text" id="full-name" name="full-name" placeholder="ex. Khadaffe Abubakar Sulaiman">
+        <input type="text" id="full-name" name="full-name" placeholder="ex. Khadaffe Abubakar Sulaiman" disabled>
         
         <label for="username">Username</label>
         <input type="text" id="username" name="username" placeholder="ex. KCprsnlcc">
@@ -197,10 +199,17 @@
         <label for="contact-number">Contact Number</label>
         <input type="tel" id="contact-number" name="contact-number" placeholder="ex. +639949953785">
         
-        <button type="submit" class="save-changes">Save changes</button>
+        <button type="submit" class="save-changes" id="updateProfileBtn">Save changes</button>
     </form>
+    <!-- Success and Error Dialogs -->
+    <div id="updateSuccessDialog" class="flat-ui-dialog success" style="display:none;">
+        <div id="updateSuccessContent">Profile updated successfully!</div>
+    </div>
+    <div id="updateErrorDialog" class="flat-ui-dialog error" style="display:none;">
+        <div id="updateErrorContent">Error updating profile. Please try again.</div>
+    </div>
 </div>
-    
+
     <!-- Upload Avatar Modal -->
     <div id="avatarModal" class="modal-content avatar">
         <span class="close" id="closeAvatarModal">&times;</span>

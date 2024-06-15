@@ -84,15 +84,30 @@ def update_user_profile(request):
         username = data.get('username')
         contact_number = data.get('contact_number')
         email = data.get('email')
+        academic_year_level = data.get('academic_year_level')
 
         user = request.user
-        user.username = username
-        user.contact_number = contact_number
-        user.email = email
-        user.save()
+        response_data = {'success': True, 'errors': {}}
 
+        if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['username'] = 'Username already exists.'
+
+        if CustomUser.objects.filter(email=email).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['email'] = 'Email already registered by another user.'
+
+        if response_data['success']:
+            user.username = username
+            user.contact_number = contact_number
+            user.email = email
+            user.academic_year_level = academic_year_level
+            user.save()
+        else:
+            return JsonResponse(response_data, status=400)
+        
         return JsonResponse({'success': True})
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
 @login_required
 def logout_view(request):
     if request.method == 'POST':

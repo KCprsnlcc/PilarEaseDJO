@@ -10,7 +10,6 @@ const closeAvatarModal = document.getElementById('closeAvatarModal');
 const passwordLink = document.getElementById('passwordLink');
 const passwordModal = document.getElementById('passwordModal');
 const closePasswordModal = document.getElementById('closePasswordModal');
-const updateProfileBtn = document.getElementById('updateProfileBtn');
 // Function to close currently open modal
 function closeCurrentModal() {
     const modals = document.querySelectorAll('.modal-content');
@@ -30,21 +29,6 @@ document.querySelectorAll('.modal-content').forEach(modal => {
         }
     });
 });
-// Function to fetch user profile data
-function fetchUserProfile() {
-    fetch('/get_user_profile/')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('student-id').textContent = data.student_id;
-            document.getElementById('username').textContent = data.username;
-            document.getElementById('full-name').textContent = data.full_name;
-            document.getElementById('academic-year').textContent = data.academic_year_level;
-            document.getElementById('contact-number').textContent = data.contact_number;
-            document.getElementById('email').textContent = data.email;
-        })
-        .catch(error => console.error('Error fetching user profile:', error));
-}
-
 // Show profile modal when profile link is clicked
 profileLink.addEventListener('click', (e) => {
     e.preventDefault();
@@ -91,10 +75,10 @@ profileLink.addEventListener('click', (e) => {
 
 // Close profile modal when the close button is clicked
 closeProfileModal.addEventListener('click', () => {
-    closeProfileModal.style.display = 'none'; // Hide the close button
     profileModal.classList.add('slide-upSolid');
     profileModal.classList.remove('slide-downSolid');
 });
+
 
 // Show avatar modal when avatar link is clicked
 avatarLink.addEventListener('click', (e) => {
@@ -107,10 +91,10 @@ avatarLink.addEventListener('click', (e) => {
 
 // Close avatar modal when the close button is clicked
 closeAvatarModal.addEventListener('click', () => {
-    closeAvatarModal.style.display = 'none'; // Hide the close button
     avatarModal.classList.add('slide-upSolid');
     avatarModal.classList.remove('slide-downSolid');
 });
+
 
 // Show password modal when password link is clicked
 passwordLink.addEventListener('click', (e) => {
@@ -123,38 +107,6 @@ passwordLink.addEventListener('click', (e) => {
 
 // Close password modal when the close button is clicked
 closePasswordModal.addEventListener('click', () => {
-    closePasswordModal.style.display = 'none'; // Hide the close button
     passwordModal.classList.add('slide-upSolid');
     passwordModal.classList.remove('slide-downSolid');
 });
-// Function to update user profile data
-function updateUserProfile() {
-    const username = document.getElementById('username').value;
-    const contactNumber = document.getElementById('contact-number').value;
-    const email = document.getElementById('email').value;
-
-    fetch('/update_user_profile/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')  // Include CSRF token
-        },
-        body: JSON.stringify({
-            username: username,
-            contact_number: contactNumber,
-            email: email
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Profile updated successfully!');
-        } else {
-            alert('Error updating profile.');
-        }
-    })
-    .catch(error => console.error('Error updating user profile:', error));
-}
-
-// Event listener for update button
-updateProfileBtn.addEventListener('click', updateUserProfile);
