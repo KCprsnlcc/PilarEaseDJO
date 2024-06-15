@@ -694,25 +694,189 @@ button:hover {
   cursor: pointer;
   z-index: 1000200;
 }
+.modal-content.avatar {
+  overflow: auto;
+  height: 100%;
+  padding: 20px
+}
 
-/* Modal styling */
-#avatarModal, #passwordModal {
-  display: none; /* Hidden by default */
+.avatar-options {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 20px
+}
+
+.built-in-avatars {
+  width: 100%;
+  text-align: center
+}
+
+.avatars-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px
+}
+
+.avatars-grid img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease
+}
+
+.avatars-grid .upload-area {
+  position: relative
+}
+
+.avatars-grid .upload-area img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.3s ease
+}
+
+.avatars-grid .upload-area:hover img,.avatars-grid img:hover,.avatars-grid img.selected {
+  border-color: #689E4B
+}
+
+.avatars-grid .upload-area input[type="file"] {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer
+}
+
+.dialog-buttons.avatar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px
+}
+
+.avatar {
+  display: none;
   position: fixed;
-  z-index: 1000100; /* Sit on top */
+  z-index: 1000100;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%; /* Full width */
-  max-width: 500px; /* Could be more or less, depending on screen size */
-  max-height: 80%; /* Prevent content overflow */
-  overflow: hidden; /* Hide overflowing content */
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%,-50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   background-color: white;
   border-radius: 10px;
   padding: 20px;
   text-align: center;
-  border: 2px solid #0F2326; /* Add border */
+  border: 2px solid #0F2326
+}
+
+.avatar h2 {
+  margin-bottom: 20px
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px
+}
+
+.avatar-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s
+}
+
+.avatar-img:hover {
+  transform: scale(1.1)
+}
+
+.avatar-actions {
+  display: flex;
+  justify-content: space-around
+}
+
+.primary {
+  background-color: #689E4B;
+  color: #fff;
+  margin-right: 30px;
+  width: 110px;
+  margin-top: 25px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.primary:hover {
+  background-color: #3b5a2b;
+  color: #fff;
+}
+
+.secondary {
+  background-color: #ddd;
+  color: #333;
+  margin-left: 30px;
+  width: 110px;
+  margin-top: 25px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.secondary:hover {
+  background-color: #bbb;
+  color: #333;
+}
+
+#avatarModal{
+  display: none;
+  position: fixed;
+  z-index: 1000100;
+  left: 50%;
+  top: 50%;
+  height:450px;
+  transform: translate(-50%,-50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 50%;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326
+}
+#passwordModal {
+  display: none;
+  position: fixed;
+  z-index: 1000100;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326
 }
 
 #profileModal .close, #avatarModal .close, #passwordModal .close {

@@ -1,5 +1,57 @@
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('loader-overlay').style.display = 'none';
+    const avatarModal = document.getElementById('avatarModal');
+    const closeAvatarModal = document.getElementById('closeAvatarModal');
+    const saveAvatarBtn = document.getElementById('saveAvatarBtn');
+    const cancelAvatarBtn = document.getElementById('cancelAvatarBtn');
+    const avatarImages = document.querySelectorAll('.avatars-grid img');
+    const uploadAvatarInput = document.getElementById('uploadAvatarInput');
+    let selectedAvatar = null;
+
+    avatarImages.forEach(img => {
+        img.addEventListener('click', function() {
+            avatarImages.forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedAvatar = this.src;
+        });
+    });
+
+    document.querySelector('.upload-area').addEventListener('click', function() {
+        uploadAvatarInput.click();
+    });
+
+    uploadAvatarInput.addEventListener('change', function() {
+        if (uploadAvatarInput.files.length > 0) {
+            const uploadedFile = uploadAvatarInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                avatarImages.forEach(i => i.classList.remove('selected'));
+                document.querySelector('.upload-area img').src = e.target.result;
+                document.querySelector('.upload-area img').classList.add('selected');
+                selectedAvatar = e.target.result;
+            };
+            reader.readAsDataURL(uploadedFile);
+        }
+    });
+
+    saveAvatarBtn.addEventListener('click', function() {
+        if (selectedAvatar) {
+            console.log('Selected avatar:', selectedAvatar);
+            // Handle saving the selected avatar
+        } else {
+            alert('Please select or upload an avatar.');
+        }
+    });
+
+    cancelAvatarBtn.addEventListener('click', function() {
+        avatarModal.classList.add('slide-upSolid');
+        avatarModal.classList.remove('slide-downSolid');
+    });
+
+    closeAvatarModal.addEventListener('click', function() {
+        avatarModal.classList.add('slide-upSolid');
+        avatarModal.classList.remove('slide-downSolid');
+    });
         const profileIcon = document.getElementById('profileIcon');
         const tooltip = document.getElementById('profileTooltip');
         const avatarLink = document.getElementById('avatarLink');
