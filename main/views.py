@@ -7,14 +7,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import pytz
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
-<<<<<<< HEAD
 from django.views.decorators.csrf import csrf_exempt
 CustomUser = get_user_model()  # Get the custom user model
 import json
-=======
-
-CustomUser = get_user_model()  # Get the custom user model
->>>>>>> 7106f13252543654f23333fb3ac38060345826b5
 
 def current_time_view(request):
     tz = pytz.timezone('Asia/Manila')
@@ -63,7 +58,6 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
-<<<<<<< HEAD
 # main/views.py
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -99,8 +93,6 @@ def update_user_profile(request):
 
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-=======
->>>>>>> 7106f13252543654f23333fb3ac38060345826b5
 @login_required
 def logout_view(request):
     if request.method == 'POST':
