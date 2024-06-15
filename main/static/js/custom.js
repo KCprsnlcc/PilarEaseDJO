@@ -4,6 +4,7 @@ const dropdown = document.querySelector('.dropdown');
 const profileLink = document.getElementById('profileLink');
 const profileModal = document.getElementById('profileModal');
 const closeProfileModal = document.getElementById('closeProfileModal');
+<<<<<<< HEAD
 const avatarLink = document.getElementById('avatarLink');
 const avatarModal = document.getElementById('avatarModal');
 const closeAvatarModal = document.getElementById('closeAvatarModal');
@@ -54,6 +55,9 @@ profileLink.addEventListener('click', (e) => {
     profileModal.classList.remove('slide-upSolid');
     fetchUserProfile();  // Fetch and populate user data when the modal is opened
 });
+=======
+
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
 burger.addEventListener('change', () => {
     if (burger.checked) {
         dropdown.classList.add('slide-down');
@@ -83,14 +87,21 @@ document.querySelectorAll('.dropdown a').forEach(link => {
 // Show profile modal when profile link is clicked
 profileLink.addEventListener('click', (e) => {
     e.preventDefault();
+<<<<<<< HEAD
     closeCurrentModal();
     profileModal.style.display = 'block';
     profileModal.classList.add('slide-downSolid');
     profileModal.classList.remove('slide-upSolid');
+=======
+    profileModal.style.display = 'block';
+    profileModal.classList.add('slide-downOp');
+    profileModal.classList.remove('slide-upOp');
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
 });
 
 // Close profile modal when the close button is clicked
 closeProfileModal.addEventListener('click', () => {
+<<<<<<< HEAD
     closeProfileModal.style.display = 'none'; // Hide the close button
     profileModal.classList.add('slide-upSolid');
     profileModal.classList.remove('slide-downSolid');
@@ -158,3 +169,54 @@ function updateUserProfile() {
 
 // Event listener for update button
 updateProfileBtn.addEventListener('click', updateUserProfile);
+=======
+    profileModal.classList.add('slide-upOp');
+    profileModal.classList.remove('slide-downOp');
+});
+
+profileModal.addEventListener('animationend', (event) => {
+    if (event.animationName === 'slideUpOp') {
+        profileModal.style.display = 'none';
+    }
+});
+
+// Show profile modal when profile link is clicked
+avatarLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    avatarModal.style.display = 'block';
+    avatarModal.classList.add('slide-downOp');
+    avatarModal.classList.remove('slide-upOp');
+});
+
+// Close profile modal when the close button is clicked
+closeAvatarModal.addEventListener('click', () => {
+    avatarModal.classList.add('slide-upOp');
+    avatarModal.classList.remove('slide-downOp');
+});
+
+avatarModal.addEventListener('animationend', (event) => {
+    if (event.animationName === 'slideUpOp') {
+        avatarModal.style.display = 'none';
+    }
+});
+
+// Show profile modal when profile link is clicked
+passwordLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    passwordModal.style.display = 'block';
+    passwordModal.classList.add('slide-downOp');
+    passwordModal.classList.remove('slide-upOp');
+});
+
+// Close profile modal when the close button is clicked
+closePasswordModal.addEventListener('click', () => {
+    passwordModal.classList.add('slide-upOp');
+    passwordModal.classList.remove('slide-downOp');
+});
+
+passwordModal.addEventListener('animationend', (event) => {
+    if (event.animationName === 'slideUpOp') {
+        passwordModal.style.display = 'none';
+    }
+});
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5

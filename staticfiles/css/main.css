@@ -509,6 +509,7 @@ button:hover {
   box-shadow: 0px 8px 17px #0F2326,0px 0px 2px #0F2326;
   z-index: 10000
 }
+<<<<<<< HEAD
 /* Solid slide-down and slide-up animations with opacity change */
 @keyframes slideDownSolid {
   0% {
@@ -629,14 +630,55 @@ form::-webkit-scrollbar-thumb:hover {
 #avatarModal, #passwordModal {
   display: none; /* Hidden by default */
   position: fixed;
+=======
+
+@keyframes slideDownOp {
+  0% {
+      max-height: 0;
+      opacity: 1
+  }
+
+  100% {
+      max-height: 500px;
+      opacity: 1
+  }
+}
+
+@keyframes slideUpOp {
+  0% {
+      max-height: 500px;
+      opacity: 1
+  }
+
+  100% {
+      max-height: 0;
+      opacity: 1
+  }
+}
+
+.slide-downOp {
+  animation: slideDown 1s forwards
+}
+
+.slide-upOp {
+  animation: slideUp 1s forwards
+}
+
+#profileModal {
+  display: none; /* Hidden by default */
+  position: relative;
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
   z-index: 1000100; /* Sit on top */
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   width: 80%; /* Full width */
   max-width: 500px; /* Could be more or less, depending on screen size */
+<<<<<<< HEAD
   max-height: 80%; /* Prevent content overflow */
   overflow: hidden; /* Hide overflowing content */
+=======
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   background-color: white;
   border-radius: 10px;
@@ -645,12 +687,17 @@ form::-webkit-scrollbar-thumb:hover {
   border: 2px solid #0F2326; /* Add border */
 }
 
+<<<<<<< HEAD
 #profileModal .close, #avatarModal .close, #passwordModal .close {
+=======
+#profileModal .close {
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
   position: absolute;
   right: 20px;
   top: 10px;
   font-size: 30px;
   cursor: pointer;
+<<<<<<< HEAD
   z-index: 1000200;
 }
 
@@ -660,6 +707,60 @@ form::-webkit-scrollbar-thumb:hover {
 }
 
 
+=======
+}
+
+#passwordModal {
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1000100; /* Sit on top */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* Full width */
+  max-width: 500px; /* Could be more or less, depending on screen size */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326; /* Add border */
+}
+
+#passwordModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+
+#avatarModal {
+  display: none; /* Hidden by default */
+  position: relative;
+  z-index: 1000100; /* Sit on top */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* Full width */
+  max-width: 500px; /* Could be more or less, depending on screen size */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326; /* Add border */
+}
+
+#avatarModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+}
+>>>>>>> 7106f13252543654f23333fb3ac38060345826b5
 #loginRequiredModal {
   top: 140px;
   left: 790px;
