@@ -254,15 +254,40 @@
 
 </div>
 
-
-    
-    <!-- Password Manager Modal -->
-    <div id="passwordModal" class="modal-content password">
-        <span class="close" id="closePasswordModal">&times;</span>
-        <h2>Password Manager</h2>
-        <p>Your password manager goes here.</p>
+<!-- Password Manager Modal -->
+<div id="passwordModal" class="modal-content password">
+    <span class="close" id="closePasswordModal">&times;</span>
+    <h2>Password Manager</h2>
+    <p>Make sure to save your password in a password manager!</p>
+    <form id="passwordForm">
+        <div class="input-container">
+            <label for="currentPassword">Current Password</label>
+            <input type="password" id="currentPassword" name="currentPassword" showpass="true" required>
+        </div>
+        <div class="input-container">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" placeholder="At least 8 characters and at least 2 numbers" showpass="true" required>
+            <div class="password-strength">
+                <div class="strength-bar" id="strengthBar"></div>
+            </div>
+        </div>
+        <div class="input-container">
+            <label for="repeatPassword">Repeat New Password</label>
+            <input type="password" id="repeatPassword" name="repeatPassword" showpass="true" required>
+        </div>
+        <button type="submit" id="confirmPassword">Confirm</button>
+        <button type="button" id="generatePassword">Generate a Secure Password for Me (recommended!)</button>
+    </form>
+    <div id="updatepasssuccess" class="flat-ui-dialog success" style="display:none;">
+        <div id="updatepasssuccessContent">Password updated successfully!</div>
     </div>
-    
+    <div id="updatepasserror" class="flat-ui-dialog error" style="display:none;">
+        <div id="updatepasserrorContent">Please check your current password.</div>
+    </div>
+</div>
+
+
+
     <!-- Login Required Modal -->
     <div id="loginRequiredModal" class="flat-ui-dialog required" style="display:none;">
         <p>You need to log in to compose a status.</p>

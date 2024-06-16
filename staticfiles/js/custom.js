@@ -75,10 +75,10 @@ profileLink.addEventListener('click', (e) => {
 
 // Close profile modal when the close button is clicked
 closeProfileModal.addEventListener('click', () => {
-    closeProfileModal.style.display = 'none'; // Hide the close button
     profileModal.classList.add('slide-upSolid');
     profileModal.classList.remove('slide-downSolid');
 });
+
 
 // Show avatar modal when avatar link is clicked
 avatarLink.addEventListener('click', (e) => {
@@ -91,10 +91,10 @@ avatarLink.addEventListener('click', (e) => {
 
 // Close avatar modal when the close button is clicked
 closeAvatarModal.addEventListener('click', () => {
-    closeAvatarModal.style.display = 'none'; // Hide the close button
     avatarModal.classList.add('slide-upSolid');
     avatarModal.classList.remove('slide-downSolid');
 });
+
 
 // Show password modal when password link is clicked
 passwordLink.addEventListener('click', (e) => {
@@ -107,7 +107,6 @@ passwordLink.addEventListener('click', (e) => {
 
 // Close password modal when the close button is clicked
 closePasswordModal.addEventListener('click', () => {
-    closePasswordModal.style.display = 'none'; // Hide the close button
     passwordModal.classList.add('slide-upSolid');
     passwordModal.classList.remove('slide-downSolid');
 });

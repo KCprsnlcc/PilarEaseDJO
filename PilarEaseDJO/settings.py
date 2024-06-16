@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main', 
-    'axes',
     'corsheaders',
     'debug_toolbar',
     'compressor',
@@ -62,14 +61,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'axes.middleware.AxesMiddleware',
     'main.middleware.TimezoneMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware', 
-]
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'axes.backends.AxesStandaloneBackend',  # Add this backend
 ]
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -97,9 +90,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000"
 ]
-
-AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1 
 
 TEMPLATES = [
     {

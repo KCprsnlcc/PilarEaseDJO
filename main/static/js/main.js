@@ -74,8 +74,120 @@ document.addEventListener('DOMContentLoaded', function() {
             avatarLink.click(); // Trigger click event on avatar link
         });
     });
-    
-    
+    const newPasswordInput = document.getElementById('newPassword');
+    const repeatPasswordInput = document.getElementById('repeatPassword');
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const strengthBar = document.getElementById('strengthBar');
+    const generatePasswordBtn = document.getElementById('generatePassword');
+    const passwordForm = document.getElementById('passwordForm');
+
+    newPasswordInput.addEventListener('input', function() {
+        const password = newPasswordInput.value;
+        const strength = calculatePasswordStrength(password);
+        updateStrengthBar(strength);
+    });
+
+    generatePasswordBtn.addEventListener('click', function() {
+        const generatedPassword = generateSecurePassword();
+        newPasswordInput.value = generatedPassword;
+        repeatPasswordInput.value = generatedPassword;
+        const strength = calculatePasswordStrength(generatedPassword);
+        updateStrengthBar(strength);
+    });
+
+    passwordForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const currentPassword = currentPasswordInput.value;
+        const newPassword = newPasswordInput.value;
+        const repeatPassword = repeatPasswordInput.value;
+
+        if (newPassword !== repeatPassword) {
+            showError("Passwords do not match.");
+            return;
+        }
+
+        const data = {
+            current_password: currentPassword,
+            new_password: newPassword,
+            repeat_new_password: repeatPassword
+        };
+
+        fetch('/password_manager/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess("Password updated successfully!");
+                passwordForm.reset();
+                updateStrengthBar(0);
+            } else {
+                showError("Please check your current password.");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError("Please check your current password.");
+        });
+    });
+
+    function calculatePasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+        return strength;
+    }
+
+    function updateStrengthBar(strength) {
+        const colors = ['#ff4b4b', '#ffb74b', '#fff44b', '#b4ff4b', '#4bff4b'];
+        strengthBar.style.width = (strength * 25) + '%';
+        strengthBar.style.backgroundColor = colors[strength];
+    }
+
+    function generateSecurePassword() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        let password = '';
+        for (let i = 0; i < 12; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    }
+
+    function showSuccess(message) {
+        const dialogBox = document.getElementById('updatepasssuccess');
+        const dialogContent = document.getElementById('updatepasssuccessContent');
+        dialogContent.innerHTML = message;
+        dialogBox.style.display = 'block';
+        setTimeout(() => {
+            dialogBox.classList.add('pop-out');
+            setTimeout(() => {
+                dialogBox.style.display = 'none';
+                dialogBox.classList.remove('pop-out');
+            }, 300);
+        }, 3000);
+    }
+
+    function showError(message) {
+        const dialogBox = document.getElementById('updatepasserror');
+        const dialogContent = document.getElementById('updatepasserrorContent');
+        dialogContent.innerHTML = message;
+        dialogBox.style.display = 'block';
+        setTimeout(() => {
+            dialogBox.classList.add('pop-out');
+            setTimeout(() => {
+                dialogBox.style.display = 'none';
+                dialogBox.classList.remove('pop-out');
+            }, 300);
+        }, 3000);
+    }
     // Start session timeout timer only if the user is authenticated
     if (document.body.classList.contains('authenticated')) {
         startSessionTimer();
