@@ -87,6 +87,7 @@ def update_user_profile(request):
         user = request.user
         response_data = {'success': True, 'errors': {}}
 
+        # Check if the username or email already exists for another user
         if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
             response_data['success'] = False
             response_data['errors']['username'] = 'Username already exists.'
@@ -94,7 +95,8 @@ def update_user_profile(request):
         if CustomUser.objects.filter(email=email).exclude(id=user.id).exists():
             response_data['success'] = False
             response_data['errors']['email'] = 'Email already registered by another user.'
-
+            
+        # Update the user details if there are no errors
         if response_data['success']:
             user.username = username
             user.contact_number = contact_number
@@ -103,7 +105,6 @@ def update_user_profile(request):
             user.save()
         else:
             return JsonResponse(response_data, status=400)
-
         return JsonResponse({'success': True, 'message': 'Profile updated successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)

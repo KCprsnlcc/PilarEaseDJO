@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": true,
   "editor.formatOnSave": true
 }
+=======
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+}
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403

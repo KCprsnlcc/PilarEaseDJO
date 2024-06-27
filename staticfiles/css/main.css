@@ -773,26 +773,42 @@ button:hover {
 .modal-content.avatar {
   overflow: auto;
   height: 100%;
+<<<<<<< HEAD
   padding: 20px;
+=======
+  padding: 20px
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatar-options {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+<<<<<<< HEAD
   margin-top: 20px;
+=======
+  margin-top: 20px
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .built-in-avatars {
   width: 100%;
+<<<<<<< HEAD
   text-align: center;
+=======
+  text-align: center
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatars-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+<<<<<<< HEAD
   gap: 10px;
+=======
+  gap: 10px
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatars-grid img {
@@ -801,11 +817,19 @@ button:hover {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
+<<<<<<< HEAD
   transition: border-color 0.3s ease;
 }
 
 .avatars-grid .upload-area {
   position: relative;
+=======
+  transition: border-color 0.3s ease
+}
+
+.avatars-grid .upload-area {
+  position: relative
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatars-grid .upload-area img {
@@ -814,6 +838,7 @@ button:hover {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
+<<<<<<< HEAD
   transition: border-color 0.3s ease;
 }
 
@@ -821,6 +846,13 @@ button:hover {
 .avatars-grid img:hover,
 .avatars-grid img.selected {
   border-color: #689e4b;
+=======
+  transition: border-color 0.3s ease
+}
+
+.avatars-grid .upload-area:hover img,.avatars-grid img:hover,.avatars-grid img.selected {
+  border-color: #689E4B
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatars-grid .upload-area input[type="file"] {
@@ -830,13 +862,21 @@ button:hover {
   top: 0;
   left: 0;
   opacity: 0;
+<<<<<<< HEAD
   cursor: pointer;
+=======
+  cursor: pointer
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .dialog-buttons.avatar {
   display: flex;
   justify-content: space-between;
+<<<<<<< HEAD
   margin-top: 20px;
+=======
+  margin-top: 20px
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatar {
@@ -845,17 +885,221 @@ button:hover {
   z-index: 1000100;
   left: 50%;
   top: 50%;
+<<<<<<< HEAD
   transform: translate(-50%, -50%);
+=======
+  transform: translate(-50%,-50%);
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
   width: 80%;
   max-width: 500px;
   max-height: 80%;
   overflow: hidden;
+<<<<<<< HEAD
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+=======
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
   background-color: white;
   border-radius: 10px;
   padding: 20px;
   text-align: center;
+<<<<<<< HEAD
   border: 2px solid #0f2326;
+=======
+  border: 2px solid #0F2326
+}
+
+.avatar h2 {
+  margin-bottom: 20px
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px
+}
+
+.avatar-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s
+}
+
+.avatar-img:hover {
+  transform: scale(1.1)
+}
+
+.avatar-actions {
+  display: flex;
+  justify-content: space-around
+}
+
+.primary {
+  background-color: #689E4B;
+  color: #fff;
+  margin-right: 30px;
+  width: 110px;
+  margin-top: 25px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.primary:hover {
+  background-color: #3b5a2b;
+  color: #fff;
+}
+
+.secondary {
+  background-color: #ddd;
+  color: #333;
+  margin-left: 30px;
+  width: 110px;
+  margin-top: 25px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.secondary:hover {
+  background-color: #bbb;
+  color: #333;
+}
+
+#avatarModal{
+  display: none;
+  position: fixed;
+  z-index: 1000100;
+  left: 50%;
+  top: 50%;
+  height:450px;
+  transform: translate(-50%,-50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 50%;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326
+}
+/* Password Manager Modal Styles */
+.modal-content.password {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.modal-content.password h2 {
+  margin-bottom: 20px;
+  color: #0F2326;
+}
+
+.modal-content.password p {
+  color: #BCC1CA;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.input-container {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.input-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-align: left;
+  color: #0F2326;
+}
+
+.input-container input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.password-strength {
+  height: 5px;
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 5px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  background-color: #ff4b4b;
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+
+button#confirmPassword {
+  width: 100%;
+  padding: 12px;
+  background-color: #689E4B;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button#confirmPassword:hover {
+  background-color: #3b5a2b;
+}
+
+button#generatePassword {
+  width: 100%;
+  padding: 12px;
+  background-color: #ddd;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+button#generatePassword:hover {
+  background-color: #bbb;
+}
+
+#passwordModal {
+  display: none;
+  position: fixed;
+  z-index: 1000100;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  width: 80%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid #0F2326
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 }
 
 .avatar h2 {

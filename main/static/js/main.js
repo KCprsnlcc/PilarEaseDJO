@@ -1,11 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("loader-overlay").style.display = "none";
+<<<<<<< HEAD
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
+=======
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
   const avatarModal = document.getElementById("avatarModal");
   const closeAvatarModal = document.getElementById("closeAvatarModal");
   const saveAvatarBtn = document.getElementById("saveAvatarBtn");
   const cancelAvatarBtn = document.getElementById("cancelAvatarBtn");
+<<<<<<< HEAD
   const avatarImages = document.querySelectorAll(
     ".avatars-grid img.avatar-option"
   );
@@ -34,8 +38,21 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error fetching user profile:", error);
       avatarLoader.style.display = "none";
       currentAvatar.style.display = "block";
-    });
+=======
+  const avatarImages = document.querySelectorAll(".avatars-grid img");
+  const uploadAvatarInput = document.getElementById("uploadAvatarInput");
+  let selectedAvatar = null;
 
+  avatarImages.forEach((img) => {
+    img.addEventListener("click", function () {
+      avatarImages.forEach((i) => i.classList.remove("selected"));
+      this.classList.add("selected");
+      selectedAvatar = this.src;
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
+    });
+  });
+
+<<<<<<< HEAD
   avatarImages.forEach((img) => {
     img.addEventListener("click", function () {
       avatarImages.forEach((i) => i.classList.remove("selected"));
@@ -76,11 +93,27 @@ document.addEventListener("DOMContentLoaded", function () {
           aspectRatio: 528 / 560,
           viewMode: 1,
         });
+=======
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    uploadAvatarInput.click();
+  });
+
+  uploadAvatarInput.addEventListener("change", function () {
+    if (uploadAvatarInput.files.length > 0) {
+      const uploadedFile = uploadAvatarInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        avatarImages.forEach((i) => i.classList.remove("selected"));
+        document.querySelector(".upload-area img").src = e.target.result;
+        document.querySelector(".upload-area img").classList.add("selected");
+        selectedAvatar = e.target.result;
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
       };
       reader.readAsDataURL(uploadedFile);
     }
   });
 
+<<<<<<< HEAD
   cropImageBtn.addEventListener("click", function () {
     if (cropper) {
       cropper.getCroppedCanvas().toBlob((blob) => {
@@ -188,6 +221,17 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300);
     }, 3000);
   }
+=======
+  saveAvatarBtn.addEventListener("click", function () {
+    if (selectedAvatar) {
+      console.log("Selected avatar:", selectedAvatar);
+      // Handle saving the selected avatar
+    } else {
+      alert("Please select or upload an avatar.");
+    }
+  });
+
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
   cancelAvatarBtn.addEventListener("click", function () {
     avatarModal.classList.add("slide-upSolid");
     avatarModal.classList.remove("slide-downSolid");
@@ -197,9 +241,15 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.classList.add("slide-upSolid");
     avatarModal.classList.remove("slide-downSolid");
   });
+<<<<<<< HEAD
 
   const profileIcon = document.getElementById("profileIcon");
   const tooltip = document.getElementById("profileTooltip");
+=======
+  const profileIcon = document.getElementById("profileIcon");
+  const tooltip = document.getElementById("profileTooltip");
+  const avatarLink = document.getElementById("avatarLink");
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 
   profileIcon.addEventListener("mouseenter", function () {
     tooltip.classList.remove("popOut");
@@ -220,12 +270,18 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   profileIcon.addEventListener("click", function () {
+<<<<<<< HEAD
     avatarModal.classList.add("slide-downSolid");
     avatarModal.classList.remove("slide-upSolid");
     avatarModal.style.display = "block";
   });
 });
 
+=======
+    avatarLink.click(); // Trigger click event on avatar link
+  });
+});
+>>>>>>> be32801aaaab82ce94f117391be1601406fef403
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");
