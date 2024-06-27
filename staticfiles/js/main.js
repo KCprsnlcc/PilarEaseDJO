@@ -1,244 +1,363 @@
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('loader-overlay').style.display = 'none';
-    const avatarModal = document.getElementById('avatarModal');
-    const closeAvatarModal = document.getElementById('closeAvatarModal');
-    const saveAvatarBtn = document.getElementById('saveAvatarBtn');
-    const cancelAvatarBtn = document.getElementById('cancelAvatarBtn');
-    const avatarImages = document.querySelectorAll('.avatars-grid img');
-    const uploadAvatarInput = document.getElementById('uploadAvatarInput');
-    let selectedAvatar = null;
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("loader-overlay").style.display = "none";
+  const avatarLoader = document.getElementById("avatarLoader");
+  const currentAvatar = document.getElementById("currentAvatar");
+  const avatarModal = document.getElementById("avatarModal");
+  const closeAvatarModal = document.getElementById("closeAvatarModal");
+  const saveAvatarBtn = document.getElementById("saveAvatarBtn");
+  const cancelAvatarBtn = document.getElementById("cancelAvatarBtn");
+  const avatarImages = document.querySelectorAll(
+    ".avatars-grid img.avatar-option"
+  );
+  const uploadAvatarInput = document.getElementById("uploadAvatarInput");
+  const uploadAreaImg = document.querySelector(".upload-area img");
+  let selectedAvatar = null;
 
-    avatarImages.forEach(img => {
-        img.addEventListener('click', function() {
-            avatarImages.forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedAvatar = this.src;
-        });
+  const uploadAvatarUrl = document.getElementById("uploadAvatarUrl").value;
+
+  // Load current avatar
+  fetch("/get_user_profile/")
+    .then((response) => response.json())
+    .then((data) => {
+      currentAvatar.src =
+        data.avatar || "{% static 'images/avatars/placeholder.png' %}";
+      avatarLoader.style.display = "none";
+      currentAvatar.style.display = "block";
+    })
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
+      avatarLoader.style.display = "none";
+      currentAvatar.style.display = "block";
     });
 
-    document.querySelector('.upload-area').addEventListener('click', function() {
-        uploadAvatarInput.click();
+  avatarImages.forEach((img) => {
+    img.addEventListener("click", function () {
+      avatarImages.forEach((i) => i.classList.remove("selected"));
+      this.classList.add("selected");
+      selectedAvatar = this.src;
+      saveAvatarBtn.style.display = "inline-block";
+      document.getElementById("avatarUrlInput").value = selectedAvatar;
     });
+  });
 
-    uploadAvatarInput.addEventListener('change', function() {
-        if (uploadAvatarInput.files.length > 0) {
-            const uploadedFile = uploadAvatarInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                avatarImages.forEach(i => i.classList.remove('selected'));
-                document.querySelector('.upload-area img').src = e.target.result;
-                document.querySelector('.upload-area img').classList.add('selected');
-                selectedAvatar = e.target.result;
-            };
-            reader.readAsDataURL(uploadedFile);
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    uploadAvatarInput.click();
+  });
+
+  uploadAvatarInput.addEventListener("change", function () {
+    if (uploadAvatarInput.files.length > 0) {
+      const uploadedFile = uploadAvatarInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        avatarImages.forEach((i) => i.classList.remove("selected"));
+        uploadAreaImg.src = e.target.result;
+        uploadAreaImg.classList.add("selected");
+        selectedAvatar = e.target.result;
+        saveAvatarBtn.style.display = "inline-block";
+      };
+      reader.readAsDataURL(uploadedFile);
+    }
+  });
+
+  saveAvatarBtn.addEventListener("click", function () {
+    const formData = new FormData();
+    if (uploadAvatarInput.files.length > 0) {
+      formData.append("avatar", uploadAvatarInput.files[0]);
+    } else {
+      formData.append(
+        "avatar_url",
+        document.getElementById("avatarUrlInput").value
+      );
+    }
+
+    fetch(uploadAvatarUrl, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: formData,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((data) => {
+            throw new Error(data.errors || "Unknown error");
+          });
         }
-    });
-
-    saveAvatarBtn.addEventListener('click', function() {
-        if (selectedAvatar) {
-            console.log('Selected avatar:', selectedAvatar);
-            // Handle saving the selected avatar
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          showNotificationSuccess("Avatar updated successfully!");
+          document.getElementById("currentAvatar").src = data.avatar_url;
         } else {
-            alert('Please select or upload an avatar.');
+          showNotificationError(
+            "Error uploading avatar: " + (data.errors || "Unknown error")
+          );
         }
-    });
+      })
+      .catch((error) => {
+        console.error("Error uploading avatar:", error);
+        showNotificationError("Error uploading avatar: " + error.message);
+      });
+  });
 
-    cancelAvatarBtn.addEventListener('click', function() {
-        avatarModal.classList.add('slide-upSolid');
-        avatarModal.classList.remove('slide-downSolid');
-    });
+  cancelAvatarBtn.addEventListener("click", function () {
+    avatarModal.classList.add("slide-upSolid");
+    avatarModal.classList.remove("slide-downSolid");
+  });
 
-    closeAvatarModal.addEventListener('click', function() {
-        avatarModal.classList.add('slide-upSolid');
-        avatarModal.classList.remove('slide-downSolid');
-    });
-        const profileIcon = document.getElementById('profileIcon');
-        const tooltip = document.getElementById('profileTooltip');
-        const avatarLink = document.getElementById('avatarLink');
-    
-        profileIcon.addEventListener('mouseenter', function() {
-            tooltip.classList.remove('popOut');
-            tooltip.classList.add('popIn');
-            tooltip.style.visibility = 'visible';
-        });
-    
-        profileIcon.addEventListener('mouseleave', function() {
-            tooltip.classList.remove('popIn');
-            tooltip.classList.add('popOut');
-            tooltip.addEventListener('animationend', function() {
-                tooltip.style.visibility = 'hidden';
-            }, { once: true });
-        });
-    
-        profileIcon.addEventListener('click', function() {
-            avatarLink.click(); // Trigger click event on avatar link
-        });
-    });
-    const newPasswordInput = document.getElementById('newPassword');
-    const repeatPasswordInput = document.getElementById('repeatPassword');
-    const currentPasswordInput = document.getElementById('currentPassword');
-    const strengthBar = document.getElementById('strengthBar');
-    const generatePasswordBtn = document.getElementById('generatePassword');
-    const passwordForm = document.getElementById('passwordForm');
+  closeAvatarModal.addEventListener("click", function () {
+    avatarModal.classList.add("slide-upSolid");
+    avatarModal.classList.remove("slide-downSolid");
+  });
 
-    newPasswordInput.addEventListener('input', function() {
-        const password = newPasswordInput.value;
-        const strength = calculatePasswordStrength(password);
-        updateStrengthBar(strength);
-    });
+  const profileIcon = document.getElementById("profileIcon");
+  const tooltip = document.getElementById("profileTooltip");
 
-    generatePasswordBtn.addEventListener('click', function() {
-        const generatedPassword = generateSecurePassword();
-        newPasswordInput.value = generatedPassword;
-        repeatPasswordInput.value = generatedPassword;
-        const strength = calculatePasswordStrength(generatedPassword);
-        updateStrengthBar(strength);
-    });
+  profileIcon.addEventListener("mouseenter", function () {
+    tooltip.classList.remove("popOut");
+    tooltip.classList.add("popIn");
+    tooltip.style.visibility = "visible";
+  });
 
-    passwordForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const currentPassword = currentPasswordInput.value;
-        const newPassword = newPasswordInput.value;
-        const repeatPassword = repeatPasswordInput.value;
+  profileIcon.addEventListener("mouseleave", function () {
+    tooltip.classList.remove("popIn");
+    tooltip.classList.add("popOut");
+    tooltip.addEventListener(
+      "animationend",
+      function () {
+        tooltip.style.visibility = "hidden";
+      },
+      { once: true }
+    );
+  });
 
-        if (newPassword !== repeatPassword) {
-            showError("Passwords do not match.");
-            return;
+  profileIcon.addEventListener("click", function () {
+    avatarModal.classList.add("slide-downSolid");
+    avatarModal.classList.remove("slide-upSolid");
+    avatarModal.style.display = "block";
+  });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
+      }
+    }
+    return cookieValue;
+  }
 
-        const data = {
-            current_password: currentPassword,
-            new_password: newPassword,
-            repeat_new_password: repeatPassword
-        };
+  function showNotificationSuccess(message) {
+    const dialogBox = document.getElementById("notificationSuccessBox");
+    const dialogContent = document.getElementById("notificationSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
 
-        fetch('/password_manager/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccess("Password updated successfully!");
-                passwordForm.reset();
-                updateStrengthBar(0);
-            } else {
-                showError("Please check your current password.");
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showError("Please check your current password.");
-        });
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  function showNotificationError(message) {
+    const dialogBox = document.getElementById("notificationErrorBox");
+    const dialogContent = document.getElementById("notificationErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+});
+
+const newPasswordInput = document.getElementById("newPassword");
+const repeatPasswordInput = document.getElementById("repeatPassword");
+const currentPasswordInput = document.getElementById("currentPassword");
+const strengthBar = document.getElementById("strengthBar");
+const generatePasswordBtn = document.getElementById("generatePassword");
+const passwordForm = document.getElementById("passwordForm");
+
+newPasswordInput.addEventListener("input", function () {
+  const password = newPasswordInput.value;
+  const strength = calculatePasswordStrength(password);
+  updateStrengthBar(strength);
+});
+
+generatePasswordBtn.addEventListener("click", function () {
+  const generatedPassword = generateSecurePassword();
+  newPasswordInput.value = generatedPassword;
+  repeatPasswordInput.value = generatedPassword;
+  const strength = calculatePasswordStrength(generatedPassword);
+  updateStrengthBar(strength);
+});
+
+passwordForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const currentPassword = currentPasswordInput.value;
+  const newPassword = newPasswordInput.value;
+  const repeatPassword = repeatPasswordInput.value;
+
+  if (newPassword !== repeatPassword) {
+    showError("Passwords do not match.");
+    return;
+  }
+
+  const data = {
+    current_password: currentPassword,
+    new_password: newPassword,
+    repeat_new_password: repeatPassword,
+  };
+
+  fetch("/password_manager/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        showSuccess("Password updated successfully!");
+        passwordForm.reset();
+        updateStrengthBar(0);
+      } else {
+        showError("Please check your current password.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      showError("Please check your current password.");
     });
+});
 
-    function calculatePasswordStrength(password) {
-        let strength = 0;
-        if (password.length >= 8) strength += 1;
-        if (/[A-Z]/.test(password)) strength += 1;
-        if (/[0-9]/.test(password)) strength += 1;
-        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-        return strength;
-    }
+function calculatePasswordStrength(password) {
+  let strength = 0;
+  if (password.length >= 8) strength += 1;
+  if (/[A-Z]/.test(password)) strength += 1;
+  if (/[0-9]/.test(password)) strength += 1;
+  if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+  return strength;
+}
 
-    function updateStrengthBar(strength) {
-        const colors = ['#ff4b4b', '#ffb74b', '#fff44b', '#b4ff4b', '#4bff4b'];
-        strengthBar.style.width = (strength * 25) + '%';
-        strengthBar.style.backgroundColor = colors[strength];
-    }
+function updateStrengthBar(strength) {
+  const colors = ["#ff4b4b", "#ffb74b", "#fff44b", "#b4ff4b", "#4bff4b"];
+  strengthBar.style.width = strength * 25 + "%";
+  strengthBar.style.backgroundColor = colors[strength];
+}
 
-    function generateSecurePassword() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-        let password = '';
-        for (let i = 0; i < 12; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
-    }
+function generateSecurePassword() {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
-    function showSuccess(message) {
-        const dialogBox = document.getElementById('updatepasssuccess');
-        const dialogContent = document.getElementById('updatepasssuccessContent');
-        dialogContent.innerHTML = message;
-        dialogBox.style.display = 'block';
-        setTimeout(() => {
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
+function showSuccess(message) {
+  const dialogBox = document.getElementById("updatepasssuccess");
+  const dialogContent = document.getElementById("updatepasssuccessContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  setTimeout(() => {
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
 
-    function showError(message) {
-        const dialogBox = document.getElementById('updatepasserror');
-        const dialogContent = document.getElementById('updatepasserrorContent');
-        dialogContent.innerHTML = message;
-        dialogBox.style.display = 'block';
-        setTimeout(() => {
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
-    // Start session timeout timer only if the user is authenticated
-    if (document.body.classList.contains('authenticated')) {
-        startSessionTimer();
-    }
+function showError(message) {
+  const dialogBox = document.getElementById("updatepasserror");
+  const dialogContent = document.getElementById("updatepasserrorContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  setTimeout(() => {
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+// Start session timeout timer only if the user is authenticated
+if (document.body.classList.contains("authenticated")) {
+  startSessionTimer();
+}
 
 function startSessionTimer() {
-    document.addEventListener('mousemove', resetTimer);
-    document.addEventListener('keypress', resetTimer);
+  document.addEventListener("mousemove", resetTimer);
+  document.addEventListener("keypress", resetTimer);
 
-    const sessionTimeout = 30 * 60 * 1000;
+  const sessionTimeout = 30 * 60 * 1000;
 
-    let timeout;
+  let timeout;
 
-    function resetTimer() {
-        clearTimeout(timeout);
-        timeout = setTimeout(endSession, sessionTimeout);
-    }
+  function resetTimer() {
+    clearTimeout(timeout);
+    timeout = setTimeout(endSession, sessionTimeout);
+  }
 
-    function endSession() {
-        showError("Session Expired, Please log in again.", 'session');
-        fetch('/logout/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
-        }).then(response => response.json()).then(data => {
-            if (data.success) {
-                // No redirect here, just show the session expired message
-            }
-        });
-    }
+  function endSession() {
+    showError("Session Expired, Please log in again.", "session");
+    fetch("/logout/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // No redirect here, just show the session expired message
+        }
+      });
+  }
 
-    resetTimer();
+  resetTimer();
 }
 
 function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
-    return cookieValue;
+  }
+  return cookieValue;
 }
 
-const csrftoken = getCookie('csrftoken');
+const csrftoken = getCookie("csrftoken");
 
 var loginModal = document.getElementById("loginModal");
 var registerModal = document.getElementById("registerModal");
@@ -253,454 +372,499 @@ var loginLinkFromRegister = document.getElementById("loginLinkFromRegister");
 
 // Show login modal and overlay
 if (loginLink) {
-    loginLink.onclick = function(event) {
-        event.preventDefault();
-        loginModal.style.display = "block";
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            loginModal.classList.add("pop-in");
-            overlay.classList.add("show");
-        }, 10);
-    }
+  loginLink.onclick = function (event) {
+    event.preventDefault();
+    loginModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      loginModal.classList.add("pop-in");
+      overlay.classList.add("show");
+    }, 10);
+  };
 }
 
 // Show register modal and overlay
 if (registerLink) {
-    registerLink.onclick = function(event) {
-        event.preventDefault();
-        registerModal.style.display = "block";
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            registerModal.classList.add("pop-in");
-            overlay.classList.add("show");
-        }, 10);
-    }
+  registerLink.onclick = function (event) {
+    event.preventDefault();
+    registerModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      registerModal.classList.add("pop-in");
+      overlay.classList.add("show");
+    }, 10);
+  };
 }
 
 // Show login modal from register modal
 if (loginLinkFromRegister) {
-    loginLinkFromRegister.onclick = function(event) {
-        event.preventDefault();
-        registerModal.classList.add("pop-out");
-        setTimeout(() => {
-            registerModal.style.display = "none";
-            registerModal.classList.remove("pop-out");
-            loginModal.style.display = "block";
-            setTimeout(() => {
-                loginModal.classList.add("pop-in");
-                overlay.classList.add("show");
-            }, 10);
-        }, 300);
-    }
+  loginLinkFromRegister.onclick = function (event) {
+    event.preventDefault();
+    registerModal.classList.add("pop-out");
+    setTimeout(() => {
+      registerModal.style.display = "none";
+      registerModal.classList.remove("pop-out");
+      loginModal.style.display = "block";
+      setTimeout(() => {
+        loginModal.classList.add("pop-in");
+        overlay.classList.add("show");
+      }, 10);
+    }, 300);
+  };
 }
 
 // Hide login modal and overlay
 if (closeLoginModal) {
-    closeLoginModal.onclick = function() {
-        loginModal.classList.add("pop-out");
-        overlay.classList.add("hide");
-        setTimeout(() => {
-            loginModal.style.display = 'none';
-            overlay.style.display = 'none';
-            loginModal.classList.remove('pop-in', 'pop-out');
-            overlay.classList.remove('show', 'hide');
-        }, 300);
-    }
+  closeLoginModal.onclick = function () {
+    loginModal.classList.add("pop-out");
+    overlay.classList.add("hide");
+    setTimeout(() => {
+      loginModal.style.display = "none";
+      overlay.style.display = "none";
+      loginModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("show", "hide");
+    }, 300);
+  };
 }
 
 // Hide register modal and overlay
 if (closeRegisterModal) {
-    closeRegisterModal.onclick = function() {
-        registerModal.classList.add("pop-out");
-        loginModal.classList.add("pop-out");
-        overlay.classList.add("hide");
-        setTimeout(() => {
-            registerModal.style.display = 'none';
-            loginModal.style.display = 'none';
-            overlay.style.display = 'none';
-            registerModal.classList.remove('pop-in', 'pop-out');
-            loginModal.classList.remove('pop-in', 'pop-out');
-            overlay.classList.remove('show', 'hide');
-        }, 300);
-    }
+  closeRegisterModal.onclick = function () {
+    registerModal.classList.add("pop-out");
+    loginModal.classList.add("pop-out");
+    overlay.classList.add("hide");
+    setTimeout(() => {
+      registerModal.style.display = "none";
+      loginModal.style.display = "none";
+      overlay.style.display = "none";
+      registerModal.classList.remove("pop-in", "pop-out");
+      loginModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("show", "hide");
+    }, 300);
+  };
 }
 
 // Show login required modal and overlay
 var expressFeelingsButton = document.getElementById("loginButton");
 if (expressFeelingsButton) {
-    expressFeelingsButton.onclick = function(event) {
-        event.preventDefault();
-        loginRequiredModal.style.display = "block";
-        overlay.style.display = "flex";
-        setTimeout(() => {
-            loginRequiredModal.classList.add("pop-in");
-            overlay.classList.add("show");
-        }, 10);
-    }
+  expressFeelingsButton.onclick = function (event) {
+    event.preventDefault();
+    loginRequiredModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      loginRequiredModal.classList.add("pop-in");
+      overlay.classList.add("show");
+    }, 10);
+  };
 }
 
 // Close modal and overlay when clicking outside
-window.onclick = function(event) {
-    if (event.target == overlay) {
-        if (loginRequiredModal.style.display === "block" || document.querySelector('.flat-ui-dialog.session').style.display === "block") {
-            closeModals();
-        }
+window.onclick = function (event) {
+  if (event.target == overlay) {
+    if (
+      loginRequiredModal.style.display === "block" ||
+      document.querySelector(".flat-ui-dialog.session").style.display ===
+        "block"
+    ) {
+      closeModals();
     }
-}
+  }
+};
 
 function closeModals() {
-    if (loginRequiredModal.style.display === "block") {
-        loginRequiredModal.classList.add("pop-out");
-        overlay.classList.add("hide");
-        setTimeout(() => {
-            loginRequiredModal.style.display = "none";
-            overlay.style.display = "none";
-            loginRequiredModal.classList.remove("pop-in", "pop-out");
-            overlay.classList.remove('show', 'hide');
-        }, 300);
-    } else if (document.querySelector('.flat-ui-dialog.session').style.display === "block") {
-        const sessionDialogBox = document.querySelector('.flat-ui-dialog.session');
-        sessionDialogBox.classList.add("pop-out");
-        overlay.classList.add("hide");
-        setTimeout(() => {
-            sessionDialogBox.style.display = "none";
-            overlay.style.display = "none";
-            sessionDialogBox.classList.remove("pop-in", "pop-out");
-            overlay.classList.remove('show', 'hide');
-            window.location.reload();
-        }, 300);
-    }
+  if (loginRequiredModal.style.display === "block") {
+    loginRequiredModal.classList.add("pop-out");
+    overlay.classList.add("hide");
+    setTimeout(() => {
+      loginRequiredModal.style.display = "none";
+      overlay.style.display = "none";
+      loginRequiredModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("show", "hide");
+    }, 300);
+  } else if (
+    document.querySelector(".flat-ui-dialog.session").style.display === "block"
+  ) {
+    const sessionDialogBox = document.querySelector(".flat-ui-dialog.session");
+    sessionDialogBox.classList.add("pop-out");
+    overlay.classList.add("hide");
+    setTimeout(() => {
+      sessionDialogBox.style.display = "none";
+      overlay.style.display = "none";
+      sessionDialogBox.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("show", "hide");
+      window.location.reload();
+    }, 300);
+  }
 }
 
 // Close login required modal and show login modal
 if (openLoginModalButton) {
-    openLoginModalButton.onclick = function() {
-        loginRequiredModal.classList.add("pop-out");
-        setTimeout(() => {
-            loginRequiredModal.style.display = "none";
-            loginRequiredModal.classList.remove("pop-out");
-            loginModal.style.display = "block";
-            setTimeout(() => {
-                loginModal.classList.add("pop-in");
-            }, 10);
-        }, 300);
-    }
+  openLoginModalButton.onclick = function () {
+    loginRequiredModal.classList.add("pop-out");
+    setTimeout(() => {
+      loginRequiredModal.style.display = "none";
+      loginRequiredModal.classList.remove("pop-out");
+      loginModal.style.display = "block";
+      setTimeout(() => {
+        loginModal.classList.add("pop-in");
+      }, 10);
+    }, 300);
+  };
 }
 
 function showError(message, type) {
-    const dialogBox = document.getElementById(type === 'login' ? 'loginDialogBox' : type === 'register' ? 'registerDialogBox' : 'sessionDialogBox');
-    const dialogContent = document.getElementById(type === 'login' ? 'loginDialogContent' : type === 'register' ? 'registerDialogContent' : 'sessionDialogContent');
+  const dialogBox = document.getElementById(
+    type === "login"
+      ? "loginDialogBox"
+      : type === "register"
+      ? "registerDialogBox"
+      : "sessionDialogBox"
+  );
+  const dialogContent = document.getElementById(
+    type === "login"
+      ? "loginDialogContent"
+      : type === "register"
+      ? "registerDialogContent"
+      : "sessionDialogContent"
+  );
 
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = 'block';
-    dialogBox.classList.add('error');
-    dialogBox.classList.remove('pop-out');
-    dialogBox.classList.add('pop-in');
-    
-    if (type === 'session') {
-        overlay.style.display = 'flex';
-        overlay.classList.add('pop-in');
-        overlay.addEventListener('click', function handleOverlayClick() {
-            dialogBox.classList.add('pop-out');
-            overlay.classList.add('hide');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-                overlay.style.display = 'none';
-                overlay.classList.remove('show', 'hide');
-                overlay.removeEventListener('click', handleOverlayClick);
-                window.location.reload();
-            }, 300);
-        });
-    }
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.add("error");
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
 
-    if (type !== 'session') {
-        setTimeout(() => {
-            dialogBox.classList.remove('pop-in');
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
+  if (type === "session") {
+    overlay.style.display = "flex";
+    overlay.classList.add("pop-in");
+    overlay.addEventListener("click", function handleOverlayClick() {
+      dialogBox.classList.add("pop-out");
+      overlay.classList.add("hide");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+        overlay.style.display = "none";
+        overlay.classList.remove("show", "hide");
+        overlay.removeEventListener("click", handleOverlayClick);
+        window.location.reload();
+      }, 300);
+    });
+  }
+
+  if (type !== "session") {
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
 }
 
 function showSuccess(message, type) {
-    const successBox = document.getElementById(type === 'login' ? 'loginSuccessBox' : type === 'register' ? 'registerSuccessBox' : 'logoutSuccessBox');
-    const successContent = document.getElementById(type === 'login' ? 'loginSuccessContent' : type === 'register' ? 'registerSuccessContent' : 'logoutSuccessContent');
+  const successBox = document.getElementById(
+    type === "login"
+      ? "loginSuccessBox"
+      : type === "register"
+      ? "registerSuccessBox"
+      : "logoutSuccessBox"
+  );
+  const successContent = document.getElementById(
+    type === "login"
+      ? "loginSuccessContent"
+      : type === "register"
+      ? "registerSuccessContent"
+      : "logoutSuccessContent"
+  );
 
-    successContent.innerHTML = message;
-    successBox.style.display = 'block';
-    successBox.classList.add('success');
-    successBox.classList.remove('pop-out');
-    successBox.classList.add('pop-in');
+  successContent.innerHTML = message;
+  successBox.style.display = "block";
+  successBox.classList.add("success");
+  successBox.classList.remove("pop-out");
+  successBox.classList.add("pop-in");
 
+  setTimeout(() => {
+    successBox.classList.remove("pop-in");
+    successBox.classList.add("pop-out");
     setTimeout(() => {
-        successBox.classList.remove('pop-in');
-        successBox.classList.add('pop-out');
-        setTimeout(() => {
-            successBox.style.display = 'none';
-            successBox.classList.remove('pop-out');
-        }, 300);
-    }, 3000);
+      successBox.style.display = "none";
+      successBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
 
-    if (type === 'logout') {
-        overlay.addEventListener('click', function handleOverlayClick() {
-            successBox.classList.add('pop-out');
-            overlay.classList.add('hide');
-            setTimeout(() => {
-                successBox.style.display = 'none';
-                successBox.classList.remove('pop-out');
-                overlay.style.display = 'none';
-                overlay.classList.remove('show', 'hide');
-                overlay.removeEventListener('click', handleOverlayClick);
-                window.location.reload();
-            }, 300);
-        });
-    }
+  if (type === "logout") {
+    overlay.addEventListener("click", function handleOverlayClick() {
+      successBox.classList.add("pop-out");
+      overlay.classList.add("hide");
+      setTimeout(() => {
+        successBox.style.display = "none";
+        successBox.classList.remove("pop-out");
+        overlay.style.display = "none";
+        overlay.classList.remove("show", "hide");
+        overlay.removeEventListener("click", handleOverlayClick);
+        window.location.reload();
+      }, 300);
+    });
+  }
 }
 
 function parseErrorMessages(errors) {
-    for (let field in errors) {
-        if (errors.hasOwnProperty(field)) {
-            return errors[field][0].message;
-        }
+  for (let field in errors) {
+    if (errors.hasOwnProperty(field)) {
+      return errors[field][0].message;
     }
-    return "An error occurred. Please try again.";
+  }
+  return "An error occurred. Please try again.";
 }
 
-document.getElementById('registerForm').addEventListener('submit', function(event) {
+document
+  .getElementById("registerForm")
+  .addEventListener("submit", function (event) {
     event.preventDefault();
     const formData = new FormData(this);
     let errorMessage = checkEmptyFields(formData, {
-        'student_id': 'Student ID No.',
-        'username': 'Username',
-        'full_name': 'Full Name',
-        'academic_year_level': 'Academic Year Level',
-        'contact_number': 'Contact Number',
-        'email': 'Email',
-        'password1': 'Password',
-        'password2': 'Confirm Password'
+      student_id: "Student ID No.",
+      username: "Username",
+      full_name: "Full Name",
+      academic_year_level: "Academic Year Level",
+      contact_number: "Contact Number",
+      email: "Email",
+      password1: "Password",
+      password2: "Confirm Password",
     });
     if (errorMessage) {
-        showError(errorMessage, 'register');
-        return;
+      showError(errorMessage, "register");
+      return;
     }
     fetch(this.action, {
-        method: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
-        body: formData
+      method: "POST",
+      headers: { "X-CSRFToken": csrftoken },
+      body: formData,
     })
-    .then(response => response.json())
-    .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         if (data.success) {
-            showSuccess("Registration successful!", 'register');
+          showSuccess("Registration successful!", "register");
+          setTimeout(() => {
+            registerModal.classList.add("pop-out");
             setTimeout(() => {
-                registerModal.classList.add("pop-out");
-                setTimeout(() => {
-                    registerModal.style.display = "none";
-                    registerModal.classList.remove("pop-out");
-                    loginModal.style.display = "block";
-                    setTimeout(() => {
-                        loginModal.classList.add("pop-in");
-                        overlay.classList.add("show");
-                    }, 10);
-                }, 300);
+              registerModal.style.display = "none";
+              registerModal.classList.remove("pop-out");
+              loginModal.style.display = "block";
+              setTimeout(() => {
+                loginModal.classList.add("pop-in");
+                overlay.classList.add("show");
+              }, 10);
+            }, 300);
 
-                document.getElementById('registerForm').reset();
-            }, 1500);
+            document.getElementById("registerForm").reset();
+          }, 1500);
         } else {
-            let errorMessage = parseErrorMessages(data.error_message);
-            showError(errorMessage, 'register');
+          let errorMessage = parseErrorMessages(data.error_message);
+          showError(errorMessage, "register");
         }
-    })
-    .catch(error => {
-        showError("An error occurred. Please try again.", 'register');
-    });
-});
+      })
+      .catch((error) => {
+        showError("An error occurred. Please try again.", "register");
+      });
+  });
 
-document.getElementById('loginForm').addEventListener('submit', function(event) {
+document
+  .getElementById("loginForm")
+  .addEventListener("submit", function (event) {
     event.preventDefault();
     const formData = new FormData(this);
     let errorMessage = checkEmptyFields(formData, {
-        'username': 'Username',
-        'password': 'Password'
+      username: "Username",
+      password: "Password",
     });
     if (errorMessage) {
-        showError(errorMessage, 'login');
-        return;
+      showError(errorMessage, "login");
+      return;
     }
     fetch(this.action, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrftoken,
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams(formData).toString()
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams(formData).toString(),
     })
-    .then(response => response.json())
-    .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         if (data.success) {
-            showSuccess("Login successful!", 'login');
+          showSuccess("Login successful!", "login");
+          setTimeout(() => {
+            document.getElementById("loginForm").reset();
+            loginModal.classList.add("pop-out");
+            overlay.classList.add("hide");
             setTimeout(() => {
-                document.getElementById('loginForm').reset();
-                loginModal.classList.add("pop-out");
-                overlay.classList.add("hide");
-                setTimeout(() => {
-                    loginModal.style.display = "none";
-                    overlay.style.display = "none";
-                    loginModal.classList.remove('pop-in', 'pop-out');
-                    overlay.classList.remove('show', 'hide');
-                    window.location.href = data.redirect_url;
-                }, 300);
-            }, 1500);
+              loginModal.style.display = "none";
+              overlay.style.display = "none";
+              loginModal.classList.remove("pop-in", "pop-out");
+              overlay.classList.remove("show", "hide");
+              window.location.href = data.redirect_url;
+            }, 300);
+          }, 1500);
         } else {
-            let errorMessage = parseErrorMessages(data.error_message);
-            showError(errorMessage, 'login');
+          let errorMessage = parseErrorMessages(data.error_message);
+          showError(errorMessage, "login");
         }
+      })
+      .catch((error) => {
+        showError("An error occurred. Please try again.", "login");
+      });
+  });
+
+document.querySelectorAll(".logout-link").forEach((item) => {
+  item.addEventListener("click", function (event) {
+    event.preventDefault();
+
+    // Disable the logout button to prevent multiple clicks
+    this.style.pointerEvents = "none";
+
+    // Send the logout request
+    fetch(this.href, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
     })
-    .catch(error => {
-        showError("An error occurred. Please try again.", 'login');
-    });
-});
-
-document.querySelectorAll('.logout-link').forEach(item => {
-    item.addEventListener('click', function(event) {
-        event.preventDefault();
-        
-        // Disable the logout button to prevent multiple clicks
-        this.style.pointerEvents = 'none';
-
-        // Send the logout request
-        fetch(this.href, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccess("Logout successful!", 'logout');
-                setTimeout(() => {
-                    document.getElementById('logoutSuccessBox').classList.add("pop-out");
-                    overlay.classList.add("hide");
-                    setTimeout(() => {
-                        document.getElementById('logoutSuccessBox').style.display = "none";
-                        overlay.style.display = "none";
-                        document.getElementById('logoutSuccessBox').classList.remove('pop-in', 'pop-out');
-                        overlay.classList.remove('show', 'hide');
-                        window.location.href = data.redirect_url;
-                    }, 300);
-                }, 1500);
-            } else {
-                // Handle failure silently
-                window.location.reload(); // Refresh the page on failure
-            }
-        })
-        .catch(error => {
-            // Handle network errors silently
-            window.location.reload(); // Refresh the page on error
-        });
-    });
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showSuccess("Logout successful!", "logout");
+          setTimeout(() => {
+            document
+              .getElementById("logoutSuccessBox")
+              .classList.add("pop-out");
+            overlay.classList.add("hide");
+            setTimeout(() => {
+              document.getElementById("logoutSuccessBox").style.display =
+                "none";
+              overlay.style.display = "none";
+              document
+                .getElementById("logoutSuccessBox")
+                .classList.remove("pop-in", "pop-out");
+              overlay.classList.remove("show", "hide");
+              window.location.href = data.redirect_url;
+            }, 300);
+          }, 1500);
+        } else {
+          // Handle failure silently
+          window.location.reload(); // Refresh the page on failure
+        }
+      })
+      .catch((error) => {
+        // Handle network errors silently
+        window.location.reload(); // Refresh the page on error
+      });
+  });
 });
 
 function checkEmptyFields(formData, fields) {
-    let emptyFields = [];
-    let allFieldsEmpty = true;
+  let emptyFields = [];
+  let allFieldsEmpty = true;
 
-    for (let field in fields) {
-        if (formData.get(field) && formData.get(field).trim() !== "") {
-            allFieldsEmpty = false;
-        } else {
-            emptyFields.push(fields[field] + " is required.");
-        }
+  for (let field in fields) {
+    if (formData.get(field) && formData.get(field).trim() !== "") {
+      allFieldsEmpty = false;
+    } else {
+      emptyFields.push(fields[field] + " is required.");
     }
+  }
 
-    if (allFieldsEmpty) {
-        return "All fields are required.";
-    }
+  if (allFieldsEmpty) {
+    return "All fields are required.";
+  }
 
-    return emptyFields.length ? emptyFields[0] : null;
+  return emptyFields.length ? emptyFields[0] : null;
 }
 
-document.querySelectorAll('.v1_124 div').forEach(item => {
-    item.addEventListener('click', function() {
-        document.querySelectorAll('.v1_127, .v1_129, .v1_131, .v1_133, .v1_135, .v1_137, .v1_139, .v1_141').forEach(span => {
-            span.classList.remove('active');
-        });
-        this.querySelector('span').classList.add('active');
-    });
+document.querySelectorAll(".v1_124 div").forEach((item) => {
+  item.addEventListener("click", function () {
+    document
+      .querySelectorAll(
+        ".v1_127, .v1_129, .v1_131, .v1_133, .v1_135, .v1_137, .v1_139, .v1_141"
+      )
+      .forEach((span) => {
+        span.classList.remove("active");
+      });
+    this.querySelector("span").classList.add("active");
+  });
 });
 
-document.querySelectorAll('.curved-line path').forEach(function(path) {
-    var controlPointX1 = Math.random() * 50;
-    var controlPointY1 = Math.random() * 50;
-    var controlPointX2 = 100 - Math.random() * 50;
-    var controlPointY2 = Math.random() * 50;
-    var endPointX = Math.random() * 100;
-    var endPointY = Math.random() * 100;
-    var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`;
-    path.setAttribute('d', d);
+document.querySelectorAll(".curved-line path").forEach(function (path) {
+  var controlPointX1 = Math.random() * 50;
+  var controlPointY1 = Math.random() * 50;
+  var controlPointX2 = 100 - Math.random() * 50;
+  var controlPointY2 = Math.random() * 50;
+  var endPointX = Math.random() * 100;
+  var endPointY = Math.random() * 100;
+  var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`;
+  path.setAttribute("d", d);
 });
 
 // Function to fetch user profile data
 function fetchUserProfile() {
-    fetch('/get_user_profile/')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('student-id').value = data.student_id;
-            document.getElementById('username').value = data.username;
-            document.getElementById('full-name').value = data.full_name;
-            document.getElementById('academic-year').value = data.academic_year_level;
-            document.getElementById('contact-number').value = data.contact_number;
-            document.getElementById('email').value = data.email;
-        })
-        .catch(error => console.error('Error fetching user profile:', error));
+  fetch("/get_user_profile/")
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("student-id").value = data.student_id;
+      document.getElementById("username").value = data.username;
+      document.getElementById("full-name").value = data.full_name;
+      document.getElementById("academic-year").value = data.academic_year_level;
+      document.getElementById("contact-number").value = data.contact_number;
+      document.getElementById("email").value = data.email;
+    })
+    .catch((error) => console.error("Error fetching user profile:", error));
 }
 
 // Function to update user profile data
 function updateUserProfile(event) {
-    event.preventDefault(); // Prevent the form from submitting in the traditional way
+  event.preventDefault(); // Prevent the form from submitting in the traditional way
 
-    const username = document.getElementById('username').value;
-    const contactNumber = document.getElementById('contact-number').value;
-    const email = document.getElementById('email').value;
-    const academicYear = document.getElementById('academic-year').value;
+  const username = document.getElementById("username").value;
+  const contactNumber = document.getElementById("contact-number").value;
+  const email = document.getElementById("email").value;
+  const academicYear = document.getElementById("academic-year").value;
 
-    fetch('/update_user_profile/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')  // Include CSRF token
-        },
-        body: JSON.stringify({
-            username: username,
-            contact_number: contactNumber,
-            email: email,
-            academic_year_level: academicYear,
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccess('Profile updated successfully!', 'update');
+  fetch("/update_user_profile/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token
+    },
+    body: JSON.stringify({
+      username: username,
+      contact_number: contactNumber,
+      email: email,
+      academic_year_level: academicYear,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        showSuccess("Profile updated successfully!", "update");
+      } else {
+        // Check for specific errors
+        if (data.errors.username) {
+          showError(data.errors.username, "update");
+        } else if (data.errors.email) {
+          showError(data.errors.email, "update");
         } else {
-            // Check for specific errors
-            if (data.errors.username) {
-                showError(data.errors.username, 'update');
-            } else if (data.errors.email) {
-                showError(data.errors.email, 'update');
-            } else {
-                showError('Error updating profile. Please try again.', 'update');
-            }
+          showError("Error updating profile. Please try again.", "update");
         }
+      }
     })
-    .catch(error => {
-        console.error('Error updating user profile:', error);
-        showError('Error updating profile. Please try again.', 'update');
+    .catch((error) => {
+      console.error("Error updating user profile:", error);
+      showError("Error updating profile. Please try again.", "update");
     });
 }
 
-document.getElementById('profileForm').addEventListener('submit', updateUserProfile);
+document
+  .getElementById("profileForm")
+  .addEventListener("submit", updateUserProfile);
