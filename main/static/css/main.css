@@ -860,6 +860,99 @@ button:hover {
   text-align: center;
   border: 2px solid #0F2326
 }
+/* Password Manager Modal Styles */
+.modal-content.password {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.modal-content.password h2 {
+  margin-bottom: 20px;
+  color: #0F2326;
+}
+
+.modal-content.password p {
+  color: #BCC1CA;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.input-container {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.input-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-align: left;
+  color: #0F2326;
+}
+
+.input-container input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.password-strength {
+  height: 5px;
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 5px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.strength-bar {
+  height: 100%;
+  width: 0%;
+  background-color: #ff4b4b;
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+
+button#confirmPassword {
+  width: 100%;
+  padding: 12px;
+  background-color: #689E4B;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button#confirmPassword:hover {
+  background-color: #3b5a2b;
+}
+
+button#generatePassword {
+  width: 100%;
+  padding: 12px;
+  background-color: #ddd;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+button#generatePassword:hover {
+  background-color: #bbb;
+}
+
 #passwordModal {
   display: none;
   position: fixed;
