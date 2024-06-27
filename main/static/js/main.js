@@ -122,6 +122,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  saveAvatarBtn.addEventListener("click", function () {
+    if (selectedAvatar) {
+      const formData = new FormData();
+      formData.append("avatar_url", selectedAvatar);
+
+      fetch(uploadAvatarUrl, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((data) => {
+              throw new Error(data.errors || "Unknown error");
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            showNotificationSuccess("Avatar updated successfully!");
+            document.getElementById("currentAvatar").src = data.avatar_url;
+          } else {
+            showNotificationError(
+              "Error uploading avatar: " + (data.errors || "Unknown error")
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error uploading avatar:", error);
+          showNotificationError("Error uploading avatar: " + error.message);
+        });
+    }
+  });
+
   cancelCropBtn.addEventListener("click", function () {
     closeCropperModal.click();
   });

@@ -1164,6 +1164,7 @@ button#generatePassword:hover {
 }
 #notificationSuccessBox {
   top: 40%;
+  left: 70px;
   width: 360px;
   display: none;
   text-align: center;
@@ -1175,8 +1176,10 @@ button#generatePassword:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
+
 #notificationErrorBox {
   top: 40%;
+  left: 70px;
   width: 360px;
   display: none;
   text-align: center;
