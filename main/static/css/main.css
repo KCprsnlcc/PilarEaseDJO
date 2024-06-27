@@ -109,7 +109,6 @@ button:hover {
     margin-top: 0;
   }
 }
-<<<<<<< HEAD
 
 /* Smaller loader for avatar upload area */
 
@@ -194,17 +193,6 @@ button:hover {
     transform: scale(1.1);
   }
   100% {
-=======
-/* Add CSS for pop animations */
-@keyframes popIn {
-  0% {
-    transform: scale(0);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
->>>>>>> be32801aaaab82ce94f117391be1601406fef403
     transform: scale(1);
   }
 }
@@ -991,11 +979,7 @@ button:hover {
   width: 80%;
   max-width: 500px;
   max-height: 50%;
-<<<<<<< HEAD
   overflow: visible;
-=======
-  overflow: hidden;
->>>>>>> be32801aaaab82ce94f117391be1601406fef403
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   background-color: white;
   border-radius: 10px;
@@ -1178,17 +1162,9 @@ button#generatePassword:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
-<<<<<<< HEAD
 #notificationSuccessBox {
   top: 40%;
   width: 360px;
-=======
-#updateSuccessDialog,
-#updateErrorDialog {
-  top: 230px;
-  left: 110px;
-  width: 400px;
->>>>>>> be32801aaaab82ce94f117391be1601406fef403
   display: none;
   text-align: center;
   position: absolute;
@@ -1199,7 +1175,6 @@ button#generatePassword:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
-<<<<<<< HEAD
 #notificationErrorBox {
   top: 40%;
   width: 360px;
@@ -1227,8 +1202,6 @@ button#generatePassword:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
-=======
->>>>>>> be32801aaaab82ce94f117391be1601406fef403
 #loginDialogBox,
 #loginSuccessBox {
   top: 230px;
