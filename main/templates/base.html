@@ -362,176 +362,160 @@
     <div id="avatarModal" class="modal-content avatar">
       <span class="close" id="closeAvatarModal">&times;</span>
       <h2>Change Your Avatar!</h2>
-      <div class="avatar-options">
-        <div class="built-in-avatars">
-          <div class="avatars-grid">
-            <div class="upload-area">
-              <img
-                id="currentAvatar"
-                src=""
-                data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
-                alt="Upload Avatar"
-              />
-              <div
-                id="avatarLoader"
-                class="loader-avatar"
-                style="display: none"
-              ></div>
-              <input
-                type="file"
-                id="uploadAvatarInput"
-                accept="image/*"
-                style="display: none"
-              />
-            </div>
+      <div class="built-in-avatars">
+        <div class="avatars-grid">
+          <div class="upload-area">
             <img
-              src="{% static 'images/avatars/avataaars1.png' %}"
-              alt="Avatar 1"
-              class="avatar-option"
+              id="currentAvatar"
+              src=""
+              data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
+              alt="Upload Avatar"
             />
-            <img
-              src="{% static 'images/avatars/avataaars2.png' %}"
-              alt="Avatar 2"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars3.png' %}"
-              alt="Avatar 3"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars4.png' %}"
-              alt="Avatar 4"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars5.png' %}"
-              alt="Avatar 5"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars6.png' %}"
-              alt="Avatar 6"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars7.png' %}"
-              alt="Avatar 7"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars8.png' %}"
-              alt="Avatar 8"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars9.png' %}"
-              alt="Avatar 9"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars10.png' %}"
-              alt="Avatar 10"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars11.png' %}"
-              alt="Avatar 11"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars12.png' %}"
-              alt="Avatar 12"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars13.png' %}"
-              alt="Avatar 13"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars14.png' %}"
-              alt="Avatar 14"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars15.png' %}"
-              alt="Avatar 15"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars16.png' %}"
-              alt="Avatar 16"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars17.png' %}"
-              alt="Avatar 17"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars18.png' %}"
-              alt="Avatar 18"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars19.png' %}"
-              alt="Avatar 19"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars20.png' %}"
-              alt="Avatar 20"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars21.png' %}"
-              alt="Avatar 21"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars22.png' %}"
-              alt="Avatar 22"
-              class="avatar-option"
-            />
-            <img
-              src="{% static 'images/avatars/avataaars23.png' %}"
-              alt="Avatar 23"
-              class="avatar-option"
+            <div
+              id="avatarLoader"
+              class="loader-avatar"
+              style="display: none"
+            ></div>
+            <input
+              type="file"
+              id="uploadAvatarInput"
+              accept="image/*"
+              style="display: none"
             />
           </div>
-          <button class="primary" id="saveAvatarBtn">Change Now</button>
-          <button class="secondary" id="cancelAvatarBtn">No, Thanks</button>
+          <img
+            src="{% static 'images/avatars/avataaars1.png' %}"
+            alt="Avatar 1"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars2.png' %}"
+            alt="Avatar 2"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars3.png' %}"
+            alt="Avatar 3"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars4.png' %}"
+            alt="Avatar 4"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars5.png' %}"
+            alt="Avatar 5"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars6.png' %}"
+            alt="Avatar 6"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars7.png' %}"
+            alt="Avatar 7"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars8.png' %}"
+            alt="Avatar 8"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars9.png' %}"
+            alt="Avatar 9"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars10.png' %}"
+            alt="Avatar 10"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars11.png' %}"
+            alt="Avatar 11"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars12.png' %}"
+            alt="Avatar 12"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars13.png' %}"
+            alt="Avatar 13"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars14.png' %}"
+            alt="Avatar 14"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars15.png' %}"
+            alt="Avatar 15"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars16.png' %}"
+            alt="Avatar 16"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars17.png' %}"
+            alt="Avatar 17"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars18.png' %}"
+            alt="Avatar 18"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars19.png' %}"
+            alt="Avatar 19"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars20.png' %}"
+            alt="Avatar 20"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars21.png' %}"
+            alt="Avatar 21"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars22.png' %}"
+            alt="Avatar 22"
+            class="avatar-option"
+          />
+          <img
+            src="{% static 'images/avatars/avataaars23.png' %}"
+            alt="Avatar 23"
+            class="avatar-option"
+          />
         </div>
-        <!-- Notification Dialogs -->
-        <div
-          id="notificationSuccessBox"
-          class="flat-ui-dialog success"
-          style="display: none"
-        >
-          <div id="notificationSuccessContent"></div>
-        </div>
-        <div
-          id="notificationErrorBox"
-          class="flat-ui-dialog error"
-          style="display: none"
-        >
-          <div id="notificationErrorContent"></div>
-        </div>
-        <!-- Cropping Modal -->
-        <div
-          id="cropperModal"
-          class="modal-content cropper"
-          style="display: none"
-        >
-          <span class="close" id="closeCropperModal">&times;</span>
-          <h2>Crop Your Image</h2>
-          <div class="cropper-container">
-            <img id="imageToCrop" src="" alt="Image to Crop" />
-          </div>
-          <button class="primary" id="cropImageBtn">Crop</button>
-          <button class="secondary" id="cancelCropBtn">Cancel</button>
-        </div>
+        <button class="primary" id="saveAvatarBtn">Change Now</button>
+        <button class="secondary" id="cancelAvatarBtn">No, Thanks</button>
+      </div>
+      <!-- Notification Dialogs -->
+      <div
+        id="notificationSuccessBox"
+        class="flat-ui-dialog success"
+        style="display: none"
+      >
+        <div id="notificationSuccessContent"></div>
+      </div>
+      <div
+        id="notificationErrorBox"
+        class="flat-ui-dialog error"
+        style="display: none"
+      >
+        <div id="notificationErrorContent"></div>
       </div>
       <form id="avatarForm" enctype="multipart/form-data" style="display: none">
         <input type="file" name="avatar" id="avatarInput" accept="image/*" />
@@ -543,6 +527,17 @@
         id="uploadAvatarUrl"
         value="{% url 'upload_avatar' %}"
       />
+    </div>
+
+    <!-- Cropping Modal -->
+    <div id="cropperModal" class="modal-content cropper" style="display: none">
+      <span id="closeCropperModal">&times;</span>
+      <h2>Crop Your Image</h2>
+      <div class="cropper-container">
+        <img id="imageToCrop" src="" alt="Image to Crop" />
+      </div>
+      <button class="primary" id="cropImageBtn">Crop</button>
+      <button class="secondary" id="cancelCropBtn">Cancel</button>
     </div>
 
     <!-- Password Manager Modal -->
