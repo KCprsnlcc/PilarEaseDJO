@@ -106,15 +106,13 @@ document.addEventListener("DOMContentLoaded", function () {
               showNotificationSuccess("Avatar updated successfully!");
               document.getElementById("currentAvatar").src = data.avatar_url;
             } else {
-              showNotificationError(
-                "Error uploading avatar: " + (data.errors || "Unknown error")
-              );
+              showNotificationError("" + (data.errors || "Unknown error"));
             }
             closeCropperModal.click();
           })
           .catch((error) => {
             console.error("Error uploading avatar:", error);
-            showNotificationError("Error uploading avatar: " + error.message);
+            showNotificationError("" + error.message);
             closeCropperModal.click();
           });
       });
@@ -149,14 +147,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 showNotificationSuccess("Avatar updated successfully!");
                 document.getElementById("currentAvatar").src = data.avatar_url;
               } else {
-                showNotificationError(
-                  "Error uploading avatar: " + (data.errors || "Unknown error")
-                );
+                showNotificationError("" + (data.errors || "Unknown error"));
               }
             })
             .catch((error) => {
               console.error("Error uploading avatar:", error);
-              showNotificationError("Error uploading avatar: " + error.message);
+              showNotificationError("" + error.message);
             });
         });
     } else {
