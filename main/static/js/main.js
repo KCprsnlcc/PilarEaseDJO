@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", function () {
       this.classList.add("selected");
       selectedAvatar = this.src;
       saveAvatarBtn.style.display = "inline-block";
-      document.getElementById("avatarUrlInput").value = selectedAvatar;
     });
   });
 
@@ -124,38 +123,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
   saveAvatarBtn.addEventListener("click", function () {
     if (selectedAvatar) {
-      const formData = new FormData();
-      formData.append("avatar_url", selectedAvatar);
+      fetch(selectedAvatar)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const formData = new FormData();
+          formData.append("avatar", blob, "avatar.png");
 
-      fetch(uploadAvatarUrl, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: formData,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            return response.json().then((data) => {
-              throw new Error(data.errors || "Unknown error");
+          fetch(uploadAvatarUrl, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((data) => {
+                  throw new Error(data.errors || "Unknown error");
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                showNotificationSuccess("Avatar updated successfully!");
+                document.getElementById("currentAvatar").src = data.avatar_url;
+              } else {
+                showNotificationError(
+                  "Error uploading avatar: " + (data.errors || "Unknown error")
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error uploading avatar:", error);
+              showNotificationError("Error uploading avatar: " + error.message);
             });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          if (data.success) {
-            showNotificationSuccess("Avatar updated successfully!");
-            document.getElementById("currentAvatar").src = data.avatar_url;
-          } else {
-            showNotificationError(
-              "Error uploading avatar: " + (data.errors || "Unknown error")
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error uploading avatar:", error);
-          showNotificationError("Error uploading avatar: " + error.message);
         });
+    } else {
+      showNotificationError("Select or upload your avatar.");
     }
   });
 
@@ -204,6 +209,10 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
+
+        // Close the avatar modal only after the success message animation is done
+        avatarModal.classList.add("slide-upSolid");
+        avatarModal.classList.remove("slide-downSolid");
       }, 300);
     }, 3000);
   }
@@ -257,6 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   profileIcon.addEventListener("click", function () {
+    fetchUserProfile();
     avatarModal.classList.add("slide-downSolid");
     avatarModal.classList.remove("slide-upSolid");
     avatarModal.style.display = "block";
@@ -881,6 +891,14 @@ document.querySelectorAll(".curved-line path").forEach(function (path) {
 
 // Function to fetch user profile data
 function fetchUserProfile() {
+  const avatarLoader = document.getElementById("avatarLoader");
+  const profileIconImage = document.getElementById("profileIconImage");
+  const placeholderUrl = profileIconImage.src;
+
+  // Show loader and hide image
+  avatarLoader.style.display = "block";
+  profileIconImage.style.display = "none";
+
   fetch("/get_user_profile/")
     .then((response) => response.json())
     .then((data) => {
@@ -890,9 +908,66 @@ function fetchUserProfile() {
       document.getElementById("academic-year").value = data.academic_year_level;
       document.getElementById("contact-number").value = data.contact_number;
       document.getElementById("email").value = data.email;
+      // Set the profile icon image source
+      profileIconImage.src = data.avatar || placeholderUrl;
+      // Hide loader once image is loaded
+      profileIconImage.onload = () => {
+        avatarLoader.style.display = "none";
+        profileIconImage.style.display = "block";
+      };
     })
-    .catch((error) => console.error("Error fetching user profile:", error));
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
+      // Hide loader in case of error
+      avatarLoader.style.display = "none";
+      profileIconImage.style.display = "block";
+    });
 }
+// Function to show success dialog
+function showProfileSuccess(message) {
+  const dialogBox = document.getElementById("profileSuccessDialog");
+  const dialogContent = document.getElementById("profileSuccessContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
+
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+
+// Function to show error dialog
+function showProfileError(message) {
+  const dialogBox = document.getElementById("profileErrorDialog");
+  const dialogContent = document.getElementById("profileErrorContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
+
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+document.getElementById("profileLink").addEventListener("click", function () {
+  fetchUserProfile();
+  profileModal.style.display = "block";
+});
+const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
+refreshAvatarBtn.addEventListener("click", function () {
+  fetchUserProfile();
+});
 
 // Function to update user profile data
 function updateUserProfile(event) {
@@ -919,21 +994,23 @@ function updateUserProfile(event) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        showSuccess("Profile updated successfully!", "update");
+        showProfileSuccess("Profile updated successfully!");
       } else {
         // Check for specific errors
         if (data.errors.username) {
-          showError(data.errors.username, "update");
+          showProfileError(data.errors.username);
         } else if (data.errors.email) {
-          showError(data.errors.email, "update");
+          showProfileError(data.errors.email);
+        } else if (data.errors.password) {
+          showProfileError(data.errors.password);
         } else {
-          showError("Error updating profile. Please try again.", "update");
+          showProfileError("Error updating profile. Please try again.");
         }
       }
     })
     .catch((error) => {
       console.error("Error updating user profile:", error);
-      showError("Error updating profile. Please try again.", "update");
+      showProfileError("Error updating profile. Please try again.");
     });
 }
 

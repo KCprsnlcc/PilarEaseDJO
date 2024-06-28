@@ -1,8 +1,8 @@
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.utils import timezone
 from datetime import datetime
 import pytz
@@ -13,7 +13,6 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .models import UserProfile
 import logging
-from django.shortcuts import render, get_object_or_404
 from PIL import Image
 from io import BytesIO
 import os
@@ -151,25 +150,15 @@ def upload_avatar(request):
             if avatar.size > 1 * 1024 * 1024:
                 return JsonResponse({'success': False, 'errors': 'File size exceeds the 1MB limit.'}, status=400)
 
-            # Crop the image
-            image = Image.open(avatar)
-            image = image.resize((528, 560), Image.ANTIALIAS)
-            image_io = BytesIO()
-            image.save(image_io, format=image.format)
-            avatar = image_io
-
+            # Save the image file directly
             user_profile.avatar.save(avatar.name, avatar)
-            user_profile.avatar_url = user_profile.avatar.url  # Save the URL of the uploaded file
-        elif 'avatar_url' in request.POST:
-            avatar_url = request.POST.get('avatar_url')
-            user_profile.avatar_url = avatar_url
+            user_profile.save()
 
-        user_profile.save()
+            return JsonResponse({'success': True, 'avatar_url': user_profile.avatar.url})
 
-        return JsonResponse({'success': True, 'avatar_url': user_profile.avatar.url if user_profile.avatar else user_profile.avatar_url})
+        return JsonResponse({'success': False, 'errors': 'No avatar file uploaded.'}, status=400)
 
     return JsonResponse({'success': False, 'errors': 'Invalid request'}, status=400)
-
 
 @login_required
 def logout_view(request):

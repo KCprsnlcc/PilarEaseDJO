@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("loader-overlay").style.display = "none";
   const avatarLoader = document.getElementById("avatarLoader");
@@ -12,16 +11,22 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const uploadAvatarInput = document.getElementById("uploadAvatarInput");
   const uploadAreaImg = document.querySelector(".upload-area img");
+  const cropperModal = document.getElementById("cropperModal");
+  const closeCropperModal = document.getElementById("closeCropperModal");
+  const cropImageBtn = document.getElementById("cropImageBtn");
+  const cancelCropBtn = document.getElementById("cancelCropBtn");
+  const imageToCrop = document.getElementById("imageToCrop");
   let selectedAvatar = null;
+  let cropper;
 
   const uploadAvatarUrl = document.getElementById("uploadAvatarUrl").value;
+  const placeholderUrl = currentAvatar.dataset.placeholderUrl;
 
   // Load current avatar
   fetch("/get_user_profile/")
     .then((response) => response.json())
     .then((data) => {
-      currentAvatar.src =
-        data.avatar || "{% static 'images/avatars/placeholder.png' %}";
+      currentAvatar.src = data.avatar || placeholderUrl;
       avatarLoader.style.display = "none";
       currentAvatar.style.display = "block";
     })
@@ -37,7 +42,6 @@ document.addEventListener("DOMContentLoaded", function () {
       this.classList.add("selected");
       selectedAvatar = this.src;
       saveAvatarBtn.style.display = "inline-block";
-      document.getElementById("avatarUrlInput").value = selectedAvatar;
     });
   });
 
@@ -48,255 +52,188 @@ document.addEventListener("DOMContentLoaded", function () {
   uploadAvatarInput.addEventListener("change", function () {
     if (uploadAvatarInput.files.length > 0) {
       const uploadedFile = uploadAvatarInput.files[0];
+
+      // Check file size (limit to 1MB)
+      if (uploadedFile.size > 1 * 1024 * 1024) {
+        showNotificationError("File size exceeds the 1MB limit.");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = function (e) {
-        avatarImages.forEach((i) => i.classList.remove("selected"));
-        uploadAreaImg.src = e.target.result;
-        uploadAreaImg.classList.add("selected");
-        selectedAvatar = e.target.result;
-        saveAvatarBtn.style.display = "inline-block";
+        imageToCrop.src = e.target.result;
+
+        // Show cropping modal
+        cropperModal.style.display = "block";
+        cropperModal.classList.add("pop-in");
+
+        // Initialize cropper
+        if (cropper) {
+          cropper.destroy();
+        }
+        cropper = new Cropper(imageToCrop, {
+          aspectRatio: 528 / 560,
+          viewMode: 1,
+        });
       };
       reader.readAsDataURL(uploadedFile);
-=======
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('loader-overlay').style.display = 'none';
-    const avatarModal = document.getElementById('avatarModal');
-    const closeAvatarModal = document.getElementById('closeAvatarModal');
-    const saveAvatarBtn = document.getElementById('saveAvatarBtn');
-    const cancelAvatarBtn = document.getElementById('cancelAvatarBtn');
-    const avatarImages = document.querySelectorAll('.avatars-grid img');
-    const uploadAvatarInput = document.getElementById('uploadAvatarInput');
-    let selectedAvatar = null;
+    }
+  });
 
-    avatarImages.forEach(img => {
-        img.addEventListener('click', function() {
-            avatarImages.forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedAvatar = this.src;
-        });
-    });
+  cropImageBtn.addEventListener("click", function () {
+    if (cropper) {
+      cropper.getCroppedCanvas().toBlob((blob) => {
+        const formData = new FormData();
+        formData.append("avatar", blob, "avatar.png");
 
-    document.querySelector('.upload-area').addEventListener('click', function() {
-        uploadAvatarInput.click();
-    });
-
-    uploadAvatarInput.addEventListener('change', function() {
-        if (uploadAvatarInput.files.length > 0) {
-            const uploadedFile = uploadAvatarInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                avatarImages.forEach(i => i.classList.remove('selected'));
-                document.querySelector('.upload-area img').src = e.target.result;
-                document.querySelector('.upload-area img').classList.add('selected');
-                selectedAvatar = e.target.result;
-            };
-            reader.readAsDataURL(uploadedFile);
-        }
-    });
-
-    saveAvatarBtn.addEventListener('click', function() {
-        if (selectedAvatar) {
-            console.log('Selected avatar:', selectedAvatar);
-            // Handle saving the selected avatar
-        } else {
-            alert('Please select or upload an avatar.');
-        }
-    });
-
-    cancelAvatarBtn.addEventListener('click', function() {
-        avatarModal.classList.add('slide-upSolid');
-        avatarModal.classList.remove('slide-downSolid');
-    });
-
-    closeAvatarModal.addEventListener('click', function() {
-        avatarModal.classList.add('slide-upSolid');
-        avatarModal.classList.remove('slide-downSolid');
-    });
-        const profileIcon = document.getElementById('profileIcon');
-        const tooltip = document.getElementById('profileTooltip');
-        const avatarLink = document.getElementById('avatarLink');
-    
-        profileIcon.addEventListener('mouseenter', function() {
-            tooltip.classList.remove('popOut');
-            tooltip.classList.add('popIn');
-            tooltip.style.visibility = 'visible';
-        });
-    
-        profileIcon.addEventListener('mouseleave', function() {
-            tooltip.classList.remove('popIn');
-            tooltip.classList.add('popOut');
-            tooltip.addEventListener('animationend', function() {
-                tooltip.style.visibility = 'hidden';
-            }, { once: true });
-        });
-    
-        profileIcon.addEventListener('click', function() {
-            avatarLink.click(); // Trigger click event on avatar link
-        });
-    });
-    const newPasswordInput = document.getElementById('newPassword');
-    const repeatPasswordInput = document.getElementById('repeatPassword');
-    const currentPasswordInput = document.getElementById('currentPassword');
-    const strengthBar = document.getElementById('strengthBar');
-    const generatePasswordBtn = document.getElementById('generatePassword');
-    const passwordForm = document.getElementById('passwordForm');
-
-    newPasswordInput.addEventListener('input', function() {
-        const password = newPasswordInput.value;
-        const strength = calculatePasswordStrength(password);
-        updateStrengthBar(strength);
-    });
-
-    generatePasswordBtn.addEventListener('click', function() {
-        const generatedPassword = generateSecurePassword();
-        newPasswordInput.value = generatedPassword;
-        repeatPasswordInput.value = generatedPassword;
-        const strength = calculatePasswordStrength(generatedPassword);
-        updateStrengthBar(strength);
-    });
-
-    passwordForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const currentPassword = currentPasswordInput.value;
-        const newPassword = newPasswordInput.value;
-        const repeatPassword = repeatPasswordInput.value;
-
-        if (newPassword !== repeatPassword) {
-            showError("Passwords do not match.");
-            return;
-        }
-
-        const data = {
-            current_password: currentPassword,
-            new_password: newPassword,
-            repeat_new_password: repeatPassword
-        };
-
-        fetch('/password_manager/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(data)
+        fetch(uploadAvatarUrl, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formData,
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccess("Password updated successfully!");
-                passwordForm.reset();
-                updateStrengthBar(0);
-            } else {
-                showError("Please check your current password.");
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.errors || "Unknown error");
+              });
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showError("Please check your current password.");
-        });
-    });
-
-    function calculatePasswordStrength(password) {
-        let strength = 0;
-        if (password.length >= 8) strength += 1;
-        if (/[A-Z]/.test(password)) strength += 1;
-        if (/[0-9]/.test(password)) strength += 1;
-        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-        return strength;
-    }
-
-    function updateStrengthBar(strength) {
-        const colors = ['#ff4b4b', '#ffb74b', '#fff44b', '#b4ff4b', '#4bff4b'];
-        strengthBar.style.width = (strength * 25) + '%';
-        strengthBar.style.backgroundColor = colors[strength];
-    }
-
-    function generateSecurePassword() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-        let password = '';
-        for (let i = 0; i < 12; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
-    }
-
-    function showSuccess(message) {
-        const dialogBox = document.getElementById('updatepasssuccess');
-        const dialogContent = document.getElementById('updatepasssuccessContent');
-        dialogContent.innerHTML = message;
-        dialogBox.style.display = 'block';
-        setTimeout(() => {
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
-
-    function showError(message) {
-        const dialogBox = document.getElementById('updatepasserror');
-        const dialogContent = document.getElementById('updatepasserrorContent');
-        dialogContent.innerHTML = message;
-        dialogBox.style.display = 'block';
-        setTimeout(() => {
-            dialogBox.classList.add('pop-out');
-            setTimeout(() => {
-                dialogBox.style.display = 'none';
-                dialogBox.classList.remove('pop-out');
-            }, 300);
-        }, 3000);
-    }
-    // Start session timeout timer only if the user is authenticated
-    if (document.body.classList.contains('authenticated')) {
-        startSessionTimer();
->>>>>>> be32801aaaab82ce94f117391be1601406fef403
+            return response.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              showNotificationSuccess("Avatar updated successfully!");
+              document.getElementById("currentAvatar").src = data.avatar_url;
+            } else {
+              showNotificationError(
+                "Error uploading avatar: " + (data.errors || "Unknown error")
+              );
+            }
+            closeCropperModal.click();
+          })
+          .catch((error) => {
+            console.error("Error uploading avatar:", error);
+            showNotificationError("Error uploading avatar: " + error.message);
+            closeCropperModal.click();
+          });
+      });
     }
   });
 
   saveAvatarBtn.addEventListener("click", function () {
-    const formData = new FormData();
-    if (uploadAvatarInput.files.length > 0) {
-      formData.append("avatar", uploadAvatarInput.files[0]);
-    } else {
-      formData.append(
-        "avatar_url",
-        document.getElementById("avatarUrlInput").value
-      );
-    }
+    if (selectedAvatar) {
+      fetch(selectedAvatar)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const formData = new FormData();
+          formData.append("avatar", blob, "avatar.png");
 
-    fetch(uploadAvatarUrl, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: formData,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then((data) => {
-            throw new Error(data.errors || "Unknown error");
-          });
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.success) {
-          showNotificationSuccess("Avatar updated successfully!");
-          document.getElementById("currentAvatar").src = data.avatar_url;
-        } else {
-          showNotificationError(
-            "Error uploading avatar: " + (data.errors || "Unknown error")
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Error uploading avatar:", error);
-        showNotificationError("Error uploading avatar: " + error.message);
-      });
+          fetch(uploadAvatarUrl, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((data) => {
+                  throw new Error(data.errors || "Unknown error");
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                showNotificationSuccess("Avatar updated successfully!");
+                document.getElementById("currentAvatar").src = data.avatar_url;
+              } else {
+                showNotificationError(
+                  "Error uploading avatar: " + (data.errors || "Unknown error")
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error uploading avatar:", error);
+              showNotificationError("Error uploading avatar: " + error.message);
+            });
+        });
+    } else {
+      showNotificationError("Select or upload your avatar.");
+    }
   });
 
+  cancelCropBtn.addEventListener("click", function () {
+    closeCropperModal.click();
+  });
+
+  closeCropperModal.addEventListener("click", function () {
+    cropperModal.classList.remove("pop-in");
+    cropperModal.classList.add("pop-out");
+    setTimeout(() => {
+      cropperModal.style.display = "none";
+      cropperModal.classList.remove("pop-out");
+      if (cropper) {
+        cropper.destroy();
+      }
+    }, 300);
+  });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function showNotificationSuccess(message) {
+    const dialogBox = document.getElementById("notificationSuccessBox");
+    const dialogContent = document.getElementById("notificationSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+
+        // Close the avatar modal only after the success message animation is done
+        avatarModal.classList.add("slide-upSolid");
+        avatarModal.classList.remove("slide-downSolid");
+      }, 300);
+    }, 3000);
+  }
+
+  function showNotificationError(message) {
+    const dialogBox = document.getElementById("notificationErrorBox");
+    const dialogContent = document.getElementById("notificationErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
   cancelAvatarBtn.addEventListener("click", function () {
     avatarModal.classList.add("slide-upSolid");
     avatarModal.classList.remove("slide-downSolid");
@@ -329,63 +266,12 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   profileIcon.addEventListener("click", function () {
+    fetchUserProfile();
     avatarModal.classList.add("slide-downSolid");
     avatarModal.classList.remove("slide-upSolid");
     avatarModal.style.display = "block";
   });
-
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  function showNotificationSuccess(message) {
-    const dialogBox = document.getElementById("notificationSuccessBox");
-    const dialogContent = document.getElementById("notificationSuccessContent");
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = "block";
-    dialogBox.classList.remove("pop-out");
-    dialogBox.classList.add("pop-in");
-
-    setTimeout(() => {
-      dialogBox.classList.remove("pop-in");
-      dialogBox.classList.add("pop-out");
-      setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-      }, 300);
-    }, 3000);
-  }
-
-  function showNotificationError(message) {
-    const dialogBox = document.getElementById("notificationErrorBox");
-    const dialogContent = document.getElementById("notificationErrorContent");
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = "block";
-    dialogBox.classList.remove("pop-out");
-    dialogBox.classList.add("pop-in");
-
-    setTimeout(() => {
-      dialogBox.classList.remove("pop-in");
-      dialogBox.classList.add("pop-out");
-      setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-      }, 300);
-    }, 3000);
-  }
 });
-
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");
@@ -1005,6 +891,14 @@ document.querySelectorAll(".curved-line path").forEach(function (path) {
 
 // Function to fetch user profile data
 function fetchUserProfile() {
+  const avatarLoader = document.getElementById("avatarLoader");
+  const profileIconImage = document.getElementById("profileIconImage");
+  const placeholderUrl = profileIconImage.src;
+
+  // Show loader and hide image
+  avatarLoader.style.display = "block";
+  profileIconImage.style.display = "none";
+
   fetch("/get_user_profile/")
     .then((response) => response.json())
     .then((data) => {
@@ -1014,9 +908,66 @@ function fetchUserProfile() {
       document.getElementById("academic-year").value = data.academic_year_level;
       document.getElementById("contact-number").value = data.contact_number;
       document.getElementById("email").value = data.email;
+      // Set the profile icon image source
+      profileIconImage.src = data.avatar || placeholderUrl;
+      // Hide loader once image is loaded
+      profileIconImage.onload = () => {
+        avatarLoader.style.display = "none";
+        profileIconImage.style.display = "block";
+      };
     })
-    .catch((error) => console.error("Error fetching user profile:", error));
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
+      // Hide loader in case of error
+      avatarLoader.style.display = "none";
+      profileIconImage.style.display = "block";
+    });
 }
+// Function to show success dialog
+function showProfileSuccess(message) {
+  const dialogBox = document.getElementById("profileSuccessDialog");
+  const dialogContent = document.getElementById("profileSuccessContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
+
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+
+// Function to show error dialog
+function showProfileError(message) {
+  const dialogBox = document.getElementById("profileErrorDialog");
+  const dialogContent = document.getElementById("profileErrorContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
+
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+document.getElementById("profileLink").addEventListener("click", function () {
+  fetchUserProfile();
+  profileModal.style.display = "block";
+});
+const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
+refreshAvatarBtn.addEventListener("click", function () {
+  fetchUserProfile();
+});
 
 // Function to update user profile data
 function updateUserProfile(event) {
@@ -1043,28 +994,26 @@ function updateUserProfile(event) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        showSuccess("Profile updated successfully!", "update");
+        showProfileSuccess("Profile updated successfully!");
       } else {
         // Check for specific errors
         if (data.errors.username) {
-          showError(data.errors.username, "update");
+          showProfileError(data.errors.username);
         } else if (data.errors.email) {
-          showError(data.errors.email, "update");
+          showProfileError(data.errors.email);
+        } else if (data.errors.password) {
+          showProfileError(data.errors.password);
         } else {
-          showError("Error updating profile. Please try again.", "update");
+          showProfileError("Error updating profile. Please try again.");
         }
       }
     })
     .catch((error) => {
       console.error("Error updating user profile:", error);
-      showError("Error updating profile. Please try again.", "update");
+      showProfileError("Error updating profile. Please try again.");
     });
 }
 
-<<<<<<< HEAD
 document
   .getElementById("profileForm")
   .addEventListener("submit", updateUserProfile);
-=======
-document.getElementById('profileForm').addEventListener('submit', updateUserProfile);
->>>>>>> be32801aaaab82ce94f117391be1601406fef403

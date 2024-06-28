@@ -293,15 +293,26 @@
       <span class="close" id="closeProfileModal">&times;</span>
       <h2>Profile Settings</h2>
       <div class="profile-icon tooltip" id="profileIcon">
-        <img
-          src="{% static 'images/avatars/placeholder.png' %}"
-          alt="Profile Icon"
-          id="profileIconImage"
-        />
+        <div
+          id="avatarLoader"
+          class="loader-avatar"
+          style="display: none"
+        ></div>
+        <!-- Avatar Loader -->
+        <div id="profileIconImageContainer">
+          <img
+            src="{% static 'images/avatars/placeholder.png' %}"
+            alt="Profile Icon"
+            id="profileIconImage"
+          />
+        </div>
         <span class="tooltiptext" id="profileTooltip"
           >Click to change avatar.</span
         >
       </div>
+      <button id="refreshAvatarBtn" class="refresh-avatar-btn">
+        <i class="bx bx-refresh"></i>
+      </button>
       <form id="profileForm">
         <label for="student-id">Student ID No.</label>
         <input
@@ -356,11 +367,30 @@
           Save changes
         </button>
       </form>
+      <!-- Success and Error Dialogs -->
+      <div
+        id="profileSuccessDialog"
+        class="flat-ui-dialog success"
+        style="display: none"
+      >
+        <div class="flat-ui-dialog-content">
+          <span id="profileSuccessContent"></span>
+        </div>
+      </div>
+      <div
+        id="profileErrorDialog"
+        class="flat-ui-dialog error"
+        style="display: none"
+      >
+        <div class="flat-ui-dialog-content">
+          <span id="profileErrorContent"></span>
+        </div>
+      </div>
     </div>
 
     <!-- Avatar Modal -->
     <div id="avatarModal" class="modal-content avatar">
-      <span class="close" id="closeAvatarModal">&times;</span>
+      <span id="closeAvatarModal"></span>
       <h2>Change Your Avatar!</h2>
       <div class="built-in-avatars">
         <div class="avatars-grid">
@@ -520,6 +550,11 @@
       <form id="avatarForm" enctype="multipart/form-data" style="display: none">
         <input type="file" name="avatar" id="avatarInput" accept="image/*" />
         <input type="hidden" name="avatar_url" id="avatarUrlInput" />
+        <input
+          type="hidden"
+          name="csrfmiddlewaretoken"
+          value="{{ csrf_token }}"
+        />
       </form>
       <!-- Hidden element to store the URL -->
       <input
