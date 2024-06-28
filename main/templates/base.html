@@ -665,6 +665,19 @@
     >
       <div id="logoutSuccessContent">Logout successful!</div>
     </div>
+    <script>
+      const feelingIcons = document.querySelectorAll(".feeling-icon");
+      feelingIcons.forEach((icon) => {
+        icon.addEventListener("click", () => {
+          feelingIcons.forEach((i) => i.classList.remove("active"));
+          icon.classList.add("active");
+        });
+      });
+
+      function formatText(command, value = null) {
+        document.execCommand(command, false, value);
+      }
+    </script>
     <script src="https://unpkg.com/cropperjs"></script>
     {% compress js %}
     <script src="{% static 'js/main.js' %}?v=1.0"></script>

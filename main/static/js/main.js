@@ -22,6 +22,104 @@ document.addEventListener("DOMContentLoaded", function () {
   const uploadAvatarUrl = document.getElementById("uploadAvatarUrl").value;
   const placeholderUrl = currentAvatar.dataset.placeholderUrl;
 
+  const statusModal = document.getElementById("statusModal");
+  const closeStatusModal = document.getElementById("closeStatusModal");
+  const statusComposerButton = document.getElementById("statuscomposer");
+  const descriptionDiv = document.getElementById("description");
+
+  function showPlaceholder() {
+    if (!descriptionDiv.textContent.trim().length) {
+      descriptionDiv.classList.add("placeholder");
+      descriptionDiv.textContent = descriptionDiv.getAttribute("placeholder");
+    }
+  }
+
+  function hidePlaceholder() {
+    if (descriptionDiv.classList.contains("placeholder")) {
+      descriptionDiv.classList.remove("placeholder");
+      descriptionDiv.textContent = "";
+    }
+  }
+
+  descriptionDiv.addEventListener("focus", hidePlaceholder);
+  descriptionDiv.addEventListener("blur", showPlaceholder);
+
+  // Initial placeholder display
+  showPlaceholder();
+
+  // Open status modal if authenticated button is clicked
+  if (statusComposerButton) {
+    statusComposerButton.onclick = function (event) {
+      event.preventDefault();
+      statusModal.style.display = "block";
+      overlay.style.display = "flex";
+      setTimeout(() => {
+        statusModal.classList.add("pop-in");
+        overlay.classList.add("show");
+      }, 10);
+    };
+  }
+
+  // Open login modal if unauthenticated button is clicked
+  if (loginButton) {
+    loginButton.onclick = function (event) {
+      event.preventDefault();
+      loginModal.style.display = "block";
+      overlay.style.display = "flex";
+      setTimeout(() => {
+        loginModal.classList.add("pop-in");
+        overlay.classList.add("show");
+      }, 10);
+    };
+  }
+
+  // Close status modal
+  if (closeStatusModal) {
+    closeStatusModal.onclick = function () {
+      statusModal.classList.add("pop-out");
+      overlay.classList.add("hide");
+      setTimeout(() => {
+        statusModal.style.display = "none";
+        overlay.style.display = "none";
+        statusModal.classList.remove("pop-in", "pop-out");
+        overlay.classList.remove("show", "hide");
+      }, 300);
+    };
+  }
+
+  // Close modal and overlay when clicking outside
+  window.onclick = function (event) {
+    if (event.target == overlay) {
+      if (
+        statusModal.style.display === "block" ||
+        loginModal.style.display === "block"
+      ) {
+        closeModals();
+      }
+    }
+  };
+
+  function closeModals() {
+    if (statusModal.style.display === "block") {
+      statusModal.classList.add("pop-out");
+      overlay.classList.add("hide");
+      setTimeout(() => {
+        statusModal.style.display = "none";
+        overlay.style.display = "none";
+        statusModal.classList.remove("pop-in", "pop-out");
+        overlay.classList.remove("show", "hide");
+      }, 300);
+    } else if (loginModal.style.display === "block") {
+      loginModal.classList.add("pop-out");
+      overlay.classList.add("hide");
+      setTimeout(() => {
+        loginModal.style.display = "none";
+        overlay.style.display = "none";
+        loginModal.classList.remove("pop-in", "pop-out");
+        overlay.classList.remove("show", "hide");
+      }, 300);
+    }
+  }
   // Load current avatar
   fetch("/get_user_profile/")
     .then((response) => response.json())
@@ -31,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
       currentAvatar.style.display = "block";
     })
     .catch((error) => {
-      console.error("Error fetching user profile:", error);
+      console.error("", error);
       avatarLoader.style.display = "none";
       currentAvatar.style.display = "block";
     });
@@ -111,7 +209,7 @@ document.addEventListener("DOMContentLoaded", function () {
             closeCropperModal.click();
           })
           .catch((error) => {
-            console.error("Error uploading avatar:", error);
+            console.error("", error);
             showNotificationError("" + error.message);
             closeCropperModal.click();
           });
@@ -151,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
               }
             })
             .catch((error) => {
-              console.error("Error uploading avatar:", error);
+              console.error("", error);
               showNotificationError("" + error.message);
             });
         });
@@ -913,7 +1011,7 @@ function fetchUserProfile() {
       };
     })
     .catch((error) => {
-      console.error("Error fetching user profile:", error);
+      console.error("", error);
       // Hide loader in case of error
       avatarLoader.style.display = "none";
       profileIconImage.style.display = "block";
@@ -1005,7 +1103,7 @@ function updateUserProfile(event) {
       }
     })
     .catch((error) => {
-      console.error("Error updating user profile:", error);
+      console.error("", error);
       showProfileError("Error updating profile. Please try again.");
     });
 }
