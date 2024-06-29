@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser
-
+from .models import CustomUser, Status
+from django import forms
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
@@ -29,5 +29,13 @@ class CustomAuthenticationForm(AuthenticationForm):
         if not user.is_active:
             raise forms.ValidationError("This account is inactive.", code='inactive')
         
+class StatusForm(forms.ModelForm):
+    class Meta:
+        model = Status
+        fields = ['emotion', 'title', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={'class': 'editable-div', 'contenteditable': 'true'}),
+        }
+
 class AvatarUploadForm(forms.Form):
     avatar = forms.ImageField()

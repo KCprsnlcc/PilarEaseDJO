@@ -24,29 +24,200 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusModal = document.getElementById("statusModal");
   const statusModalOverlay = document.getElementById("statusModalOverlay");
   const closeStatusModal = document.getElementById("closeStatusModal");
-  const descriptionDiv = document.getElementById("description");
-  var statusComposerButton = document.getElementById("statuscomposer");
+  const statusComposerButton = document.getElementById("statuscomposer");
 
-  if (statusComposerButton) {
-    // Show the modal with pop-in animation
-    statusComposerButton.addEventListener("click", function () {
-      statusModal.style.display = "block";
-      statusModalOverlay.style.display = "block";
-      setTimeout(() => {
-        statusModal.classList.add("pop-in");
-        statusModalOverlay.classList.add("fade-in");
-      }, 10);
+  const statusForm = document.getElementById("statusForm");
+  const feelingIcons = document.querySelectorAll(".feeling-icon");
+  const statusTitle = document.getElementById("caption");
+  const statusDescription = document.getElementById("description");
+  const statusLoader = document.getElementById("statusLoader");
+  const statusFormContent = document.querySelector(".status-form");
+
+  let selectedEmotion = null;
+
+  feelingIcons.forEach((icon) => {
+    icon.addEventListener("click", () => {
+      feelingIcons.forEach((i) => i.classList.remove("active"));
+      icon.classList.add("active");
+      selectedEmotion = icon.querySelector("img").alt;
+      saveFormData();
     });
+  });
+
+  statusTitle.addEventListener("input", saveFormData);
+  statusDescription.addEventListener("input", saveFormData);
+
+  statusForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
+
+    if (!selectedEmotion) {
+      showStatusError("Choose your emotion label.");
+      return;
+    }
+
+    if (!title) {
+      showStatusError("Choose a title for this status.");
+      return;
+    }
+
+    if (!description) {
+      showStatusError("Write what you feel in the description.");
+      return;
+    }
+
+    // Show loader and overlay, dim form content
+    statusLoader.style.display = "block";
+    statusOverlay.style.display = "flex";
+    statusFormContent.style.opacity = "0.5";
+
+    fetch("/submit_status/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        emotion: selectedEmotion,
+        title: title,
+        description: description,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Hide loader and overlay
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        statusFormContent.style.opacity = "1";
+
+        if (data.success) {
+          showStatusSuccess("Status shared successfully!");
+        } else {
+          showStatusError(
+            "Failed to share status: " + JSON.stringify(data.errors)
+          );
+        }
+      })
+      .catch((error) => {
+        // Hide loader and overlay
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        statusFormContent.style.opacity = "1";
+
+        console.error("Error:", error);
+        showStatusError("Network error could not upload.");
+      });
+  });
+  statusDescription.addEventListener("focus", hidePlaceholder);
+  statusDescription.addEventListener("blur", showPlaceholder);
+
+  function hidePlaceholder() {
+    if (statusDescription.classList.contains("placeholder")) {
+      statusDescription.classList.remove("placeholder");
+      statusDescription.innerHTML = "";
+    }
   }
 
-  // Close the modal with pop-out animation
-  closeStatusModal.addEventListener("click", function () {
-    closeStatusComposerModal();
-  });
+  function showPlaceholder() {
+    if (!statusDescription.innerHTML.trim().length) {
+      statusDescription.classList.add("placeholder");
+      statusDescription.innerHTML =
+        statusDescription.getAttribute("placeholder");
+    }
+  }
 
-  statusModalOverlay.addEventListener("click", function () {
-    closeStatusComposerModal();
-  });
+  // Initialize placeholder display
+  showPlaceholder();
+
+  function saveFormData() {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.innerHTML.trim();
+
+    const formData = {
+      selectedEmotion: selectedEmotion,
+      title: title,
+      description: description,
+    };
+
+    localStorage.setItem("statusFormData", JSON.stringify(formData));
+  }
+
+  function loadFormData() {
+    const formData = JSON.parse(localStorage.getItem("statusFormData"));
+
+    if (formData) {
+      selectedEmotion = formData.selectedEmotion;
+      statusTitle.value = formData.title;
+      statusDescription.innerHTML = formData.description;
+
+      feelingIcons.forEach((icon) => {
+        if (icon.querySelector("img").alt === selectedEmotion) {
+          icon.classList.add("active");
+        } else {
+          icon.classList.remove("active");
+        }
+      });
+    }
+  }
+
+  function clearFormData() {
+    localStorage.removeItem("statusFormData");
+  }
+
+  window.formatText = function (command, value = null) {
+    document.execCommand(command, false, value);
+    saveFormData();
+  };
+
+  function showStatusSuccess(message) {
+    const dialogBox = document.getElementById("statusNotificationSuccess");
+    const dialogContent = document.getElementById(
+      "statusNotificationSuccessContent"
+    );
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+        clearStatusComposerModal(); // Clear the modal fields
+        closeStatusComposerModal(); // Close the modal with animation
+        window.location.reload(); // Refresh the page after modal is closed
+      }, 300);
+    }, 3000);
+  }
+
+  function showStatusError(message) {
+    const dialogBox = document.getElementById("statusNotificationError");
+    const dialogContent = document.getElementById(
+      "statusNotificationErrorContent"
+    );
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
 
   function closeStatusComposerModal() {
     statusModal.classList.remove("pop-in");
@@ -60,40 +231,36 @@ document.addEventListener("DOMContentLoaded", function () {
       statusModalOverlay.classList.remove("fade-out");
     }, 300);
   }
-  // Placeholder functionality
-  function showPlaceholder() {
-    if (!descriptionDiv.textContent.trim().length) {
-      descriptionDiv.classList.add("placeholder");
-      descriptionDiv.textContent = descriptionDiv.getAttribute("placeholder");
-    }
+
+  function clearStatusComposerModal() {
+    selectedEmotion = null;
+    statusTitle.value = "";
+    statusDescription.innerHTML = "";
+    statusDescription.classList.add("placeholder");
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    clearFormData();
   }
-
-  function hidePlaceholder() {
-    if (descriptionDiv.classList.contains("placeholder")) {
-      descriptionDiv.classList.remove("placeholder");
-      descriptionDiv.textContent = "";
-    }
-  }
-
-  descriptionDiv.addEventListener("focus", hidePlaceholder);
-  descriptionDiv.addEventListener("blur", showPlaceholder);
-
-  // Initial placeholder display
-  showPlaceholder();
-
-  // Feeling icons selection
-  const feelingIcons = document.querySelectorAll(".feeling-icon");
-  feelingIcons.forEach((icon) => {
-    icon.addEventListener("click", () => {
-      feelingIcons.forEach((i) => i.classList.remove("active"));
-      icon.classList.add("active");
+  // Clear the modal fields when opened
+  if (statusComposerButton) {
+    statusComposerButton.addEventListener("click", function () {
+      loadFormData();
+      statusModal.style.display = "block";
+      statusModalOverlay.style.display = "block";
+      setTimeout(() => {
+        statusModal.classList.add("pop-in");
+        statusModalOverlay.classList.add("fade-in");
+      }, 10);
     });
+  }
+
+  // Close the modal with pop-out animation
+  closeStatusModal.addEventListener("click", function () {
+    closeStatusComposerModal();
+  });
+  statusModalOverlay.addEventListener("click", function () {
+    closeStatusComposerModal();
   });
 
-  // Text formatting
-  window.formatText = function (command, value = null) {
-    document.execCommand(command, false, value);
-  };
   // Load current avatar
   fetch("/get_user_profile/")
     .then((response) => response.json())
@@ -340,6 +507,7 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.style.display = "block";
   });
 });
+
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");

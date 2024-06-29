@@ -16,6 +16,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
+from .models import Status
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -59,6 +60,38 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
+@login_required
+@csrf_exempt
+def submit_status(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        emotion = data.get('emotion')
+        title = data.get('title')
+        description = data.get('description')
+
+        # Validate the input fields
+        errors = {}
+        if not emotion:
+            errors['emotion'] = 'This field is required.'
+        if not title:
+            errors['title'] = 'This field is required.'
+        if not description:
+            errors['description'] = 'This field is required.'
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Save the status to the database
+        Status.objects.create(
+            user=request.user,
+            emotion=emotion,
+            title=title,
+            description=description
+        )
+
+        return JsonResponse({'success': True, 'message': 'Status shared successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
 @login_required
 def get_user_profile(request):
     user_profile = request.user.profile

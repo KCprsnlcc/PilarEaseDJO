@@ -77,107 +77,138 @@
 <!-- Status Composer Modal -->
 <div id="statusModal" class="modal-content status">
   <span class="close" id="closeStatusModal">&times;</span>
-  <div class="status-form">
-    <label for="feelings">What's your feeling?</label>
-    <div class="feeling-icons">
-      <div class="feeling-icon">
-        <img src="{% static 'images/feelings/Sadness.png' %}" alt="Sadness" />
-        <div class="tooltip feelings">Sadness</div>
+  <form id="statusForm" method="post" action="{% url 'submit_status' %}">
+    {% csrf_token %}
+    <div class="status-form">
+      <label for="feelings">What's your feeling?</label>
+      <div class="feeling-icons">
+        <div class="feeling-icon">
+          <img src="{% static 'images/feelings/Sadness.png' %}" alt="Sadness" />
+          <div class="tooltip feelings">Sadness</div>
+        </div>
+        <div class="feeling-icon">
+          <img
+            src="{% static 'images/feelings/Happiness.png' %}"
+            alt="Happiness"
+          />
+          <div class="tooltip feelings">Happiness</div>
+        </div>
+        <div class="feeling-icon">
+          <img src="{% static 'images/feelings/Fear.png' %}" alt="Fear" />
+          <div class="tooltip feelings">Fear</div>
+        </div>
+        <div class="feeling-icon">
+          <img src="{% static 'images/feelings/Anger.png' %}" alt="Anger" />
+          <div class="tooltip feelings">Anger</div>
+        </div>
+        <div class="feeling-icon">
+          <img
+            src="{% static 'images/feelings/Surprise.png' %}"
+            alt="Surprise"
+          />
+          <div class="tooltip feelings">Surprise</div>
+        </div>
+        <div class="feeling-icon">
+          <img src="{% static 'images/feelings/Disgust.png' %}" alt="Disgust" />
+          <div class="tooltip feelings">Disgust</div>
+        </div>
       </div>
-      <div class="feeling-icon">
-        <img
-          src="{% static 'images/feelings/Happiness.png' %}"
-          alt="Happiness"
-        />
-        <div class="tooltip feelings">Happiness</div>
+      <label for="caption">Write a brief caption</label>
+      <input
+        type="text"
+        id="caption"
+        name="title"
+        placeholder="How do you feel about..."
+      />
+      <label for="description">Describe your feelings</label>
+      <div class="formatter-container">
+        <div class="formatter-buttons">
+          <select onchange="formatText('fontName', this.value)">
+            <option value="Arial">Arial</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Verdana">Verdana</option>
+          </select>
+          <select onchange="formatText('fontSize', this.value)">
+            <option value="1">8px</option>
+            <option value="2">9px</option>
+            <option value="3">10px</option>
+            <option value="4">11px</option>
+            <option value="5">12px</option>
+            <option value="6">14px</option>
+            <option value="7">16px</option>
+            <option value="8">18px</option>
+            <option value="9">22px</option>
+            <option value="10">24px</option>
+          </select>
+          <button type="button" onclick="formatText('bold')">
+            <i class="bx bx-bold"></i>
+          </button>
+          <button type="button" onclick="formatText('italic')">
+            <i class="bx bx-italic"></i>
+          </button>
+          <button type="button" onclick="formatText('underline')">
+            <i class="bx bx-underline"></i>
+          </button>
+          <button type="button" onclick="formatText('strikeThrough')">
+            <i class="bx bx-strikethrough"></i>
+          </button>
+          <button type="button" onclick="formatText('insertUnorderedList')">
+            <i class="bx bx-list-ul"></i>
+          </button>
+          <button type="button" onclick="formatText('insertOrderedList')">
+            <i class="bx bx-list-ol"></i>
+          </button>
+          <button type="button" onclick="formatText('justifyLeft')">
+            <i class="bx bx-align-left"></i>
+          </button>
+          <button type="button" onclick="formatText('justifyCenter')">
+            <i class="bx bx-align-middle"></i>
+          </button>
+          <button type="button" onclick="formatText('justifyRight')">
+            <i class="bx bx-align-right"></i>
+          </button>
+          <button type="button" onclick="formatText('justifyFull')">
+            <i class="bx bx-align-justify"></i>
+          </button>
+          <input
+            type="color"
+            onchange="formatText('foreColor', this.value)"
+            title="Text Color"
+          />
+          <input
+            type="color"
+            onchange="formatText('hiliteColor', this.value)"
+            title="Background Color"
+          />
+        </div>
+        <div
+          id="description"
+          class="editable-div placeholder"
+          contenteditable="true"
+          placeholder="Express your feelings..."
+        ></div>
       </div>
-      <div class="feeling-icon">
-        <img src="{% static 'images/feelings/Fear.png' %}" alt="Fear" />
-        <div class="tooltip feelings">Fear</div>
-      </div>
-      <div class="feeling-icon">
-        <img src="{% static 'images/feelings/Anger.png' %}" alt="Anger" />
-        <div class="tooltip feelings">Anger</div>
-      </div>
-      <div class="feeling-icon">
-        <img src="{% static 'images/feelings/Surprise.png' %}" alt="Surprise" />
-        <div class="tooltip feelings">Surprise</div>
-      </div>
-      <div class="feeling-icon">
-        <img src="{% static 'images/feelings/Disgust.png' %}" alt="Disgust" />
-        <div class="tooltip feelings">Disgust</div>
-      </div>
+      <button type="submit">Share Your Feelings</button>
     </div>
-    <label for="caption">Write a brief caption</label>
-    <input type="text" id="caption" placeholder="How do you feel about..." />
-    <label for="description">Describe your feelings</label>
-    <div class="formatter-container">
-      <div class="formatter-buttons">
-        <select onchange="formatText('fontName', this.value)">
-          <option value="Arial">Arial</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Verdana">Verdana</option>
-        </select>
-        <select onchange="formatText('fontSize', this.value)">
-          <option value="1">10px</option>
-          <option value="2">13px</option>
-          <option value="3">16px</option>
-          <option value="4">18px</option>
-          <option value="5">24px</option>
-          <option value="6">32px</option>
-          <option value="7">48px</option>
-        </select>
-        <button type="button" onclick="formatText('bold')">
-          <i class="bx bx-bold"></i>
-        </button>
-        <button type="button" onclick="formatText('italic')">
-          <i class="bx bx-italic"></i>
-        </button>
-        <button type="button" onclick="formatText('underline')">
-          <i class="bx bx-underline"></i>
-        </button>
-        <button type="button" onclick="formatText('strikeThrough')">
-          <i class="bx bx-strikethrough"></i>
-        </button>
-        <button type="button" onclick="formatText('insertUnorderedList')">
-          <i class="bx bx-list-ul"></i>
-        </button>
-        <button type="button" onclick="formatText('insertOrderedList')">
-          <i class="bx bx-list-ol"></i>
-        </button>
-        <button type="button" onclick="formatText('justifyLeft')">
-          <i class="bx bx-align-left"></i>
-        </button>
-        <button type="button" onclick="formatText('justifyCenter')">
-          <i class="bx bx-align-middle"></i>
-        </button>
-        <button type="button" onclick="formatText('justifyRight')">
-          <i class="bx bx-align-right"></i>
-        </button>
-        <button type="button" onclick="formatText('justifyFull')">
-          <i class="bx bx-align-justify"></i>
-        </button>
-        <input
-          type="color"
-          onchange="formatText('foreColor', this.value)"
-          title="Text Color"
-        />
-        <input
-          type="color"
-          onchange="formatText('hiliteColor', this.value)"
-          title="Background Color"
-        />
-      </div>
-      <div
-        id="description"
-        class="editable-div"
-        contenteditable="true"
-        placeholder="Express your feelings..."
-      ></div>
-    </div>
-    <button type="submit">Share Your Feelings</button>
+    <div id="statusLoader" class="status-loader" style="display: none"></div>
+    <div id="statusOverlay" class="status-overlay" style="display: none"></div>
+  </form>
+  <!-- Notification Dialogs -->
+  <div
+    id="statusNotificationSuccess"
+    class="flat-ui-dialog success"
+    style="display: none"
+  >
+    <div id="statusNotificationSuccessContent"></div>
+  </div>
+  <div
+    id="statusNotificationError"
+    class="flat-ui-dialog error"
+    style="display: none"
+  >
+    <div id="statusNotificationErrorContent"></div>
   </div>
 </div>
 

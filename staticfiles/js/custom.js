@@ -10,6 +10,81 @@ const closeAvatarModal = document.getElementById("closeAvatarModal");
 const passwordLink = document.getElementById("passwordLink");
 const passwordModal = document.getElementById("passwordModal");
 const closePasswordModal = document.getElementById("closePasswordModal");
+const statusModal = document.getElementById("statusModal");
+const statusModalOverlay = document.getElementById("statusModalOverlay");
+const closeStatusModal = document.getElementById("closeStatusModal");
+const descriptionDiv = document.getElementById("description");
+var statusComposerButton = document.getElementById("statuscomposer");
+
+if (statusComposerButton) {
+  // Show the modal with pop-in animation
+  statusComposerButton.addEventListener("click", function () {
+    statusModal.style.display = "block";
+    statusModalOverlay.style.display = "block";
+    setTimeout(() => {
+      statusModal.classList.add("pop-in");
+      statusModalOverlay.classList.add("pop-in");
+    }, 10);
+  });
+}
+
+// Close the modal with pop-out animation
+closeStatusModal.addEventListener("click", function () {
+  closeModal();
+});
+
+statusModalOverlay.addEventListener("click", function () {
+  closeModal();
+});
+
+function closeModal() {
+  statusModal.classList.remove("pop-in");
+  statusModal.classList.add("pop-out");
+  statusModalOverlay.classList.remove("pop-in");
+  statusModalOverlay.classList.add("pop-out");
+  setTimeout(() => {
+    statusModal.style.display = "none";
+    statusModal.classList.remove("pop-out");
+    statusModalOverlay.style.display = "none";
+    statusModalOverlay.classList.remove("pop-out");
+  }, 300);
+}
+
+// Placeholder functionality
+function showPlaceholder() {
+  if (!descriptionDiv.textContent.trim().length) {
+    descriptionDiv.classList.add("placeholder");
+    descriptionDiv.textContent = descriptionDiv.getAttribute("placeholder");
+  }
+}
+
+function hidePlaceholder() {
+  if (descriptionDiv.classList.contains("placeholder")) {
+    descriptionDiv.classList.remove("placeholder");
+    descriptionDiv.textContent = "";
+  }
+}
+
+descriptionDiv.addEventListener("focus", hidePlaceholder);
+descriptionDiv.addEventListener("blur", showPlaceholder);
+
+// Initial placeholder display
+showPlaceholder();
+
+// Feeling icons selection
+const feelingIcons = document.querySelectorAll(".feeling-icon");
+feelingIcons.forEach((icon) => {
+  icon.addEventListener("click", () => {
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    icon.classList.add("active");
+  });
+});
+
+// Text formatting
+window.formatText = function (command, value = null) {
+  document.execCommand(command, false, value);
+};
+
 // Function to close currently open modal
 function closeCurrentModal() {
   const modals = document.querySelectorAll(".modal-content");
