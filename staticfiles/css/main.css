@@ -206,6 +206,73 @@ button:hover {
     transform: scale(0);
   }
 }
+/* Overlay styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 999; /* Ensure the overlay is above other elements */
+}
+
+@keyframes slideInBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.slide-in-bottom {
+  animation: slideInBottom 0.3s forwards;
+}
+
+.slide-out-bottom {
+  animation: slideOutBottom 0.3s forwards;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s forwards;
+}
 
 .pop-in {
   animation: popIn 0.3s ease-in-out forwards;
@@ -1062,6 +1129,180 @@ button:hover {
   margin-bottom: 20px;
 }
 
+.feeling-icons {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.feeling-icons .feeling-icon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.feeling-icons img {
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.feeling-icons img:hover {
+  transform: scale(1.1);
+}
+
+.feeling-icons .feeling-icon.active img {
+  transform: scale(1.3);
+}
+
+.tooltip.feelings {
+  display: none;
+  position: absolute;
+  bottom: 50px;
+  background-color: white;
+  color: #333;
+  text-align: center;
+  border-radius: 10px;
+  padding: 5px 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  font-size: 12px;
+  animation: popIn 0.3s ease-in-out forwards;
+}
+
+.tooltip.feelings::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
+}
+
+.feeling-icons .feeling-icon:hover .tooltip {
+  display: block;
+}
+
+.modal-content.status {
+  display: none;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+#statusModal .close {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  font-size: 30px;
+  cursor: pointer;
+  z-index: 1000200;
+}
+
+#statusModal {
+  text-align: justify;
+  position: fixed;
+  z-index: 1000100;
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  height: 800px;
+  top: -35px;
+  left: 630px;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: popIn 0.3s ease-in-out forwards;
+}
+
+.status-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.status-form label {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.status-form input,
+.status-form .editable-div {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  width: 100%;
+}
+.status-form .editable-div.placeholder {
+  color: #bbb;
+  font-size: 15px;
+}
+.status-form input::placeholder {
+  color: #bbb;
+}
+
+.status-form .editable-div {
+  resize: none;
+  height: 320px;
+  overflow-y: auto;
+}
+
+.status-form button {
+  padding: 12px;
+  background-color: #689e4b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+}
+
+.status-form button:hover {
+  background-color: #3b5a2b;
+}
+
+.formatter-container {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.formatter-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.formatter-buttons select,
+.formatter-buttons button,
+.formatter-buttons input[type="color"] {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  color: #333;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+}
+
+.formatter-buttons button:hover,
+.formatter-buttons input[type="color"]:hover {
+  background-color: #e9ecef;
+  color: #000;
+}
+
 .input-container {
   margin-bottom: 20px;
   position: relative;
@@ -1163,6 +1404,7 @@ button#generatePassword:hover {
 
 .modal-content.profile,
 .modal-content.avatar,
+.modal-content.status,
 .modal-content.password {
   overflow: auto; /* Enable scrolling if content overflows */
   height: 100%; /* Ensure full height */

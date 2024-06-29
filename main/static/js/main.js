@@ -10,7 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ".avatars-grid img.avatar-option"
   );
   const uploadAvatarInput = document.getElementById("uploadAvatarInput");
-  const uploadAreaImg = document.querySelector(".upload-area img");
   const cropperModal = document.getElementById("cropperModal");
   const closeCropperModal = document.getElementById("closeCropperModal");
   const cropImageBtn = document.getElementById("cropImageBtn");
@@ -23,10 +22,45 @@ document.addEventListener("DOMContentLoaded", function () {
   const placeholderUrl = currentAvatar.dataset.placeholderUrl;
 
   const statusModal = document.getElementById("statusModal");
+  const statusModalOverlay = document.getElementById("statusModalOverlay");
   const closeStatusModal = document.getElementById("closeStatusModal");
-  const statusComposerButton = document.getElementById("statuscomposer");
   const descriptionDiv = document.getElementById("description");
+  var statusComposerButton = document.getElementById("statuscomposer");
 
+  if (statusComposerButton) {
+    // Show the modal with pop-in animation
+    statusComposerButton.addEventListener("click", function () {
+      statusModal.style.display = "block";
+      statusModalOverlay.style.display = "block";
+      setTimeout(() => {
+        statusModal.classList.add("pop-in");
+        statusModalOverlay.classList.add("fade-in");
+      }, 10);
+    });
+  }
+
+  // Close the modal with pop-out animation
+  closeStatusModal.addEventListener("click", function () {
+    closeStatusComposerModal();
+  });
+
+  statusModalOverlay.addEventListener("click", function () {
+    closeStatusComposerModal();
+  });
+
+  function closeStatusComposerModal() {
+    statusModal.classList.remove("pop-in");
+    statusModal.classList.add("pop-out");
+    statusModalOverlay.classList.remove("fade-in");
+    statusModalOverlay.classList.add("fade-out");
+    setTimeout(() => {
+      statusModal.style.display = "none";
+      statusModal.classList.remove("pop-out");
+      statusModalOverlay.style.display = "none";
+      statusModalOverlay.classList.remove("fade-out");
+    }, 300);
+  }
+  // Placeholder functionality
   function showPlaceholder() {
     if (!descriptionDiv.textContent.trim().length) {
       descriptionDiv.classList.add("placeholder");
@@ -47,79 +81,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial placeholder display
   showPlaceholder();
 
-  // Open status modal if authenticated button is clicked
-  if (statusComposerButton) {
-    statusComposerButton.onclick = function (event) {
-      event.preventDefault();
-      statusModal.style.display = "block";
-      overlay.style.display = "flex";
-      setTimeout(() => {
-        statusModal.classList.add("pop-in");
-        overlay.classList.add("show");
-      }, 10);
-    };
-  }
+  // Feeling icons selection
+  const feelingIcons = document.querySelectorAll(".feeling-icon");
+  feelingIcons.forEach((icon) => {
+    icon.addEventListener("click", () => {
+      feelingIcons.forEach((i) => i.classList.remove("active"));
+      icon.classList.add("active");
+    });
+  });
 
-  // Open login modal if unauthenticated button is clicked
-  if (loginButton) {
-    loginButton.onclick = function (event) {
-      event.preventDefault();
-      loginModal.style.display = "block";
-      overlay.style.display = "flex";
-      setTimeout(() => {
-        loginModal.classList.add("pop-in");
-        overlay.classList.add("show");
-      }, 10);
-    };
-  }
-
-  // Close status modal
-  if (closeStatusModal) {
-    closeStatusModal.onclick = function () {
-      statusModal.classList.add("pop-out");
-      overlay.classList.add("hide");
-      setTimeout(() => {
-        statusModal.style.display = "none";
-        overlay.style.display = "none";
-        statusModal.classList.remove("pop-in", "pop-out");
-        overlay.classList.remove("show", "hide");
-      }, 300);
-    };
-  }
-
-  // Close modal and overlay when clicking outside
-  window.onclick = function (event) {
-    if (event.target == overlay) {
-      if (
-        statusModal.style.display === "block" ||
-        loginModal.style.display === "block"
-      ) {
-        closeModals();
-      }
-    }
+  // Text formatting
+  window.formatText = function (command, value = null) {
+    document.execCommand(command, false, value);
   };
-
-  function closeModals() {
-    if (statusModal.style.display === "block") {
-      statusModal.classList.add("pop-out");
-      overlay.classList.add("hide");
-      setTimeout(() => {
-        statusModal.style.display = "none";
-        overlay.style.display = "none";
-        statusModal.classList.remove("pop-in", "pop-out");
-        overlay.classList.remove("show", "hide");
-      }, 300);
-    } else if (loginModal.style.display === "block") {
-      loginModal.classList.add("pop-out");
-      overlay.classList.add("hide");
-      setTimeout(() => {
-        loginModal.style.display = "none";
-        overlay.style.display = "none";
-        loginModal.classList.remove("pop-in", "pop-out");
-        overlay.classList.remove("show", "hide");
-      }, 300);
-    }
-  }
   // Load current avatar
   fetch("/get_user_profile/")
     .then((response) => response.json())
@@ -554,7 +528,7 @@ if (loginLink) {
     overlay.style.display = "flex";
     setTimeout(() => {
       loginModal.classList.add("pop-in");
-      overlay.classList.add("show");
+      overlay.classList.add("fade-in");
     }, 10);
   };
 }
@@ -567,7 +541,7 @@ if (registerLink) {
     overlay.style.display = "flex";
     setTimeout(() => {
       registerModal.classList.add("pop-in");
-      overlay.classList.add("show");
+      overlay.classList.add("fade-in");
     }, 10);
   };
 }
@@ -583,7 +557,7 @@ if (loginLinkFromRegister) {
       loginModal.style.display = "block";
       setTimeout(() => {
         loginModal.classList.add("pop-in");
-        overlay.classList.add("show");
+        overlay.classList.add("fade-in");
       }, 10);
     }, 300);
   };
@@ -598,7 +572,7 @@ if (closeLoginModal) {
       loginModal.style.display = "none";
       overlay.style.display = "none";
       loginModal.classList.remove("pop-in", "pop-out");
-      overlay.classList.remove("show", "hide");
+      overlay.classList.remove("fade-in", "fade-out");
     }, 300);
   };
 }
@@ -608,14 +582,14 @@ if (closeRegisterModal) {
   closeRegisterModal.onclick = function () {
     registerModal.classList.add("pop-out");
     loginModal.classList.add("pop-out");
-    overlay.classList.add("hide");
+    overlay.classList.add("fade-in");
     setTimeout(() => {
       registerModal.style.display = "none";
       loginModal.style.display = "none";
       overlay.style.display = "none";
       registerModal.classList.remove("pop-in", "pop-out");
       loginModal.classList.remove("pop-in", "pop-out");
-      overlay.classList.remove("show", "hide");
+      overlay.classList.remove("fade-in", "fade-out");
     }, 300);
   };
 }
@@ -629,7 +603,7 @@ if (expressFeelingsButton) {
     overlay.style.display = "flex";
     setTimeout(() => {
       loginRequiredModal.classList.add("pop-in");
-      overlay.classList.add("show");
+      overlay.classList.add("fade-in");
     }, 10);
   };
 }
@@ -650,24 +624,24 @@ window.onclick = function (event) {
 function closeModals() {
   if (loginRequiredModal.style.display === "block") {
     loginRequiredModal.classList.add("pop-out");
-    overlay.classList.add("hide");
+    overlay.classList.add("fade-out");
     setTimeout(() => {
       loginRequiredModal.style.display = "none";
       overlay.style.display = "none";
       loginRequiredModal.classList.remove("pop-in", "pop-out");
-      overlay.classList.remove("show", "hide");
+      overlay.classList.remove("fade-in", "fade-out");
     }, 300);
   } else if (
     document.querySelector(".flat-ui-dialog.session").style.display === "block"
   ) {
     const sessionDialogBox = document.querySelector(".flat-ui-dialog.session");
     sessionDialogBox.classList.add("pop-out");
-    overlay.classList.add("hide");
+    overlay.classList.add("fade-in");
     setTimeout(() => {
       sessionDialogBox.style.display = "none";
       overlay.style.display = "none";
       sessionDialogBox.classList.remove("pop-in", "pop-out");
-      overlay.classList.remove("show", "hide");
+      overlay.classList.remove("fade-in", "fade-out");
       window.location.reload();
     }, 300);
   }
@@ -773,12 +747,12 @@ function showSuccess(message, type) {
   if (type === "logout") {
     overlay.addEventListener("click", function handleOverlayClick() {
       successBox.classList.add("pop-out");
-      overlay.classList.add("hide");
+      overlay.classList.add("fade-out");
       setTimeout(() => {
         successBox.style.display = "none";
         successBox.classList.remove("pop-out");
         overlay.style.display = "none";
-        overlay.classList.remove("show", "hide");
+        overlay.classList.remove("fade-in", "fade-out");
         overlay.removeEventListener("click", handleOverlayClick);
         window.location.reload();
       }, 300);
@@ -831,7 +805,7 @@ document
               loginModal.style.display = "block";
               setTimeout(() => {
                 loginModal.classList.add("pop-in");
-                overlay.classList.add("show");
+                overlay.classList.add("fade-in");
               }, 10);
             }, 300);
 
@@ -875,12 +849,12 @@ document
           setTimeout(() => {
             document.getElementById("loginForm").reset();
             loginModal.classList.add("pop-out");
-            overlay.classList.add("hide");
+            overlay.classList.add("fade-in");
             setTimeout(() => {
               loginModal.style.display = "none";
               overlay.style.display = "none";
               loginModal.classList.remove("pop-in", "pop-out");
-              overlay.classList.remove("show", "hide");
+              overlay.classList.remove("fade-in", "fade-out");
               window.location.href = data.redirect_url;
             }, 300);
           }, 1500);
@@ -916,7 +890,7 @@ document.querySelectorAll(".logout-link").forEach((item) => {
             document
               .getElementById("logoutSuccessBox")
               .classList.add("pop-out");
-            overlay.classList.add("hide");
+            overlay.classList.add("fade-out");
             setTimeout(() => {
               document.getElementById("logoutSuccessBox").style.display =
                 "none";
@@ -924,7 +898,7 @@ document.querySelectorAll(".logout-link").forEach((item) => {
               document
                 .getElementById("logoutSuccessBox")
                 .classList.remove("pop-in", "pop-out");
-              overlay.classList.remove("show", "hide");
+              overlay.classList.remove("fade-in", "fade-out");
               window.location.href = data.redirect_url;
             }, 300);
           }, 1500);

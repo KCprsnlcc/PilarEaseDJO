@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
       currentAvatar.style.display = "block";
     })
     .catch((error) => {
-      console.error("Error fetching user profile:", error);
+      console.error("", error);
       avatarLoader.style.display = "none";
       currentAvatar.style.display = "block";
     });
@@ -106,15 +106,13 @@ document.addEventListener("DOMContentLoaded", function () {
               showNotificationSuccess("Avatar updated successfully!");
               document.getElementById("currentAvatar").src = data.avatar_url;
             } else {
-              showNotificationError(
-                "Error uploading avatar: " + (data.errors || "Unknown error")
-              );
+              showNotificationError("" + (data.errors || "Unknown error"));
             }
             closeCropperModal.click();
           })
           .catch((error) => {
-            console.error("Error uploading avatar:", error);
-            showNotificationError("Error uploading avatar: " + error.message);
+            console.error("", error);
+            showNotificationError("" + error.message);
             closeCropperModal.click();
           });
       });
@@ -149,14 +147,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 showNotificationSuccess("Avatar updated successfully!");
                 document.getElementById("currentAvatar").src = data.avatar_url;
               } else {
-                showNotificationError(
-                  "Error uploading avatar: " + (data.errors || "Unknown error")
-                );
+                showNotificationError("" + (data.errors || "Unknown error"));
               }
             })
             .catch((error) => {
-              console.error("Error uploading avatar:", error);
-              showNotificationError("Error uploading avatar: " + error.message);
+              console.error("", error);
+              showNotificationError("" + error.message);
             });
         });
     } else {
@@ -917,7 +913,7 @@ function fetchUserProfile() {
       };
     })
     .catch((error) => {
-      console.error("Error fetching user profile:", error);
+      console.error("", error);
       // Hide loader in case of error
       avatarLoader.style.display = "none";
       profileIconImage.style.display = "block";
@@ -1009,7 +1005,7 @@ function updateUserProfile(event) {
       }
     })
     .catch((error) => {
-      console.error("Error updating user profile:", error);
+      console.error("", error);
       showProfileError("Error updating profile. Please try again.");
     });
 }
