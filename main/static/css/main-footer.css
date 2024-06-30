@@ -1,5 +1,5 @@
 footer {
-  position: absolute; /* Stick to the bottom of the viewport */
+  position: fixed; /* Stick to the bottom of the viewport */
   bottom: 0;
   width: 100%;
   z-index: 9999; /* Set the z-index to 99999 */

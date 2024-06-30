@@ -36,6 +36,24 @@ document.addEventListener("DOMContentLoaded", function () {
   const cancelBtn = document.getElementById("cancelBtn");
 
   let selectedEmotion = null;
+  let page = 1;
+  let isLoading = false;
+  let hasNext = true;
+
+  // Fetch initial statuses
+  fetchStatuses(page);
+
+  // Add scroll event listener for infinite scrolling
+  window.addEventListener("scroll", () => {
+    if (
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+      !isLoading &&
+      hasNext
+    ) {
+      page++;
+      fetchStatuses(page);
+    }
+  });
 
   // Show loader and overlay
   function showLoader() {
@@ -114,6 +132,112 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 300);
   });
 
+  function fetchStatuses(page) {
+    isLoading = true;
+    const statusLoader = document.getElementById("statusLoader");
+    const statusOverlay = document.getElementById("statusOverlay");
+
+    statusLoader.style.display = "block";
+    statusOverlay.style.display = "block";
+
+    fetch(`/get_all_statuses/?page=${page}`)
+      .then((response) => response.json())
+      .then((data) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        const container = document.getElementById("boxContainer");
+
+        data.statuses.forEach((status) => {
+          const newBox = document.createElement("div");
+          newBox.classList.add("box5", "pop");
+          newBox.innerHTML = `
+                        <div class="avatar-content">
+                            <img src="${
+                              status.avatar_url
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                            <p class="username-placeholder">${
+                              status.username
+                            }</p>
+                        </div>
+                        <div class="content">
+                            <h2 class="title-placeholder">${status.title}</h2>
+                            <p class="description-placeholder">${truncateText(
+                              status.description
+                            )}</p>
+                            <span class="time-stamp time-stamp-placeholder">${
+                              status.created_at
+                            } ago</span>
+                             <span class="feelings feelings-placeholder">${getEmotionIcon(
+                               status.emotion
+                             )} ${mapEmotion(status.emotion)}</span>
+                            <span class="replies replies-placeholder">${
+                              status.replies
+                            } ${
+            status.replies === 1 ? "Reply" : "Replies"
+          }</span>
+                        </div>
+                        <button id="deletestatus"class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;
+          container.appendChild(newBox);
+
+          newBox.addEventListener("animationend", function () {
+            newBox.classList.remove("pop");
+          });
+        });
+
+        hasNext = data.has_next;
+      })
+      .catch((error) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        console.error("Error fetching statuses:", error);
+      });
+  }
+  function getEmotionIcon(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "<i class='bx bx-happy-alt'></i>";
+      case "sadness":
+        return "<i class='bx bx-sad'></i>";
+      case "fear":
+        return "<i class='bx bx-dizzy' ></i>";
+      case "anger":
+        return "<i class='bx bx-angry'></i>";
+      case "surprise":
+        return "<i class='bx bx-shocked' ></i>";
+      case "disgust":
+        return "<i class='bx bx-confused' ></i>";
+      default:
+        return "<i class='bx bx-face'></i>";
+    }
+  }
+  function mapEmotion(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "Happy";
+      case "sadness":
+        return "Sad";
+      case "fear":
+        return "Fear";
+      case "anger":
+        return "Angry";
+      case "surprise":
+        return "Surprise";
+      case "disgust":
+        return "Disgust";
+      default:
+        return emotion;
+    }
+  }
+
+  function truncateText(text, maxLength = 150) {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + "...";
+  }
+
   function uploadStatus() {
     const title = statusTitle.value.trim();
     const description = statusDescription.classList.contains("placeholder")
@@ -124,7 +248,6 @@ document.addEventListener("DOMContentLoaded", function () {
       'input[name="csrfmiddlewaretoken"]'
     ).value;
 
-    // Show loader and hide form content
     showLoader();
     statusModal.querySelector(".status-form").style.opacity = "0.5";
 
@@ -148,6 +271,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (data.success) {
           showStatusSuccess("Status shared successfully!");
+          displayNewStatus(data.status);
         } else {
           showStatusError(
             "Failed to share status: " + JSON.stringify(data.errors)
@@ -161,6 +285,41 @@ document.addEventListener("DOMContentLoaded", function () {
         showStatusError("Network error could not upload.");
       });
   }
+
+  function displayNewStatus(status) {
+    const container = document.getElementById("boxContainer");
+    const newBox = document.createElement("div");
+    newBox.classList.add("box5", "pop");
+    newBox.innerHTML = `
+            <div class="avatar-content">
+                <img src="${
+                  status.avatar_url
+                }" alt="Avatar" class="circle-avatar-placeholder" />
+                <p class="username-placeholder">${status.username}</p>
+            </div>
+            <div class="content">
+                <h2 class="title-placeholder">${status.title}</h2>
+                <p class="description-placeholder">${truncateText(
+                  status.description
+                )}</p>
+                <span class="time-stamp time-stamp-placeholder">${
+                  status.created_at
+                } ago</span>
+                <span class="feelings feelings-placeholder">${getEmotionIcon(
+                  status.emotion
+                )} ${mapEmotion(status.emotion)}</span>
+                <span class="replies replies-placeholder">${status.replies} ${
+      status.replies === 1 ? "Reply" : "Replies"
+    }</span>
+            </div>
+            <button id="deletestatus" class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;
+    container.prepend(newBox); // Prepend to show the new status at the top
+
+    newBox.addEventListener("animationend", function () {
+      newBox.classList.remove("pop");
+    });
+  }
+
   statusDescription.addEventListener("focus", hidePlaceholder);
   statusDescription.addEventListener("blur", showPlaceholder);
 

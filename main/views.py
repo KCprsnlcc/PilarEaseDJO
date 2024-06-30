@@ -18,6 +18,8 @@ from io import BytesIO
 import os
 from .models import Status
 import re
+from django.utils.timesince import timesince
+from django.core.paginator import Paginator
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -88,7 +90,7 @@ def submit_status(request):
             return JsonResponse({'success': False, 'errors': errors}, status=400)
 
         # Save the status to the database
-        Status.objects.create(
+        status = Status.objects.create(
             user=request.user,
             emotion=emotion,
             title=title,
@@ -96,9 +98,45 @@ def submit_status(request):
             plain_description=plain_description
         )
 
-        return JsonResponse({'success': True, 'message': 'Status shared successfully!'})
+        # Prepare the status data to return
+        status_data = {
+            'id': status.id,
+            'username': request.user.username,
+            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else None,
+            'emotion': status.emotion,
+            'title': status.title,
+            'description': status.plain_description,
+            'created_at': timesince(status.created_at),
+            'replies': 0  # Placeholder for replies
+        }
+
+        return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+
+def get_all_statuses(request):
+    page_number = request.GET.get('page', 1)
+    page_size = 10  # Number of statuses per page
+
+    statuses = Status.objects.all().order_by('-created_at')
+    paginator = Paginator(statuses, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    statuses_data = [
+        {
+            'id': status.id,
+            'username': status.user.username,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else None,
+            'emotion': status.emotion,
+            'title': status.title,
+            'description': status.plain_description,
+            'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
+            'replies': 0  # Placeholder for replies
+        }
+        for status in page_obj
+    ]
+    return JsonResponse({'statuses': statuses_data, 'has_next': page_obj.has_next()})
+
 @login_required
 def get_user_profile(request):
     user_profile = request.user.profile
