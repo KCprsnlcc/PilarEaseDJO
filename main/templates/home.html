@@ -195,20 +195,29 @@
     <div id="statusLoader" class="status-loader" style="display: none"></div>
     <div id="statusOverlay" class="status-overlay" style="display: none"></div>
   </form>
-  <!-- Notification Dialogs -->
-  <div
-    id="statusNotificationSuccess"
-    class="flat-ui-dialog success"
-    style="display: none"
-  >
-    <div id="statusNotificationSuccessContent"></div>
-  </div>
+  <!-- Error Dialog -->
   <div
     id="statusNotificationError"
     class="flat-ui-dialog error"
     style="display: none"
   >
     <div id="statusNotificationErrorContent"></div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="ConfirmStatusModal" class="flat-ui-dialog confirmstatus">
+    <p>Are you sure you want to post this?</p>
+    <button id="confirmBtn">Confirm</button>
+    <button id="cancelBtn">Cancel</button>
+  </div>
+
+  <!-- Success Dialogs -->
+  <div
+    id="statusNotificationSuccess"
+    class="flat-ui-dialog success"
+    style="display: none"
+  >
+    <div id="statusNotificationSuccessContent"></div>
   </div>
 </div>
 

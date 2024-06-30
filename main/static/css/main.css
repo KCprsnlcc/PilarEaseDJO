@@ -109,6 +109,7 @@ button:hover {
     margin-top: 0;
   }
 }
+
 .status-overlay {
   position: absolute;
   top: 0;
@@ -601,7 +602,6 @@ button:hover {
   flex-direction: column; /* Change to column layout */
   align-items: center; /* Center items horizontally */
 }
-
 .username-placeholder {
   font-size: 14px; /* Adjust font size for placeholders */
   color: #0f2326; /* Placeholder color */
@@ -616,22 +616,50 @@ button:hover {
   margin-bottom: 10px;
   margin-left: 15px;
   font-family: Gothic A1;
+  top: 0px;
+  position: absolute;
 }
 
 .description-placeholder {
   font-size: 12px;
   color: #bbb;
   margin-top: 0px;
+  top: 65px;
+  position: absolute;
   margin-left: 15px;
   font-family: Gothic A1;
 }
 .time-stamp-placeholder {
   font-size: 14px; /* Adjust font size for placeholders */
-  color: #0f2326; /* Placeholder color */
+  color: #bbb; /* Placeholder color */
   align-items: center; /* Center vertically - This applies to flex containers, not text alignment */
-  margin-bottom: 25px;
+  margin-left: 15px;
+  top: 95px;
+  left: 300px;
+  position: absolute;
   font-family: Gothic A1;
-  text-align: center; /* Center text horizontally */
+}
+
+.feelings-placeholder {
+  font-size: 14px; /* Adjust font size for placeholders */
+  color: #bbb; /* Placeholder color */
+  align-items: center; /* Center vertically - This applies to flex containers, not text alignment */
+  margin-left: 15px;
+  top: 95px;
+  left: 220px;
+  position: absolute;
+  font-family: Gothic A1;
+}
+
+.replies-placeholder {
+  font-size: 14px; /* Adjust font size for placeholders */
+  color: #bbb; /* Placeholder color */
+  align-items: center; /* Center vertically - This applies to flex containers, not text alignment */
+  margin-left: 15px;
+  top: 95px;
+  left: 220px;
+  position: absolute;
+  font-family: Gothic A1;
 }
 
 .pop {
@@ -1088,11 +1116,14 @@ button:hover {
 .primary {
   background-color: #689e4b;
   color: #fff;
-  margin-right: 30px;
   width: 110px;
   margin-top: 25px;
   border: none;
+  border-radius: 5px;
+  margin-right: 80px;
   cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -1104,11 +1135,13 @@ button:hover {
 .secondary {
   background-color: #ddd;
   color: #333;
-  margin-left: 30px;
   width: 110px;
   margin-top: 25px;
   border: none;
+  border-radius: 5px;
   cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -1454,6 +1487,55 @@ button#generatePassword:hover {
 .modal-content.password {
   overflow: auto; /* Enable scrolling if content overflows */
   height: 100%; /* Ensure full height */
+}
+#confirmBtn {
+  background-color: #689e4b;
+  color: #fff;
+  width: 110px;
+  border: none;
+  border-radius: 5px;
+  margin-right: 10px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#confirmBtn:hover {
+  background-color: #3b5a2b;
+  color: #fff;
+}
+
+#cancelBtn {
+  background-color: #ddd;
+  color: #333;
+  width: 110px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#cancelBtn:hover {
+  background-color: #bbb;
+  color: #333;
+}
+
+#ConfirmStatusModal {
+  top: 400px;
+  left: 150px;
+  width: 315px;
+  display: none;
+  text-align: center;
+  position: flex;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 #loginRequiredModal {

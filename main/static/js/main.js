@@ -31,20 +31,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusTitle = document.getElementById("caption");
   const statusDescription = document.getElementById("description");
   const statusLoader = document.getElementById("statusLoader");
-  const statusFormContent = document.querySelector(".status-form");
+  const confirmStatusModal = document.getElementById("ConfirmStatusModal");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
 
   let selectedEmotion = null;
 
   // Show loader and overlay
   function showLoader() {
     statusLoader.style.display = "block";
-    statusModalOverlay.classList.add("fade-in");
   }
 
   // Hide loader and overlay
   function hideLoader() {
     statusLoader.style.display = "none";
-    statusModalOverlay.classList.remove("fade-in");
   }
 
   feelingIcons.forEach((icon) => {
@@ -68,9 +68,6 @@ document.addEventListener("DOMContentLoaded", function () {
       ? ""
       : statusDescription.innerHTML.trim();
     const plainDescription = statusDescription.textContent.trim();
-    const csrfToken = document.querySelector(
-      'input[name="csrfmiddlewaretoken"]'
-    ).value;
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -86,6 +83,46 @@ document.addEventListener("DOMContentLoaded", function () {
       showStatusError("Write what you feel in the description.");
       return;
     }
+
+    // Show confirmation dialog with pop-in animation
+    confirmStatusModal.style.display = "block";
+    setTimeout(() => {
+      confirmStatusModal.classList.add("pop-in");
+    }, 10);
+  });
+
+  confirmBtn.addEventListener("click", function () {
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+
+      // Proceed with status submission
+      uploadStatus();
+    }, 300);
+  });
+
+  cancelBtn.addEventListener("click", function () {
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+    }, 300);
+  });
+
+  function uploadStatus() {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent.trim();
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
 
     // Show loader and hide form content
     showLoader();
@@ -106,7 +143,6 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        // Hide loader and show form content
         hideLoader();
         statusModal.querySelector(".status-form").style.opacity = "1";
 
@@ -119,14 +155,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
-        // Hide loader and show form content
         hideLoader();
         statusModal.querySelector(".status-form").style.opacity = "1";
-
         console.error("Error:", error);
         showStatusError("Network error could not upload.");
       });
-  });
+  }
   statusDescription.addEventListener("focus", hidePlaceholder);
   statusDescription.addEventListener("blur", showPlaceholder);
 
@@ -206,12 +240,14 @@ document.addEventListener("DOMContentLoaded", function () {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
         clearStatusComposerModal();
-        closeStatusComposerModal();
-        window.location.reload();
-      }, 300);
-    }, 3000);
+        closeStatusComposerModal(() => {
+          setTimeout(() => {
+            window.location.reload();
+          }, 300); // Wait for statusModal pop-out animation to finish
+        });
+      }, 300); // Wait for dialogBox pop-out animation to finish
+    }, 3000); // Duration to show the success message
   }
-
   // Function to show error message
   function showStatusError(message) {
     const dialogBox = document.getElementById("statusNotificationError");
@@ -233,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000);
   }
 
-  function closeStatusComposerModal() {
+  function closeStatusComposerModal(callback) {
     statusModal.classList.remove("pop-in");
     statusModal.classList.add("pop-out");
     statusModalOverlay.classList.remove("fade-in");
@@ -243,9 +279,11 @@ document.addEventListener("DOMContentLoaded", function () {
       statusModal.classList.remove("pop-out");
       statusModalOverlay.style.display = "none";
       statusModalOverlay.classList.remove("fade-out");
-    }, 300);
+      if (callback) {
+        callback();
+      }
+    }, 300); // Animation duration
   }
-
   function clearStatusComposerModal() {
     selectedEmotion = null;
     statusTitle.value = "";
@@ -254,6 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
     feelingIcons.forEach((i) => i.classList.remove("active"));
     clearFormData();
   }
+
   // Clear the modal fields when opened
   if (statusComposerButton) {
     statusComposerButton.addEventListener("click", function () {
@@ -749,7 +788,7 @@ if (loginLinkFromRegister) {
 if (closeLoginModal) {
   closeLoginModal.onclick = function () {
     loginModal.classList.add("pop-out");
-    overlay.classList.add("hide");
+    overlay.classList.add("fade-out"); // Added fade-out effect
     setTimeout(() => {
       loginModal.style.display = "none";
       overlay.style.display = "none";
@@ -764,7 +803,7 @@ if (closeRegisterModal) {
   closeRegisterModal.onclick = function () {
     registerModal.classList.add("pop-out");
     loginModal.classList.add("pop-out");
-    overlay.classList.add("fade-in");
+    overlay.classList.add("fade-out");
     setTimeout(() => {
       registerModal.style.display = "none";
       loginModal.style.display = "none";
@@ -868,15 +907,15 @@ function showError(message, type) {
 
   if (type === "session") {
     overlay.style.display = "flex";
-    overlay.classList.add("pop-in");
+    overlay.classList.add("fade-in");
     overlay.addEventListener("click", function handleOverlayClick() {
       dialogBox.classList.add("pop-out");
-      overlay.classList.add("hide");
+      overlay.classList.add("fade-out"); // Updated to fade-out
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
         overlay.style.display = "none";
-        overlay.classList.remove("show", "hide");
+        overlay.classList.remove("fade-in", "fade-out");
         overlay.removeEventListener("click", handleOverlayClick);
         window.location.reload();
       }, 300);
