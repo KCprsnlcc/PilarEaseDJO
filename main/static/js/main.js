@@ -35,6 +35,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let selectedEmotion = null;
 
+  // Show loader and overlay
+  function showLoader() {
+    statusLoader.style.display = "block";
+    statusModalOverlay.classList.add("fade-in");
+  }
+
+  // Hide loader and overlay
+  function hideLoader() {
+    statusLoader.style.display = "none";
+    statusModalOverlay.classList.remove("fade-in");
+  }
+
   feelingIcons.forEach((icon) => {
     icon.addEventListener("click", () => {
       feelingIcons.forEach((i) => i.classList.remove("active"));
@@ -47,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
   statusTitle.addEventListener("input", saveFormData);
   statusDescription.addEventListener("input", saveFormData);
 
+  // Add event listener to form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -54,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const description = statusDescription.classList.contains("placeholder")
       ? ""
       : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent.trim();
     const csrfToken = document.querySelector(
       'input[name="csrfmiddlewaretoken"]'
     ).value;
@@ -73,10 +87,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Show loader and overlay, dim form content
-    statusLoader.style.display = "block";
-    statusOverlay.style.display = "flex";
-    statusFormContent.style.opacity = "0.5";
+    // Show loader and hide form content
+    showLoader();
+    statusModal.querySelector(".status-form").style.opacity = "0.5";
 
     fetch("/submit_status/", {
       method: "POST",
@@ -88,14 +101,14 @@ document.addEventListener("DOMContentLoaded", function () {
         emotion: selectedEmotion,
         title: title,
         description: description,
+        plain_description: plainDescription,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        // Hide loader and overlay
-        statusLoader.style.display = "none";
-        statusOverlay.style.display = "none";
-        statusFormContent.style.opacity = "1";
+        // Hide loader and show form content
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
 
         if (data.success) {
           showStatusSuccess("Status shared successfully!");
@@ -106,10 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
-        // Hide loader and overlay
-        statusLoader.style.display = "none";
-        statusOverlay.style.display = "none";
-        statusFormContent.style.opacity = "1";
+        // Hide loader and show form content
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
 
         console.error("Error:", error);
         showStatusError("Network error could not upload.");
@@ -176,6 +188,7 @@ document.addEventListener("DOMContentLoaded", function () {
     saveFormData();
   };
 
+  // Function to show success message and close modal after animation
   function showStatusSuccess(message) {
     const dialogBox = document.getElementById("statusNotificationSuccess");
     const dialogContent = document.getElementById(
@@ -192,13 +205,14 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
-        clearStatusComposerModal(); // Clear the modal fields
-        closeStatusComposerModal(); // Close the modal with animation
-        window.location.reload(); // Refresh the page after modal is closed
+        clearStatusComposerModal();
+        closeStatusComposerModal();
+        window.location.reload();
       }, 300);
     }, 3000);
   }
 
+  // Function to show error message
   function showStatusError(message) {
     const dialogBox = document.getElementById("statusNotificationError");
     const dialogContent = document.getElementById(

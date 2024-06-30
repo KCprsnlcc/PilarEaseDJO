@@ -17,6 +17,7 @@ from PIL import Image
 from io import BytesIO
 import os
 from .models import Status
+import re
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -60,6 +61,10 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
+def strip_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
 @login_required
 @csrf_exempt
 def submit_status(request):
@@ -68,7 +73,8 @@ def submit_status(request):
         emotion = data.get('emotion')
         title = data.get('title')
         description = data.get('description')
-
+        plain_description = strip_html_tags(description)
+        
         # Validate the input fields
         errors = {}
         if not emotion:
@@ -86,7 +92,8 @@ def submit_status(request):
             user=request.user,
             emotion=emotion,
             title=title,
-            description=description
+            description=description,
+            plain_description=plain_description
         )
 
         return JsonResponse({'success': True, 'message': 'Status shared successfully!'})

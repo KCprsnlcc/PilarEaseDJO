@@ -41,6 +41,7 @@ class Status(models.Model):
     emotion = models.CharField(max_length=50)
     title = models.CharField(max_length=200)
     description = models.TextField()
+    plain_description = models.TextField(default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
