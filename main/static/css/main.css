@@ -639,6 +639,7 @@ button:hover {
   color: #bbb;
   margin-top: 0px;
   top: 55px;
+  margin-right: 15px;
   position: absolute;
   margin-left: 15px;
   font-family: Gothic A1;
@@ -661,6 +662,7 @@ button:hover {
   color: #bbb;
   align-items: center;
   margin-left: 15px;
+  left: 85px;
   top: 95px;
   padding-left: 130px;
   text-align: center;
@@ -682,7 +684,7 @@ button:hover {
 .pop {
   animation: popAnimation 0.5s ease-in-out; /* Define animation properties */
 }
-#deletestatus {
+.delete-button.status {
   position: absolute;
   top: 0px;
   left: 500px;
@@ -692,7 +694,7 @@ button:hover {
   font-size: 24px;
   color: #0f2326;
 }
-#deletestatus:hover {
+.delete-button.status:hover {
   color: #689e4b;
 }
 /* Error Message Style */
@@ -1552,6 +1554,18 @@ button#generatePassword:hover {
   z-index: 1000100;
   opacity: 1;
   transition: opacity 0.3s ease;
+}
+
+#openLoginModal {
+  padding: 12px;
+  width: 100%;
+  background-color: #689e4b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
 }
 
 #loginRequiredModal {

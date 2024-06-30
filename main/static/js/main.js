@@ -34,14 +34,29 @@ document.addEventListener("DOMContentLoaded", function () {
   const confirmStatusModal = document.getElementById("ConfirmStatusModal");
   const confirmBtn = document.getElementById("confirmBtn");
   const cancelBtn = document.getElementById("cancelBtn");
+  const categoryElements = document.querySelectorAll(".v1_124 div");
 
   let selectedEmotion = null;
   let page = 1;
   let isLoading = false;
   let hasNext = true;
+  let activeCategory = "recent";
+
+  categoryElements.forEach((categoryElement) => {
+    categoryElement.addEventListener("click", function () {
+      categoryElements.forEach((el) =>
+        el.querySelector("span").classList.remove("active")
+      );
+      this.querySelector("span").classList.add("active");
+      activeCategory = this.id;
+      page = 1;
+      document.getElementById("boxContainer").innerHTML = "";
+      fetchStatuses(page, activeCategory);
+    });
+  });
 
   // Fetch initial statuses
-  fetchStatuses(page);
+  fetchStatuses(page, activeCategory);
 
   // Add scroll event listener for infinite scrolling
   window.addEventListener("scroll", () => {
@@ -132,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 300);
   });
 
-  function fetchStatuses(page) {
+  function fetchStatuses(page, category) {
     isLoading = true;
     const statusLoader = document.getElementById("statusLoader");
     const statusOverlay = document.getElementById("statusOverlay");
@@ -140,7 +155,7 @@ document.addEventListener("DOMContentLoaded", function () {
     statusLoader.style.display = "block";
     statusOverlay.style.display = "block";
 
-    fetch(`/get_all_statuses/?page=${page}`)
+    fetch(`/get_all_statuses/?page=${page}&category=${category}`)
       .then((response) => response.json())
       .then((data) => {
         isLoading = false;
@@ -153,9 +168,9 @@ document.addEventListener("DOMContentLoaded", function () {
           newBox.classList.add("box5", "pop");
           newBox.innerHTML = `
                         <div class="avatar-content">
-                            <img src="${
-                              status.avatar_url
-                            }" alt="Avatar" class="circle-avatar-placeholder" />
+               <img src="${
+                 status.avatar_url
+               }" alt="Avatar" class="circle-avatar-placeholder" />
                             <p class="username-placeholder">${
                               status.username
                             }</p>
@@ -177,8 +192,21 @@ document.addEventListener("DOMContentLoaded", function () {
             status.replies === 1 ? "Reply" : "Replies"
           }</span>
                         </div>
-                        <button id="deletestatus"class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;
+                        ${
+                          status.can_delete
+                            ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                            : ""
+                        }
+          `;
           container.appendChild(newBox);
+
+          if (status.can_delete) {
+            document
+              .getElementById(`delete-${status.id}`)
+              .addEventListener("click", function () {
+                deleteStatus(status.id);
+              });
+          }
 
           newBox.addEventListener("animationend", function () {
             newBox.classList.remove("pop");
@@ -194,6 +222,31 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+
+  function deleteStatus(statusId) {
+    fetch(`/delete_status/${statusId}/`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document
+            .getElementById(`delete-${statusId}`)
+            .closest(".box5")
+            .remove();
+        } else {
+          showStatusError(data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting status:", error);
+        showStatusError("Error deleting status. Please try again.");
+      });
+  }
+
   function getEmotionIcon(emotion) {
     switch (emotion.toLowerCase()) {
       case "happiness":
@@ -271,7 +324,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (data.success) {
           showStatusSuccess("Status shared successfully!");
-          displayNewStatus(data.status);
+          setTimeout(() => {
+            const dialogBox = document.getElementById(
+              "statusNotificationSuccess"
+            );
+            dialogBox.classList.remove("pop-in");
+            dialogBox.classList.add("pop-out");
+            setTimeout(() => {
+              dialogBox.style.display = "none";
+              dialogBox.classList.remove("pop-out");
+
+              // Hide the status modal with animation
+              statusModal.classList.remove("pop-in");
+              statusModal.classList.add("pop-out");
+              setTimeout(() => {
+                statusModal.style.display = "none";
+                statusModal.classList.remove("pop-out");
+
+                // Reload the page after both animations complete
+                window.location.reload();
+              }, 300); // Duration of the status modal pop-out animation
+            }, 300); // Duration of the success dialog pop-out animation
+          }, 3000); // Duration to show the success message
         } else {
           showStatusError(
             "Failed to share status: " + JSON.stringify(data.errors)
@@ -312,7 +386,12 @@ document.addEventListener("DOMContentLoaded", function () {
       status.replies === 1 ? "Reply" : "Replies"
     }</span>
             </div>
-            <button id="deletestatus" class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;
+             ${
+               status.can_delete
+                 ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                 : ""
+             }
+          `;
     container.prepend(newBox); // Prepend to show the new status at the top
 
     newBox.addEventListener("animationend", function () {

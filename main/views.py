@@ -117,30 +117,56 @@ def submit_status(request):
 def get_all_statuses(request):
     page_number = request.GET.get('page', 1)
     page_size = 10  # Number of statuses per page
+    category = request.GET.get('category', 'recent')
 
-    statuses = Status.objects.all().order_by('-created_at')
+    if category == 'recent':
+        statuses = Status.objects.all().order_by('-created_at')
+    elif category == 'popular':
+        statuses = Status.objects.annotate(reply_count=Count('replies')).order_by('-reply_count', '-created_at')
+    else:
+        statuses = Status.objects.filter(emotion__iexact=category).order_by('-created_at')
+
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
+
+    authenticated_user_id = request.user.id if request.user.is_authenticated else None
+
+    default_avatar_url = "/static/images/avatars/placeholder.png"
 
     statuses_data = [
         {
             'id': status.id,
             'username': status.user.username,
-            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else None,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else default_avatar_url,
             'emotion': status.emotion,
             'title': status.title,
             'description': status.plain_description,
             'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
-            'replies': 0  # Placeholder for replies
+            'replies': 0,  # Placeholder for replies
+            'can_delete': status.user.id == authenticated_user_id
         }
         for status in page_obj
     ]
     return JsonResponse({'statuses': statuses_data, 'has_next': page_obj.has_next()})
 
+
+@login_required
+@csrf_exempt
+def delete_status(request, status_id):
+    if request.method == 'DELETE':
+        try:
+            status = Status.objects.get(id=status_id, user=request.user)
+            status.delete()
+            return JsonResponse({'success': True, 'message': 'Status deleted successfully.'})
+        except Status.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Status not found or you do not have permission to delete this status.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
 @login_required
 def get_user_profile(request):
     user_profile = request.user.profile
-    avatar_url = user_profile.avatar.url if user_profile.avatar else None
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+    avatar_url = user_profile.avatar.url if user_profile.avatar else default_avatar_url
     data = {
         'student_id': request.user.student_id,
         'username': request.user.username,

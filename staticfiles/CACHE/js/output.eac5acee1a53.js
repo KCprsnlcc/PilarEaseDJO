@@ -5,31 +5,71 @@ if(!title){showStatusError("Choose a title for this status.");return;}
 if(!description){showStatusError("Write what you feel in the description.");return;}
 confirmStatusModal.style.display="block";setTimeout(()=>{confirmStatusModal.classList.add("pop-in");},10);});confirmBtn.addEventListener("click",function(){confirmStatusModal.classList.remove("pop-in");confirmStatusModal.classList.add("pop-out");setTimeout(()=>{confirmStatusModal.style.display="none";confirmStatusModal.classList.remove("pop-out");uploadStatus();},300);});cancelBtn.addEventListener("click",function(){confirmStatusModal.classList.remove("pop-in");confirmStatusModal.classList.add("pop-out");setTimeout(()=>{confirmStatusModal.style.display="none";confirmStatusModal.classList.remove("pop-out");},300);});function fetchStatuses(page){isLoading=true;const statusLoader=document.getElementById("statusLoader");const statusOverlay=document.getElementById("statusOverlay");statusLoader.style.display="block";statusOverlay.style.display="block";fetch(`/get_all_statuses/?page=${page}`).then((response)=>response.json()).then((data)=>{isLoading=false;statusLoader.style.display="none";statusOverlay.style.display="none";const container=document.getElementById("boxContainer");data.statuses.forEach((status)=>{const newBox=document.createElement("div");newBox.classList.add("box5","pop");newBox.innerHTML=`
                         <div class="avatar-content">
-                            <img src="${status.avatar_url}" alt="Avatar" class="circle-avatar-placeholder" />
-                            <p class="username-placeholder">${status.username}</p>
+               <img src="${
+                 status.avatar_url
+               }" alt="Avatar" class="circle-avatar-placeholder" />
+                            <p class="username-placeholder">${
+                              status.username
+                            }</p>
                         </div>
                         <div class="content">
                             <h2 class="title-placeholder">${status.title}</h2>
-                            <p class="description-placeholder">${status.description}</p>
-                            <span class="time-stamp time-stamp-placeholder">${status.created_at}</span>
-                            <span class="feelings feelings-placeholder">${status.emotion}</span>
-                            <span class="replies replies-placeholder">Replies: ${status.replies}</span>
+                            <p class="description-placeholder">${truncateText(
+                              status.description
+                            )}</p>
+                            <span class="time-stamp time-stamp-placeholder">${
+                              status.created_at
+                            } ago</span>
+                             <span class="feelings feelings-placeholder">${getEmotionIcon(
+                               status.emotion
+                             )} ${mapEmotion(status.emotion)}</span>
+                            <span class="replies replies-placeholder">${
+                              status.replies
+                            } ${
+            status.replies === 1 ? "Reply" : "Replies"
+          }</span>
                         </div>
-                        <button class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;container.appendChild(newBox);newBox.addEventListener("animationend",function(){newBox.classList.remove("pop");});});hasNext=data.has_next;}).catch((error)=>{isLoading=false;statusLoader.style.display="none";statusOverlay.style.display="none";console.error("Error fetching statuses:",error);});}
-function uploadStatus(){const title=statusTitle.value.trim();const description=statusDescription.classList.contains("placeholder")?"":statusDescription.innerHTML.trim();const plainDescription=statusDescription.textContent.trim();const csrfToken=document.querySelector('input[name="csrfmiddlewaretoken"]').value;showLoader();statusModal.querySelector(".status-form").style.opacity="0.5";fetch("/submit_status/",{method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":csrfToken,},body:JSON.stringify({emotion:selectedEmotion,title:title,description:description,plain_description:plainDescription,}),}).then((response)=>response.json()).then((data)=>{hideLoader();statusModal.querySelector(".status-form").style.opacity="1";if(data.success){showStatusSuccess("Status shared successfully!");displayNewStatus(data.status);}else{showStatusError("Failed to share status: "+JSON.stringify(data.errors));}}).catch((error)=>{hideLoader();statusModal.querySelector(".status-form").style.opacity="1";console.error("Error:",error);showStatusError("Network error could not upload.");});}
+                        ${
+                          status.can_delete
+                            ? `<button id="delete-${status.id}"class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                            : ""
+                        }
+          `;container.appendChild(newBox);if(status.can_delete){document.getElementById(`delete-${status.id}`).addEventListener("click",function(){deleteStatus(status.id);});}
+newBox.addEventListener("animationend",function(){newBox.classList.remove("pop");});});hasNext=data.has_next;}).catch((error)=>{isLoading=false;statusLoader.style.display="none";statusOverlay.style.display="none";console.error("Error fetching statuses:",error);});}
+function deleteStatus(statusId){fetch(`/delete_status/${statusId}/`,{method:"DELETE",headers:{"X-CSRFToken":getCookie("csrftoken"),},}).then((response)=>response.json()).then((data)=>{if(data.success){document.getElementById(`delete-${statusId}`).closest(".box5").remove();}else{showStatusError(data.message);}}).catch((error)=>{console.error("Error deleting status:",error);showStatusError("Error deleting status. Please try again.");});}
+function getEmotionIcon(emotion){switch(emotion.toLowerCase()){case"happiness":return"<i class='bx bx-happy-alt'></i>";case"sadness":return"<i class='bx bx-sad'></i>";case"fear":return"<i class='bx bx-dizzy' ></i>";case"anger":return"<i class='bx bx-angry'></i>";case"surprise":return"<i class='bx bx-shocked' ></i>";case"disgust":return"<i class='bx bx-confused' ></i>";default:return"<i class='bx bx-face'></i>";}}
+function mapEmotion(emotion){switch(emotion.toLowerCase()){case"happiness":return"Happy";case"sadness":return"Sad";case"fear":return"Fear";case"anger":return"Angry";case"surprise":return"Surprise";case"disgust":return"Disgust";default:return emotion;}}
+function truncateText(text,maxLength=150){if(text.length<=maxLength){return text;}
+return text.substring(0,maxLength)+"...";}
+function uploadStatus(){const title=statusTitle.value.trim();const description=statusDescription.classList.contains("placeholder")?"":statusDescription.innerHTML.trim();const plainDescription=statusDescription.textContent.trim();const csrfToken=document.querySelector('input[name="csrfmiddlewaretoken"]').value;showLoader();statusModal.querySelector(".status-form").style.opacity="0.5";fetch("/submit_status/",{method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":csrfToken,},body:JSON.stringify({emotion:selectedEmotion,title:title,description:description,plain_description:plainDescription,}),}).then((response)=>response.json()).then((data)=>{hideLoader();statusModal.querySelector(".status-form").style.opacity="1";if(data.success){showStatusSuccess("Status shared successfully!");setTimeout(()=>{const dialogBox=document.getElementById("statusNotificationSuccess");dialogBox.classList.remove("pop-in");dialogBox.classList.add("pop-out");setTimeout(()=>{dialogBox.style.display="none";dialogBox.classList.remove("pop-out");statusModal.classList.remove("pop-in");statusModal.classList.add("pop-out");setTimeout(()=>{statusModal.style.display="none";statusModal.classList.remove("pop-out");window.location.reload();},300);},300);},3000);}else{showStatusError("Failed to share status: "+JSON.stringify(data.errors));}}).catch((error)=>{hideLoader();statusModal.querySelector(".status-form").style.opacity="1";console.error("Error:",error);showStatusError("Network error could not upload.");});}
 function displayNewStatus(status){const container=document.getElementById("boxContainer");const newBox=document.createElement("div");newBox.classList.add("box5","pop");newBox.innerHTML=`
             <div class="avatar-content">
-                <img src="${status.avatar_url}" alt="Avatar" class="circle-avatar-placeholder" />
+                <img src="${
+                  status.avatar_url
+                }" alt="Avatar" class="circle-avatar-placeholder" />
                 <p class="username-placeholder">${status.username}</p>
             </div>
             <div class="content">
                 <h2 class="title-placeholder">${status.title}</h2>
-                <p class="description-placeholder">${status.description}</p>
-                <span class="time-stamp time-stamp-placeholder">${status.created_at}</span>
-                <span class="feelings feelings-placeholder">${status.emotion}</span>
-                <span class="replies replies-placeholder">Replies: ${status.replies}</span>
+                <p class="description-placeholder">${truncateText(
+                  status.description
+                )}</p>
+                <span class="time-stamp time-stamp-placeholder">${
+                  status.created_at
+                } ago</span>
+                <span class="feelings feelings-placeholder">${getEmotionIcon(
+                  status.emotion
+                )} ${mapEmotion(status.emotion)}</span>
+                <span class="replies replies-placeholder">${status.replies} ${
+      status.replies === 1 ? "Reply" : "Replies"
+    }</span>
             </div>
-            <button class="delete-button"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`;container.prepend(newBox);newBox.addEventListener("animationend",function(){newBox.classList.remove("pop");});}
+             ${
+               status.can_delete
+                 ? `<button id="delete-${status.id}"class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                 : ""
+             }
+          `;container.prepend(newBox);newBox.addEventListener("animationend",function(){newBox.classList.remove("pop");});}
 statusDescription.addEventListener("focus",hidePlaceholder);statusDescription.addEventListener("blur",showPlaceholder);function hidePlaceholder(){if(statusDescription.classList.contains("placeholder")){statusDescription.classList.remove("placeholder");statusDescription.innerHTML="";}}
 function showPlaceholder(){if(!statusDescription.innerHTML.trim().length){statusDescription.classList.add("placeholder");statusDescription.innerHTML=statusDescription.getAttribute("placeholder");}}
 showPlaceholder();function saveFormData(){const title=statusTitle.value.trim();const description=statusDescription.innerHTML.trim();const formData={selectedEmotion:selectedEmotion,title:title,description:description,};localStorage.setItem("statusFormData",JSON.stringify(formData));}
