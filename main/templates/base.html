@@ -103,7 +103,12 @@
         </div>
         <div class="actions">
           Share your Feelings<br />Submit an Appointment<br />Become a
-          Pilarist<br />Contact Us
+          Pilarist<br /><a
+            href="#"
+            id="contactUsButton"
+            style="cursor: pointer; text-decoration: none; color: #9095a0"
+            >Contact Us</a
+          >
         </div>
         <div class="connect">CONNECT</div>
         <div class="learn-more">Learn More...</div>
@@ -635,6 +640,29 @@
         <div id="updatepasserrorContent">
           Please check your current password.
         </div>
+      </div>
+    </div>
+
+    <!-- Contact Us Modal -->
+    <div id="contactUsModal" class="modal">
+      <div id="contactcontent" class="modal-content pop-in">
+        <span class="close" id="closeContactUsModal">&times;</span>
+        <h2>Contact Us</h2>
+        <form id="contactUsForm">
+          <label id="label" for="name">Your Name</label>
+          <input type="text" id="name" name="name" required />
+
+          <label id="label" for="email">Your Email</label>
+          <input type="email" id="email" name="email" required />
+
+          <label id="label" for="subject">Subject</label>
+          <input type="text" id="subject" name="subject" required />
+
+          <label id="label" for="message">Message</label>
+          <textarea id="message" name="message" required></textarea>
+
+          <button id="contactbutton" type="submit">Send</button>
+        </form>
       </div>
     </div>
 

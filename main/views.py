@@ -16,7 +16,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply
+from .models import Status, Reply, ContactUs
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator
@@ -158,9 +158,25 @@ def submit_reply(request, status_id):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
+
+@csrf_exempt
+def contact_us_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
+
+        ContactUs.objects.create(name=name, email=email, subject=subject, message=message)
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    
 def get_all_statuses(request):
     page_number = request.GET.get('page', 1)
-    page_size = 10  # Number of statuses per page
+    page_size = 100  # Number of statuses per page
     category = request.GET.get('category', 'recent')
 
     if category == 'recent':

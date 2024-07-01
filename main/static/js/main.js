@@ -35,6 +35,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const confirmBtn = document.getElementById("confirmBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const categoryElements = document.querySelectorAll(".v1_124 div");
+  const contactUsButton = document.getElementById("contactUsButton");
+  const contactUsModal = document.getElementById("contactUsModal");
+  const closeContactUsModal = document.getElementById("closeContactUsModal");
 
   let selectedEmotion = null;
   let page = 1;
@@ -42,6 +45,75 @@ document.addEventListener("DOMContentLoaded", function () {
   let hasNext = true;
   let activeCategory = "recent";
 
+  // Show modal when Contact Us button is clicked
+  contactUsButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    contactUsModal.style.display = "block";
+    setTimeout(() => {
+      contactUsModal.classList.add("fade-in");
+      document.querySelector(".modal-content").classList.add("pop-in");
+    }, 10);
+  });
+
+  // Close modal when the close button is clicked
+  closeContactUsModal.addEventListener("click", function () {
+    document.querySelector(".modal-content").classList.add("pop-out");
+    contactUsModal.classList.add("fade-out");
+    setTimeout(() => {
+      contactUsModal.style.display = "none";
+      document.querySelector(".modal-content").classList.remove("pop-out");
+      contactUsModal.classList.remove("fade-out");
+    }, 300);
+  });
+
+  // Close modal when clicking outside of the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === contactUsModal) {
+      document.querySelector(".modal-content").classList.add("pop-out");
+      contactUsModal.classList.add("fade-out");
+      setTimeout(() => {
+        contactUsModal.style.display = "none";
+        document.querySelector(".modal-content").classList.remove("pop-out");
+        contactUsModal.classList.remove("fade-out");
+      }, 300);
+    }
+  });
+
+  // Handle form submission
+  const contactUsForm = document.getElementById("contactUsForm");
+  contactUsForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const formData = new FormData(contactUsForm);
+
+    fetch("/contact_us/", {
+      method: "POST",
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject"),
+        message: formData.get("message"),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Your message has been sent successfully!");
+          contactUsModal.style.display = "none";
+          contactUsForm.reset();
+        } else {
+          alert("There was an error sending your message. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("There was an error sending your message. Please try again.");
+      });
+  });
   // Added back button functionality
   const backButton = document.getElementById("backButton");
   if (backButton) {
