@@ -1,0 +1,85 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<link
+  href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap"
+  rel="stylesheet"
+/>
+<link
+  href="https://fonts.googleapis.com/css?family=Inter&display=swap"
+  rel="stylesheet"
+/>
+<link
+  href="https://fonts.googleapis.com/css?family=Beau+Rivage&display=swap"
+  rel="stylesheet"
+/>
+<svg class="curved-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+  <path d="M0,0 C20,40 40,40 60,0" />
+</svg>
+<svg
+  class="curved-line bottom-left"
+  viewBox="0 0 100 100"
+  preserveAspectRatio="none"
+>
+  <path d="M0,100 C30,70 70,70 100,100" />
+</svg>
+<svg
+  class="curved-line bottom-right"
+  viewBox="0 0 100 100"
+  preserveAspectRatio="none"
+>
+  <path d="M0,100 C30,70 70,70 100,100" />
+</svg>
+<svg
+  class="curved-line top-left"
+  viewBox="0 0 100 100"
+  preserveAspectRatio="none"
+>
+  <path d="M0,0 C30,30 70,30 100,0" />
+</svg>
+<div class="status-detail-container">
+  <button id="backButton" class="back-button">
+    <i class="bx bx-arrow-back"></i>
+  </button>
+  <div class="status-detail">
+    <div id="avatarshow" class="avatar-content">
+      <img
+        src="{{ avatar_url }}"
+        alt="Avatar"
+        class="circle-avatar-placeholder"
+      />
+      <p class="username-placeholder">{{ status.user.username }}</p>
+    </div>
+    <h2>{{ status.title }}</h2>
+    <div class="description-container">
+      <div>{{ status.description|safe }}</div>
+    </div>
+    <!-- Use the safe filter to render HTML content -->
+    <span>Posted by {{ status.user.username }} - {{ status.created_at }}</span>
+  </div>
+  <div class="replies-section">
+    <h3>Replies</h3>
+    <div id="repliesList">
+      {% for reply in replies %}
+      <div class="reply">
+        <strong>{{ reply.user.username }}</strong>
+        <p>{{ reply.text }}</p>
+        <span>{{ reply.created_at }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <form
+      id="replyForm"
+      action="{% url 'submit_reply' status.id %}"
+      method="post"
+    >
+      {% csrf_token %}
+      <textarea
+        id="replyText"
+        name="text"
+        placeholder="Write a reply..."
+      ></textarea>
+      <button type="submit">Submit Reply</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

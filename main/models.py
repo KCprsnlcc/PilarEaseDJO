@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth.models import User
+
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
     full_name = models.CharField(max_length=100)
@@ -46,6 +48,12 @@ class Status(models.Model):
 
     def __str__(self):
         return f"{self.title} by {self.user.username}"
+    
+class Reply(models.Model):
+    status = models.ForeignKey(Status, related_name='replies', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver

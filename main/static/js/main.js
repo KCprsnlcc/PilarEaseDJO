@@ -42,6 +42,26 @@ document.addEventListener("DOMContentLoaded", function () {
   let hasNext = true;
   let activeCategory = "recent";
 
+  // Added back button functionality
+  const backButton = document.getElementById("backButton");
+  if (backButton) {
+    backButton.addEventListener("click", function () {
+      window.location.href = "/";
+    });
+  }
+
+  // Function to add pop animation to status detail
+  function addPopAnimation() {
+    const statusDetailContainer = document.querySelector(
+      ".status-detail-container"
+    );
+    if (statusDetailContainer) {
+      statusDetailContainer.classList.add("pop-in");
+    }
+  }
+
+  addPopAnimation();
+
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>
@@ -146,7 +166,6 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.classList.remove("pop-out");
     }, 300);
   });
-
   function fetchStatuses(page, category) {
     isLoading = true;
     const statusLoader = document.getElementById("statusLoader");
@@ -167,37 +186,37 @@ document.addEventListener("DOMContentLoaded", function () {
           const newBox = document.createElement("div");
           newBox.classList.add("box5", "pop");
           newBox.innerHTML = `
-                        <div class="avatar-content">
-               <img src="${
-                 status.avatar_url
-               }" alt="Avatar" class="circle-avatar-placeholder" />
-                            <p class="username-placeholder">${
-                              status.username
-                            }</p>
-                        </div>
-                        <div class="content">
+                    <div class="avatar-content">
+                        <a href="/status/${status.id}/">
+                            <img src="${
+                              status.avatar_url
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                        </a>
+                        <p class="username-placeholder">${status.username}</p>
+                    </div>
+                    <div class="content">
+                        <a href="/status/${status.id}/">
                             <h2 class="title-placeholder">${status.title}</h2>
                             <p class="description-placeholder">${truncateText(
-                              status.description
+                              status.plain_description
                             )}</p>
-                            <span class="time-stamp time-stamp-placeholder">${
-                              status.created_at
-                            } ago</span>
-                             <span class="feelings feelings-placeholder">${getEmotionIcon(
-                               status.emotion
-                             )} ${mapEmotion(status.emotion)}</span>
-                            <span class="replies replies-placeholder">${
-                              status.replies
-                            } ${
-            status.replies === 1 ? "Reply" : "Replies"
-          }</span>
-                        </div>
+                        </a>
+                        <span class="time-stamp time-stamp-placeholder">${
+                          status.created_at
+                        } ago</span>
+                        <span class="feelings feelings-placeholder">${getEmotionIcon(
+                          status.emotion
+                        )} ${mapEmotion(status.emotion)}</span>
+                        <span class="replies replies-placeholder">${
+                          status.replies
+                        } ${status.replies === 1 ? "Reply" : "Replies"}</span>
                         ${
                           status.can_delete
                             ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
                             : ""
                         }
-          `;
+                    </div>
+                `;
           container.appendChild(newBox);
 
           if (status.can_delete) {
@@ -222,7 +241,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
-
   function deleteStatus(statusId) {
     fetch(`/delete_status/${statusId}/`, {
       method: "DELETE",

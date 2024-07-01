@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -16,10 +16,13 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status
+from .models import Status, Reply
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator
+from .models import Status
+from django.db.models import Count
+
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -114,6 +117,47 @@ def submit_status(request):
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
 
+
+@login_required
+@csrf_exempt
+def add_reply(request, status_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        text = data.get('text')
+
+        if not text:
+            return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
+
+        status = get_object_or_404(Status, id=status_id)
+        reply = Reply.objects.create(status=status, user=request.user, text=text)
+
+        return JsonResponse({'success': True, 'reply': {
+            'id': reply.id,
+            'username': reply.user.username,
+            'text': reply.text,
+            'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+@login_required
+def status_detail(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    replies = status.replies.all()
+    avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
+    return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
+
+@login_required
+@csrf_exempt
+def submit_reply(request, status_id):
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        if text:
+            status = get_object_or_404(Status, id=status_id)
+            reply = Reply.objects.create(status=status, user=request.user, text=text)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
 def get_all_statuses(request):
     page_number = request.GET.get('page', 1)
     page_size = 10  # Number of statuses per page
@@ -140,15 +184,15 @@ def get_all_statuses(request):
             'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else default_avatar_url,
             'emotion': status.emotion,
             'title': status.title,
-            'description': status.plain_description,
+            'plain_description': status.plain_description,  # Include plain_description
+            'description': status.description,  # Include description with formatted text
             'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
-            'replies': 0,  # Placeholder for replies
+            'replies': status.replies.count(),  # Count the number of replies
             'can_delete': status.user.id == authenticated_user_id
         }
         for status in page_obj
     ]
     return JsonResponse({'statuses': statuses_data, 'has_next': page_obj.has_next()})
-
 
 @login_required
 @csrf_exempt
