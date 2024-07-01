@@ -208,10 +208,10 @@ button[type="submit"]:hover {
   }
 }
 
-.floating-button {
+#floatingButton {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 180px;
+  right: 10px;
   background-color: #0f2326;
   color: #ffffff;
   border: none;
@@ -225,86 +225,97 @@ button[type="submit"]:hover {
   justify-content: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   user-select: none;
-  z-index: 10;
+  z-index: 10000;
   transition: transform 0.3s ease-in-out;
   animation: float 3s ease-in-out infinite;
 }
-.floating-button i {
+
+#floatingButton i {
   font-size: 24px;
   transition: transform 0.3s ease-in-out;
 }
 .chat-popup {
   display: none;
   position: fixed;
-  bottom: 90px;
-  right: 20px;
-  border: 1px solid #679e4a;
+  border: 1px solid #fff;
   border-radius: 10px;
   background-color: #ffffff;
   width: 350px;
+  margin-right: -20px;
   height: 500px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 9;
+  z-index: 10000;
   animation-duration: 0.3s;
   animation-fill-mode: both;
 }
+
 .chat-popup::after {
   content: "";
   position: absolute;
   bottom: -10px;
-  right: 30px; /* Adjusted to point to the icon */
+  right: 10px;
   width: 0;
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-top: 10px solid #ffffff;
 }
-.pop-in {
-  animation-name: popIn;
+
+.chatPopIn {
+  animation-name: chatPopIn;
 }
-.pop-out {
-  animation-name: popOut;
+
+.chatPopOut {
+  animation-name: chatPopOut;
 }
-@keyframes popIn {
+@keyframes chatPopIn {
   from {
     transform: scale(0);
     opacity: 0;
     transform-origin: bottom right;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
     transform-origin: bottom right;
   }
 }
-@keyframes popOut {
+
+@keyframes chatPopOut {
   from {
     transform: scale(1);
     opacity: 1;
     transform-origin: bottom right;
   }
+
   to {
     transform: scale(0);
     opacity: 0;
     transform-origin: bottom right;
   }
 }
+
 @keyframes float {
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
 }
+
 @keyframes drag {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.1);
   }
+
   100% {
     transform: scale(1);
   }
@@ -312,24 +323,29 @@ button[type="submit"]:hover {
 .icon-pop-in {
   animation: iconPopIn 0.3s ease-in-out forwards;
 }
+
 .icon-pop-out {
   animation: iconPopOut 0.3s ease-in-out forwards;
 }
+
 @keyframes iconPopIn {
   from {
     transform: scale(0);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
   }
 }
+
 @keyframes iconPopOut {
   from {
     transform: scale(1);
     opacity: 1;
   }
+
   to {
     transform: scale(0);
     opacity: 0;
@@ -338,33 +354,37 @@ button[type="submit"]:hover {
 .chat-popup header {
   background-color: #0e2326;
   color: #ffffff;
-  padding: 10px;
+  padding: 5px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   text-align: center;
   font-family: "Aguafina Script", cursive;
-  font-size: 24px;
+  font-size: 30px;
 }
+
 .chat-popup .chat-body {
   padding: 10px;
   max-height: calc(100% - 130px);
   overflow-y: auto;
 }
+
 .chat-popup .chat-input {
   display: flex;
   padding: 10px;
-  border-top: 1px solid #679e4a;
+  border-top: 1px solid #0f2326;
   position: absolute;
   bottom: 0;
   width: 100%;
   box-sizing: border-box;
 }
+
 .chat-popup .chat-input input {
   width: 100%;
   padding: 10px;
-  border: none;
-  border-top: 1px solid #0e2326;
+  border-radius: 5px;
+  border: 1px solid #0e2326;
 }
+
 .chat-popup .chat-input button {
   background-color: #0e2326;
   color: #ffffff;
@@ -373,15 +393,18 @@ button[type="submit"]:hover {
   border-radius: 5px;
   cursor: pointer;
 }
+
 .chat-message {
   margin-bottom: 10px;
 }
+
 .chat-timestamp {
   font-size: 0.8em;
   color: #999;
   text-align: center;
   margin-bottom: 10px;
 }
+
 .chatbot-message {
   background-color: #ffffff;
   color: #0e2326;
@@ -393,6 +416,7 @@ button[type="submit"]:hover {
   position: relative;
   margin-right: 50px;
 }
+
 .user-message {
   background-color: #0e2326;
   color: #ffffff;
@@ -405,7 +429,6 @@ button[type="submit"]:hover {
   position: relative;
   margin-left: 50px;
 }
-
 #contactUsModal {
   display: none;
   position: fixed;

@@ -16,6 +16,119 @@ const closeStatusModal = document.getElementById("closeStatusModal");
 const descriptionDiv = document.getElementById("description");
 var statusComposerButton = document.getElementById("statuscomposer");
 
+var floatingButton = document.getElementById("floatingButton");
+var chatPopup = document.getElementById("chatPopup");
+var isDragging = false;
+var isOpen = false;
+var startX, startY, initialX, initialY;
+
+function updateChatPosition() {
+  var buttonRect = floatingButton.getBoundingClientRect();
+  chatPopup.style.bottom = window.innerHeight - buttonRect.bottom + 70 + "px";
+  chatPopup.style.right = window.innerWidth - buttonRect.right + 20 + "px";
+}
+
+window.addEventListener("resize", updateChatPosition);
+
+floatingButton.addEventListener("mousedown", function (e) {
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  initialX = floatingButton.offsetLeft;
+  initialY = floatingButton.offsetTop;
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+  floatingButton.style.animation = "drag 0.5s infinite";
+});
+
+function onMouseMove(e) {
+  if (isDragging) {
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    floatingButton.style.left = initialX + dx + "px";
+    floatingButton.style.top = initialY + dy + "px";
+    updateChatPosition();
+  }
+}
+
+function onMouseUp() {
+  isDragging = false;
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
+  floatingButton.style.animation = "float 3s ease-in-out infinite";
+}
+
+floatingButton.addEventListener("click", function () {
+  updateChatPosition(); // Update position before showing
+  if (!isOpen) {
+    chatPopup.style.display = "block";
+    chatPopup.classList.remove("chatPopOut");
+    chatPopup.classList.add("chatPopIn");
+    floatingButton.firstElementChild.classList.add("icon-pop-out");
+    setTimeout(() => {
+      floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
+    }, 300);
+    isOpen = true;
+  } else {
+    chatPopup.classList.remove("chatPopIn");
+    chatPopup.classList.add("chatPopOut");
+    floatingButton.firstElementChild.classList.add("icon-pop-out");
+    setTimeout(function () {
+      chatPopup.style.display = "none";
+      floatingButton.firstElementChild.className = "bx bxs-message icon-pop-in";
+    }, 300); // Match the animation duration
+    isOpen = false;
+  }
+});
+
+function sendMessage() {
+  var chatInput = document.getElementById("chatInput");
+  var chatBody = document.getElementById("chatBody");
+  var message = chatInput.value;
+  if (message.trim() !== "") {
+    var messageElement = document.createElement("div");
+    messageElement.className = "user-message chat-message";
+    messageElement.textContent = message;
+    chatBody.appendChild(messageElement);
+
+    var timestampElement = document.createElement("div");
+    timestampElement.className = "chat-timestamp";
+    timestampElement.textContent = getCurrentTime();
+    chatBody.appendChild(timestampElement);
+
+    chatInput.value = "";
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    setTimeout(function () {
+      var botMessageElement = document.createElement("div");
+      botMessageElement.className = "chatbot-message chat-message";
+      botMessageElement.textContent = "How can I help you today?";
+      chatBody.appendChild(botMessageElement);
+
+      var botTimestampElement = document.createElement("div");
+      botTimestampElement.className = "chat-timestamp";
+      botTimestampElement.textContent = getCurrentTime();
+      chatBody.appendChild(botTimestampElement);
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }, 1000);
+  }
+}
+
+function getCurrentTime() {
+  var now = new Date();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
+  var ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  var strTime = hours + ":" + minutes + " " + ampm;
+  return strTime;
+}
+
+document.addEventListener("DOMContentLoaded", updateChatPosition);
+
 if (statusComposerButton) {
   // Show the modal with pop-in animation
   statusComposerButton.addEventListener("click", function () {
