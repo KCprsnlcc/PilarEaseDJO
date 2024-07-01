@@ -207,6 +207,205 @@ button[type="submit"]:hover {
     margin-top: 0;
   }
 }
+
+.floating-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #0f2326;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  z-index: 10;
+  transition: transform 0.3s ease-in-out;
+  animation: float 3s ease-in-out infinite;
+}
+.floating-button i {
+  font-size: 24px;
+  transition: transform 0.3s ease-in-out;
+}
+.chat-popup {
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  border: 1px solid #679e4a;
+  border-radius: 10px;
+  background-color: #ffffff;
+  width: 350px;
+  height: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 9;
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+.chat-popup::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  right: 30px; /* Adjusted to point to the icon */
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #ffffff;
+}
+.pop-in {
+  animation-name: popIn;
+}
+.pop-out {
+  animation-name: popOut;
+}
+@keyframes popIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+    transform-origin: bottom right;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+    transform-origin: bottom right;
+  }
+}
+@keyframes popOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+    transform-origin: bottom right;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+    transform-origin: bottom right;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes drag {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.icon-pop-in {
+  animation: iconPopIn 0.3s ease-in-out forwards;
+}
+.icon-pop-out {
+  animation: iconPopOut 0.3s ease-in-out forwards;
+}
+@keyframes iconPopIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes iconPopOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.chat-popup header {
+  background-color: #0e2326;
+  color: #ffffff;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  text-align: center;
+  font-family: "Aguafina Script", cursive;
+  font-size: 24px;
+}
+.chat-popup .chat-body {
+  padding: 10px;
+  max-height: calc(100% - 130px);
+  overflow-y: auto;
+}
+.chat-popup .chat-input {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #679e4a;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.chat-popup .chat-input input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-top: 1px solid #0e2326;
+}
+.chat-popup .chat-input button {
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.chat-message {
+  margin-bottom: 10px;
+}
+.chat-timestamp {
+  font-size: 0.8em;
+  color: #999;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.chatbot-message {
+  background-color: #ffffff;
+  color: #0e2326;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  display: inline-block;
+  border: 1px solid #0e2326;
+  position: relative;
+  margin-right: 50px;
+}
+.user-message {
+  background-color: #0e2326;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  display: inline-block;
+  align-self: flex-end;
+  border: 1px solid #0e2326;
+  position: relative;
+  margin-left: 50px;
+}
+
 #contactUsModal {
   display: none;
   position: fixed;
