@@ -399,7 +399,7 @@
         </div>
       </div>
     </div>
-
+    {% if user.is_authenticated %}
     <!-- Floating Chatbot -->
     <button class="floating-button" id="floatingButton">
       <i class="bx bxs-message"></i>
@@ -415,6 +415,7 @@
         <button onclick="sendMessage()"><i class="bx bxs-send"></i></button>
       </div>
     </div>
+    {% else %} {% endif %}
 
     <!-- Avatar Modal -->
     <div id="avatarModal" class="modal-content avatar">

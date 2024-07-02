@@ -173,7 +173,7 @@ def contact_us_view(request):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
-    
+    @login_required
 def get_all_statuses(request):
     page_number = request.GET.get('page', 1)
     page_size = 100  # Number of statuses per page

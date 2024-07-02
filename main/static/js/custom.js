@@ -102,7 +102,8 @@ function sendMessage() {
     setTimeout(function () {
       var botMessageElement = document.createElement("div");
       botMessageElement.className = "chatbot-message chat-message";
-      botMessageElement.textContent = "How can I help you today?";
+      botMessageElement.textContent =
+        "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today?";
       chatBody.appendChild(botMessageElement);
 
       var botTimestampElement = document.createElement("div");
