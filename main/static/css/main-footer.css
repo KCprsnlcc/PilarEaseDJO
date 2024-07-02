@@ -74,6 +74,10 @@ footer {
   word-wrap: break-word;
   cursor: pointer;
   width: 120px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.join-us:hover {
+  background-color: #3b5a2b;
 }
 
 .icon {
