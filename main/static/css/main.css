@@ -23,6 +23,59 @@ button:hover {
   background-color: #3b5a2b;
 }
 
+#notificationButton {
+  position: relative;
+  font-size: 24px;
+  color: #fff;
+  background-color: #0e2326;
+  left: 1280px;
+  top: -2px;
+  cursor: pointer;
+}
+
+#notificationCount {
+  position: absolute;
+  top: 8px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+#notificationList {
+  position: fixed;
+  top: 40px;
+  right: 0;
+  left: 1120px;
+  background: #fff;
+  color: #000;
+  width: 300px;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: none;
+}
+
+.notification-item {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.notification-item a:hover {
+  text-decoration: underline;
+}
+
 .status-detail-container {
   width: 1090px;
   margin: 0 auto;

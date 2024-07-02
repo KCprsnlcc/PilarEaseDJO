@@ -1634,3 +1634,56 @@ function updateUserProfile(event) {
 document
   .getElementById("profileForm")
   .addEventListener("submit", updateUserProfile);
+
+const notificationButton = document.getElementById("notificationButton");
+const notificationList = document.getElementById("notificationList");
+const notificationCount = document.getElementById("notificationCount");
+
+function fetchNotifications() {
+  // Fetch notifications from the server (this is just a mock example)
+  return [
+    {
+      message: "You uploaded a status, click to view it.",
+    },
+    {
+      message: "USERNAME replied to your status, click to see it.",
+    },
+  ];
+}
+
+function renderNotifications() {
+  const notifications = fetchNotifications();
+  notificationList.innerHTML = "";
+  notifications.forEach((notification) => {
+    const item = document.createElement("div");
+    item.classList.add("notification-item");
+    item.innerHTML = `<a href="${notification.link}">${notification.message}</a>`;
+    notificationList.appendChild(item);
+  });
+  notificationCount.innerText = notifications.length;
+  if (notifications.length > 0) {
+    notificationCount.style.display = "block";
+  } else {
+    notificationCount.style.display = "none";
+  }
+}
+
+notificationButton.addEventListener("click", function () {
+  if (notificationList.style.display === "none") {
+    renderNotifications();
+    notificationList.style.display = "block";
+  } else {
+    notificationList.style.display = "none";
+  }
+});
+
+window.addEventListener("click", function (event) {
+  if (
+    !notificationButton.contains(event.target) &&
+    !notificationList.contains(event.target)
+  ) {
+    notificationList.style.display = "none";
+  }
+});
+
+renderNotifications();

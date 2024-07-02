@@ -6,11 +6,11 @@ import re
 from collections import defaultdict
 import time
 
-# Load the translation model for Tagalog to English from Hugging Face
-translator = pipeline("translation", model="Helsinki-NLP/opus-mt-tl-en")
+# Load the translation model for Tagalog to English from local path
+translator = pipeline("translation", model="translationmodel/")
 
-# Load the J-Hartmann model for emotion classification
-emotion_classifier = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base")
+# Load the J-Hartmann model for emotion classification from local path
+emotion_classifier = pipeline("text-classification", model="predictivemodel/")
 
 # Define all emotions we are interested in
 all_emotions = ['anger', 'sadness', 'disgust', 'joy', 'neutral', 'surprise', 'fear']
