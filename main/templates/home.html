@@ -72,7 +72,13 @@
   <div id="surprise" class="v1_138"><span class="v1_139">Surprise</span></div>
   <div id="disgust" class="v1_140"><span class="v1_141">Disgust</span></div>
 </div>
+{% if user.is_authenticated %}
 <div class="container5" id="boxContainer"></div>
+{% else %}
+<p class="status-hidden">
+  Your emotions matter. Log in to see how others are feeling.
+</p>
+{% endif %}
 
 <!-- Modal Overlay -->
 <div id="statusModalOverlay" class="modal-overlay"></div>

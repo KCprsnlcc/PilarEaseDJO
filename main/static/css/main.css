@@ -514,6 +514,23 @@ button[type="submit"]:hover {
   transform: scale(0.7);
 }
 
+#closeContactUsModal {
+  margin-top: -10px;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.status-hidden {
+  font-family: Beau Rivage;
+  font-weight: Regular;
+  margin-left: 445px;
+  margin-top: 5px;
+  color: #0f2326;
+  font-size: 30px;
+}
+
 .close {
   color: #aaa;
   float: right;
@@ -1390,14 +1407,6 @@ button[type="submit"]:hover {
   background-color: #3b5a2b;
 }
 
-.close {
-  position: absolute;
-  right: 20px;
-  top: 10px;
-  font-size: 30px;
-  cursor: pointer;
-  z-index: 1000200;
-}
 .message-dialog {
   position: fixed;
   top: 50%;
@@ -1721,7 +1730,7 @@ button[type="submit"]:hover {
   border: 1px solid #888;
   width: 90%;
   height: 800px;
-  top: -35px;
+  top: -50px;
   left: 630px;
   max-width: 600px;
   border-radius: 10px;
@@ -2227,8 +2236,8 @@ button#generatePassword:hover {
 }
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0px;
+  right: 5px;
   width: 30px;
   height: 30px;
   cursor: pointer;
@@ -2835,14 +2844,14 @@ nav.open .nav-content span {
 }
 
 .v74_801 {
-  width: 1139px; /* Set the panel width to 1139px */
-  margin: 0 auto; /* Center the panel horizontally */
+  width: 1090px;
+  margin: 0 auto;
   height: 624px;
   background: rgba(255, 255, 255, 1);
   opacity: 1;
   position: fixed;
   top: 45px;
-  left: 375px;
+  left: 355px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   border-bottom-left-radius: 8px;
@@ -2857,6 +2866,7 @@ nav.open .nav-content span {
   overflow: hidden;
   z-index: 100008;
 }
+
 .v74_802 {
   width: 302px;
   color: rgba(255, 255, 255, 1);
@@ -3608,21 +3618,4 @@ nav.open .nav-content span {
   top: 2px;
   left: 6px;
   border: 2.057142972946167px solid rgba(86, 94, 108, 1);
-}
-
-.close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  opacity: 1;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
 }
