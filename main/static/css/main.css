@@ -145,6 +145,7 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
+  color: #fff;
   background-color: #3b5a2b;
 }
 
@@ -295,6 +296,7 @@ button[type="submit"]:hover {
   border-radius: 10px;
   background-color: #ffffff;
   width: 350px;
+  margin-right: -25px;
   margin-right: -25px;
   height: 500px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -2703,6 +2705,7 @@ nav.open .nav-content span {
   opacity: 1;
   text-align: left;
   cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
