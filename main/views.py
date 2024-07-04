@@ -176,7 +176,7 @@ def contact_us_view(request):
 @login_required
 def get_all_statuses(request):
     page_number = request.GET.get('page', 1)
-    page_size = 100  # Number of statuses per page
+    page_size = 10  # Number of statuses per page
     category = request.GET.get('category', 'recent')
 
     if category == 'recent':

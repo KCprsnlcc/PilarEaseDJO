@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
     event.preventDefault();
     contactUsModal.style.display = "block";
     setTimeout(() => {
-      contactUsModal.classList.add("fade-in");
+      contactUsModal.classList.add("pop-in");
       document.querySelector(".modal-content").classList.add("pop-in");
     }, 10);
   });
@@ -58,11 +58,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // Close modal when the close button is clicked
   closeContactUsModal.addEventListener("click", function () {
     document.querySelector(".modal-content").classList.add("pop-out");
-    contactUsModal.classList.add("fade-out");
+    contactUsModal.classList.add("pop-out");
     setTimeout(() => {
       contactUsModal.style.display = "none";
       document.querySelector(".modal-content").classList.remove("pop-out");
-      contactUsModal.classList.remove("fade-out");
+      contactUsModal.classList.remove("pop-out");
     }, 300);
   });
 
@@ -70,11 +70,11 @@ document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("click", function (event) {
     if (event.target === contactUsModal) {
       document.querySelector(".modal-content").classList.add("pop-out");
-      contactUsModal.classList.add("fade-out");
+      contactUsModal.classList.add("pop-out");
       setTimeout(() => {
         contactUsModal.style.display = "none";
         document.querySelector(".modal-content").classList.remove("pop-out");
-        contactUsModal.classList.remove("fade-out");
+        contactUsModal.classList.remove("pop-out");
       }, 300);
     }
   });
