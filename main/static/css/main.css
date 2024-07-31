@@ -297,7 +297,6 @@ button[type="submit"]:hover {
   background-color: #ffffff;
   width: 350px;
   margin-right: -25px;
-  margin-right: -25px;
   height: 500px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   z-index: 10000;
@@ -2698,10 +2697,10 @@ nav.open .nav-content span {
   color: rgba(255, 255, 255, 1);
   position: absolute;
   top: 10px;
-  left: 10px;
+  left: 15px;
   font-family: Inter;
   font-weight: Regular;
-  font-size: 12px;
+  font-size: 11px;
   opacity: 1;
   text-align: left;
   cursor: pointer;

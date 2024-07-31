@@ -24,51 +24,607 @@ document.addEventListener("DOMContentLoaded", function () {
   const statusModal = document.getElementById("statusModal");
   const statusModalOverlay = document.getElementById("statusModalOverlay");
   const closeStatusModal = document.getElementById("closeStatusModal");
-  const descriptionDiv = document.getElementById("description");
-  var statusComposerButton = document.getElementById("statuscomposer");
+  const statusComposerButton = document.getElementById("statuscomposer");
 
   const statusForm = document.getElementById("statusForm");
-  const statusEmotion = document.querySelector(".feeling-icon.active img").alt;
+  const feelingIcons = document.querySelectorAll(".feeling-icon");
   const statusTitle = document.getElementById("caption");
   const statusDescription = document.getElementById("description");
+  const statusLoader = document.getElementById("statusLoader");
+  const confirmStatusModal = document.getElementById("ConfirmStatusModal");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const categoryElements = document.querySelectorAll(".v1_124 div");
+  const contactUsButton = document.getElementById("contactUsButton");
+  const contactUsModal = document.getElementById("contactUsModal");
+  const closeContactUsModal = document.getElementById("closeContactUsModal");
 
+  let selectedEmotion = null;
+  let page = 1;
+  let isLoading = false;
+  let hasNext = true;
+  let activeCategory = "recent";
+
+  // Show modal when Contact Us button is clicked
+  contactUsButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    contactUsModal.style.display = "block";
+    setTimeout(() => {
+      contactUsModal.classList.add("pop-in");
+      document.querySelector(".modal-content").classList.add("pop-in");
+    }, 10);
+  });
+
+  // Close modal when the close button is clicked
+  closeContactUsModal.addEventListener("click", function () {
+    document.querySelector(".modal-content").classList.add("pop-out");
+    contactUsModal.classList.add("pop-out");
+    setTimeout(() => {
+      contactUsModal.style.display = "none";
+      document.querySelector(".modal-content").classList.remove("pop-out");
+      contactUsModal.classList.remove("pop-out");
+    }, 300);
+  });
+
+  // Close modal when clicking outside of the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === contactUsModal) {
+      document.querySelector(".modal-content").classList.add("pop-out");
+      contactUsModal.classList.add("pop-out");
+      setTimeout(() => {
+        contactUsModal.style.display = "none";
+        document.querySelector(".modal-content").classList.remove("pop-out");
+        contactUsModal.classList.remove("pop-out");
+      }, 300);
+    }
+  });
+
+  // Handle form submission
+  const contactUsForm = document.getElementById("contactUsForm");
+  contactUsForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const formData = new FormData(contactUsForm);
+
+    fetch("/contact_us/", {
+      method: "POST",
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject"),
+        message: formData.get("message"),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Your message has been sent successfully!");
+          contactUsModal.style.display = "none";
+          contactUsForm.reset();
+        } else {
+          alert("There was an error sending your message. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("There was an error sending your message. Please try again.");
+      });
+  });
+  // Added back button functionality
+  const backButton = document.getElementById("backButton");
+  if (backButton) {
+    backButton.addEventListener("click", function () {
+      window.location.href = "/";
+    });
+  }
+
+  // Function to add pop animation to status detail
+  function addPopAnimation() {
+    const statusDetailContainer = document.querySelector(
+      ".status-detail-container"
+    );
+    if (statusDetailContainer) {
+      statusDetailContainer.classList.add("pop-in");
+    }
+  }
+
+  addPopAnimation();
+
+  categoryElements.forEach((categoryElement) => {
+    categoryElement.addEventListener("click", function () {
+      categoryElements.forEach((el) =>
+        el.querySelector("span").classList.remove("active")
+      );
+      this.querySelector("span").classList.add("active");
+      activeCategory = this.id;
+      page = 1;
+      document.getElementById("boxContainer").innerHTML = "";
+      fetchStatuses(page, activeCategory);
+    });
+  });
+
+  // Fetch initial statuses
+  fetchStatuses(page, activeCategory);
+
+  // Add scroll event listener for infinite scrolling
+  window.addEventListener("scroll", () => {
+    if (
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+      !isLoading &&
+      hasNext
+    ) {
+      page++;
+      fetchStatuses(page);
+    }
+  });
+
+  // Show loader and overlay
+  function showLoader() {
+    statusLoader.style.display = "block";
+  }
+
+  // Hide loader and overlay
+  function hideLoader() {
+    statusLoader.style.display = "none";
+  }
+
+  feelingIcons.forEach((icon) => {
+    icon.addEventListener("click", () => {
+      feelingIcons.forEach((i) => i.classList.remove("active"));
+      icon.classList.add("active");
+      selectedEmotion = icon.querySelector("img").alt;
+      saveFormData();
+    });
+  });
+
+  statusTitle.addEventListener("input", saveFormData);
+  statusDescription.addEventListener("input", saveFormData);
+
+  // Add event listener to form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    const emotion = statusEmotion;
-    const title = statusTitle.value;
-    const description = statusDescription.innerText;
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent.trim();
+
+    if (!selectedEmotion) {
+      showStatusError("Choose your emotion label.");
+      return;
+    }
+
+    if (!title) {
+      showStatusError("Choose a title for this status.");
+      return;
+    }
+
+    if (!description) {
+      showStatusError("Write what you feel in the description.");
+      return;
+    }
+
+    // Show confirmation dialog with pop-in animation
+    confirmStatusModal.style.display = "block";
+    setTimeout(() => {
+      confirmStatusModal.classList.add("pop-in");
+    }, 10);
+  });
+
+  confirmBtn.addEventListener("click", function () {
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+
+      // Proceed with status submission
+      uploadStatus();
+    }, 300);
+  });
+
+  cancelBtn.addEventListener("click", function () {
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+    }, 300);
+  });
+  function fetchStatuses(page, category) {
+    isLoading = true;
+    const statusLoader = document.getElementById("statusLoader");
+    const statusOverlay = document.getElementById("statusOverlay");
+
+    statusLoader.style.display = "block";
+    statusOverlay.style.display = "block";
+
+    fetch(`/get_all_statuses/?page=${page}&category=${category}`)
+      .then((response) => response.json())
+      .then((data) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        const container = document.getElementById("boxContainer");
+
+        data.statuses.forEach((status) => {
+          const newBox = document.createElement("div");
+          newBox.classList.add("box5", "pop");
+          newBox.innerHTML = `
+                    <div class="avatar-content">
+                        <a href="/status/${status.id}/">
+                            <img src="${
+                              status.avatar_url
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                        </a>
+                        <p class="username-placeholder">${status.username}</p>
+                    </div>
+                    <div class="content">
+                        <a href="/status/${status.id}/">
+                            <h2 class="title-placeholder">${status.title}</h2>
+                            <p class="description-placeholder">${truncateText(
+                              status.plain_description
+                            )}</p>
+                        </a>
+                        <span class="time-stamp time-stamp-placeholder">${
+                          status.created_at
+                        } ago</span>
+                        <span class="feelings feelings-placeholder">${getEmotionIcon(
+                          status.emotion
+                        )} ${mapEmotion(status.emotion)}</span>
+                        <span class="replies replies-placeholder">${
+                          status.replies
+                        } ${status.replies === 1 ? "Reply" : "Replies"}</span>
+                        ${
+                          status.can_delete
+                            ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                            : ""
+                        }
+                    </div>
+                `;
+          container.appendChild(newBox);
+
+          if (status.can_delete) {
+            document
+              .getElementById(`delete-${status.id}`)
+              .addEventListener("click", function () {
+                deleteStatus(status.id);
+              });
+          }
+
+          newBox.addEventListener("animationend", function () {
+            newBox.classList.remove("pop");
+          });
+        });
+
+        hasNext = data.has_next;
+      })
+      .catch((error) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        console.error("Error fetching statuses:", error);
+      });
+  }
+  function deleteStatus(statusId) {
+    fetch(`/delete_status/${statusId}/`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document
+            .getElementById(`delete-${statusId}`)
+            .closest(".box5")
+            .remove();
+        } else {
+          showStatusError(data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting status:", error);
+        showStatusError("Error deleting status. Please try again.");
+      });
+  }
+
+  function getEmotionIcon(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "<i class='bx bx-happy-alt'></i>";
+      case "sadness":
+        return "<i class='bx bx-sad'></i>";
+      case "fear":
+        return "<i class='bx bx-dizzy' ></i>";
+      case "anger":
+        return "<i class='bx bx-angry'></i>";
+      case "surprise":
+        return "<i class='bx bx-shocked' ></i>";
+      case "disgust":
+        return "<i class='bx bx-confused' ></i>";
+      default:
+        return "<i class='bx bx-face'></i>";
+    }
+  }
+  function mapEmotion(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "Happy";
+      case "sadness":
+        return "Sad";
+      case "fear":
+        return "Fear";
+      case "anger":
+        return "Angry";
+      case "surprise":
+        return "Surprise";
+      case "disgust":
+        return "Disgust";
+      default:
+        return emotion;
+    }
+  }
+
+  function truncateText(text, maxLength = 150) {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + "...";
+  }
+
+  function uploadStatus() {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent.trim();
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
+
+    showLoader();
+    statusModal.querySelector(".status-form").style.opacity = "0.5";
 
     fetch("/submit_status/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
+        "X-CSRFToken": csrfToken,
       },
       body: JSON.stringify({
-        emotion: emotion,
+        emotion: selectedEmotion,
         title: title,
         description: description,
+        plain_description: plainDescription,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+
         if (data.success) {
-          alert("Status shared successfully!");
-          closeModal(); // Close the modal after successful submission
+          showStatusSuccess("Status shared successfully!");
+          setTimeout(() => {
+            const dialogBox = document.getElementById(
+              "statusNotificationSuccess"
+            );
+            dialogBox.classList.remove("pop-in");
+            dialogBox.classList.add("pop-out");
+            setTimeout(() => {
+              dialogBox.style.display = "none";
+              dialogBox.classList.remove("pop-out");
+
+              // Hide the status modal with animation
+              statusModal.classList.remove("pop-in");
+              statusModal.classList.add("pop-out");
+              setTimeout(() => {
+                statusModal.style.display = "none";
+                statusModal.classList.remove("pop-out");
+
+                // Reload the page after both animations complete
+                window.location.reload();
+              }, 300); // Duration of the status modal pop-out animation
+            }, 300); // Duration of the success dialog pop-out animation
+          }, 3000); // Duration to show the success message
         } else {
-          alert("Failed to share status: " + JSON.stringify(data.errors));
+          showStatusError(
+            "Failed to share status: " + JSON.stringify(data.errors)
+          );
         }
       })
       .catch((error) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
         console.error("Error:", error);
-        alert("An error occurred while sharing status.");
+        showStatusError("Network error could not upload.");
       });
-  });
+  }
 
+  function displayNewStatus(status) {
+    const container = document.getElementById("boxContainer");
+    const newBox = document.createElement("div");
+    newBox.classList.add("box5", "pop");
+    newBox.innerHTML = `
+            <div class="avatar-content">
+                <img src="${
+                  status.avatar_url
+                }" alt="Avatar" class="circle-avatar-placeholder" />
+                <p class="username-placeholder">${status.username}</p>
+            </div>
+            <div class="content">
+                <h2 class="title-placeholder">${status.title}</h2>
+                <p class="description-placeholder">${truncateText(
+                  status.description
+                )}</p>
+                <span class="time-stamp time-stamp-placeholder">${
+                  status.created_at
+                } ago</span>
+                <span class="feelings feelings-placeholder">${getEmotionIcon(
+                  status.emotion
+                )} ${mapEmotion(status.emotion)}</span>
+                <span class="replies replies-placeholder">${status.replies} ${
+      status.replies === 1 ? "Reply" : "Replies"
+    }</span>
+            </div>
+             ${
+               status.can_delete
+                 ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                 : ""
+             }
+          `;
+    container.prepend(newBox); // Prepend to show the new status at the top
+
+    newBox.addEventListener("animationend", function () {
+      newBox.classList.remove("pop");
+    });
+  }
+
+  statusDescription.addEventListener("focus", hidePlaceholder);
+  statusDescription.addEventListener("blur", showPlaceholder);
+
+  function hidePlaceholder() {
+    if (statusDescription.classList.contains("placeholder")) {
+      statusDescription.classList.remove("placeholder");
+      statusDescription.innerHTML = "";
+    }
+  }
+
+  function showPlaceholder() {
+    if (!statusDescription.innerHTML.trim().length) {
+      statusDescription.classList.add("placeholder");
+      statusDescription.innerHTML =
+        statusDescription.getAttribute("placeholder");
+    }
+  }
+
+  // Initialize placeholder display
+  showPlaceholder();
+
+  function saveFormData() {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.innerHTML.trim();
+
+    const formData = {
+      selectedEmotion: selectedEmotion,
+      title: title,
+      description: description,
+    };
+
+    localStorage.setItem("statusFormData", JSON.stringify(formData));
+  }
+
+  function loadFormData() {
+    const formData = JSON.parse(localStorage.getItem("statusFormData"));
+
+    if (formData) {
+      selectedEmotion = formData.selectedEmotion;
+      statusTitle.value = formData.title;
+      statusDescription.innerHTML = formData.description;
+
+      feelingIcons.forEach((icon) => {
+        if (icon.querySelector("img").alt === selectedEmotion) {
+          icon.classList.add("active");
+        } else {
+          icon.classList.remove("active");
+        }
+      });
+    }
+  }
+
+  function clearFormData() {
+    localStorage.removeItem("statusFormData");
+  }
+
+  window.formatText = function (command, value = null) {
+    document.execCommand(command, false, value);
+    saveFormData();
+  };
+
+  // Function to show success message and close modal after animation
+  function showStatusSuccess(message) {
+    const dialogBox = document.getElementById("statusNotificationSuccess");
+    const dialogContent = document.getElementById(
+      "statusNotificationSuccessContent"
+    );
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+        clearStatusComposerModal();
+        closeStatusComposerModal(() => {
+          setTimeout(() => {
+            window.location.reload();
+          }, 300); // Wait for statusModal pop-out animation to finish
+        });
+      }, 300); // Wait for dialogBox pop-out animation to finish
+    }, 3000); // Duration to show the success message
+  }
+  // Function to show error message
+  function showStatusError(message) {
+    const dialogBox = document.getElementById("statusNotificationError");
+    const dialogContent = document.getElementById(
+      "statusNotificationErrorContent"
+    );
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  function closeStatusComposerModal(callback) {
+    statusModal.classList.remove("pop-in");
+    statusModal.classList.add("pop-out");
+    statusModalOverlay.classList.remove("fade-in");
+    statusModalOverlay.classList.add("fade-out");
+    setTimeout(() => {
+      statusModal.style.display = "none";
+      statusModal.classList.remove("pop-out");
+      statusModalOverlay.style.display = "none";
+      statusModalOverlay.classList.remove("fade-out");
+      if (callback) {
+        callback();
+      }
+    }, 300); // Animation duration
+  }
+  function clearStatusComposerModal() {
+    selectedEmotion = null;
+    statusTitle.value = "";
+    statusDescription.innerHTML = "";
+    statusDescription.classList.add("placeholder");
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    clearFormData();
+  }
+
+  // Clear the modal fields when opened
   if (statusComposerButton) {
-    // Show the modal with pop-in animation
     statusComposerButton.addEventListener("click", function () {
+      loadFormData();
       statusModal.style.display = "block";
       statusModalOverlay.style.display = "block";
       setTimeout(() => {
@@ -82,57 +638,10 @@ document.addEventListener("DOMContentLoaded", function () {
   closeStatusModal.addEventListener("click", function () {
     closeStatusComposerModal();
   });
-
   statusModalOverlay.addEventListener("click", function () {
     closeStatusComposerModal();
   });
 
-  function closeStatusComposerModal() {
-    statusModal.classList.remove("pop-in");
-    statusModal.classList.add("pop-out");
-    statusModalOverlay.classList.remove("fade-in");
-    statusModalOverlay.classList.add("fade-out");
-    setTimeout(() => {
-      statusModal.style.display = "none";
-      statusModal.classList.remove("pop-out");
-      statusModalOverlay.style.display = "none";
-      statusModalOverlay.classList.remove("fade-out");
-    }, 300);
-  }
-  // Placeholder functionality
-  function showPlaceholder() {
-    if (!descriptionDiv.textContent.trim().length) {
-      descriptionDiv.classList.add("placeholder");
-      descriptionDiv.textContent = descriptionDiv.getAttribute("placeholder");
-    }
-  }
-
-  function hidePlaceholder() {
-    if (descriptionDiv.classList.contains("placeholder")) {
-      descriptionDiv.classList.remove("placeholder");
-      descriptionDiv.textContent = "";
-    }
-  }
-
-  descriptionDiv.addEventListener("focus", hidePlaceholder);
-  descriptionDiv.addEventListener("blur", showPlaceholder);
-
-  // Initial placeholder display
-  showPlaceholder();
-
-  // Feeling icons selection
-  const feelingIcons = document.querySelectorAll(".feeling-icon");
-  feelingIcons.forEach((icon) => {
-    icon.addEventListener("click", () => {
-      feelingIcons.forEach((i) => i.classList.remove("active"));
-      icon.classList.add("active");
-    });
-  });
-
-  // Text formatting
-  window.formatText = function (command, value = null) {
-    document.execCommand(command, false, value);
-  };
   // Load current avatar
   fetch("/get_user_profile/")
     .then((response) => response.json())
@@ -379,6 +888,7 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.style.display = "block";
   });
 });
+
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");
@@ -606,7 +1116,7 @@ if (loginLinkFromRegister) {
 if (closeLoginModal) {
   closeLoginModal.onclick = function () {
     loginModal.classList.add("pop-out");
-    overlay.classList.add("hide");
+    overlay.classList.add("fade-out"); // Added fade-out effect
     setTimeout(() => {
       loginModal.style.display = "none";
       overlay.style.display = "none";
@@ -621,7 +1131,7 @@ if (closeRegisterModal) {
   closeRegisterModal.onclick = function () {
     registerModal.classList.add("pop-out");
     loginModal.classList.add("pop-out");
-    overlay.classList.add("fade-in");
+    overlay.classList.add("fade-out");
     setTimeout(() => {
       registerModal.style.display = "none";
       loginModal.style.display = "none";
@@ -725,15 +1235,15 @@ function showError(message, type) {
 
   if (type === "session") {
     overlay.style.display = "flex";
-    overlay.classList.add("pop-in");
+    overlay.classList.add("fade-in");
     overlay.addEventListener("click", function handleOverlayClick() {
       dialogBox.classList.add("pop-out");
-      overlay.classList.add("hide");
+      overlay.classList.add("fade-out"); // Updated to fade-out
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
         overlay.style.display = "none";
-        overlay.classList.remove("show", "hide");
+        overlay.classList.remove("fade-in", "fade-out");
         overlay.removeEventListener("click", handleOverlayClick);
         window.location.reload();
       }, 300);
@@ -1124,3 +1634,56 @@ function updateUserProfile(event) {
 document
   .getElementById("profileForm")
   .addEventListener("submit", updateUserProfile);
+
+const notificationButton = document.getElementById("notificationButton");
+const notificationList = document.getElementById("notificationList");
+const notificationCount = document.getElementById("notificationCount");
+
+function fetchNotifications() {
+  // Fetch notifications from the server (this is just a mock example)
+  return [
+    {
+      message: "You uploaded a status, click to view it.",
+    },
+    {
+      message: "USERNAME replied to your status, click to see it.",
+    },
+  ];
+}
+
+function renderNotifications() {
+  const notifications = fetchNotifications();
+  notificationList.innerHTML = "";
+  notifications.forEach((notification) => {
+    const item = document.createElement("div");
+    item.classList.add("notification-item");
+    item.innerHTML = `<a href="${notification.link}">${notification.message}</a>`;
+    notificationList.appendChild(item);
+  });
+  notificationCount.innerText = notifications.length;
+  if (notifications.length > 0) {
+    notificationCount.style.display = "block";
+  } else {
+    notificationCount.style.display = "none";
+  }
+}
+
+notificationButton.addEventListener("click", function () {
+  if (notificationList.style.display === "none") {
+    renderNotifications();
+    notificationList.style.display = "block";
+  } else {
+    notificationList.style.display = "none";
+  }
+});
+
+window.addEventListener("click", function (event) {
+  if (
+    !notificationButton.contains(event.target) &&
+    !notificationList.contains(event.target)
+  ) {
+    notificationList.style.display = "none";
+  }
+});
+
+renderNotifications();

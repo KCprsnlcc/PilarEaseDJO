@@ -1,0 +1,27 @@
+{% load static %} {% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Login</title>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+    {% endcompress %}
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>Admin Login</h2>
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required />
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </body>
+</html>

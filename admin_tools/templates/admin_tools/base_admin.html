@@ -1,0 +1,67 @@
+<!-- templates/admin_tools/base_admin.html -->
+{% load static %} {% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | PilarEase</title>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}" />
+    {% endcompress %}
+    <link
+      href="https://cdn.jsdelivr.net/npm/boxicons@2.1.1/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-title">PilarEase</div>
+      <ul class="sidebar-menu">
+        <li>
+          <a href="{% url 'admin_dashboard' %}"
+            ><i class="bx bx-home"></i> Dashboard</a
+          >
+        </li>
+        <li>
+          <a href="{% url 'analytics' %}"
+            ><i class="bx bx-bar-chart"></i> Analytics</a
+          >
+        </li>
+        <li>
+          <a href="{% url 'status' %}"><i class="bx bx-edit"></i> Status</a>
+        </li>
+        <li>
+          <a href="{% url 'replies' %}"
+            ><i class="bx bx-message"></i> Replies</a
+          >
+        </li>
+        <li>
+          <a href="{% url 'manage_users' %}"
+            ><i class="bx bx-user"></i> Manage Users</a
+          >
+        </li>
+        <li>
+          <a href="{% url 'settings' %}"><i class="bx bx-cog"></i> Settings</a>
+        </li>
+        <li>
+          <a href="{% url 'admin_logout' %}"
+            ><i class="bx bx-log-out"></i> Logout</a
+          >
+        </li>
+      </ul>
+    </div>
+    <div class="content">{% block content %} {% endblock %}</div>
+    {% compress js %}
+    <script>
+      const sidebar = document.getElementById("sidebar");
+      sidebar.addEventListener("mouseenter", () => {
+        sidebar.classList.add("sidebar-expanded");
+      });
+      sidebar.addEventListener("mouseleave", () => {
+        sidebar.classList.remove("sidebar-expanded");
+      });
+    </script>
+    {% endcompress %}
+  </body>
+</html>

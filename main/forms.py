@@ -5,7 +5,7 @@ from django import forms
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ['student_id', 'username', 'full_name', 'academic_year_level', 'contact_number', 'email', 'password1', 'password2']
+        fields = ['student_id', 'username', 'full_name', 'is_counselor', 'academic_year_level', 'contact_number', 'email', 'password1', 'password2']
 
     def clean(self):
         cleaned_data = super().clean()

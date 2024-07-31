@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
+    is_counselor = models.BooleanField(default=False)
     full_name = models.CharField(max_length=100)
     academic_year_level = models.CharField(max_length=20)
     contact_number = models.CharField(max_length=15)
