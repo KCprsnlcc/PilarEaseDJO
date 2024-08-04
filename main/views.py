@@ -19,7 +19,7 @@ import os
 from .models import Status, Reply, ContactUs
 import re
 from django.utils.timesince import timesince
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Count
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -225,11 +225,10 @@ def contact_us_view(request):
 
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
 @login_required
 def get_all_statuses(request):
-    page_number = request.GET.get('page', 1)
-    page_size = 10  # Number of statuses per page
+    page_size = 100  # Number of statuses per batch
+    page_number = int(request.GET.get('page', 1))
     category = request.GET.get('category', 'recent')
 
     if category == 'recent':
@@ -261,7 +260,11 @@ def get_all_statuses(request):
         }
         for status in page_obj
     ]
-    return JsonResponse({'statuses': statuses_data, 'has_next': page_obj.has_next()})
+
+    return JsonResponse({
+        'statuses': statuses_data,
+        'has_next': page_obj.has_next()
+    })
 
 @login_required
 @csrf_exempt

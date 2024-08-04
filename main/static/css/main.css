@@ -2332,7 +2332,7 @@ nav.open .nav-content span {
   z-index: 1000;
 }
 .curved-line {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   width: 60%; /* Adjusted width for thinner line */
@@ -2452,11 +2452,11 @@ nav.open .nav-content span {
   border: 1px solid rgba(222, 225, 230, 1);
 }
 .v53_171 {
-  width: 157px;
+  width: 200px;
   color: rgba(23, 26, 31, 1);
   position: absolute;
   top: 440px;
-  left: 189px;
+  left: 190px;
   font-family: Inter;
   font-weight: Regular;
   font-size: 14px;
@@ -2512,12 +2512,13 @@ nav.open .nav-content span {
   left: 357px;
   overflow: hidden;
 }
+
 .v53_179 {
   width: 58px;
   color: rgba(23, 26, 31, 1);
   position: absolute;
   top: 440px;
-  left: 349px;
+  left: 359px;
   font-family: Inter;
   font-weight: Bold;
   font-size: 14px;
