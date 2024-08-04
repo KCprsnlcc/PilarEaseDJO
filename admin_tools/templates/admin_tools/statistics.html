@@ -1,4 +1,5 @@
-{% extends "admin_tools/base_admin.html" %} {% block content %}
+{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
+%} {% block content %}
 <div class="statistics-container">
   <div class="statistics-header">
     <div class="title">Statistics</div>
@@ -10,7 +11,7 @@
           <i class="bx bx-smile"></i>
         </div>
         <div class="statistics-card-info">
-          <span>38.22%</span>
+          <span>{{ positive_percent }}%</span>
           <p>Positive</p>
         </div>
       </div>
@@ -21,7 +22,7 @@
           <i class="bx bx-meh"></i>
         </div>
         <div class="statistics-card-info">
-          <span>21.12%</span>
+          <span>{{ neutral_percent }}%</span>
           <p>Neutral</p>
         </div>
       </div>
@@ -32,7 +33,7 @@
           <i class="bx bx-sad"></i>
         </div>
         <div class="statistics-card-info">
-          <span>21.12%</span>
+          <span>{{ negative_percent }}%</span>
           <p>Negative</p>
         </div>
       </div>
@@ -40,8 +41,8 @@
     <div class="statistics-card">
       <div class="statistics-card-content">
         <div class="statistics-card-info">
-          <span>12</span>
-          <p>Total no. of student who visited</p>
+          <span>{{ total_students }}</span>
+          <p>Total no. of students who visited</p>
         </div>
       </div>
     </div>
@@ -49,34 +50,47 @@
   <div class="statistics-charts">
     <div class="statistics-chart">
       <div class="chart-header">
-        <span>For this week...</span>
+        <span>Emotion Analysis</span>
       </div>
       <div class="chart-content">
-        <!-- Chart content for the week -->
+        {% if emotion_chart_image_base64 %}
+        <img
+          src="data:image/png;base64,{{ emotion_chart_image_base64 }}"
+          alt="Emotion Chart"
+        />
+        {% else %}
+        <p>No data available</p>
+        {% endif %}
       </div>
     </div>
     <div class="statistics-chart">
       <div class="chart-header">
-        <span>For this week...</span>
+        <span>Word Cloud</span>
       </div>
       <div class="chart-content">
-        <!-- Word cloud content for the week -->
+        {% if wordcloud_image_base64 %}
+        <img
+          src="data:image/png;base64,{{ wordcloud_image_base64 }}"
+          alt="Word Cloud"
+        />
+        {% else %}
+        <p>No data available</p>
+        {% endif %}
       </div>
     </div>
     <div class="statistics-chart">
       <div class="chart-header">
-        <span>Today</span>
+        <span>Emotion Bar Chart</span>
       </div>
       <div class="chart-content">
-        <!-- Chart content for today -->
-      </div>
-    </div>
-    <div class="statistics-chart">
-      <div class="chart-header">
-        <span>For this month...</span>
-      </div>
-      <div class="chart-content">
-        <!-- Chart content for the month -->
+        {% if bar_chart_image_base64 %}
+        <img
+          src="data:image/png;base64,{{ bar_chart_image_base64 }}"
+          alt="Bar Chart"
+        />
+        {% else %}
+        <p>No data available</p>
+        {% endif %}
       </div>
     </div>
   </div>

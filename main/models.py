@@ -6,10 +6,10 @@ from django.contrib.auth.models import User
 
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
-    is_counselor = models.BooleanField(default=False)
     full_name = models.CharField(max_length=100)
     academic_year_level = models.CharField(max_length=20)
     contact_number = models.CharField(max_length=15)
+    is_counselor = models.BooleanField(default=False)
 
     groups = models.ManyToManyField(
         Group,
@@ -40,11 +40,25 @@ class UserProfile(models.Model):
 User = get_user_model()
 
 class Status(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    emotion = models.CharField(max_length=50)
-    title = models.CharField(max_length=200)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
     description = models.TextField()
-    plain_description = models.TextField(default='')
+    plain_description = models.TextField()
+    emotion = models.CharField(max_length=50)
+    anger = models.FloatField(default=0)
+    disgust = models.FloatField(default=0)
+    fear = models.FloatField(default=0)
+    neutral = models.FloatField(default=0)
+    happiness = models.FloatField(default=0)
+    sadness = models.FloatField(default=0)
+    surprise = models.FloatField(default=0)
+    anger_percentage = models.IntegerField(default=0)
+    disgust_percentage = models.IntegerField(default=0)
+    fear_percentage = models.IntegerField(default=0)
+    neutral_percentage = models.IntegerField(default=0)
+    happiness_percentage = models.IntegerField(default=0)
+    sadness_percentage = models.IntegerField(default=0)
+    surprise_percentage = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
