@@ -8,7 +8,8 @@ body {
 
 /* Container styles */
 .status-container,
-.analysis-table {
+.analysis-table,
+.contact-us-queries {
   margin: 20px;
 }
 
@@ -37,7 +38,8 @@ body {
 
 /* Table styles */
 .status-table,
-.analysis-table table {
+.analysis-table table,
+.contact-us-queries table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
@@ -46,13 +48,16 @@ body {
 .status-table th,
 .status-table td,
 .analysis-table th,
-.analysis-table td {
+.analysis-table td,
+.contact-us-queries th,
+.contact-us-queries td {
   padding: 10px;
   border: 1px solid #ddd;
   text-align: center;
 }
 
-.analysis-table th {
+.analysis-table th,
+.contact-us-queries th {
   background-color: #0e2326;
   color: white;
 }

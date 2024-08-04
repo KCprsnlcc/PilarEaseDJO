@@ -91,7 +91,9 @@
       {% endfor %}
     </tbody>
   </table>
-  
+  {% if not statuses %}
+  <p>No analysis data found.</p>
+  {% endif %}
   <div class="pagination">
     <span class="step-links">
       {% if page_obj.has_previous %}

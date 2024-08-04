@@ -15,6 +15,28 @@ from wordcloud import WordCloud
 from io import BytesIO
 import base64
 
+# def admin_dashboard(request):
+#     query = request.GET.get('q')
+#     contact_us_list = ContactUs.objects.all()
+
+#     if query:
+#         contact_us_list = contact_us_list.filter(
+#             Q(name__icontains=query) |
+#             Q(email__icontains=query) |
+#             Q(subject__icontains=query) |
+#             Q(message__icontains=query)
+#         )
+
+#     paginator = Paginator(contact_us_list, 10)  # Show 10 contacts per page
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+
+#     context = {
+#         'query': query,
+#         'page_obj': page_obj,
+#     }
+#     return render(request, 'admin_tools/dashboard.html', context)
+
 @login_required
 def status_view(request):
     search_query = request.GET.get('search', '')
@@ -134,26 +156,28 @@ def analysis_view(request):
     })
 
 @login_required
-def admin_dashboard(request):
-    query = request.GET.get('q', '')
+def contact_us_view(request):
+    search_query = request.GET.get('search', '')
     page_number = request.GET.get('page', 1)
+    page_size = 10
 
-    contact_us_queries = ContactUs.objects.filter(
-        Q(name__icontains=query) | 
-        Q(email__icontains=query) | 
-        Q(subject__icontains=query) | 
-        Q(message__icontains=query)
-    ).order_by('-created_at')
+    # Filter contact us queries based on search query
+    contacts = ContactUs.objects.filter(
+        Q(name__icontains=search_query) |
+        Q(email__icontains=search_query) |
+        Q(subject__icontains=search_query) |
+        Q(message__icontains=search_query)
+    )
 
-    paginator = Paginator(contact_us_queries, 10)  # 10 queries per page
+    paginator = Paginator(contacts, page_size)
     page_obj = paginator.get_page(page_number)
 
-    context = {
+    return render(request, 'admin_tools/dashboard.html', {
+        'contacts': page_obj,
+        'search_query': search_query,
         'page_obj': page_obj,
-        'query': query,
-    }
+    })
 
-    return render(request, 'admin_tools/dashboard.html', context)
 def admin_login_view(request):
     if request.user.is_authenticated and request.user.is_counselor:
         return HttpResponseRedirect(reverse('admin_dashboard'))

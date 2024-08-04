@@ -1,16 +1,18 @@
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
 %} {% block content %}
 <h1>Dashboard</h1>
-<div class="search-container">
-  <form method="get" action="{% url 'admin_dashboard' %}">
-    <input type="text" name="q" placeholder="Search..." value="{{ query }}" />
+<div class="status-container">
+  <form method="get" class="search-form">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search..."
+      value="{{ search_query }}"
+    />
     <button type="submit">Search</button>
   </form>
-</div>
 
-<div class="contact-us-queries">
-  {% if page_obj.object_list %}
-  <table>
+  <table class="status-table">
     <thead>
       <tr>
         <th>Name</th>
@@ -21,41 +23,44 @@
       </tr>
     </thead>
     <tbody>
-      {% for contact in page_obj.object_list %}
+      {% for contact in contacts.object_list %}
       <tr>
         <td>{{ contact.name }}</td>
         <td>{{ contact.email }}</td>
         <td>{{ contact.subject }}</td>
         <td>{{ contact.message }}</td>
-        <td>{{ contact.created_at }}</td>
+        <td>{{ contact.created_at|date:"Y-m-d" }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
+  {% if not contacts.object_list %}
+  <p>No contact us queries found.</p>
+  {% endif %}
   <div class="pagination">
     <span class="step-links">
-      {% if page_obj.has_previous %}
-      <a href="?q={{ query }}&page=1">&laquo; first</a>
-      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}"
+      {% if contacts.has_previous %}
+      <a href="?search={{ search_query }}&page=1">&laquo; first</a>
+      <a
+        href="?search={{ search_query }}&page={{ contacts.previous_page_number }}"
         >previous</a
       >
       {% endif %}
 
       <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
       </span>
 
-      {% if page_obj.has_next %}
-      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">next</a>
-      <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}"
+      {% if contacts.has_next %}
+      <a href="?search={{ search_query }}&page={{ contacts.next_page_number }}"
+        >next</a
+      >
+      <a
+        href="?search={{ search_query }}&page={{ contacts.paginator.num_pages }}"
         >last &raquo;</a
       >
       {% endif %}
     </span>
   </div>
-  {% else %}
-  <p>No contact us queries found.</p>
-  {% endif %}
 </div>
 {% endblock %}
