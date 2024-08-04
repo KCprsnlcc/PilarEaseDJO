@@ -1,5 +1,113 @@
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
+
+{% block content %}
 <h1>Analysis</h1>
-<p>Analysis page content goes here.</p>
+<div class="status-container">
+  <form method="get" class="search-form">
+    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}">
+    <select name="category">
+      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
+      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
+      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
+      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
+      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
+      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
+      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+  
+  <table class="status-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Body</th>
+        <th>Anger</th>
+        <th>Disgust</th>
+        <th>Fear</th>
+        <th>Happiness</th>
+        <th>Neutral</th>
+        <th>Sadness</th>
+        <th>Surprise</th>
+        <th>Timestamp</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for status in statuses %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ status.plain_description|truncatewords:10 }}</td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
+            <span class="progress-percentage">{{ status.anger_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
+            <span class="progress-percentage">{{ status.disgust_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
+            <span class="progress-percentage">{{ status.fear_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
+            <span class="progress-percentage">{{ status.happiness_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
+            <span class="progress-percentage">{{ status.neutral_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
+            <span class="progress-percentage">{{ status.sadness_percentage }}%</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
+            <span class="progress-percentage">{{ status.surprise_percentage }}%</span>
+          </div>
+        </td>
+        <td>{{ status.created_at|date:"Y-m-d" }}</td>
+        <td>
+          <a href="{% url 'delete_status' status.id %}" class="delete-icon"><i class="bx bx-trash"></i></a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <div class="pagination">
+    <span class="step-links">
+      {% if page_obj.has_previous %}
+        <a href="?page=1&search={{ search_query }}&category={{ category }}">first</a>
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}">previous</a>
+      {% endif %}
+      
+      <span class="current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+      
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}">last</a>
+      {% endif %}
+    </span>
+  </div>
+</div>
 {% endblock %}

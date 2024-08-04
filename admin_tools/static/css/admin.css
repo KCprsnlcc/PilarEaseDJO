@@ -1,3 +1,4 @@
+/* Base styles */
 body {
   font-family: "Inter", sans-serif;
   background-color: #f4f7f9;
@@ -5,6 +6,105 @@ body {
   padding: 0;
 }
 
+/* Container styles */
+.status-container,
+.analysis-table {
+  margin: 20px;
+}
+
+/* Search form styles */
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-form input[type="text"],
+.search-form select {
+  padding: 5px;
+  font-size: 14px;
+}
+
+.search-form button {
+  padding: 5px 10px;
+  font-size: 14px;
+  background-color: #0e2326;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* Table styles */
+.status-table,
+.analysis-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.status-table th,
+.status-table td,
+.analysis-table th,
+.analysis-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.analysis-table th {
+  background-color: #0e2326;
+  color: white;
+}
+
+/* Progress bar styles */
+.progress-bar-container {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.progress-percentage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #000;
+}
+
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination .step-links {
+  display: flex;
+  gap: 10px;
+}
+
+.pagination .step-links a {
+  margin: 0 5px;
+  text-decoration: none;
+  color: #007bff;
+}
+
+.pagination .step-links .current {
+  margin: 0 5px;
+}
+
+/* Sidebar styles */
 .sidebar {
   background-color: #0e2326;
   width: 60px;
@@ -71,6 +171,7 @@ body {
   margin-top: -15px;
   width: 100%;
 }
+
 .sidebar-menu li {
   width: 100%;
 }
@@ -113,6 +214,7 @@ body {
   margin-left: 200px;
 }
 
+/* Header styles */
 .header {
   background-color: #0e2326;
   color: white;
@@ -155,11 +257,13 @@ body {
   color: white;
 }
 
+/* Content styles */
 .content {
   margin-top: 60px;
   padding: 20px;
 }
 
+/* Sidebar active link styles */
 .sidebar-link.active {
   background-color: #142d32;
 }

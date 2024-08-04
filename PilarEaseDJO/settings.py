@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'admin_tools.middleware.EmotionModelMiddleware',
     'main.middleware.TimezoneMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware', 
 ]

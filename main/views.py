@@ -20,9 +20,18 @@ from .models import Status, Reply, ContactUs
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator
-from .models import Status
 from django.db.models import Count
-
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import BytesIO
+import base64
+from wordcloud import WordCloud
+from django.shortcuts import render
+from scipy.special import softmax
+from django.db.models import Avg, Count
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -48,15 +57,7 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
-
-
 def login_view(request):
-    if request.user.is_authenticated:
-        if request.user.is_counselor:
-            logout(request)
-            return JsonResponse({'success': False, 'error_message': 'Counselors must log in through the admin login page.'})
-        return redirect('home')
-
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -64,9 +65,6 @@ def login_view(request):
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                if user.is_counselor:
-                    logout(request)
-                    return JsonResponse({'success': False, 'error_message': 'Counselors must log in through the admin login page.'})
                 login(request, user)
                 return JsonResponse({'success': True, 'redirect_url': '/'})
             else:
@@ -77,40 +75,84 @@ def login_view(request):
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
-
 def strip_html_tags(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, '', text)
 
+model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+
+def analyze_emotions(text):
+    inputs = tokenizer(text, return_tensors="pt")
+    outputs = model(**inputs)
+    scores = outputs[0][0].detach().numpy()
+    scores = softmax(scores)
+    emotions = {
+        'anger': scores[0],
+        'disgust': scores[1],
+        'fear': scores[2],
+        'happiness': scores[3],
+        'neutral': scores[4],
+        'sadness': scores[5],
+        'surprise': scores[6]
+    }
+    return emotions
+# main/views.py
 @login_required
 @csrf_exempt
 def submit_status(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        emotion = data.get('emotion')
-        title = data.get('title')
-        description = data.get('description')
-        plain_description = strip_html_tags(description)
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            title = data.get('title')
+            description = data.get('description')
+            emotion = data.get('emotion')
+        else:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            emotion = request.POST.get('emotion')
         
+        plain_description = strip_html_tags(description)
+
         # Validate the input fields
         errors = {}
-        if not emotion:
-            errors['emotion'] = 'This field is required.'
         if not title:
             errors['title'] = 'This field is required.'
         if not description:
             errors['description'] = 'This field is required.'
+        if not emotion:
+            errors['emotion'] = 'This field is required.'
 
         if errors:
             return JsonResponse({'success': False, 'errors': errors}, status=400)
 
+        # Analyze emotions
+        emotions = analyze_emotions(plain_description)
+
+        # Convert emotions to percentages
+        emotion_percentages = {key: int(value * 100) for key, value in emotions.items()}
+
         # Save the status to the database
         status = Status.objects.create(
             user=request.user,
-            emotion=emotion,
             title=title,
             description=description,
-            plain_description=plain_description
+            plain_description=plain_description,
+            emotion=emotion,
+            anger=emotions['anger'],
+            disgust=emotions['disgust'],
+            fear=emotions['fear'],
+            happiness=emotions['happiness'],
+            sadness=emotions['sadness'],
+            surprise=emotions['surprise'],
+            neutral=emotions['neutral'],
+            anger_percentage=emotion_percentages['anger'],
+            disgust_percentage=emotion_percentages['disgust'],
+            fear_percentage=emotion_percentages['fear'],
+            happiness_percentage=emotion_percentages['happiness'],
+            sadness_percentage=emotion_percentages['sadness'],
+            surprise_percentage=emotion_percentages['surprise'],
+            neutral_percentage=emotion_percentages['neutral']
         )
 
         # Prepare the status data to return
@@ -118,9 +160,9 @@ def submit_status(request):
             'id': status.id,
             'username': request.user.username,
             'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else None,
-            'emotion': status.emotion,
             'title': status.title,
             'description': status.plain_description,
+            'emotion': status.emotion,
             'created_at': timesince(status.created_at),
             'replies': 0  # Placeholder for replies
         }
@@ -128,7 +170,6 @@ def submit_status(request):
         return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
-
 
 @login_required
 @csrf_exempt
