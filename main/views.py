@@ -48,7 +48,15 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
+
+
 def login_view(request):
+    if request.user.is_authenticated:
+        if request.user.is_counselor:
+            logout(request)
+            return JsonResponse({'success': False, 'error_message': 'Counselors must log in through the admin login page.'})
+        return redirect('home')
+
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -56,6 +64,9 @@ def login_view(request):
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
+                if user.is_counselor:
+                    logout(request)
+                    return JsonResponse({'success': False, 'error_message': 'Counselors must log in through the admin login page.'})
                 login(request, user)
                 return JsonResponse({'success': True, 'redirect_url': '/'})
             else:
@@ -65,6 +76,7 @@ def login_view(request):
     else:
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
+
 
 def strip_html_tags(text):
     clean = re.compile('<.*?>')

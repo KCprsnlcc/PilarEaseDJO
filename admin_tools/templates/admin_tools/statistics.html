@@ -1,0 +1,84 @@
+{% extends "admin_tools/base_admin.html" %} {% block content %}
+<div class="statistics-container">
+  <div class="statistics-header">
+    <div class="title">Statistics</div>
+  </div>
+  <div class="statistics-cards">
+    <div class="statistics-card">
+      <div class="statistics-card-content">
+        <div class="statistics-card-icon">
+          <i class="bx bx-smile"></i>
+        </div>
+        <div class="statistics-card-info">
+          <span>38.22%</span>
+          <p>Positive</p>
+        </div>
+      </div>
+    </div>
+    <div class="statistics-card">
+      <div class="statistics-card-content">
+        <div class="statistics-card-icon">
+          <i class="bx bx-meh"></i>
+        </div>
+        <div class="statistics-card-info">
+          <span>21.12%</span>
+          <p>Neutral</p>
+        </div>
+      </div>
+    </div>
+    <div class="statistics-card">
+      <div class="statistics-card-content">
+        <div class="statistics-card-icon">
+          <i class="bx bx-sad"></i>
+        </div>
+        <div class="statistics-card-info">
+          <span>21.12%</span>
+          <p>Negative</p>
+        </div>
+      </div>
+    </div>
+    <div class="statistics-card">
+      <div class="statistics-card-content">
+        <div class="statistics-card-info">
+          <span>12</span>
+          <p>Total no. of student who visited</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="statistics-charts">
+    <div class="statistics-chart">
+      <div class="chart-header">
+        <span>For this week...</span>
+      </div>
+      <div class="chart-content">
+        <!-- Chart content for the week -->
+      </div>
+    </div>
+    <div class="statistics-chart">
+      <div class="chart-header">
+        <span>For this week...</span>
+      </div>
+      <div class="chart-content">
+        <!-- Word cloud content for the week -->
+      </div>
+    </div>
+    <div class="statistics-chart">
+      <div class="chart-header">
+        <span>Today</span>
+      </div>
+      <div class="chart-content">
+        <!-- Chart content for today -->
+      </div>
+    </div>
+    <div class="statistics-chart">
+      <div class="chart-header">
+        <span>For this month...</span>
+      </div>
+      <div class="chart-content">
+        <!-- Chart content for the month -->
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,11 +1,12 @@
-# admin_tools/urls.py
 from django.urls import path
-from . import views
+from admin_tools import views
 
 urlpatterns = [
     path('login/', views.admin_login_view, name='admin_login'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('analytics/', views.analytics, name='analytics'),
+    path('statistics/', views.statistics, name='statistics'),
+    path('analysis/', views.analysis, name='analysis'),
+    path('reports/', views.reports, name='reports'),
     path('status/', views.status, name='status'),
     path('replies/', views.replies, name='replies'),
     path('manage_users/', views.manage_users, name='manage_users'),
