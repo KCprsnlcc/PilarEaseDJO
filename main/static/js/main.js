@@ -184,7 +184,25 @@ document.addEventListener("DOMContentLoaded", function () {
   statusTitle.addEventListener("input", saveFormData);
   statusDescription.addEventListener("input", saveFormData);
 
-  // Add event listener to form submission
+  // Function to show error dialog for profanity
+  function showProfanityError(message) {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const dialogContent = document.getElementById("profanityErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -192,7 +210,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const description = statusDescription.classList.contains("placeholder")
       ? ""
       : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent.trim();
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -217,6 +234,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   confirmBtn.addEventListener("click", function () {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent.trim();
+
     // Hide confirmation dialog with pop-out animation
     confirmStatusModal.classList.remove("pop-in");
     confirmStatusModal.classList.add("pop-out");
@@ -224,8 +247,31 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.style.display = "none";
       confirmStatusModal.classList.remove("pop-out");
 
-      // Proceed with status submission
-      uploadStatus();
+      // Proceed with profanity check
+      fetch(profanityCheckUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          title: title,
+          description: plainDescription,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.contains_profanity) {
+            showProfanityError("Your post contains inappropriate content.");
+          } else {
+            // Proceed with status submission
+            uploadStatus();
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          showStatusError("Network error could not check profanity.");
+        });
     }, 300);
   });
 
@@ -238,6 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.classList.remove("pop-out");
     }, 300);
   });
+
   function fetchStatuses(page, category) {
     isLoading = true;
     const statusLoader = document.getElementById("statusLoader");

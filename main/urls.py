@@ -10,6 +10,7 @@ urlpatterns = [
     path('register/', register_view, name='register'),
     path('login/', login_view, name='login'),
     path('submit_status/', views.submit_status, name='submit_status'),
+    path('check_profanity/', views.check_profanity, name='check_profanity'),
     path('get_all_statuses/', views.get_all_statuses, name='get_all_statuses'), 
     path('status/<int:status_id>/', views.status_detail, name='status_detail'),
     path('add_reply/<int:status_id>/', views.add_reply, name='add_reply'),

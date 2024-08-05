@@ -32,6 +32,7 @@ from wordcloud import WordCloud
 from django.shortcuts import render
 from scipy.special import softmax
 from django.db.models import Avg, Count
+from better_profanity import profanity
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -97,7 +98,22 @@ def analyze_emotions(text):
         'surprise': scores[6]
     }
     return emotions
-# main/views.py
+
+# Load the profanity word list
+profanity.load_censor_words()
+
+def check_profanity(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = data.get('title')
+        description = data.get('description')
+
+        if profanity.contains_profanity(title) or profanity.contains_profanity(description):
+            return JsonResponse({'contains_profanity': True})
+        else:
+            return JsonResponse({'contains_profanity': False})
+    return JsonResponse({'contains_profanity': False}, status=400)
+
 @login_required
 @csrf_exempt
 def submit_status(request):
@@ -122,6 +138,10 @@ def submit_status(request):
             errors['description'] = 'This field is required.'
         if not emotion:
             errors['emotion'] = 'This field is required.'
+
+        # Check for inappropriate words
+        if profanity.contains_profanity(title) or profanity.contains_profanity(plain_description):
+            errors['profanity'] = 'Your status contains inappropriate language. Please edit and try again.'
 
         if errors:
             return JsonResponse({'success': False, 'errors': errors}, status=400)
