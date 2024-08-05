@@ -184,7 +184,6 @@ document.addEventListener("DOMContentLoaded", function () {
   statusTitle.addEventListener("input", saveFormData);
   statusDescription.addEventListener("input", saveFormData);
 
-  // Function to show error dialog for profanity
   function showProfanityError(message) {
     const dialogBox = document.getElementById("profanityErrorModal");
     const dialogContent = document.getElementById("profanityErrorContent");
@@ -203,6 +202,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000);
   }
 
+  function convertNewLinesToSpaces(text) {
+    return text.replace(/\n/g, " ");
+  }
+
+  // Updated event listener for status form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -210,6 +214,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const description = statusDescription.classList.contains("placeholder")
       ? ""
       : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent
+      .trim()
+      .replace(/\n+/g, " ");
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -238,7 +245,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const description = statusDescription.classList.contains("placeholder")
       ? ""
       : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent.trim();
+    const plainDescription = statusDescription.textContent
+      .trim()
+      .replace(/\n+/g, " ");
 
     // Hide confirmation dialog with pop-out animation
     confirmStatusModal.classList.remove("pop-in");
@@ -248,7 +257,7 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.classList.remove("pop-out");
 
       // Proceed with profanity check
-      fetch(profanityCheckUrl, {
+      fetch("/check_profanity/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -265,7 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
             showProfanityError("Your post contains inappropriate content.");
           } else {
             // Proceed with status submission
-            uploadStatus();
+            uploadStatus(title, description, plainDescription);
           }
         })
         .catch((error) => {
@@ -284,6 +293,70 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.classList.remove("pop-out");
     }, 300);
   });
+
+  function uploadStatus(title, description, plainDescription) {
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
+
+    showLoader();
+    statusModal.querySelector(".status-form").style.opacity = "0.5";
+
+    fetch("/submit_status/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        emotion: selectedEmotion,
+        title: title,
+        description: description,
+        plain_description: plainDescription,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+
+        if (data.success) {
+          showStatusSuccess("Status shared successfully!");
+          setTimeout(() => {
+            const dialogBox = document.getElementById(
+              "statusNotificationSuccess"
+            );
+            dialogBox.classList.remove("pop-in");
+            dialogBox.classList.add("pop-out");
+            setTimeout(() => {
+              dialogBox.style.display = "none";
+              dialogBox.classList.remove("pop-out");
+
+              // Hide the status modal with animation
+              statusModal.classList.remove("pop-in");
+              statusModal.classList.add("pop-out");
+              setTimeout(() => {
+                statusModal.style.display = "none";
+                statusModal.classList.remove("pop-out");
+
+                // Reload the page after both animations complete
+                window.location.reload();
+              }, 300); // Duration of the status modal pop-out animation
+            }, 300); // Duration of the success dialog pop-out animation
+          }, 3000); // Duration to show the success message
+        } else {
+          showStatusError(
+            "Failed to share status: " + JSON.stringify(data.errors)
+          );
+        }
+      })
+      .catch((error) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+        console.error("Error:", error);
+        showStatusError("Network error could not upload.");
+      });
+  }
 
   function fetchStatuses(page, category) {
     isLoading = true;
@@ -426,75 +499,6 @@ document.addEventListener("DOMContentLoaded", function () {
       return text;
     }
     return text.substring(0, maxLength) + "...";
-  }
-
-  function uploadStatus() {
-    const title = statusTitle.value.trim();
-    const description = statusDescription.classList.contains("placeholder")
-      ? ""
-      : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent.trim();
-    const csrfToken = document.querySelector(
-      'input[name="csrfmiddlewaretoken"]'
-    ).value;
-
-    showLoader();
-    statusModal.querySelector(".status-form").style.opacity = "0.5";
-
-    fetch("/submit_status/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({
-        emotion: selectedEmotion,
-        title: title,
-        description: description,
-        plain_description: plainDescription,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        hideLoader();
-        statusModal.querySelector(".status-form").style.opacity = "1";
-
-        if (data.success) {
-          showStatusSuccess("Status shared successfully!");
-          setTimeout(() => {
-            const dialogBox = document.getElementById(
-              "statusNotificationSuccess"
-            );
-            dialogBox.classList.remove("pop-in");
-            dialogBox.classList.add("pop-out");
-            setTimeout(() => {
-              dialogBox.style.display = "none";
-              dialogBox.classList.remove("pop-out");
-
-              // Hide the status modal with animation
-              statusModal.classList.remove("pop-in");
-              statusModal.classList.add("pop-out");
-              setTimeout(() => {
-                statusModal.style.display = "none";
-                statusModal.classList.remove("pop-out");
-
-                // Reload the page after both animations complete
-                window.location.reload();
-              }, 300); // Duration of the status modal pop-out animation
-            }, 300); // Duration of the success dialog pop-out animation
-          }, 3000); // Duration to show the success message
-        } else {
-          showStatusError(
-            "Failed to share status: " + JSON.stringify(data.errors)
-          );
-        }
-      })
-      .catch((error) => {
-        hideLoader();
-        statusModal.querySelector(".status-form").style.opacity = "1";
-        console.error("Error:", error);
-        showStatusError("Network error could not upload.");
-      });
   }
 
   function displayNewStatus(status) {
