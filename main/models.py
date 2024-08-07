@@ -10,6 +10,8 @@ class CustomUser(AbstractUser):
     academic_year_level = models.CharField(max_length=20)
     contact_number = models.CharField(max_length=15)
     is_counselor = models.BooleanField(default=False)
+    block_reason = models.CharField(max_length=255, blank=True, null=True)
+    block_duration = models.IntegerField(blank=True, null=True)
 
     groups = models.ManyToManyField(
         Group,

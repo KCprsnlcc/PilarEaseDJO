@@ -1,7 +1,7 @@
 # admin_tools/views.py
 
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -14,32 +14,46 @@ import plotly.io as pio
 from wordcloud import WordCloud
 from io import BytesIO
 import base64
-
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from django.utils.timesince import timesince
+from datetime import datetime
 
 @login_required
 def replies_view(request):
     search_query = request.GET.get('search', '')
-    page_number = request.GET.get('page', 1)
-    
-    replies = Reply.objects.select_related('status', 'user').all()
-    
     if search_query:
-        replies = replies.filter(
-            Q(user__username__icontains=search_query) |
-            Q(status__title__icontains=search_query) |
-            Q(text__icontains=search_query)
-        )
-    
-    paginator = Paginator(replies, 10)  # 10 replies per page
+        replies = Reply.objects.filter(text__icontains=search_query)
+    else:
+        replies = Reply.objects.all()
+
+    paginator = Paginator(replies, 10)  # Show 10 replies per page
+    page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    context = {
-        'replies': page_obj.object_list,
-        'page_obj': page_obj,
-        'search_query': search_query
-    }
+    current_time = datetime.now()
 
+    replies_data = [
+        {
+            'id': reply.id,
+            'student_id': reply.user.student_id,
+            'username': reply.user.username,
+            'status_title': reply.status.title,
+            'text': reply.text,
+            'created_at': reply.created_at,
+            'last_sent': timesince(reply.created_at, current_time)
+        }
+        for reply in page_obj
+    ]
+
+    context = {
+        'replies': replies_data,
+        'search_query': search_query,
+        'page_obj': page_obj,
+    }
     return render(request, 'admin_tools/replies.html', context)
+
 
 @login_required
 def delete_reply(request, reply_id):
@@ -219,23 +233,51 @@ def reports(request):
 
 
 
+
 @login_required
 def manage_users_view(request):
     search_query = request.GET.get('search', '')
-    users = CustomUser.objects.all()
-
     if search_query:
-        users = users.filter(username__icontains=search_query)
+        users = CustomUser.objects.filter(username__icontains=search_query)
+    else:
+        users = CustomUser.objects.all()
 
     paginator = Paginator(users, 10)  # Show 10 users per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
+    
     context = {
-        'page_obj': page_obj,
+        'users': page_obj,
         'search_query': search_query,
+        'page_obj': page_obj,
     }
-    return render(request, 'manage_users.html', context)
+    return render(request, 'admin_tools/manage_users.html', context)
+
+@login_required
+@csrf_exempt
+def block_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        reason = data.get('reason')
+        duration = data.get('duration')
+
+        try:
+            user = CustomUser.objects.get(id=user_id)
+            user.is_active = False
+            user.block_reason = reason
+            user.block_duration = duration
+            user.save()
+            return JsonResponse({'success': True})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def delete_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    user.delete()
+    return redirect('manage_users')
 
 @login_required
 def settings(request):

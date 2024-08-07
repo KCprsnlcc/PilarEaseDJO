@@ -45,9 +45,9 @@
           <button class="block-button" data-user-id="{{ user.id }}">
             Block
           </button>
-          <button class="delete-button" data-user-id="{{ user.id }}">
-            Delete
-          </button>
+          <a href="{% url 'delete_user' user.id %}" class="delete-icon"
+            ><i class="bx bx-trash"></i
+          ></a>
         </td>
       </tr>
       {% endfor %}

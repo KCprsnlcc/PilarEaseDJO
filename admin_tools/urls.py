@@ -1,5 +1,5 @@
 from django.urls import path
-from admin_tools import views
+from . import views
 
 urlpatterns = [
     path('dashboard/', views.contact_us_view, name='admin_dashboard'),
