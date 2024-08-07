@@ -184,23 +184,97 @@ document.addEventListener("DOMContentLoaded", function () {
   statusTitle.addEventListener("input", saveFormData);
   statusDescription.addEventListener("input", saveFormData);
 
+  // Show the profanity error modal with overlay
   function showProfanityError(message) {
     const dialogBox = document.getElementById("profanityErrorModal");
     const dialogContent = document.getElementById("profanityErrorContent");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
     dialogContent.innerHTML = message;
     dialogBox.style.display = "block";
+    overlay.style.display = "block";
+
     dialogBox.classList.remove("pop-out");
     dialogBox.classList.add("pop-in");
+  }
 
-    setTimeout(() => {
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", function () {
+      const dialogBox = document.getElementById("profanityErrorModal");
       dialogBox.classList.remove("pop-in");
       dialogBox.classList.add("pop-out");
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
       }, 300);
-    }, 3000);
+    });
+
+  // Close the profanity error modal
+  function closeProfanityErrorModal() {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+      overlay.style.display = "none";
+    }, 300);
   }
+
+  // Show the guidelines modal
+  function showGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.style.display = "block";
+    guidelinesOverlay.style.display = "block";
+
+    guidelinesModal.classList.remove("pop-out");
+    guidelinesModal.classList.add("pop-in");
+  }
+
+  // Close the guidelines modal
+  function closeGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.classList.remove("pop-in");
+    guidelinesModal.classList.add("pop-out");
+    setTimeout(() => {
+      guidelinesModal.style.display = "none";
+      guidelinesModal.classList.remove("pop-out");
+      guidelinesOverlay.style.display = "none";
+    }, 300);
+  }
+
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to close the profanity error modal when the overlay is clicked
+  document
+    .getElementById("profanityErrorOverlay")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to show the guidelines modal when the guidelines text is clicked
+  document
+    .getElementById("showGuidelines")
+    .addEventListener("click", showGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the close button is clicked
+  document
+    .getElementById("closeGuidelinesModal")
+    .addEventListener("click", closeGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the overlay is clicked
+  document
+    .getElementById("guidelinesOverlay")
+    .addEventListener("click", closeGuidelinesModal);
 
   function convertNewLinesToSpaces(text) {
     return text.replace(/\n/g, " ");

@@ -229,6 +229,13 @@
   </div>
 </div>
 
+<!-- Profanity Error Modal Overlay -->
+<div
+  id="profanityErrorOverlay"
+  class="invisible-overlay"
+  style="display: none"
+></div>
+
 <!-- Profanity Error Modal -->
 <div
   id="profanityErrorModal"
@@ -236,7 +243,68 @@
   style="display: none"
 >
   <p id="profanityErrorContent">Your post contains inappropriate content.</p>
+  <p>
+    <strong>
+      <u id="showGuidelines"
+        >Please rewrite your expression without inappropriate words. Follow the
+        guidelines for a better community.</u
+      >
+    </strong>
+  </p>
   <button id="closeProfanityModal">Close</button>
+</div>
+
+<!-- Guidelines Modal Overlay -->
+<div
+  id="guidelinesOverlay"
+  class="invisible-overlay"
+  style="display: none"
+></div>
+
+<!-- Guidelines Modal -->
+<div
+  id="guidelinesModal"
+  class="flat-ui-dialog guidelines"
+  style="display: none"
+>
+  <h2>Guidelines for a Better Community</h2>
+  <div class="guidelines-content">
+    <p>
+      To maintain a positive and respectful community, we ask that all users
+      follow these guidelines when posting content:
+    </p>
+    <ul>
+      <li>
+        <strong>Use Respectful Language:</strong> Ensure that all your
+        expressions are respectful and considerate of others. Avoid using
+        language that can be offensive, hurtful, or inappropriate.
+      </li>
+      <li>
+        <strong>Avoid Profanity:</strong> Refrain from using profane or vulgar
+        language. This includes swearing, slurs, and any other forms of
+        inappropriate words.
+      </li>
+      <li>
+        <strong>Positive Contributions:</strong> Aim to contribute positively to
+        the community. Share helpful, supportive, and constructive content.
+      </li>
+      <li>
+        <strong>Respect Differences:</strong> Appreciate the diversity within
+        our community. Respect different opinions, backgrounds, and
+        perspectives.
+      </li>
+      <li>
+        <strong>Report Issues:</strong> If you encounter any inappropriate
+        content, please report it to the moderators. This helps us keep the
+        community safe and welcoming for everyone.
+      </li>
+    </ul>
+    <p>
+      By adhering to these guidelines, you help us create a supportive and
+      respectful environment for all members.
+    </p>
+  </div>
+  <button id="closeGuidelinesModal">Close</button>
 </div>
 
 {% endblock %}
