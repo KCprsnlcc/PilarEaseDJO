@@ -1,5 +1,103 @@
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
 %} {% block content %}
 <h1>Manage Users</h1>
-<p>Manage users page content goes here.</p>
+<div class="users-container">
+  <form method="get" class="search-form">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search..."
+      value="{{ search_query }}"
+    />
+    <button type="submit">Search</button>
+  </form>
+
+  <table class="users-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Student ID</th>
+        <th>Username</th>
+        <th>Full Name</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Academic Year Level</th>
+        <th>Contact Number</th>
+        <th>Email</th>
+        <th>Last Joined</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ user.student_id }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.full_name }}</td>
+        <td>{{ user.first_name }}</td>
+        <td>{{ user.last_name }}</td>
+        <td>{{ user.academic_year_level }}</td>
+        <td>{{ user.contact_number }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.last_login|date:"Y-m-d" }}</td>
+        <td>
+          <button class="block-button" data-user-id="{{ user.id }}">
+            Block
+          </button>
+          <button class="delete-button" data-user-id="{{ user.id }}">
+            Delete
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not users %}
+  <p>No users found.</p>
+  {% endif %}
+  <div class="pagination">
+    <span class="step-links">
+      {% if page_obj.has_previous %}
+      <a href="?page=1&search={{ search_query }}">first</a>
+      <a
+        href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"
+        >previous</a
+      >
+      {% endif %}
+
+      <span class="current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}"
+        >next</a
+      >
+      <a
+        href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}"
+        >last</a
+      >
+      {% endif %}
+    </span>
+  </div>
+</div>
+
+<!-- Block User Modal -->
+<div id="blockUserModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeBlockUserModal">&times;</span>
+    <h2>Block User</h2>
+    <form id="blockUserForm">
+      <input type="hidden" name="user_id" id="blockUserId" />
+      <label for="reason">Reason for Blocking:</label>
+      <input type="text" id="reason" name="reason" required />
+      <label for="duration">Duration (in days):</label>
+      <input type="number" id="duration" name="duration" required />
+      <button type="submit">Block User</button>
+    </form>
+  </div>
+</div>
+
+<script src="{% static 'js/manage_users.js' %}"></script>
 {% endblock %}

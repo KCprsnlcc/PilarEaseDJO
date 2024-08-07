@@ -1,5 +1,73 @@
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
+{% load humanize %}  <!-- Load the humanize template tags for naturally formatted dates -->
+
+{% block content %}
 <h1>Replies</h1>
-<p>Replies page content goes here.</p>
+<div class="status-container">
+  <form method="get" class="search-form">
+    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}">
+    <select name="category">
+      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
+      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
+      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
+      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
+      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
+      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
+      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+  
+  <table class="status-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Student ID</th>
+        <th>Title</th>
+        <th>Reply</th>
+        <th>Last Sent</th>
+        <th>Date</th>
+        <th>ACTION</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reply in replies %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ reply.user.student_id }}</td>
+        <td>{{ reply.status.title }}</td>
+        <td>{{ reply.text }}</td>
+        <td>{{ reply.created_at|naturaltime }}</td>
+        <td>{{ reply.created_at|date:"Y-m-d" }}</td>
+        <td>
+          <a href="{% url 'delete_reply' reply.id %}" class="delete-icon"><i class="bx bx-trash"></i></a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not replies %}
+  <p>No replies data found.</p>
+  {% endif %}
+  <div class="pagination">
+    <span class="step-links">
+      {% if page_obj.has_previous %}
+        <a href="?page=1&search={{ search_query }}&category={{ category }}">first</a>
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}">previous</a>
+      {% endif %}
+      
+      <span class="current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+      
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}">last</a>
+      {% endif %}
+    </span>
+  </div>
+</div>
 {% endblock %}

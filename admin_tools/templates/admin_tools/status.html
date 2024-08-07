@@ -24,7 +24,7 @@
     <thead>
       <tr>
         <th>No.</th>
-        <th>ID_Num</th>
+        <th>Student ID</th>
         <th>Title</th>
         <th>Body</th>
         <th>Category</th>
@@ -43,7 +43,7 @@
       {% for status in statuses %}
       <tr>
         <td>{{ forloop.counter }}</td>
-        <td>{{ status.user.username }}</td>
+        <td>{{ status.user.student_id }}</td>
         <td>{{ status.title }}</td>
         <td>{{ status.plain_description|truncatewords:10 }}</td>
         <td>{{ status.emotion }}</td>

@@ -7,6 +7,7 @@ body {
 }
 
 /* Container styles */
+.users-container,
 .status-container,
 .analysis-table,
 .contact-us-queries {
@@ -37,6 +38,7 @@ body {
 }
 
 /* Table styles */
+.users-table,
 .status-table,
 .analysis-table table,
 .contact-us-queries table {
@@ -45,6 +47,8 @@ body {
   margin-bottom: 20px;
 }
 
+.users-table th,
+.users-table td,
 .status-table th,
 .status-table td,
 .analysis-table th,
@@ -56,6 +60,8 @@ body {
   text-align: center;
 }
 
+.users-table th,
+.status-table th,
 .analysis-table th,
 .contact-us-queries th {
   background-color: #0e2326;
