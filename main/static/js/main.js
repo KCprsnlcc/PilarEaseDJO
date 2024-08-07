@@ -1607,6 +1607,42 @@ function checkEmptyFields(formData, fields) {
   return emptyFields.length ? emptyFields[0] : null;
 }
 
+// Function to show the policy modal with overlay
+function showPolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.style.display = "block";
+  policyOverlay.style.display = "block";
+
+  policyModal.classList.remove("pop-out");
+  policyModal.classList.add("pop-in");
+}
+
+// Function to close the policy modal
+function closePolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.classList.remove("pop-in");
+  policyModal.classList.add("pop-out");
+  setTimeout(() => {
+    policyModal.style.display = "none";
+    policyModal.classList.remove("pop-out");
+    policyOverlay.style.display = "none";
+  }, 300);
+}
+
+// Event listener to show the policy modal when the policy text is clicked
+document
+  .getElementById("showPolicy")
+  .addEventListener("click", showPolicyModal);
+
+// Event listener to close the policy modal when the overlay is clicked
+document
+  .getElementById("policyOverlay")
+  .addEventListener("click", closePolicyModal);
+
 document.querySelectorAll(".v1_124 div").forEach((item) => {
   item.addEventListener("click", function () {
     document

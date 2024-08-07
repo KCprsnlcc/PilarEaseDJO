@@ -2118,6 +2118,83 @@ button#generatePassword:hover {
   background-color: #d32f2f;
 }
 
+/* Policy Modal Styles */
+#policyModal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  max-height: 80%;
+  margin: 100px auto;
+  padding: 20px;
+  top: -55px;
+  left: 355px;
+  height: 625px;
+  width: 500px;
+  text-align: left;
+  z-index: 1000100;
+  overflow-y: auto;
+}
+
+#policyModal h2 {
+  margin-top: 0;
+}
+
+.policy-content {
+  margin-top: 20px;
+}
+
+.policy-content ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.policy-content li {
+  margin-bottom: 10px;
+}
+
+#closePolicyModal {
+  background-color: #f44336;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin: 20px auto 0 auto;
+}
+
+#closePolicyModal:hover {
+  background-color: #d32f2f;
+}
+
+#showPolicy {
+  width: 300px;
+  color: rgba(23, 26, 31, 1);
+  position: absolute;
+  top: 580px;
+  left: 658px;
+  cursor: pointer;
+  font-family: Inter;
+  font-weight: Regular;
+  font-size: 14px;
+  opacity: 1;
+  text-align: center;
+}
+
+#policyOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100099;
+}
+
 #guidelinesOverlay {
   display: none;
   position: fixed;

@@ -272,7 +272,9 @@
           <span class="v74_811">Sign Up</span>
         </button>
       </form>
-      <span class="v74_822">Privacy Policy and Terms of Service apply</span>
+      <span class="v74_822" id="showPolicy"
+        >Privacy Policy and Terms of Service apply</span
+      >
       <span class="v74_836">Join us at the PilarEase's Portal!</span>
       <span class="v74_837">An existing account?</span>
       <div class="v53_190" id="closeRegisterModal">
@@ -297,6 +299,253 @@
         style="display: none"
       >
         <div id="registerSuccessContent"></div>
+      </div>
+    </div>
+
+    <!-- Privacy Policy and Terms of Service Overlay -->
+    <div
+      id="policyOverlay"
+      class="invisible-overlay"
+      style="display: none"
+    ></div>
+
+    <!-- Privacy Policy and Terms of Service Modal -->
+    <div id="policyModal" class="flat-ui-dialog policy" style="display: none">
+      <h2>Privacy Policy and Terms of Service for PilarEase</h2>
+      <div class="policy-content">
+        <h3>Terms and Conditions</h3>
+        <p>Welcome to PilarEase!</p>
+        <p>
+          By accessing or using our portal, you agree to comply with and be
+          bound by the following terms and conditions. Please review these terms
+          carefully. If you do not agree with these terms, you should not use
+          our portal.
+        </p>
+        <ol>
+          <li>
+            <strong>User Conduct</strong>
+            <ul>
+              <li>
+                <strong>Respectful Interaction:</strong> Users must interact
+                respectfully with each other. Offensive, abusive, or
+                inappropriate language and behavior are strictly prohibited.
+              </li>
+              <li>
+                <strong>Appropriate Content:</strong> Users must ensure that all
+                content posted, including text, images, and links, is
+                appropriate for all audiences. Pornographic, violent, or
+                otherwise inappropriate content is not allowed.
+              </li>
+              <li>
+                <strong>No Harassment:</strong> Harassment, bullying, or any
+                form of personal attacks against other users will not be
+                tolerated.
+              </li>
+              <li>
+                <strong>No Spam:</strong> Spamming, including unsolicited
+                promotional messages or repetitive posts, is not permitted.
+              </li>
+              <li>
+                <strong>No Illegal Activities:</strong> Users must not engage in
+                or promote illegal activities through the portal.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Account Responsibilities</strong>
+            <ul>
+              <li>
+                <strong>Account Security:</strong> Users are responsible for
+                maintaining the security of their account information. Sharing
+                login details with others is discouraged.
+              </li>
+              <li>
+                <strong>Accurate Information:</strong> Users must provide
+                accurate and up-to-date information when creating an account and
+                using the portal.
+              </li>
+              <li>
+                <strong>One Account Per User:</strong> Each user is allowed to
+                create only one account. Duplicate accounts for the same
+                individual are prohibited.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Content Ownership and Usage</strong>
+            <ul>
+              <li>
+                <strong>User Content:</strong> Users retain ownership of the
+                content they create and post. By posting content on PilarEase,
+                users grant us a non-exclusive, royalty-free license to use,
+                distribute, and display the content in connection with the
+                portal.
+              </li>
+              <li>
+                <strong>Content Removal:</strong> We reserve the right to remove
+                any content that violates these terms or is deemed
+                inappropriate, without prior notice.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Privacy</strong>
+            <ul>
+              <li>
+                <strong>Data Collection:</strong> We collect personal
+                information from users, including but not limited to student ID,
+                username, full name, academic year level, contact number, and
+                email address.
+              </li>
+              <li>
+                <strong>Data Usage:</strong> Personal information is used to
+                manage user accounts, provide services, and improve the user
+                experience. We do not share personal information with third
+                parties without user consent, except as required by law.
+              </li>
+              <li>
+                <strong>Data Security:</strong> We implement security measures
+                to protect user data from unauthorized access, alteration, or
+                disclosure.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Changes to Terms</strong>
+            <ul>
+              <li>
+                We may update these terms from time to time. Users will be
+                notified of any significant changes. Continued use of the portal
+                after such changes constitutes acceptance of the new terms.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Contact Us</strong>
+            <ul>
+              <li>
+                For any questions or concerns about these terms, please contact
+                us at support@pilarease.com.
+              </li>
+            </ul>
+          </li>
+        </ol>
+        <h3>Privacy Policy</h3>
+        <p>PilarEase Privacy Policy</p>
+        <ol>
+          <li>
+            <strong>Introduction</strong>
+            <ul>
+              <li>
+                PilarEase values your privacy. This policy outlines how we
+                collect, use, and protect your personal information.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Information We Collect</strong>
+            <ul>
+              <li>
+                <strong>Personal Information:</strong> When you register, we
+                collect personal information such as student ID, username, full
+                name, academic year level, contact number, and email address.
+              </li>
+              <li>
+                <strong>Usage Data:</strong> We collect data on how you interact
+                with the portal, including pages visited, features used, and
+                time spent on the site.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>How We Use Your Information</strong>
+            <ul>
+              <li>
+                <strong>Account Management:</strong> Personal information is
+                used to manage user accounts and provide access to portal
+                features.
+              </li>
+              <li>
+                <strong>Service Improvement:</strong> Usage data helps us
+                understand user behavior and improve our services.
+              </li>
+              <li>
+                <strong>Communication:</strong> We use your email address to
+                send important updates, newsletters, and other communications
+                related to the portal.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Data Protection</strong>
+            <ul>
+              <li>
+                <strong>Security Measures:</strong> We use technical and
+                organizational measures to protect your personal information
+                against unauthorized access, loss, or alteration.
+              </li>
+              <li>
+                <strong>Data Retention:</strong> Personal information is
+                retained as long as your account is active or as needed to
+                provide services. We may retain information for longer periods
+                if required by law.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Sharing Your Information</strong>
+            <ul>
+              <li>
+                <strong>Third Parties:</strong> We do not share your personal
+                information with third parties without your consent, except as
+                required by law or to protect our rights.
+              </li>
+              <li>
+                <strong>Service Providers:</strong> We may share information
+                with third-party service providers who perform services on our
+                behalf, such as hosting and data analysis.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Your Rights</strong>
+            <ul>
+              <li>
+                <strong>Access and Correction:</strong> You have the right to
+                access and correct your personal information. You can update
+                your information through your account settings.
+              </li>
+              <li>
+                <strong>Deletion:</strong> You can request the deletion of your
+                account and personal information by contacting us at
+                support@pilarease.com.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Changes to This Policy</strong>
+            <ul>
+              <li>
+                We may update this privacy policy from time to time. Users will
+                be notified of any significant changes.
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Contact Us</strong>
+            <ul>
+              <li>
+                For any questions or concerns about this privacy policy, please
+                contact us at support@pilarease.com.
+              </li>
+            </ul>
+          </li>
+        </ol>
+        <p>
+          By clicking "Privacy Policy and Terms of Service apply", you
+          acknowledge that you have read and agree to our Terms and Conditions
+          and Privacy Policy.
+        </p>
       </div>
     </div>
 
