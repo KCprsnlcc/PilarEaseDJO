@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.utils.timesince import timesince
 from datetime import datetime
-
+from django.utils import timezone
 @login_required
 def replies_view(request):
     search_query = request.GET.get('search', '')
@@ -32,7 +32,7 @@ def replies_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    current_time = datetime.now()
+    current_time = timezone.now()
 
     replies_data = [
         {
