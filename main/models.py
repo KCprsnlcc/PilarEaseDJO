@@ -66,6 +66,12 @@ class Status(models.Model):
     def __str__(self):
         return f"{self.title} by {self.user.username}"
     
+class Referral(models.Model):
+    status = models.ForeignKey(Status, on_delete=models.CASCADE)
+    referred_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    highlighted_title = models.TextField(blank=True)
+    highlighted_description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 class Reply(models.Model):
     status = models.ForeignKey(Status, related_name='replies', on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

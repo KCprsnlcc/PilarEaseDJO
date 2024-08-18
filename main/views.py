@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import datetime
 import pytz
@@ -16,7 +17,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs
+from .models import Status, Reply, ContactUs, Referral
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -113,6 +114,60 @@ def check_profanity(request):
         else:
             return JsonResponse({'contains_profanity': False})
     return JsonResponse({'contains_profanity': False}, status=400)
+
+def get_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    data = {
+        'success': True,
+        'status': {
+            'id': status.id,
+            'title': status.title,
+            'description': status.description,
+            'plain_description': status.plain_description,
+            'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': status.user.username,
+            'emotion': status.emotion,
+        }
+    }
+    return JsonResponse(data)
+
+@require_POST
+def submit_referral(request):
+    data = json.loads(request.body)
+    try:
+        status = Status.objects.get(id=data['status_id'])
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=data.get('highlighted_title', ''),
+            highlighted_description=data.get('highlighted_description', '')
+        )
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+
+@login_required
+@require_POST
+def refer_status(request, status_id):
+    try:
+        status = Status.objects.get(id=status_id)
+        highlighted_title = request.POST.get('highlightedTitle', '')
+        highlighted_description = request.POST.get('highlightedDescription', '')
+
+        # Save the referral
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=highlighted_title,
+            highlighted_description=highlighted_description,
+        )
+
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'}, status=404)
 
 @login_required
 @csrf_exempt

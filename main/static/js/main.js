@@ -518,10 +518,115 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
-  // Function to handle referring status to a counselor
   function referStatusToCounselor(statusId) {
+    // Fetch the status data from the server
+    fetch(`/get_status/${statusId}/`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Populate the modal with status data
+          document.getElementById("referStatusTitle").textContent =
+            data.status.title;
+          document.getElementById("referStatusDescription").textContent =
+            data.status.plain_description;
+
+          // Show the modal
+          document.getElementById("referStatusModal").style.display = "block";
+
+          // Attach event listener to enable custom highlighting
+          enableCustomHighlighting("referStatusTitle");
+          enableCustomHighlighting("referStatusDescription");
+
+          // Attach event listener to the submit button
+          document.getElementById("submitReferStatus").onclick = function () {
+            submitReferral(statusId);
+          };
+        } else {
+          alert("Failed to load status data.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Error fetching status data. Please try again.");
+      });
+  }
+
+  // Function to enable custom highlighting
+  function enableCustomHighlighting(elementId) {
+    const element = document.getElementById(elementId);
+
+    element.addEventListener("mouseup", function () {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+
+        if (range && element.contains(range.commonAncestorContainer)) {
+          wrapSelectedTextWithHighlight(range);
+          selection.removeAllRanges(); // Clear the selection
+        }
+      }
+    });
+  }
+
+  // Function to wrap selected text with custom highlight
+  function wrapSelectedTextWithHighlight(range) {
+    const selectedText = range.toString();
+    if (selectedText.trim() !== "") {
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      span.textContent = selectedText;
+      range.deleteContents(); // Remove the selected text
+      range.insertNode(span); // Insert the highlighted text
+    }
+  }
+
+  // Function to get highlighted text from the content
+  function getHighlightedText(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements =
+      element.getElementsByClassName("highlighted-text");
+    let highlightedText = "";
+
+    for (let i = 0; i < highlightedElements.length; i++) {
+      highlightedText += highlightedElements[i].textContent + " ";
+    }
+
+    return highlightedText.trim();
+  }
+
+  // Event listener for refer status buttons
+  document.querySelectorAll(".refer-status-button").forEach((button) => {
+    button.addEventListener("click", function () {
+      const statusId = this.dataset.statusId;
+      referStatusToCounselor(statusId);
+    });
+  });
+  // Event listener to close the modal
+  document.getElementById("closeReferStatusModal").onclick = function () {
+    document.getElementById("referStatusModal").style.display = "none";
+  };
+
+  // Event listener to close the modal when clicking outside of it
+  window.onclick = function (event) {
+    if (event.target == document.getElementById("referStatusModal")) {
+      document.getElementById("referStatusModal").style.display = "none";
+    }
+  };
+
+  // Function to submit the referral
+  // Function to submit the referral
+  function submitReferral(statusId) {
+    const highlightedTitle = getHighlightedText("referStatusTitle");
+    const highlightedDescription = getHighlightedText("referStatusDescription");
+
+    const formData = new FormData();
+    formData.append("highlightedTitle", highlightedTitle);
+    formData.append("highlightedDescription", highlightedDescription);
+
+    // Send the highlighted text to the server
     fetch(`/refer_status/${statusId}/`, {
       method: "POST",
+      body: formData,
       headers: {
         "X-CSRFToken": getCookie("csrftoken"),
       },
@@ -529,16 +634,36 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          alert("Status referred to counselor successfully!");
+          alert("Referral submitted successfully.");
+          document.getElementById("referStatusModal").style.display = "none";
         } else {
-          alert("Failed to refer status.");
+          alert("Failed to submit referral.");
         }
       })
       .catch((error) => {
-        console.error("Error referring status:", error);
-        alert("Error referring status. Please try again.");
+        console.error("Error:", error);
+        alert("Error submitting referral. Please try again.");
       });
   }
+
+  // Utility function to get selected text in an element
+  window.getSelectionText = function (elementId) {
+    const element = document.getElementById(elementId);
+    let selectedText = "";
+    if (window.getSelection) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (
+          range.commonAncestorContainer.parentNode === element ||
+          range.commonAncestorContainer === element
+        ) {
+          selectedText = selection.toString();
+        }
+      }
+    }
+    return selectedText;
+  };
 
   function deleteStatus(statusId) {
     fetch(`/delete_status/${statusId}/`, {
