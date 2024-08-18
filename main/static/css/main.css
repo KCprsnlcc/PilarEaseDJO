@@ -1132,6 +1132,21 @@ button[type="submit"]:hover {
   font-family: Gothic A1;
 }
 
+.refer-button.status {
+  position: absolute;
+  top: 0px;
+  left: 502px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  color: #0f2326;
+}
+
+.refer-button.status:hover {
+  color: #689e4b; /* You can adjust this color as desired */
+}
+
 .delete-button.status {
   position: absolute;
   top: 0px;

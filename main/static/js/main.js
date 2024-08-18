@@ -481,6 +481,11 @@ document.addEventListener("DOMContentLoaded", function () {
                             ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
                             : ""
                         }
+                        ${
+                          !status.can_delete
+                            ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
+                            : ""
+                        }
                     </div>
                 `;
           container.appendChild(newBox);
@@ -490,6 +495,12 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
+              });
+          } else {
+            document
+              .getElementById(`refer-${status.id}`)
+              .addEventListener("click", function () {
+                referStatusToCounselor(status.id);
               });
           }
 
@@ -507,6 +518,28 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+  // Function to handle referring status to a counselor
+  function referStatusToCounselor(statusId) {
+    fetch(`/refer_status/${statusId}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Status referred to counselor successfully!");
+        } else {
+          alert("Failed to refer status.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error referring status:", error);
+        alert("Error referring status. Please try again.");
+      });
+  }
+
   function deleteStatus(statusId) {
     fetch(`/delete_status/${statusId}/`, {
       method: "DELETE",

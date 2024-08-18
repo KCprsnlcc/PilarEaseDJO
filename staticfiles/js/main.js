@@ -184,7 +184,103 @@ document.addEventListener("DOMContentLoaded", function () {
   statusTitle.addEventListener("input", saveFormData);
   statusDescription.addEventListener("input", saveFormData);
 
-  // Add event listener to form submission
+  // Show the profanity error modal with overlay
+  function showProfanityError(message) {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const dialogContent = document.getElementById("profanityErrorContent");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    overlay.style.display = "block";
+
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+  }
+
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", function () {
+      const dialogBox = document.getElementById("profanityErrorModal");
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    });
+
+  // Close the profanity error modal
+  function closeProfanityErrorModal() {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+      overlay.style.display = "none";
+    }, 300);
+  }
+
+  // Show the guidelines modal
+  function showGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.style.display = "block";
+    guidelinesOverlay.style.display = "block";
+
+    guidelinesModal.classList.remove("pop-out");
+    guidelinesModal.classList.add("pop-in");
+  }
+
+  // Close the guidelines modal
+  function closeGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.classList.remove("pop-in");
+    guidelinesModal.classList.add("pop-out");
+    setTimeout(() => {
+      guidelinesModal.style.display = "none";
+      guidelinesModal.classList.remove("pop-out");
+      guidelinesOverlay.style.display = "none";
+    }, 300);
+  }
+
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to close the profanity error modal when the overlay is clicked
+  document
+    .getElementById("profanityErrorOverlay")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to show the guidelines modal when the guidelines text is clicked
+  document
+    .getElementById("showGuidelines")
+    .addEventListener("click", showGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the close button is clicked
+  document
+    .getElementById("closeGuidelinesModal")
+    .addEventListener("click", closeGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the overlay is clicked
+  document
+    .getElementById("guidelinesOverlay")
+    .addEventListener("click", closeGuidelinesModal);
+
+  function convertNewLinesToSpaces(text) {
+    return text.replace(/\n/g, " ");
+  }
+
+  // Updated event listener for status form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -192,7 +288,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const description = statusDescription.classList.contains("placeholder")
       ? ""
       : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent.trim();
+    const plainDescription = statusDescription.textContent
+      .trim()
+      .replace(/\n+/g, " ");
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -217,6 +315,14 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   confirmBtn.addEventListener("click", function () {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent
+      .trim()
+      .replace(/\n+/g, " ");
+
     // Hide confirmation dialog with pop-out animation
     confirmStatusModal.classList.remove("pop-in");
     confirmStatusModal.classList.add("pop-out");
@@ -224,8 +330,31 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.style.display = "none";
       confirmStatusModal.classList.remove("pop-out");
 
-      // Proceed with status submission
-      uploadStatus();
+      // Proceed with profanity check
+      fetch("/check_profanity/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          title: title,
+          description: plainDescription,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.contains_profanity) {
+            showProfanityError("Your post contains inappropriate content.");
+          } else {
+            // Proceed with status submission
+            uploadStatus(title, description, plainDescription);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          showStatusError("Network error could not check profanity.");
+        });
     }, 300);
   });
 
@@ -238,6 +367,71 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmStatusModal.classList.remove("pop-out");
     }, 300);
   });
+
+  function uploadStatus(title, description, plainDescription) {
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
+
+    showLoader();
+    statusModal.querySelector(".status-form").style.opacity = "0.5";
+
+    fetch("/submit_status/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        emotion: selectedEmotion,
+        title: title,
+        description: description,
+        plain_description: plainDescription,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+
+        if (data.success) {
+          showStatusSuccess("Status shared successfully!");
+          setTimeout(() => {
+            const dialogBox = document.getElementById(
+              "statusNotificationSuccess"
+            );
+            dialogBox.classList.remove("pop-in");
+            dialogBox.classList.add("pop-out");
+            setTimeout(() => {
+              dialogBox.style.display = "none";
+              dialogBox.classList.remove("pop-out");
+
+              // Hide the status modal with animation
+              statusModal.classList.remove("pop-in");
+              statusModal.classList.add("pop-out");
+              setTimeout(() => {
+                statusModal.style.display = "none";
+                statusModal.classList.remove("pop-out");
+
+                // Reload the page after both animations complete
+                window.location.reload();
+              }, 300); // Duration of the status modal pop-out animation
+            }, 300); // Duration of the success dialog pop-out animation
+          }, 3000); // Duration to show the success message
+        } else {
+          showStatusError(
+            "Failed to share status: " + JSON.stringify(data.errors)
+          );
+        }
+      })
+      .catch((error) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+        console.error("Error:", error);
+        showStatusError("Network error could not upload.");
+      });
+  }
+
   function fetchStatuses(page, category) {
     isLoading = true;
     const statusLoader = document.getElementById("statusLoader");
@@ -379,75 +573,6 @@ document.addEventListener("DOMContentLoaded", function () {
       return text;
     }
     return text.substring(0, maxLength) + "...";
-  }
-
-  function uploadStatus() {
-    const title = statusTitle.value.trim();
-    const description = statusDescription.classList.contains("placeholder")
-      ? ""
-      : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent.trim();
-    const csrfToken = document.querySelector(
-      'input[name="csrfmiddlewaretoken"]'
-    ).value;
-
-    showLoader();
-    statusModal.querySelector(".status-form").style.opacity = "0.5";
-
-    fetch("/submit_status/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify({
-        emotion: selectedEmotion,
-        title: title,
-        description: description,
-        plain_description: plainDescription,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        hideLoader();
-        statusModal.querySelector(".status-form").style.opacity = "1";
-
-        if (data.success) {
-          showStatusSuccess("Status shared successfully!");
-          setTimeout(() => {
-            const dialogBox = document.getElementById(
-              "statusNotificationSuccess"
-            );
-            dialogBox.classList.remove("pop-in");
-            dialogBox.classList.add("pop-out");
-            setTimeout(() => {
-              dialogBox.style.display = "none";
-              dialogBox.classList.remove("pop-out");
-
-              // Hide the status modal with animation
-              statusModal.classList.remove("pop-in");
-              statusModal.classList.add("pop-out");
-              setTimeout(() => {
-                statusModal.style.display = "none";
-                statusModal.classList.remove("pop-out");
-
-                // Reload the page after both animations complete
-                window.location.reload();
-              }, 300); // Duration of the status modal pop-out animation
-            }, 300); // Duration of the success dialog pop-out animation
-          }, 3000); // Duration to show the success message
-        } else {
-          showStatusError(
-            "Failed to share status: " + JSON.stringify(data.errors)
-          );
-        }
-      })
-      .catch((error) => {
-        hideLoader();
-        statusModal.querySelector(".status-form").style.opacity = "1";
-        console.error("Error:", error);
-        showStatusError("Network error could not upload.");
-      });
   }
 
   function displayNewStatus(status) {
@@ -1481,6 +1606,42 @@ function checkEmptyFields(formData, fields) {
 
   return emptyFields.length ? emptyFields[0] : null;
 }
+
+// Function to show the policy modal with overlay
+function showPolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.style.display = "block";
+  policyOverlay.style.display = "block";
+
+  policyModal.classList.remove("pop-out");
+  policyModal.classList.add("pop-in");
+}
+
+// Function to close the policy modal
+function closePolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.classList.remove("pop-in");
+  policyModal.classList.add("pop-out");
+  setTimeout(() => {
+    policyModal.style.display = "none";
+    policyModal.classList.remove("pop-out");
+    policyOverlay.style.display = "none";
+  }, 300);
+}
+
+// Event listener to show the policy modal when the policy text is clicked
+document
+  .getElementById("showPolicy")
+  .addEventListener("click", showPolicyModal);
+
+// Event listener to close the policy modal when the overlay is clicked
+document
+  .getElementById("policyOverlay")
+  .addEventListener("click", closePolicyModal);
 
 document.querySelectorAll(".v1_124 div").forEach((item) => {
   item.addEventListener("click", function () {

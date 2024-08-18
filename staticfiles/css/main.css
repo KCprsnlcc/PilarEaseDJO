@@ -1983,7 +1983,7 @@ button#generatePassword:hover {
 
 #ConfirmStatusModal {
   top: 400px;
-  left: 150px;
+  left: 140px;
   width: 315px;
   display: none;
   text-align: center;
@@ -2027,6 +2027,196 @@ button#generatePassword:hover {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
+#profanityErrorModal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  left: 680px;
+  top: 320px;
+  margin: 100px auto;
+  padding: 20px;
+  text-align: center;
+  z-index: 1000100;
+}
+
+#profanityErrorModal p {
+  margin: 20px 0;
+  font-size: 16px;
+}
+
+#closeProfanityModal {
+  background-color: #f44336;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+#closeProfanityModal:hover {
+  background-color: #d32f2f;
+}
+
+#guidelinesModal {
+  background: #fff;
+  border-radius: 8px;
+  border-width: 0px;
+  border-style: solid;
+  border-color: #d32f2f #d32f2f #d32f2f #d32f2f;
+  left: 580px;
+  color: #d32f2f;
+  top: 175px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  max-height: 80%;
+  margin: 100px auto;
+  padding: 20px;
+  text-align: left;
+  z-index: 1000100;
+  overflow-y: auto;
+}
+
+#guidelinesModal h2 {
+  margin-top: 0;
+}
+
+.guidelines-content {
+  margin-top: 20px;
+}
+
+.guidelines-content ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.guidelines-content li {
+  margin-bottom: 10px;
+}
+
+#showGuidelines {
+  cursor: pointer;
+}
+
+#closeGuidelinesModal {
+  background-color: #f44336;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  width: 100%;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin: 20px auto 0 auto;
+}
+
+#closeGuidelinesModal:hover {
+  background-color: #d32f2f;
+}
+
+/* Policy Modal Styles */
+#policyModal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  max-height: 80%;
+  margin: 100px auto;
+  padding: 20px;
+  top: -55px;
+  left: 355px;
+  height: 625px;
+  width: 500px;
+  text-align: left;
+  z-index: 1000100;
+  overflow-y: auto;
+}
+
+#policyModal h2 {
+  margin-top: 0;
+}
+
+.policy-content {
+  margin-top: 20px;
+}
+
+.policy-content ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.policy-content li {
+  margin-bottom: 10px;
+}
+
+#closePolicyModal {
+  background-color: #f44336;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  padding: 10px 20px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin: 20px auto 0 auto;
+}
+
+#closePolicyModal:hover {
+  background-color: #d32f2f;
+}
+
+#showPolicy {
+  width: 300px;
+  color: rgba(23, 26, 31, 1);
+  position: absolute;
+  top: 580px;
+  left: 658px;
+  cursor: pointer;
+  font-family: Inter;
+  font-weight: Regular;
+  font-size: 14px;
+  opacity: 1;
+  text-align: center;
+}
+
+#policyOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100099;
+}
+
+#guidelinesOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100099;
+}
+
+#profanityErrorOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100099;
+}
+
 #logoutSuccessBox {
   top: 45%; /* Adjusted top position */
   left: 810px;
@@ -2332,7 +2522,7 @@ nav.open .nav-content span {
   z-index: 1000;
 }
 .curved-line {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   width: 60%; /* Adjusted width for thinner line */
@@ -2452,11 +2642,11 @@ nav.open .nav-content span {
   border: 1px solid rgba(222, 225, 230, 1);
 }
 .v53_171 {
-  width: 157px;
+  width: 200px;
   color: rgba(23, 26, 31, 1);
   position: absolute;
   top: 440px;
-  left: 189px;
+  left: 190px;
   font-family: Inter;
   font-weight: Regular;
   font-size: 14px;
@@ -2512,12 +2702,13 @@ nav.open .nav-content span {
   left: 357px;
   overflow: hidden;
 }
+
 .v53_179 {
   width: 58px;
   color: rgba(23, 26, 31, 1);
   position: absolute;
   top: 440px;
-  left: 349px;
+  left: 359px;
   font-family: Inter;
   font-weight: Bold;
   font-size: 14px;
