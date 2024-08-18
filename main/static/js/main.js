@@ -518,29 +518,42 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+  let undoStack = []; // Stack to keep track of the last highlight for undo
+
+  // Function to open the modal and fetch status data
   function referStatusToCounselor(statusId) {
-    // Fetch the status data from the server
     fetch(`/get_status/${statusId}/`)
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // Populate the modal with status data
           document.getElementById("referStatusTitle").textContent =
             data.status.title;
           document.getElementById("referStatusDescription").textContent =
             data.status.plain_description;
 
-          // Show the modal
           document.getElementById("referStatusModal").style.display = "block";
 
-          // Attach event listener to enable custom highlighting
           enableCustomHighlighting("referStatusTitle");
           enableCustomHighlighting("referStatusDescription");
 
-          // Attach event listener to the submit button
           document.getElementById("submitReferStatus").onclick = function () {
             submitReferral(statusId);
           };
+
+          document.getElementById("clearHighlights").onclick = function () {
+            clearAllHighlights();
+          };
+
+          document.getElementById("highlightAllTitle").onclick = function () {
+            highlightAllText("referStatusTitle");
+          };
+
+          document.getElementById("highlightAllDescription").onclick =
+            function () {
+              highlightAllText("referStatusDescription");
+            };
+
+          document.addEventListener("keydown", handleUndoHighlight);
         } else {
           alert("Failed to load status data.");
         }
@@ -577,6 +590,9 @@ document.addEventListener("DOMContentLoaded", function () {
       span.textContent = selectedText;
       range.deleteContents(); // Remove the selected text
       range.insertNode(span); // Insert the highlighted text
+
+      // Push the span element to the undo stack
+      undoStack.push(span);
     }
   }
 
@@ -592,6 +608,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return highlightedText.trim();
+  }
+
+  // Function to clear all highlights
+  function clearAllHighlights() {
+    const highlightedElements = document.querySelectorAll(".highlighted-text");
+    highlightedElements.forEach((element) => {
+      const parent = element.parentNode;
+      parent.replaceChild(
+        document.createTextNode(element.textContent),
+        element
+      );
+      parent.normalize(); // Merge adjacent text nodes
+    });
+    undoStack = []; // Clear the undo stack
+  }
+
+  // Function to highlight all text in an element
+  function highlightAllText(elementId) {
+    const element = document.getElementById(elementId);
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    wrapSelectedTextWithHighlight(range);
+  }
+
+  // Function to handle undoing the last highlight (Ctrl + Z)
+  function handleUndoHighlight(event) {
+    if (event.ctrlKey && event.key === "z") {
+      const lastHighlighted = undoStack.pop();
+      if (lastHighlighted) {
+        const parent = lastHighlighted.parentNode;
+        parent.replaceChild(
+          document.createTextNode(lastHighlighted.textContent),
+          lastHighlighted
+        );
+        parent.normalize(); // Merge adjacent text nodes
+      }
+    }
   }
 
   // Event listener for refer status buttons
@@ -623,7 +676,6 @@ document.addEventListener("DOMContentLoaded", function () {
     formData.append("highlightedTitle", highlightedTitle);
     formData.append("highlightedDescription", highlightedDescription);
 
-    // Send the highlighted text to the server
     fetch(`/refer_status/${statusId}/`, {
       method: "POST",
       body: formData,
