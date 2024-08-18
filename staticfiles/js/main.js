@@ -481,6 +481,11 @@ document.addEventListener("DOMContentLoaded", function () {
                             ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
                             : ""
                         }
+                        ${
+                          !status.can_delete
+                            ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
+                            : ""
+                        }
                     </div>
                 `;
           container.appendChild(newBox);
@@ -490,6 +495,12 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
+              });
+          } else {
+            document
+              .getElementById(`refer-${status.id}`)
+              .addEventListener("click", function () {
+                referStatusToCounselor(status.id);
               });
           }
 
@@ -507,6 +518,238 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+  let undoStack = []; // Stack to keep track of the last highlight for undo
+
+  // Function to open the modal and fetch status data with animation
+  function referStatusToCounselor(statusId) {
+    fetch(`/get_status/${statusId}/`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("referStatusTitle").textContent =
+            data.status.title;
+          document.getElementById("referStatusDescription").textContent =
+            data.status.plain_description;
+
+          const overlay = document.getElementById("referStatusOverlay");
+          const modal = document.getElementById("referStatusModal");
+          const modalContent = document.getElementById("refercontent");
+
+          overlay.style.display = "block";
+          modal.style.display = "flex";
+          modalContent.classList.remove("pop-out");
+          modalContent.classList.add("pop-in");
+
+          enableCustomHighlighting("referStatusTitle");
+          enableCustomHighlighting("referStatusDescription");
+
+          document.getElementById("submitReferStatus").onclick = function () {
+            submitReferral(statusId);
+          };
+
+          document.getElementById("clearHighlights").onclick = function () {
+            clearAllHighlights();
+          };
+
+          document.getElementById("highlightAllTitle").onclick = function () {
+            highlightAllText("referStatusTitle");
+          };
+
+          document.getElementById("highlightAllDescription").onclick =
+            function () {
+              highlightAllText("referStatusDescription");
+            };
+
+          document.addEventListener("keydown", handleUndoHighlight);
+
+          // Event listener to close modal when clicking outside the content (on overlay)
+          overlay.addEventListener("click", function () {
+            closeReferModal();
+          });
+        } else {
+          alert("Failed to load status data.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Error fetching status data. Please try again.");
+      });
+  }
+
+  // Function to close the modal with animation (Renamed from closeModal)
+  function closeReferModal() {
+    const overlay = document.getElementById("referStatusOverlay");
+    const modal = document.getElementById("referStatusModal");
+    const modalContent = document.getElementById("refercontent");
+
+    modalContent.classList.remove("pop-in");
+    modalContent.classList.add("pop-out");
+
+    // Wait for the animation to finish before hiding the modal and overlay
+    setTimeout(() => {
+      modal.style.display = "none";
+      overlay.style.display = "none";
+      document.removeEventListener("keydown", handleUndoHighlight);
+    }, 300); // Match the duration of the popOut animation
+  }
+
+  // Close modal when the close button is clicked
+  document.getElementById("closeReferStatusModal").onclick = function () {
+    closeReferModal();
+  };
+  // Function to enable custom highlighting
+  function enableCustomHighlighting(elementId) {
+    const element = document.getElementById(elementId);
+
+    element.addEventListener("mouseup", function () {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+
+        if (range && element.contains(range.commonAncestorContainer)) {
+          wrapSelectedTextWithHighlight(range);
+          selection.removeAllRanges(); // Clear the selection
+        }
+      }
+    });
+  }
+
+  // Function to wrap selected text with custom highlight
+  function wrapSelectedTextWithHighlight(range) {
+    const selectedText = range.toString();
+    if (selectedText.trim() !== "") {
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      span.textContent = selectedText;
+      range.deleteContents(); // Remove the selected text
+      range.insertNode(span); // Insert the highlighted text
+
+      // Push the span element to the undo stack
+      undoStack.push(span);
+    }
+  }
+
+  // Function to get highlighted text from the content
+  function getHighlightedText(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements =
+      element.getElementsByClassName("highlighted-text");
+    let highlightedText = "";
+
+    for (let i = 0; i < highlightedElements.length; i++) {
+      highlightedText += highlightedElements[i].textContent + " ";
+    }
+
+    return highlightedText.trim();
+  }
+
+  // Function to clear all highlights
+  function clearAllHighlights() {
+    const highlightedElements = document.querySelectorAll(".highlighted-text");
+    highlightedElements.forEach((element) => {
+      const parent = element.parentNode;
+      parent.replaceChild(
+        document.createTextNode(element.textContent),
+        element
+      );
+      parent.normalize(); // Merge adjacent text nodes
+    });
+    undoStack = []; // Clear the undo stack
+  }
+
+  // Function to highlight all text in an element
+  function highlightAllText(elementId) {
+    const element = document.getElementById(elementId);
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    wrapSelectedTextWithHighlight(range);
+  }
+
+  // Function to handle undoing the last highlight (Ctrl + Z)
+  function handleUndoHighlight(event) {
+    if (event.ctrlKey && event.key === "z") {
+      const lastHighlighted = undoStack.pop();
+      if (lastHighlighted) {
+        const parent = lastHighlighted.parentNode;
+        parent.replaceChild(
+          document.createTextNode(lastHighlighted.textContent),
+          lastHighlighted
+        );
+        parent.normalize(); // Merge adjacent text nodes
+      }
+    }
+  }
+
+  // Event listener for refer status buttons
+  document.querySelectorAll(".refer-status-button").forEach((button) => {
+    button.addEventListener("click", function () {
+      const statusId = this.dataset.statusId;
+      referStatusToCounselor(statusId);
+    });
+  });
+  // Event listener to close the modal
+  document.getElementById("closeReferStatusModal").onclick = function () {
+    document.getElementById("referStatusModal").style.display = "none";
+  };
+
+  // Event listener to close the modal when clicking outside of it
+  window.onclick = function (event) {
+    if (event.target == document.getElementById("referStatusModal")) {
+      document.getElementById("referStatusModal").style.display = "none";
+    }
+  };
+
+  // Function to submit the referral
+  // Function to submit the referral
+  function submitReferral(statusId) {
+    const highlightedTitle = getHighlightedText("referStatusTitle");
+    const highlightedDescription = getHighlightedText("referStatusDescription");
+
+    const formData = new FormData();
+    formData.append("highlightedTitle", highlightedTitle);
+    formData.append("highlightedDescription", highlightedDescription);
+
+    fetch(`/refer_status/${statusId}/`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Referral submitted successfully.");
+          document.getElementById("referStatusModal").style.display = "none";
+        } else {
+          alert("Failed to submit referral.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Error submitting referral. Please try again.");
+      });
+  }
+
+  // Utility function to get selected text in an element
+  window.getSelectionText = function (elementId) {
+    const element = document.getElementById(elementId);
+    let selectedText = "";
+    if (window.getSelection) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (
+          range.commonAncestorContainer.parentNode === element ||
+          range.commonAncestorContainer === element
+        ) {
+          selectedText = selection.toString();
+        }
+      }
+    }
+    return selectedText;
+  };
+
   function deleteStatus(statusId) {
     fetch(`/delete_status/${statusId}/`, {
       method: "DELETE",

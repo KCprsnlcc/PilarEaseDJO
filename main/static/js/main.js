@@ -518,9 +518,10 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+
   let undoStack = []; // Stack to keep track of the last highlight for undo
 
-  // Function to open the modal and fetch status data
+  // Function to open the modal and fetch status data with animation
   function referStatusToCounselor(statusId) {
     fetch(`/get_status/${statusId}/`)
       .then((response) => response.json())
@@ -531,7 +532,12 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("referStatusDescription").textContent =
             data.status.plain_description;
 
-          document.getElementById("referStatusModal").style.display = "block";
+          const modalContent = document.getElementById("refercontent");
+
+          // Display the modal content
+          modalContent.style.display = "block";
+          modalContent.classList.remove("pop-out");
+          modalContent.classList.add("pop-in");
 
           enableCustomHighlighting("referStatusTitle");
           enableCustomHighlighting("referStatusDescription");
@@ -554,6 +560,16 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
           document.addEventListener("keydown", handleUndoHighlight);
+
+          // Close modal when clicking outside the content
+          document.addEventListener("click", function (e) {
+            if (
+              !modalContent.contains(e.target) &&
+              modalContent.style.display === "block"
+            ) {
+              closeReferModal();
+            }
+          });
         } else {
           alert("Failed to load status data.");
         }
@@ -563,6 +579,25 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("Error fetching status data. Please try again.");
       });
   }
+
+  // Function to close the modal with animation (Renamed from closeModal)
+  function closeReferModal() {
+    const modalContent = document.getElementById("refercontent");
+
+    modalContent.classList.remove("pop-in");
+    modalContent.classList.add("pop-out");
+
+    // Wait for the animation to finish before hiding the modal content
+    setTimeout(() => {
+      modalContent.style.display = "none";
+      document.removeEventListener("keydown", handleUndoHighlight);
+    }, 300); // Match the duration of the popOut animation
+  }
+
+  // Close modal when the close button is clicked
+  document.getElementById("closeReferStatusModal").onclick = function () {
+    closeReferModal();
+  };
 
   // Function to enable custom highlighting
   function enableCustomHighlighting(elementId) {
@@ -654,19 +689,7 @@ document.addEventListener("DOMContentLoaded", function () {
       referStatusToCounselor(statusId);
     });
   });
-  // Event listener to close the modal
-  document.getElementById("closeReferStatusModal").onclick = function () {
-    document.getElementById("referStatusModal").style.display = "none";
-  };
 
-  // Event listener to close the modal when clicking outside of it
-  window.onclick = function (event) {
-    if (event.target == document.getElementById("referStatusModal")) {
-      document.getElementById("referStatusModal").style.display = "none";
-    }
-  };
-
-  // Function to submit the referral
   // Function to submit the referral
   function submitReferral(statusId) {
     const highlightedTitle = getHighlightedText("referStatusTitle");
@@ -687,7 +710,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => {
         if (data.success) {
           alert("Referral submitted successfully.");
-          document.getElementById("referStatusModal").style.display = "none";
+          closeReferModal();
         } else {
           alert("Failed to submit referral.");
         }

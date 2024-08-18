@@ -163,21 +163,6 @@ button[type="submit"]:hover {
   color: #689e4b;
 }
 
-.pop-in {
-  animation: popIn 0.5s ease;
-}
-
-@keyframes popIn {
-  0% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 #loader-overlay {
   display: flex;
   position: fixed;
@@ -1130,6 +1115,77 @@ button[type="submit"]:hover {
   left: 140px;
   position: absolute;
   font-family: Gothic A1;
+}
+
+/* Custom highlight style */
+.highlighted-text {
+  background-color: #ffeb3b; /* Custom yellow background */
+  color: #000; /* Text color */
+  border-radius: 3px;
+  padding: 0 2px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  display: inline-block;
+}
+
+#referStatusModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Invisible overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000100;
+}
+
+#referStatusOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100099;
+}
+
+#refercontent {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  animation: popIn 0.3s ease-in-out forwards;
+  z-index: 1000100;
+}
+
+/* Make the overlay invisible */
+#referStatusModal.invisible-overlay {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+#referStatusTextContainer h3,
+#referStatusTextContainer p {
+  cursor: text;
+  user-select: text;
+}
+
+.refer-button.status {
+  position: absolute;
+  top: 0px;
+  left: 502px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  color: #0f2326;
+}
+
+.refer-button.status:hover {
+  color: #689e4b; /* You can adjust this color as desired */
 }
 
 .delete-button.status {
