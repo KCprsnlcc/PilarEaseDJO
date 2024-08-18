@@ -519,6 +519,19 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  document
+    .getElementById("referralReason")
+    .addEventListener("change", function () {
+      const otherReasonContainer = document.getElementById(
+        "otherReasonContainer"
+      );
+      if (this.value === "Other Concerns") {
+        otherReasonContainer.style.display = "block";
+      } else {
+        otherReasonContainer.style.display = "none";
+      }
+    });
+
   let undoStack = []; // Stack to keep track of the last highlight for undo
 
   // Function to open the modal and fetch status data with animation
@@ -561,26 +574,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
           document.addEventListener("keydown", handleUndoHighlight);
 
-          // Handle displaying the 'Other Concerns' textarea
-          document
-            .getElementById("referralReason")
-            .addEventListener("change", function () {
-              const otherReasonContainer = document.getElementById(
-                "otherReasonContainer"
-              );
-              if (this.value === "Other Concerns") {
-                otherReasonContainer.style.display = "block";
-              } else {
-                otherReasonContainer.style.display = "none";
-              }
-            });
-
           // Close modal when clicking outside the content (on the body)
           document.addEventListener("click", function (e) {
-            if (
-              !modalContent.contains(e.target) &&
-              modalContent.style.display === "block"
-            ) {
+            if (!modalContent.contains(e.target)) {
               closeReferModal();
             }
           });
@@ -593,6 +589,7 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("Error fetching status data. Please try again.");
       });
   }
+
   // Function to close the modal with animation (Renamed from closeModal)
   function closeReferModal() {
     const modalContent = document.getElementById("refercontent");
@@ -622,17 +619,76 @@ document.addEventListener("DOMContentLoaded", function () {
         const range = selection.getRangeAt(0);
 
         if (range && element.contains(range.commonAncestorContainer)) {
-          wrapSelectedTextWithHighlight(range);
+          if (!rangeIsWithinHighlightedText(range)) {
+            wrapSelectedTextWithHighlight(range);
+          }
           selection.removeAllRanges(); // Clear the selection
         }
       }
     });
   }
 
-  // Function to wrap selected text with custom highlight
-  function wrapSelectedTextWithHighlight(range) {
+  // Function to check if the selection range is valid (doesn't include spaces)
+  function isValidHighlight(range, originalText) {
     const selectedText = range.toString();
-    if (selectedText.trim() !== "") {
+    const startOffset = originalText.indexOf(selectedText);
+
+    // Check if the selected text matches exactly with the original text slice
+    return (
+      startOffset !== -1 &&
+      selectedText.trim() !== "" &&
+      originalText.slice(startOffset, startOffset + selectedText.length) ===
+        selectedText
+    );
+  }
+
+  // Function to wrap selected text or merge with adjacent highlights
+  function mergeOrWrapSelectedText(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
+
+      let startSpan =
+        startContainer.nodeType === 3 ? startContainer.previousSibling : null;
+      let endSpan =
+        endContainer.nodeType === 3 ? endContainer.nextSibling : null;
+
+      // Check if the range is adjacent to existing highlighted spans and there is no space between them
+      if (
+        startSpan &&
+        startSpan.classList &&
+        startSpan.classList.contains("highlighted-text")
+      ) {
+        const textBeforeRange = startSpan.textContent.slice(-1); // Last character of the previous span
+        const textBetween = startContainer.textContent.slice(
+          0,
+          range.startOffset
+        );
+
+        if (textBetween.trim() === "" && !/\s/.test(textBeforeRange)) {
+          startSpan.textContent += selectedText;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      if (
+        endSpan &&
+        endSpan.classList &&
+        endSpan.classList.contains("highlighted-text")
+      ) {
+        const textAfterRange = endSpan.textContent.charAt(0); // First character of the next span
+        const textBetween = endContainer.textContent.slice(range.endOffset);
+
+        if (textBetween.trim() === "" && !/\s/.test(textAfterRange)) {
+          endSpan.textContent = selectedText + endSpan.textContent;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      // Create new highlight if merging is not possible or spaces are between the selected text
       const span = document.createElement("span");
       span.className = "highlighted-text";
       span.textContent = selectedText;
@@ -642,6 +698,19 @@ document.addEventListener("DOMContentLoaded", function () {
       // Push the span element to the undo stack
       undoStack.push(span);
     }
+  }
+
+  // Function to check if the selection range is within already highlighted text
+  function rangeIsWithinHighlightedText(range) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+
+    return (
+      (startContainer.parentElement &&
+        startContainer.parentElement.classList.contains("highlighted-text")) ||
+      (endContainer.parentElement &&
+        endContainer.parentElement.classList.contains("highlighted-text"))
+    );
   }
 
   // Function to get highlighted text from the content
@@ -658,23 +727,76 @@ document.addEventListener("DOMContentLoaded", function () {
     return highlightedText.trim();
   }
 
+  // Function to wrap selected text with custom highlight without deleting text
+  function wrapSelectedTextWithHighlight(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      range.surroundContents(span);
+      undoStack.push(span);
+    }
+  }
+
+  // Function to prevent merging highlights if spaces are involved
+  function preventMergeWithSpaces(span) {
+    const prevSibling = span.previousSibling;
+    const nextSibling = span.nextSibling;
+
+    if (
+      prevSibling &&
+      prevSibling.nodeType === 3 &&
+      /\s$/.test(prevSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        prevSibling.textContent.trimEnd()
+      );
+      span.parentNode.insertBefore(newTextNode, span);
+      prevSibling.textContent = " ";
+    }
+
+    if (
+      nextSibling &&
+      nextSibling.nodeType === 3 &&
+      /^\s/.test(nextSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        nextSibling.textContent.trimStart()
+      );
+      span.parentNode.insertBefore(span, nextSibling);
+      nextSibling.textContent = " ";
+    }
+  }
+
   // Function to clear all highlights
-  function clearAllHighlights() {
-    const highlightedElements = document.querySelectorAll(".highlighted-text");
-    highlightedElements.forEach((element) => {
-      const parent = element.parentNode;
+  function clearHighlightsInElement(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements = element.querySelectorAll(".highlighted-text");
+    highlightedElements.forEach((highlighted) => {
+      const parent = highlighted.parentNode;
       parent.replaceChild(
-        document.createTextNode(element.textContent),
-        element
+        document.createTextNode(highlighted.textContent),
+        highlighted
       );
       parent.normalize(); // Merge adjacent text nodes
     });
+  }
+
+  // Function to clear all highlights in both title and description
+  function clearAllHighlights() {
+    clearHighlightsInElement("referStatusTitle");
+    clearHighlightsInElement("referStatusDescription");
     undoStack = []; // Clear the undo stack
   }
 
-  // Function to highlight all text in an element
+  // Function to highlight all text in an element, reapplying even if already highlighted
   function highlightAllText(elementId) {
     const element = document.getElementById(elementId);
+
+    // First, clear all existing highlights within this specific element
+    clearHighlightsInElement(elementId);
+
+    // Then, create a new highlight across all text in this element
     const range = document.createRange();
     range.selectNodeContents(element);
     wrapSelectedTextWithHighlight(range);
@@ -686,16 +808,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const lastHighlighted = undoStack.pop();
       if (lastHighlighted) {
         const parent = lastHighlighted.parentNode;
-        parent.replaceChild(
-          document.createTextNode(lastHighlighted.textContent),
-          lastHighlighted
+        const newTextNode = document.createTextNode(
+          lastHighlighted.textContent
         );
+        parent.replaceChild(newTextNode, lastHighlighted);
         parent.normalize(); // Merge adjacent text nodes
       }
     }
   }
 
-  // Event listener for refer status buttons
   document.querySelectorAll(".refer-status-button").forEach((button) => {
     button.addEventListener("click", function () {
       const statusId = this.dataset.statusId;
@@ -729,16 +850,34 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          alert("Referral submitted successfully.");
-          closeReferModal();
+          showReferralSuccess();
         } else {
-          alert("Failed to submit referral.");
+          showReferralError();
         }
       })
       .catch((error) => {
         console.error("Error:", error);
-        alert("Error submitting referral. Please try again.");
+        showReferralError();
       });
+  }
+
+  // Function to show success dialog
+  function showReferralSuccess() {
+    const successDialog = document.getElementById("referralSuccessDialog");
+    successDialog.style.display = "block";
+    setTimeout(() => {
+      successDialog.style.display = "none";
+      closeReferModal(); // Close the modal after showing success
+    }, 3000); // Dialog visible for 3 seconds
+  }
+
+  // Function to show error dialog
+  function showReferralError() {
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.style.display = "block";
+    setTimeout(() => {
+      errorDialog.style.display = "none";
+    }, 3000); // Dialog visible for 3 seconds
   }
 
   // Utility function to get selected text in an element
@@ -756,8 +895,8 @@ document.addEventListener("DOMContentLoaded", function () {
           selectedText = selection.toString();
         }
       }
+      return selectedText;
     }
-    return selectedText;
   };
 
   function deleteStatus(statusId) {

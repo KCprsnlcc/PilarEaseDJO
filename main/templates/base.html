@@ -922,7 +922,13 @@
       <span class="close" id="closeReferStatusModal">&times;</span>
       <h2>Refer Status to Counselor</h2>
       <p>
-        Highlight the parts of the status that require a counselor's attention.
+        Please highlight specific words or sections of the status that require a
+        counselor's attention.
+      </p>
+      <p>
+        Use "Highlight All Title" or "Highlight All Description" for broad
+        issues. Choose a reason for referral, or select "Other Concerns" if none
+        apply.
       </p>
 
       <div id="referStatusTextContainer">
@@ -973,6 +979,29 @@
       <button id="submitReferStatus" class="btn submit-btn">
         Submit Referral
       </button>
+      <!-- Success and Error Dialogs -->
+      <div
+        id="referralSuccessDialog"
+        class="flat-ui-dialog success"
+        style="display: none"
+      >
+        <div class="flat-ui-dialog-content">
+          <span id="referralSuccessContent"
+            >Referral submitted successfully!</span
+          >
+        </div>
+      </div>
+      <div
+        id="referralErrorDialog"
+        class="flat-ui-dialog error"
+        style="display: none"
+      >
+        <div class="flat-ui-dialog-content">
+          <span id="referralErrorContent"
+            >Failed to submit referral. Please try again.</span
+          >
+        </div>
+      </div>
     </div>
 
     <!-- Contact Us Modal -->

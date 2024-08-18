@@ -153,9 +153,11 @@ def submit_referral(request):
 @require_POST
 def refer_status(request, status_id):
     try:
-        status = Status.objects.get(id=status_id)
+        status = get_object_or_404(Status, id=status_id)
         highlighted_title = request.POST.get('highlightedTitle', '')
         highlighted_description = request.POST.get('highlightedDescription', '')
+        referral_reason = request.POST.get('referralReason', '')
+        other_reason = request.POST.get('otherReason', '')
 
         # Save the referral
         referral = Referral.objects.create(
@@ -163,6 +165,8 @@ def refer_status(request, status_id):
             referred_by=request.user,
             highlighted_title=highlighted_title,
             highlighted_description=highlighted_description,
+            referral_reason=referral_reason,
+            other_reason=other_reason,
         )
 
         return JsonResponse({'success': True})

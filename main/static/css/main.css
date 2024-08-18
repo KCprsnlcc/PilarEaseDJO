@@ -1116,7 +1116,7 @@ button[type="submit"]:hover {
   position: absolute;
   font-family: Gothic A1;
 }
-/* Custom highlight style */
+
 .highlighted-text {
   background-color: #689e4b;
   color: #ffffff;
@@ -1124,8 +1124,48 @@ button[type="submit"]:hover {
   padding: 0 4px;
   display: inline-block;
   margin: 0 1px;
+  animation: highlightAnimation 0.4s ease forwards;
 }
 
+/* Highlight Animation */
+@keyframes highlightAnimation {
+  0% {
+    background-color: transparent;
+    color: #000000;
+  }
+  100% {
+    background-color: #689e4b;
+    color: #ffffff;
+  }
+}
+#referralSuccessDialog {
+  top: 290px;
+  left: 60px;
+  width: 360px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+#referralErrorDialog {
+  top: 290px;
+  left: 60px;
+  width: 360px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
 /* Refer Status Modal */
 #referStatusModal {
   position: fixed;

@@ -1,7 +1,7 @@
 from django.urls import path, include
 from main import views  # Adjust this import if your views are in a different app
 from django.urls import path
-from .views import register_view, login_view, logout_view, contact_us_view, get_status
+from .views import register_view, login_view, logout_view, contact_us_view, get_status, refer_status
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('check_profanity/', views.check_profanity, name='check_profanity'),
     path('get_all_statuses/', views.get_all_statuses, name='get_all_statuses'), 
     path('get_status/<int:status_id>/', get_status, name='get_status'),
+    path('refer_status/<int:status_id>/', views.refer_status, name='refer_status'),
     path('status/<int:status_id>/', views.status_detail, name='status_detail'),
     path('add_reply/<int:status_id>/', views.add_reply, name='add_reply'),
     path('submit_reply/<int:status_id>/', views.submit_reply, name='submit_reply'),
