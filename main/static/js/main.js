@@ -561,7 +561,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
           document.addEventListener("keydown", handleUndoHighlight);
 
-          // Close modal when clicking outside the content
+          // Handle displaying the 'Other Concerns' textarea
+          document
+            .getElementById("referralReason")
+            .addEventListener("change", function () {
+              const otherReasonContainer = document.getElementById(
+                "otherReasonContainer"
+              );
+              if (this.value === "Other Concerns") {
+                otherReasonContainer.style.display = "block";
+              } else {
+                otherReasonContainer.style.display = "none";
+              }
+            });
+
+          // Close modal when clicking outside the content (on the body)
           document.addEventListener("click", function (e) {
             if (
               !modalContent.contains(e.target) &&
@@ -579,7 +593,6 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("Error fetching status data. Please try again.");
       });
   }
-
   // Function to close the modal with animation (Renamed from closeModal)
   function closeReferModal() {
     const modalContent = document.getElementById("refercontent");
@@ -695,9 +708,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const highlightedTitle = getHighlightedText("referStatusTitle");
     const highlightedDescription = getHighlightedText("referStatusDescription");
 
+    const referralReason = document.getElementById("referralReason").value;
+    const otherReason = document.getElementById("otherReason").value;
+
     const formData = new FormData();
     formData.append("highlightedTitle", highlightedTitle);
     formData.append("highlightedDescription", highlightedDescription);
+    formData.append("referralReason", referralReason);
+    if (referralReason === "Other Concerns") {
+      formData.append("otherReason", otherReason);
+    }
 
     fetch(`/refer_status/${statusId}/`, {
       method: "POST",

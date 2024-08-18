@@ -870,7 +870,7 @@ button[type="submit"]:hover {
   left: 1380px;
 }
 
-.dropdown {
+#dropmenu {
   display: none;
   position: fixed;
   top: 50px;
@@ -886,7 +886,7 @@ button[type="submit"]:hover {
   transition: max-height 0.5s ease-in-out;
 }
 
-.dropdown::before {
+#dropmenu::before {
   content: "";
   width: 0;
   height: 0;
@@ -900,21 +900,21 @@ button[type="submit"]:hover {
   z-index: 1;
 }
 
-.dropdown ul {
+#dropmenu ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
 
-.dropdown ul li {
+#dropmenu ul li {
   border-bottom: 1px solid #ddd;
 }
 
-.dropdown ul li:last-child {
+#dropmenu ul li:last-child {
   border-bottom: none;
 }
 
-.dropdown ul li a {
+#dropmenu ul li a {
   display: block;
   padding: 12px 16px;
   color: #000;
@@ -922,11 +922,11 @@ button[type="submit"]:hover {
   transition: background 0.3s ease;
 }
 
-.dropdown ul li a i {
+#dropmenu ul li a i {
   margin-right: 8px;
 }
 
-.dropdown ul li a:hover {
+#dropmenu ul li a:hover {
   background: #f0f0f0;
 }
 
@@ -1116,15 +1116,14 @@ button[type="submit"]:hover {
   position: absolute;
   font-family: Gothic A1;
 }
-
 /* Custom highlight style */
 .highlighted-text {
-  background-color: #ffeb3b; /* Custom yellow background */
-  color: #000; /* Text color */
+  background-color: #689e4b;
+  color: #ffffff;
   border-radius: 3px;
-  padding: 0 2px;
-  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  padding: 0 4px;
   display: inline-block;
+  margin: 0 1px;
 }
 
 /* Refer Status Modal */
@@ -1141,29 +1140,135 @@ button[type="submit"]:hover {
   z-index: 1000100;
 }
 
-/* Refer Content with Pop-in Animation */
 #refercontent {
-  background-color: #fff;
-  padding: 20px;
-  margin-left: 650px;
-  top: 200px;
+  background-color: #ffffff;
   border-radius: 8px;
-  max-width: 500px;
+  padding: 20px;
+  max-width: 600px;
+  margin-left: 600px;
+  width: 100%;
+  top: 100px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
   position: fixed;
-  z-index: 1000101;
+  z-index: 1000100;
   animation: popIn 0.3s ease-in-out forwards;
 }
 
-/* Ensure the modal does not have a visible background when invisible */
-#referStatusModal.invisible-overlay {
-  background-color: rgba(0, 0, 0, 0); /* Invisible overlay */
+#refercontent h2 {
+  color: #0f2326;
+  font-size: 24px;
+  margin-bottom: 15px;
 }
 
-/* Make text in title and description selectable */
-#referStatusTextContainer h3,
-#referStatusTextContainer p {
-  cursor: text;
-  user-select: text;
+#refercontent p {
+  color: #0f2326;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.highlight-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+#submitReferStatus {
+  background-color: #689e4b;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+#submitReferStatus:hover {
+  background-color: #567c3c;
+}
+
+.highlight-btn {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.clear-btn {
+  background-color: #f44336;
+  flex: 1;
+}
+
+.clear-btn:hover {
+  background-color: #d32f2f;
+}
+
+.submit-btn {
+  width: 100%;
+}
+
+.referral-reason {
+  margin-bottom: 20px;
+}
+
+.referral-reason label {
+  display: block;
+  font-size: 16px;
+  color: #0f2326;
+  margin-bottom: 5px;
+}
+
+#referralReason {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #0f2326;
+  border-radius: 4px;
+  background-color: #ffffff;
+  font-size: 14px;
+  color: #0f2326;
+  appearance: none; /* Remove default dropdown arrow */
+  background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" class="bi bi-chevron-down"><path fill-rule="evenodd" d="M1.646 5.646a.5.5 0 0 1 .708 0L10 13.293l7.646-7.647a.5.5 0 0 1 .708.708l-8 8a.5.5 0 0 1-.708 0l-8-8a.5.5 0 0 1 0-.708z"/></svg>')
+    no-repeat right 10px center;
+}
+
+#referralReason:focus {
+  outline: none;
+  border-color: #689e4b;
+}
+
+/* Other Concerns Textarea */
+#otherReasonContainer {
+  margin-top: 10px;
+  display: none; /* Initially hidden */
+}
+
+#otherReason {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #0f2326;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #0f2326;
+  margin-top: 5px;
+  margin-bottom: 20px;
+  background-color: #ffffff;
+}
+
+#otherReason:focus {
+  outline: none;
+  border-color: #689e4b;
+}
+
+/* Close Button Styling */
+#closeReferStatusModal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 24px;
+  color: #0f2326;
+  cursor: pointer;
+}
+
+#closeReferStatusModal:hover {
+  color: #d32f2f;
 }
 
 /* Refer Button for Status */

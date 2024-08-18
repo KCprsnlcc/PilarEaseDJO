@@ -51,7 +51,7 @@
           <span></span>
           <span></span>
           <span></span>
-          <nav class="dropdown">
+          <nav id="dropmenu" class="dropdown">
             <ul>
               <li>
                 <a href="#" id="profileLink"
@@ -924,19 +924,55 @@
       <p>
         Highlight the parts of the status that require a counselor's attention.
       </p>
+
       <div id="referStatusTextContainer">
         <h3 id="referStatusTitle"></h3>
         <p id="referStatusDescription"></p>
       </div>
+
+      <!-- Dropdown for Referral Reasons -->
+      <div class="referral-reason">
+        <label for="referralReason">Reason for Referral:</label>
+        <select id="referralReason" class="dropdown">
+          <option value="Inappropriate Language">Inappropriate Language</option>
+          <option value="Bullying or Harassment">Bullying or Harassment</option>
+          <option value="Threatening Behavior">Threatening Behavior</option>
+          <option value="Self-Harm or Suicidal Ideation">
+            Self-Harm or Suicidal Ideation
+          </option>
+          <option value="Violence or Aggression">Violence or Aggression</option>
+          <option value="Discrimination or Hate Speech">
+            Discrimination or Hate Speech
+          </option>
+          <option value="Substance Abuse">Substance Abuse</option>
+          <option value="Sexual Content">Sexual Content</option>
+          <option value="Graphic Content">Graphic Content</option>
+          <option value="Other Concerns">Other Concerns</option>
+        </select>
+      </div>
+
+      <!-- Textarea for additional details if 'Other Concerns' is selected -->
+      <div id="otherReasonContainer" style="display: none">
+        <label for="otherReason">Please specify:</label>
+        <textarea id="otherReason" class="input-field" rows="3"></textarea>
+      </div>
+
       <!-- Buttons for highlighting and clearing -->
       <div class="highlight-controls">
-        <button id="highlightAllTitle" class="btn">Highlight All Title</button>
-        <button id="highlightAllDescription" class="btn">
+        <button id="highlightAllTitle" class="btn highlight-btn">
+          Highlight All Title
+        </button>
+        <button id="highlightAllDescription" class="btn highlight-btn">
           Highlight All Description
         </button>
-        <button id="clearHighlights" class="btn">Clear All Highlights</button>
+        <button id="clearHighlights" class="btn clear-btn">
+          Clear All Highlights
+        </button>
       </div>
-      <button id="submitReferStatus" class="btn">Submit Referral</button>
+
+      <button id="submitReferStatus" class="btn submit-btn">
+        Submit Referral
+      </button>
     </div>
 
     <!-- Contact Us Modal -->
