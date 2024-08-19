@@ -556,7 +556,7 @@ document.addEventListener("DOMContentLoaded", function () {
           enableCustomHighlighting("referStatusDescription");
 
           document.getElementById("submitReferStatus").onclick = function () {
-            submitReferral(statusId);
+            showReferralConfirmation(statusId);
           };
 
           document.getElementById("clearHighlights").onclick = function () {
@@ -574,12 +574,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
           document.addEventListener("keydown", handleUndoHighlight);
 
-          // Close modal when clicking outside the content (on the body)
-          document.addEventListener("click", function (e) {
-            if (!modalContent.contains(e.target)) {
-              closeReferModal();
-            }
-          });
+          // Removed event listener for closing modal on clicking outside of it
         } else {
           alert("Failed to load status data.");
         }
@@ -824,13 +819,72 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // Function to show the confirmation dialog
+  function showReferralConfirmation(statusId) {
+    const confirmationDialog = document.getElementById(
+      "referralConfirmationDialog"
+    );
+    confirmationDialog.classList.remove("pop-out");
+    confirmationDialog.classList.add("pop-in");
+    confirmationDialog.style.display = "block";
+
+    document.getElementById("confirmSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+        showReferralLoader();
+        submitReferral(statusId);
+      }, 300); // Match the duration of the pop-out animation
+    };
+
+    document.getElementById("cancelSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+      }, 300); // Match the duration of the pop-out animation
+    };
+  }
+
+  // Function to show the loader and overlay
+  function showReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "block";
+    overlay.style.display = "block";
+  }
+
+  // Function to hide the loader and overlay
+  function hideReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "none";
+    overlay.style.display = "none";
+  }
   // Function to submit the referral
   function submitReferral(statusId) {
     const highlightedTitle = getHighlightedText("referStatusTitle");
     const highlightedDescription = getHighlightedText("referStatusDescription");
 
+    // Check if either title or description is highlighted
+    if (!highlightedTitle && !highlightedDescription) {
+      showHighlightError();
+      return;
+    }
+
     const referralReason = document.getElementById("referralReason").value;
     const otherReason = document.getElementById("otherReason").value;
+
+    // Check if "Other Concerns" is selected but the textarea is empty
+    if (referralReason === "Other Concerns" && otherReason.trim() === "") {
+      showOtherReasonError();
+      return;
+    }
 
     const formData = new FormData();
     formData.append("highlightedTitle", highlightedTitle);
@@ -839,6 +893,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (referralReason === "Other Concerns") {
       formData.append("otherReason", otherReason);
     }
+
+    showReferralLoader(); // Show the loading overlay
 
     fetch(`/refer_status/${statusId}/`, {
       method: "POST",
@@ -849,6 +905,8 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        hideReferralLoader(); // Hide the loading overlay
+
         if (data.success) {
           showReferralSuccess();
         } else {
@@ -857,26 +915,97 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => {
         console.error("Error:", error);
+        hideReferralLoader(); // Hide the loading overlay
         showReferralError();
       });
   }
 
-  // Function to show success dialog
-  function showReferralSuccess() {
-    const successDialog = document.getElementById("referralSuccessDialog");
-    successDialog.style.display = "block";
+  // Function to show error dialog when "Other Concerns" is selected but no reason is provided
+  function showOtherReasonError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide referral reasons for 'Other Concerns'.";
+
     setTimeout(() => {
-      successDialog.style.display = "none";
-      closeReferModal(); // Close the modal after showing success
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
     }, 3000); // Dialog visible for 3 seconds
   }
 
-  // Function to show error dialog
-  function showReferralError() {
+  // Function to show error dialog when no highlight is provided
+  function showHighlightError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
     const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
     errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide a highlight for title or description for referral reasons.";
+
     setTimeout(() => {
-      errorDialog.style.display = "none";
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+  // Function to show success dialog with pop-out animation and refresh the page
+  function showReferralSuccess() {
+    const successDialog = document.getElementById("referralSuccessDialog");
+    successDialog.classList.remove("pop-out");
+    successDialog.classList.add("pop-in");
+    successDialog.style.display = "block";
+
+    setTimeout(() => {
+      successDialog.classList.remove("pop-in");
+      successDialog.classList.add("pop-out");
+
+      // Hide the dialog and close the modal with pop-out animation
+      setTimeout(() => {
+        successDialog.style.display = "none";
+        closeReferModal(); // Close the modal
+      }, 300); // Match the duration of the popOut animation
+    }, 2000); // Dialog visible for 2 seconds
+
+    // Refresh the page after the pop-out animation completes
+    setTimeout(() => {
+      window.location.reload(); // Refresh the browser
+    }, 2300); // Allow time for the pop-out animation before refreshing
+  }
+
+  // Function to show error dialog with pop-out animation
+  function showReferralError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
     }, 3000); // Dialog visible for 3 seconds
   }
 
