@@ -546,8 +546,13 @@ document.addEventListener("DOMContentLoaded", function () {
             data.status.plain_description;
 
           const modalContent = document.getElementById("refercontent");
+          const modalOverlay = document.getElementById("referralModalOverlay");
 
-          // Display the modal content
+          // Display the modal overlay and content with animations
+          modalOverlay.style.display = "block";
+          modalOverlay.classList.remove("fade-out");
+          modalOverlay.classList.add("fade-in");
+
           modalContent.style.display = "block";
           modalContent.classList.remove("pop-out");
           modalContent.classList.add("pop-in");
@@ -573,8 +578,6 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
           document.addEventListener("keydown", handleUndoHighlight);
-
-          // Removed event listener for closing modal on clicking outside of it
         } else {
           alert("Failed to load status data.");
         }
@@ -588,13 +591,18 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to close the modal with animation (Renamed from closeModal)
   function closeReferModal() {
     const modalContent = document.getElementById("refercontent");
+    const modalOverlay = document.getElementById("referralModalOverlay");
 
     modalContent.classList.remove("pop-in");
     modalContent.classList.add("pop-out");
 
+    modalOverlay.classList.remove("fade-in");
+    modalOverlay.classList.add("fade-out");
+
     // Wait for the animation to finish before hiding the modal content
     setTimeout(() => {
       modalContent.style.display = "none";
+      modalOverlay.style.display = "none";
       document.removeEventListener("keydown", handleUndoHighlight);
     }, 300); // Match the duration of the popOut animation
   }
