@@ -298,6 +298,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  //   if (tokenCount > 512) {
+  //     showSuggestDiary();
+  //     // Trim the content to the 512-token limit
+  //     const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+  //     descriptionElement.textContent = trimmedText;
+  //     moveCursorToEnd(descriptionElement);
+  //     updateCounters(); // Update the counters after trimming
+  //   } else {
+  //     updateCounters(); // Update the counters normally
+  //   }
+  // });
+
   function moveCursorToEnd(element) {
     const range = document.createRange();
     const selection = window.getSelection();
@@ -332,38 +344,42 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault(); // Prevent default drag behavior
     });
 
-    function handlePasteEvent(event) {
-  const clipboardData = event.clipboardData || window.clipboardData;
-  const items = clipboardData.items;
+  function handlePasteEvent(event) {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const items = clipboardData.items;
 
-  // Check if any of the items are not text
-  for (let i = 0; i < items.length; i++) {
-    if (items[i].kind !== 'string') {
-      event.preventDefault(); // Prevent the paste
-      showStatusError("Only text is allowed. Please do not paste images, PDFs, or other files.");
-      return;
+    // Check if any of the items are not text
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind !== "string") {
+        event.preventDefault(); // Prevent the paste
+        showStatusError(
+          "Only text is allowed. Please do not paste images, PDFs, or other files."
+        );
+        return;
+      }
     }
+
+    // If only text is being pasted, check the token limit
+    setTimeout(() => {
+      const descriptionElement = document.getElementById("description");
+      const plainDescription = descriptionElement.textContent;
+      const tokenCount = countTokens(plainDescription);
+
+      if (tokenCount > 512) {
+        showStatusError("The description exceeds the 512 token limit.");
+        // Trim the content to the 512-token limit
+        const trimmedText = plainDescription
+          .split(/\s+/)
+          .slice(0, 512)
+          .join(" ");
+        descriptionElement.textContent = trimmedText;
+        moveCursorToEnd(descriptionElement);
+        updateCounters(); // Update the counters after trimming
+      } else {
+        updateCounters(); // Update the counters normally
+      }
+    }, 0);
   }
-
-  // If only text is being pasted, check the token limit
-  setTimeout(() => {
-    const descriptionElement = document.getElementById("description");
-    const plainDescription = descriptionElement.textContent;
-    const tokenCount = countTokens(plainDescription);
-
-    if (tokenCount > 512) {
-      showStatusError("The description exceeds the 512 token limit.");
-      // Trim the content to the 512-token limit
-      const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(' ');
-      descriptionElement.textContent = trimmedText;
-      moveCursorToEnd(descriptionElement);
-      updateCounters(); // Update the counters after trimming
-    } else {
-      updateCounters(); // Update the counters normally
-    }
-  }, 0);
-}
-
 
   document
     .getElementById("description")
@@ -431,6 +447,33 @@ document.addEventListener("DOMContentLoaded", function () {
       ).textContent = `512 tokens (Max reached)`;
     }
   }
+
+  // // Show the diary suggestion dialog
+  // function showSuggestDiary() {
+  //   const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //   suggestDiaryDialog.classList.remove("pop-out");
+  //   suggestDiaryDialog.classList.add("pop-in");
+  //   suggestDiaryDialog.style.display = "block";
+  // }
+
+  // // Close the diary suggestion dialog
+  // document
+  //   .getElementById("closeDiarySuggestionBtn")
+  //   .addEventListener("click", function () {
+  //     const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //     suggestDiaryDialog.classList.remove("pop-in");
+  //     suggestDiaryDialog.classList.add("pop-out");
+  //     setTimeout(() => {
+  //       suggestDiaryDialog.style.display = "none";
+  //     }, 300);
+  //   });
+
+  // // Redirect to the diary module when clicked
+  // document
+  //   .getElementById("openDiaryBtn")
+  //   .addEventListener("click", function () {
+  //     window.location.href = "/diary_module_url"; // Replace with the actual diary module URL
+  //   });
 
   // Add event listener to update counters on input
   document
