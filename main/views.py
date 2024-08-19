@@ -85,7 +85,7 @@ model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-e
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 
 def analyze_emotions(text):
-    inputs = tokenizer(text, return_tensors="pt")
+    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
     outputs = model(**inputs)
     scores = outputs[0][0].detach().numpy()
     scores = softmax(scores)

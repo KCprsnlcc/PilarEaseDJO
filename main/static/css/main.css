@@ -2082,6 +2082,12 @@ button[type="submit"]:hover {
   flex-direction: column;
   gap: 20px;
 }
+.counter-container {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+  text-align: right;
+}
 
 .status-form label {
   font-size: 16px;

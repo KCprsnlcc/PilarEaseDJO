@@ -280,6 +280,175 @@ document.addEventListener("DOMContentLoaded", function () {
     return text.replace(/\n/g, " ");
   }
 
+  document.getElementById("description").addEventListener("input", function () {
+    const descriptionElement = document.getElementById("description");
+    const plainDescription = descriptionElement.textContent;
+    const tokenCount = countTokens(plainDescription);
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
+      // Trim the content to the 512-token limit
+      const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+      descriptionElement.textContent = trimmedText;
+      // Move cursor to the end after trimming
+      moveCursorToEnd(descriptionElement);
+      updateCounters(); // Update the counters after trimming
+    } else {
+      updateCounters(); // Update the counters normally
+    }
+  });
+
+  function moveCursorToEnd(element) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    element.focus();
+  }
+
+  // Event listener to handle paste events
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      handlePasteEvent(event);
+    });
+
+  // Event listener to handle drop events
+  document
+    .getElementById("description")
+    .addEventListener("drop", function (event) {
+      event.preventDefault(); // Prevent default drop behavior
+      showStatusError(
+        "Only text is allowed. Please do not drag and drop files or images."
+      );
+    });
+
+  // Preventing drag over behavior to avoid confusion
+  document
+    .getElementById("description")
+    .addEventListener("dragover", function (event) {
+      event.preventDefault(); // Prevent default drag behavior
+    });
+
+    function handlePasteEvent(event) {
+  const clipboardData = event.clipboardData || window.clipboardData;
+  const items = clipboardData.items;
+
+  // Check if any of the items are not text
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].kind !== 'string') {
+      event.preventDefault(); // Prevent the paste
+      showStatusError("Only text is allowed. Please do not paste images, PDFs, or other files.");
+      return;
+    }
+  }
+
+  // If only text is being pasted, check the token limit
+  setTimeout(() => {
+    const descriptionElement = document.getElementById("description");
+    const plainDescription = descriptionElement.textContent;
+    const tokenCount = countTokens(plainDescription);
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
+      // Trim the content to the 512-token limit
+      const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(' ');
+      descriptionElement.textContent = trimmedText;
+      moveCursorToEnd(descriptionElement);
+      updateCounters(); // Update the counters after trimming
+    } else {
+      updateCounters(); // Update the counters normally
+    }
+  }, 0);
+}
+
+
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      event.preventDefault();
+
+      // Get plain text from the clipboard
+      const text = (event.clipboardData || window.clipboardData).getData(
+        "text/plain"
+      );
+
+      // Count the number of tokens in the pasted text
+      const tokenCount = countTokens(text);
+      const currentTokens = countTokens(
+        document.getElementById("description").textContent
+      );
+
+      if (tokenCount + currentTokens > 512) {
+        showStatusError("Pasting this text exceeds the 512 token limit.");
+        return;
+      }
+
+      // Insert the plain text at the cursor position
+      insertTextAtCursor(text);
+
+      // Update the counters
+      updateCounters();
+    });
+
+  // Utility function to insert text at the cursor position
+  function insertTextAtCursor(text) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+
+    // Move the cursor to the end of the inserted text
+    range.setStartAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  // Function to count tokens (assuming tokens are separated by spaces)
+  function countTokens(text) {
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+  // Update the token and character count
+  function updateCounters() {
+    const descriptionElement = document.getElementById("description");
+    const characterCount = descriptionElement.textContent.length;
+    const tokenCount = countTokens(descriptionElement.textContent);
+
+    document.getElementById(
+      "characterCount"
+    ).textContent = `${characterCount} characters`;
+    document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
+
+    if (tokenCount > 512) {
+      document.getElementById(
+        "tokenCount"
+      ).textContent = `512 tokens (Max reached)`;
+    }
+  }
+
+  // Add event listener to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  // Add event listeners to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (e) {
+      setTimeout(updateCounters, 0); // Update counters after paste
+    });
+
+  // Initial count update
+  updateCounters();
+
   // Updated event listener for status form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -287,10 +456,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const title = statusTitle.value.trim();
     const description = statusDescription.classList.contains("placeholder")
       ? ""
-      : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent
-      .trim()
-      .replace(/\n+/g, " ");
+      : statusDescription.textContent.trim();
+    const plainDescription = description.replace(/\n+/g, " ");
+    const tokenCount = countTokens(plainDescription);
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -304,6 +472,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!description) {
       showStatusError("Write what you feel in the description.");
+      return;
+    }
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
       return;
     }
 
@@ -1232,23 +1405,22 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   // Function to show error message
   function showStatusError(message) {
-    const dialogBox = document.getElementById("statusNotificationError");
-    const dialogContent = document.getElementById(
-      "statusNotificationErrorContent"
-    );
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = "block";
-    dialogBox.classList.remove("pop-out");
-    dialogBox.classList.add("pop-in");
+    const errorDialog = document.getElementById("statusNotificationError");
+    document.getElementById("statusNotificationErrorContent").textContent =
+      message;
+
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
 
     setTimeout(() => {
-      dialogBox.classList.remove("pop-in");
-      dialogBox.classList.add("pop-out");
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
       setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-      }, 300);
-    }, 3000);
+        errorDialog.style.display = "none";
+      }, 300); // Hide after pop-out animation
+    }, 3000); // Error message visible for 3 seconds
   }
 
   function closeStatusComposerModal(callback) {
