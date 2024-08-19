@@ -515,17 +515,19 @@ button[type="submit"]:hover {
 }
 
 .close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
+  position: absolute;
+  top: 0px;
+  right: 15px;
+  font-size: 30px;
+  color: #0f2326;
+  cursor: pointer;
 }
 
 .close:hover,
 .close:focus {
-  color: black;
+  transition: background-color 0.3s ease;
   text-decoration: none;
-  cursor: pointer;
+  color: #d32f2f;
 }
 
 #label {
@@ -1180,13 +1182,21 @@ button[type="submit"]:hover {
 }
 
 #confirmSubmitReferral {
-  background-color: #689e4b;
-  color: #fff;
+  transition: background-color 0.3s ease;
+  flex: 1;
+  margin-right: 10px;
 }
 
 #cancelSubmitReferral {
-  background-color: #f44336;
-  color: #fff;
+  transition: background-color 0.3s ease;
+  background-color: #e74c3c;
+  color: white;
+  flex: 1;
+}
+
+#cancelSubmitReferral:hover {
+  color: white;
+  background-color: #8e2d23;
 }
 
 #referralOverlay {
@@ -1333,12 +1343,14 @@ button[type="submit"]:hover {
 
 .clear-btn {
   transition: background-color 0.3s ease;
-  background-color: #f44336;
+  background-color: #e74c3c;
+  color: white;
   flex: 1;
 }
 
 .clear-btn:hover {
-  background-color: #d32f2f;
+  color: white;
+  background-color: #8e2d23;
 }
 
 .submit-btn {
@@ -1396,11 +1408,22 @@ button[type="submit"]:hover {
   outline: none;
   border-color: #689e4b;
 }
+#closeStatusModal {
+  position: absolute;
+  top: 5px;
+  right: 15px;
+  font-size: 24px;
+  color: #0f2326;
+  cursor: pointer;
+}
 
+#closeStatusModal:hover {
+  color: #d32f2f;
+}
 /* Close Button Styling */
 #closeReferStatusModal {
   position: absolute;
-  top: 15px;
+  top: 5px;
   right: 15px;
   font-size: 24px;
   color: #0f2326;
@@ -2248,38 +2271,21 @@ button#generatePassword:hover {
   height: 100%; /* Ensure full height */
 }
 #confirmBtn {
-  background-color: #689e4b;
-  color: #fff;
-  width: 110px;
-  border: none;
-  border-radius: 5px;
+  transition: background-color 0.3s ease;
+  flex: 1;
   margin-right: 10px;
-  cursor: pointer;
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-#confirmBtn:hover {
-  background-color: #3b5a2b;
-  color: #fff;
 }
 
 #cancelBtn {
-  background-color: #ddd;
-  color: #333;
-  width: 110px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease;
+  background-color: #e74c3c;
+  color: white;
+  flex: 1;
 }
 
 #cancelBtn:hover {
-  background-color: #bbb;
-  color: #333;
+  color: white;
+  background-color: #8e2d23;
 }
 
 #ConfirmStatusModal {
