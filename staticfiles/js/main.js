@@ -280,6 +280,218 @@ document.addEventListener("DOMContentLoaded", function () {
     return text.replace(/\n/g, " ");
   }
 
+  document.getElementById("description").addEventListener("input", function () {
+    const descriptionElement = document.getElementById("description");
+    const plainDescription = descriptionElement.textContent;
+    const tokenCount = countTokens(plainDescription);
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
+      // Trim the content to the 512-token limit
+      const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+      descriptionElement.textContent = trimmedText;
+      // Move cursor to the end after trimming
+      moveCursorToEnd(descriptionElement);
+      updateCounters(); // Update the counters after trimming
+    } else {
+      updateCounters(); // Update the counters normally
+    }
+  });
+
+  //   if (tokenCount > 512) {
+  //     showSuggestDiary();
+  //     // Trim the content to the 512-token limit
+  //     const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+  //     descriptionElement.textContent = trimmedText;
+  //     moveCursorToEnd(descriptionElement);
+  //     updateCounters(); // Update the counters after trimming
+  //   } else {
+  //     updateCounters(); // Update the counters normally
+  //   }
+  // });
+
+  function moveCursorToEnd(element) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    element.focus();
+  }
+
+  // Event listener to handle paste events
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      handlePasteEvent(event);
+    });
+
+  // Event listener to handle drop events
+  document
+    .getElementById("description")
+    .addEventListener("drop", function (event) {
+      event.preventDefault(); // Prevent default drop behavior
+      showStatusError(
+        "Only text is allowed. Please do not drag and drop files or images."
+      );
+    });
+
+  // Preventing drag over behavior to avoid confusion
+  document
+    .getElementById("description")
+    .addEventListener("dragover", function (event) {
+      event.preventDefault(); // Prevent default drag behavior
+    });
+
+  function handlePasteEvent(event) {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const items = clipboardData.items;
+
+    // Check if any of the items are not text
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind !== "string") {
+        event.preventDefault(); // Prevent the paste
+        showStatusError(
+          "Only text is allowed. Please do not paste images, PDFs, or other files."
+        );
+        return;
+      }
+    }
+
+    // If only text is being pasted, check the token limit
+    setTimeout(() => {
+      const descriptionElement = document.getElementById("description");
+      const plainDescription = descriptionElement.textContent;
+      const tokenCount = countTokens(plainDescription);
+
+      if (tokenCount > 512) {
+        showStatusError("The description exceeds the 512 token limit.");
+        // Trim the content to the 512-token limit
+        const trimmedText = plainDescription
+          .split(/\s+/)
+          .slice(0, 512)
+          .join(" ");
+        descriptionElement.textContent = trimmedText;
+        moveCursorToEnd(descriptionElement);
+        updateCounters(); // Update the counters after trimming
+      } else {
+        updateCounters(); // Update the counters normally
+      }
+    }, 0);
+  }
+
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      event.preventDefault();
+
+      // Get plain text from the clipboard
+      const text = (event.clipboardData || window.clipboardData).getData(
+        "text/plain"
+      );
+
+      // Count the number of tokens in the pasted text
+      const tokenCount = countTokens(text);
+      const currentTokens = countTokens(
+        document.getElementById("description").textContent
+      );
+
+      if (tokenCount + currentTokens > 512) {
+        showStatusError("Pasting this text exceeds the 512 token limit.");
+        return;
+      }
+
+      // Insert the plain text at the cursor position
+      insertTextAtCursor(text);
+
+      // Update the counters
+      updateCounters();
+    });
+
+  // Utility function to insert text at the cursor position
+  function insertTextAtCursor(text) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+
+    // Move the cursor to the end of the inserted text
+    range.setStartAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  // Function to count tokens (assuming tokens are separated by spaces)
+  function countTokens(text) {
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+  // Update the token and character count
+  function updateCounters() {
+    const descriptionElement = document.getElementById("description");
+    const characterCount = descriptionElement.textContent.length;
+    const tokenCount = countTokens(descriptionElement.textContent);
+
+    document.getElementById(
+      "characterCount"
+    ).textContent = `${characterCount} characters`;
+    document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
+
+    if (tokenCount > 512) {
+      document.getElementById(
+        "tokenCount"
+      ).textContent = `512 tokens (Max reached)`;
+    }
+  }
+
+  // // Show the diary suggestion dialog
+  // function showSuggestDiary() {
+  //   const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //   suggestDiaryDialog.classList.remove("pop-out");
+  //   suggestDiaryDialog.classList.add("pop-in");
+  //   suggestDiaryDialog.style.display = "block";
+  // }
+
+  // // Close the diary suggestion dialog
+  // document
+  //   .getElementById("closeDiarySuggestionBtn")
+  //   .addEventListener("click", function () {
+  //     const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //     suggestDiaryDialog.classList.remove("pop-in");
+  //     suggestDiaryDialog.classList.add("pop-out");
+  //     setTimeout(() => {
+  //       suggestDiaryDialog.style.display = "none";
+  //     }, 300);
+  //   });
+
+  // // Redirect to the diary module when clicked
+  // document
+  //   .getElementById("openDiaryBtn")
+  //   .addEventListener("click", function () {
+  //     window.location.href = "/diary_module_url"; // Replace with the actual diary module URL
+  //   });
+
+  // Add event listener to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  // Add event listeners to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (e) {
+      setTimeout(updateCounters, 0); // Update counters after paste
+    });
+
+  // Initial count update
+  updateCounters();
+
   // Updated event listener for status form submission
   statusForm.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -287,10 +499,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const title = statusTitle.value.trim();
     const description = statusDescription.classList.contains("placeholder")
       ? ""
-      : statusDescription.innerHTML.trim();
-    const plainDescription = statusDescription.textContent
-      .trim()
-      .replace(/\n+/g, " ");
+      : statusDescription.textContent.trim();
+    const plainDescription = description.replace(/\n+/g, " ");
+    const tokenCount = countTokens(plainDescription);
 
     if (!selectedEmotion) {
       showStatusError("Choose your emotion label.");
@@ -304,6 +515,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!description) {
       showStatusError("Write what you feel in the description.");
+      return;
+    }
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
       return;
     }
 
@@ -518,6 +734,20 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching statuses:", error);
       });
   }
+
+  document
+    .getElementById("referralReason")
+    .addEventListener("change", function () {
+      const otherReasonContainer = document.getElementById(
+        "otherReasonContainer"
+      );
+      if (this.value === "Other Concerns") {
+        otherReasonContainer.style.display = "block";
+      } else {
+        otherReasonContainer.style.display = "none";
+      }
+    });
+
   let undoStack = []; // Stack to keep track of the last highlight for undo
 
   // Function to open the modal and fetch status data with animation
@@ -531,12 +761,15 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById("referStatusDescription").textContent =
             data.status.plain_description;
 
-          const overlay = document.getElementById("referStatusOverlay");
-          const modal = document.getElementById("referStatusModal");
           const modalContent = document.getElementById("refercontent");
+          const modalOverlay = document.getElementById("referralModalOverlay");
 
-          overlay.style.display = "block";
-          modal.style.display = "flex";
+          // Display the modal overlay and content with animations
+          modalOverlay.style.display = "block";
+          modalOverlay.classList.remove("fade-out");
+          modalOverlay.classList.add("fade-in");
+
+          modalContent.style.display = "block";
           modalContent.classList.remove("pop-out");
           modalContent.classList.add("pop-in");
 
@@ -544,7 +777,7 @@ document.addEventListener("DOMContentLoaded", function () {
           enableCustomHighlighting("referStatusDescription");
 
           document.getElementById("submitReferStatus").onclick = function () {
-            submitReferral(statusId);
+            showReferralConfirmation(statusId);
           };
 
           document.getElementById("clearHighlights").onclick = function () {
@@ -561,11 +794,6 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
           document.addEventListener("keydown", handleUndoHighlight);
-
-          // Event listener to close modal when clicking outside the content (on overlay)
-          overlay.addEventListener("click", function () {
-            closeReferModal();
-          });
         } else {
           alert("Failed to load status data.");
         }
@@ -578,17 +806,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to close the modal with animation (Renamed from closeModal)
   function closeReferModal() {
-    const overlay = document.getElementById("referStatusOverlay");
-    const modal = document.getElementById("referStatusModal");
     const modalContent = document.getElementById("refercontent");
+    const modalOverlay = document.getElementById("referralModalOverlay");
 
     modalContent.classList.remove("pop-in");
     modalContent.classList.add("pop-out");
 
-    // Wait for the animation to finish before hiding the modal and overlay
+    modalOverlay.classList.remove("fade-in");
+    modalOverlay.classList.add("fade-out");
+
+    // Wait for the animation to finish before hiding the modal content
     setTimeout(() => {
-      modal.style.display = "none";
-      overlay.style.display = "none";
+      modalContent.style.display = "none";
+      modalOverlay.style.display = "none";
       document.removeEventListener("keydown", handleUndoHighlight);
     }, 300); // Match the duration of the popOut animation
   }
@@ -597,6 +827,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("closeReferStatusModal").onclick = function () {
     closeReferModal();
   };
+
   // Function to enable custom highlighting
   function enableCustomHighlighting(elementId) {
     const element = document.getElementById(elementId);
@@ -607,17 +838,76 @@ document.addEventListener("DOMContentLoaded", function () {
         const range = selection.getRangeAt(0);
 
         if (range && element.contains(range.commonAncestorContainer)) {
-          wrapSelectedTextWithHighlight(range);
+          if (!rangeIsWithinHighlightedText(range)) {
+            wrapSelectedTextWithHighlight(range);
+          }
           selection.removeAllRanges(); // Clear the selection
         }
       }
     });
   }
 
-  // Function to wrap selected text with custom highlight
-  function wrapSelectedTextWithHighlight(range) {
+  // Function to check if the selection range is valid (doesn't include spaces)
+  function isValidHighlight(range, originalText) {
     const selectedText = range.toString();
-    if (selectedText.trim() !== "") {
+    const startOffset = originalText.indexOf(selectedText);
+
+    // Check if the selected text matches exactly with the original text slice
+    return (
+      startOffset !== -1 &&
+      selectedText.trim() !== "" &&
+      originalText.slice(startOffset, startOffset + selectedText.length) ===
+        selectedText
+    );
+  }
+
+  // Function to wrap selected text or merge with adjacent highlights
+  function mergeOrWrapSelectedText(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
+
+      let startSpan =
+        startContainer.nodeType === 3 ? startContainer.previousSibling : null;
+      let endSpan =
+        endContainer.nodeType === 3 ? endContainer.nextSibling : null;
+
+      // Check if the range is adjacent to existing highlighted spans and there is no space between them
+      if (
+        startSpan &&
+        startSpan.classList &&
+        startSpan.classList.contains("highlighted-text")
+      ) {
+        const textBeforeRange = startSpan.textContent.slice(-1); // Last character of the previous span
+        const textBetween = startContainer.textContent.slice(
+          0,
+          range.startOffset
+        );
+
+        if (textBetween.trim() === "" && !/\s/.test(textBeforeRange)) {
+          startSpan.textContent += selectedText;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      if (
+        endSpan &&
+        endSpan.classList &&
+        endSpan.classList.contains("highlighted-text")
+      ) {
+        const textAfterRange = endSpan.textContent.charAt(0); // First character of the next span
+        const textBetween = endContainer.textContent.slice(range.endOffset);
+
+        if (textBetween.trim() === "" && !/\s/.test(textAfterRange)) {
+          endSpan.textContent = selectedText + endSpan.textContent;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      // Create new highlight if merging is not possible or spaces are between the selected text
       const span = document.createElement("span");
       span.className = "highlighted-text";
       span.textContent = selectedText;
@@ -627,6 +917,19 @@ document.addEventListener("DOMContentLoaded", function () {
       // Push the span element to the undo stack
       undoStack.push(span);
     }
+  }
+
+  // Function to check if the selection range is within already highlighted text
+  function rangeIsWithinHighlightedText(range) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+
+    return (
+      (startContainer.parentElement &&
+        startContainer.parentElement.classList.contains("highlighted-text")) ||
+      (endContainer.parentElement &&
+        endContainer.parentElement.classList.contains("highlighted-text"))
+    );
   }
 
   // Function to get highlighted text from the content
@@ -643,23 +946,76 @@ document.addEventListener("DOMContentLoaded", function () {
     return highlightedText.trim();
   }
 
+  // Function to wrap selected text with custom highlight without deleting text
+  function wrapSelectedTextWithHighlight(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      range.surroundContents(span);
+      undoStack.push(span);
+    }
+  }
+
+  // Function to prevent merging highlights if spaces are involved
+  function preventMergeWithSpaces(span) {
+    const prevSibling = span.previousSibling;
+    const nextSibling = span.nextSibling;
+
+    if (
+      prevSibling &&
+      prevSibling.nodeType === 3 &&
+      /\s$/.test(prevSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        prevSibling.textContent.trimEnd()
+      );
+      span.parentNode.insertBefore(newTextNode, span);
+      prevSibling.textContent = " ";
+    }
+
+    if (
+      nextSibling &&
+      nextSibling.nodeType === 3 &&
+      /^\s/.test(nextSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        nextSibling.textContent.trimStart()
+      );
+      span.parentNode.insertBefore(span, nextSibling);
+      nextSibling.textContent = " ";
+    }
+  }
+
   // Function to clear all highlights
-  function clearAllHighlights() {
-    const highlightedElements = document.querySelectorAll(".highlighted-text");
-    highlightedElements.forEach((element) => {
-      const parent = element.parentNode;
+  function clearHighlightsInElement(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements = element.querySelectorAll(".highlighted-text");
+    highlightedElements.forEach((highlighted) => {
+      const parent = highlighted.parentNode;
       parent.replaceChild(
-        document.createTextNode(element.textContent),
-        element
+        document.createTextNode(highlighted.textContent),
+        highlighted
       );
       parent.normalize(); // Merge adjacent text nodes
     });
+  }
+
+  // Function to clear all highlights in both title and description
+  function clearAllHighlights() {
+    clearHighlightsInElement("referStatusTitle");
+    clearHighlightsInElement("referStatusDescription");
     undoStack = []; // Clear the undo stack
   }
 
-  // Function to highlight all text in an element
+  // Function to highlight all text in an element, reapplying even if already highlighted
   function highlightAllText(elementId) {
     const element = document.getElementById(elementId);
+
+    // First, clear all existing highlights within this specific element
+    clearHighlightsInElement(elementId);
+
+    // Then, create a new highlight across all text in this element
     const range = document.createRange();
     range.selectNodeContents(element);
     wrapSelectedTextWithHighlight(range);
@@ -671,43 +1027,98 @@ document.addEventListener("DOMContentLoaded", function () {
       const lastHighlighted = undoStack.pop();
       if (lastHighlighted) {
         const parent = lastHighlighted.parentNode;
-        parent.replaceChild(
-          document.createTextNode(lastHighlighted.textContent),
-          lastHighlighted
+        const newTextNode = document.createTextNode(
+          lastHighlighted.textContent
         );
+        parent.replaceChild(newTextNode, lastHighlighted);
         parent.normalize(); // Merge adjacent text nodes
       }
     }
   }
 
-  // Event listener for refer status buttons
   document.querySelectorAll(".refer-status-button").forEach((button) => {
     button.addEventListener("click", function () {
       const statusId = this.dataset.statusId;
       referStatusToCounselor(statusId);
     });
   });
-  // Event listener to close the modal
-  document.getElementById("closeReferStatusModal").onclick = function () {
-    document.getElementById("referStatusModal").style.display = "none";
-  };
 
-  // Event listener to close the modal when clicking outside of it
-  window.onclick = function (event) {
-    if (event.target == document.getElementById("referStatusModal")) {
-      document.getElementById("referStatusModal").style.display = "none";
-    }
-  };
+  // Function to show the confirmation dialog
+  function showReferralConfirmation(statusId) {
+    const confirmationDialog = document.getElementById(
+      "referralConfirmationDialog"
+    );
+    confirmationDialog.classList.remove("pop-out");
+    confirmationDialog.classList.add("pop-in");
+    confirmationDialog.style.display = "block";
 
-  // Function to submit the referral
+    document.getElementById("confirmSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+        showReferralLoader();
+        submitReferral(statusId);
+      }, 300); // Match the duration of the pop-out animation
+    };
+
+    document.getElementById("cancelSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+      }, 300); // Match the duration of the pop-out animation
+    };
+  }
+
+  // Function to show the loader and overlay
+  function showReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "block";
+    overlay.style.display = "block";
+  }
+
+  // Function to hide the loader and overlay
+  function hideReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "none";
+    overlay.style.display = "none";
+  }
   // Function to submit the referral
   function submitReferral(statusId) {
     const highlightedTitle = getHighlightedText("referStatusTitle");
     const highlightedDescription = getHighlightedText("referStatusDescription");
 
+    // Check if either title or description is highlighted
+    if (!highlightedTitle && !highlightedDescription) {
+      showHighlightError();
+      return;
+    }
+
+    const referralReason = document.getElementById("referralReason").value;
+    const otherReason = document.getElementById("otherReason").value;
+
+    // Check if "Other Concerns" is selected but the textarea is empty
+    if (referralReason === "Other Concerns" && otherReason.trim() === "") {
+      showOtherReasonError();
+      return;
+    }
+
     const formData = new FormData();
     formData.append("highlightedTitle", highlightedTitle);
     formData.append("highlightedDescription", highlightedDescription);
+    formData.append("referralReason", referralReason);
+    if (referralReason === "Other Concerns") {
+      formData.append("otherReason", otherReason);
+    }
+
+    showReferralLoader(); // Show the loading overlay
 
     fetch(`/refer_status/${statusId}/`, {
       method: "POST",
@@ -718,17 +1129,108 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        hideReferralLoader(); // Hide the loading overlay
+
         if (data.success) {
-          alert("Referral submitted successfully.");
-          document.getElementById("referStatusModal").style.display = "none";
+          showReferralSuccess();
         } else {
-          alert("Failed to submit referral.");
+          showReferralError();
         }
       })
       .catch((error) => {
         console.error("Error:", error);
-        alert("Error submitting referral. Please try again.");
+        hideReferralLoader(); // Hide the loading overlay
+        showReferralError();
       });
+  }
+
+  // Function to show error dialog when "Other Concerns" is selected but no reason is provided
+  function showOtherReasonError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide referral reasons for 'Other Concerns'.";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+
+  // Function to show error dialog when no highlight is provided
+  function showHighlightError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide a highlight for title or description for referral reasons.";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+  // Function to show success dialog with pop-out animation and refresh the page
+  function showReferralSuccess() {
+    const successDialog = document.getElementById("referralSuccessDialog");
+    successDialog.classList.remove("pop-out");
+    successDialog.classList.add("pop-in");
+    successDialog.style.display = "block";
+
+    setTimeout(() => {
+      successDialog.classList.remove("pop-in");
+      successDialog.classList.add("pop-out");
+
+      // Hide the dialog and close the modal with pop-out animation
+      setTimeout(() => {
+        successDialog.style.display = "none";
+        closeReferModal(); // Close the modal
+      }, 300); // Match the duration of the popOut animation
+    }, 2000); // Dialog visible for 2 seconds
+
+    // Refresh the page after the pop-out animation completes
+    setTimeout(() => {
+      window.location.reload(); // Refresh the browser
+    }, 2300); // Allow time for the pop-out animation before refreshing
+  }
+
+  // Function to show error dialog with pop-out animation
+  function showReferralError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
   }
 
   // Utility function to get selected text in an element
@@ -746,8 +1248,8 @@ document.addEventListener("DOMContentLoaded", function () {
           selectedText = selection.toString();
         }
       }
+      return selectedText;
     }
-    return selectedText;
   };
 
   function deleteStatus(statusId) {
@@ -946,23 +1448,22 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   // Function to show error message
   function showStatusError(message) {
-    const dialogBox = document.getElementById("statusNotificationError");
-    const dialogContent = document.getElementById(
-      "statusNotificationErrorContent"
-    );
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = "block";
-    dialogBox.classList.remove("pop-out");
-    dialogBox.classList.add("pop-in");
+    const errorDialog = document.getElementById("statusNotificationError");
+    document.getElementById("statusNotificationErrorContent").textContent =
+      message;
+
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
 
     setTimeout(() => {
-      dialogBox.classList.remove("pop-in");
-      dialogBox.classList.add("pop-out");
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
       setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-      }, 300);
-    }, 3000);
+        errorDialog.style.display = "none";
+      }, 300); // Hide after pop-out animation
+    }, 3000); // Error message visible for 3 seconds
   }
 
   function closeStatusComposerModal(callback) {
