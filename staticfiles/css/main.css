@@ -2050,8 +2050,8 @@ button[type="submit"]:hover {
   margin: 5% auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 90%;
-  height: 800px;
+  width: 100%;
+  height: 820px;
   top: -50px;
   left: 630px;
   max-width: 600px;
