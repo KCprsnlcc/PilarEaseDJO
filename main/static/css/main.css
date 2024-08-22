@@ -406,6 +406,7 @@ button[type="submit"]:hover {
   padding: 10px;
   max-height: calc(100% - 130px);
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .chat-popup .chat-input {
@@ -454,7 +455,8 @@ button[type="submit"]:hover {
   display: inline-block;
   border: 1px solid #0e2326;
   position: relative;
-  margin-right: 50px;
+  max-width: 70%; /* Ensure the message doesn't exceed container width */
+  margin-left: 10px;
 }
 
 .user-message {
@@ -467,8 +469,11 @@ button[type="submit"]:hover {
   align-self: flex-end;
   border: 1px solid #0e2326;
   position: relative;
-  margin-left: 290px;
+  max-width: 70%; /* Ensure the message doesn't exceed container width */
+  margin-left: auto;
+  margin-right: 10px; /* Adjust positioning */
 }
+
 #contactUsModal {
   display: none;
   position: fixed;
