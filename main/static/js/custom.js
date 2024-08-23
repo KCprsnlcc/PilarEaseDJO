@@ -85,36 +85,53 @@ function sendMessage() {
   var chatInput = document.getElementById("chatInput");
   var chatBody = document.getElementById("chatBody");
   var message = chatInput.value;
+
   if (message.trim() !== "") {
+    // Create a wrapper for the message
+    var messageWrapper = document.createElement("div");
+    messageWrapper.className = "message-wrapper";
+
+    // Add the user message, aligned to the right
     var messageElement = document.createElement("div");
     messageElement.className = "user-message chat-message";
     messageElement.textContent = message;
-    chatBody.appendChild(messageElement);
+    messageWrapper.appendChild(messageElement);
 
-    var timestampElement = document.createElement("div");
-    timestampElement.className = "chat-timestamp";
-    timestampElement.textContent = getCurrentTime();
-    chatBody.appendChild(timestampElement);
+    chatBody.appendChild(messageWrapper);
 
     chatInput.value = "";
     chatBody.scrollTop = chatBody.scrollHeight;
 
+    // Show loader while the bot is generating a response
+    var loaderElement = document.createElement("div");
+    loaderElement.className = "loader";
+    loaderElement.innerHTML =
+      '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chatBody.appendChild(loaderElement);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Simulate a delay before showing the bot's message, aligned to the left
     setTimeout(function () {
+      chatBody.removeChild(loaderElement); // Remove the loader
+
+      // Create a wrapper for the chatbot message
+      var botMessageWrapper = document.createElement("div");
+      botMessageWrapper.className = "message-wrapper";
+
       var botMessageElement = document.createElement("div");
       botMessageElement.className = "chatbot-message chat-message";
       botMessageElement.textContent =
         "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today?";
-      chatBody.appendChild(botMessageElement);
+      botMessageWrapper.appendChild(botMessageElement);
 
-      var botTimestampElement = document.createElement("div");
-      botTimestampElement.className = "chat-timestamp";
-      botTimestampElement.textContent = getCurrentTime();
-      chatBody.appendChild(botTimestampElement);
+      chatBody.appendChild(botMessageWrapper);
 
       chatBody.scrollTop = chatBody.scrollHeight;
-    }, 1000);
+    }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
   }
 }
+
+// Removed the toggleTimestamp function and other timestamp-related code
 
 function getCurrentTime() {
   var now = new Date();
@@ -122,7 +139,7 @@ function getCurrentTime() {
   var minutes = now.getMinutes();
   var ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = hours ? hours : 12;
   minutes = minutes < 10 ? "0" + minutes : minutes;
   var strTime = hours + ":" + minutes + " " + ampm;
   return strTime;
