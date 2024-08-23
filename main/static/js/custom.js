@@ -81,12 +81,27 @@ floatingButton.addEventListener("click", function () {
   }
 });
 
+let lastMessageTime = null;
+
 function sendMessage() {
   var chatInput = document.getElementById("chatInput");
   var chatBody = document.getElementById("chatBody");
   var message = chatInput.value;
 
   if (message.trim() !== "") {
+    const currentTime = new Date();
+
+    // Check if this is the first message or a new session
+    if (!lastMessageTime || currentTime - lastMessageTime > 60000) {
+      // 60 seconds for demo purposes
+      var sessionTimestamp = document.createElement("div");
+      sessionTimestamp.className = "session-timestamp";
+      sessionTimestamp.textContent = getCurrentTime();
+      chatBody.appendChild(sessionTimestamp);
+    }
+
+    lastMessageTime = currentTime;
+
     // Create a wrapper for the message
     var messageWrapper = document.createElement("div");
     messageWrapper.className = "message-wrapper";
@@ -130,8 +145,6 @@ function sendMessage() {
     }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
   }
 }
-
-// Removed the toggleTimestamp function and other timestamp-related code
 
 function getCurrentTime() {
   var now = new Date();

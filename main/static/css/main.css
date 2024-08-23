@@ -439,9 +439,19 @@ button[type="submit"]:hover {
   margin-bottom: 10px;
 }
 
+/* Timestamp styling */
+.session-timestamp {
+  font-size: 0.8em;
+  color: #999;
+  text-align: center;
+  margin: 10px 0;
+  display: block;
+}
+
+/* Wrapper around message */
 .message-wrapper {
   position: relative;
-  margin-bottom: 10px; /* Adjusted margin for spacing between messages */
+  margin-bottom: 10px;
 }
 
 /* User message styling */
