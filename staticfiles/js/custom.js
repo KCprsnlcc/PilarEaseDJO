@@ -80,51 +80,94 @@ floatingButton.addEventListener("click", function () {
     isOpen = false;
   }
 });
+let lastMessageTime = null;
 
 function sendMessage() {
-  var chatInput = document.getElementById("chatInput");
-  var chatBody = document.getElementById("chatBody");
-  var message = chatInput.value;
+  const chatInput = document.getElementById("chatInput");
+  const chatBody = document.getElementById("chatBody");
+  const message = chatInput.value;
+
   if (message.trim() !== "") {
-    var messageElement = document.createElement("div");
+    const currentTime = new Date();
+    let addTimestamp = false;
+
+    // Check if the user is active again after a period of inactivity (5 minutes)
+    if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
+      // 5 minutes inactivity
+      addTimestamp = true;
+    }
+
+    lastMessageTime = currentTime;
+
+    // Create a wrapper for the message
+    const messageWrapper = document.createElement("div");
+    messageWrapper.className = "message-wrapper";
+
+    // If a timestamp is needed, create and append it to the message wrapper
+    if (addTimestamp) {
+      const sessionTimestamp = document.createElement("div");
+      sessionTimestamp.className = "session-timestamp";
+      sessionTimestamp.textContent = getCurrentTime();
+
+      // Append timestamp directly above the new message
+      messageWrapper.appendChild(sessionTimestamp);
+    }
+
+    // Add the user message, aligned to the right
+    const messageElement = document.createElement("div");
     messageElement.className = "user-message chat-message";
     messageElement.textContent = message;
-    chatBody.appendChild(messageElement);
 
-    var timestampElement = document.createElement("div");
-    timestampElement.className = "chat-timestamp";
-    timestampElement.textContent = getCurrentTime();
-    chatBody.appendChild(timestampElement);
+    // Append the user's message to the wrapper
+    messageWrapper.appendChild(messageElement);
+
+    // Now append the message wrapper to the chat body
+    chatBody.appendChild(messageWrapper);
 
     chatInput.value = "";
     chatBody.scrollTop = chatBody.scrollHeight;
 
+    // Show loader while the bot is generating a response
+    const loaderElement = document.createElement("div");
+    loaderElement.className = "loader";
+    loaderElement.innerHTML =
+      '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chatBody.appendChild(loaderElement);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Simulate a delay before showing the bot's message, aligned to the left
     setTimeout(function () {
-      var botMessageElement = document.createElement("div");
+      chatBody.removeChild(loaderElement); // Remove the loader
+
+      // Create a wrapper for the chatbot message
+      const botMessageWrapper = document.createElement("div");
+      botMessageWrapper.className = "message-wrapper";
+
+      const botMessageElement = document.createElement("div");
       botMessageElement.className = "chatbot-message chat-message";
       botMessageElement.textContent =
         "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today?";
-      chatBody.appendChild(botMessageElement);
 
-      var botTimestampElement = document.createElement("div");
-      botTimestampElement.className = "chat-timestamp";
-      botTimestampElement.textContent = getCurrentTime();
-      chatBody.appendChild(botTimestampElement);
+      botMessageWrapper.appendChild(botMessageElement);
+
+      chatBody.appendChild(botMessageWrapper);
 
       chatBody.scrollTop = chatBody.scrollHeight;
-    }, 1000);
+    }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
   }
 }
 
 function getCurrentTime() {
-  var now = new Date();
-  var hours = now.getHours();
-  var minutes = now.getMinutes();
-  var ampm = hours >= 12 ? "PM" : "AM";
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+
   hours = hours % 12;
   hours = hours ? hours : 12; // the hour '0' should be '12'
-  minutes = minutes < 10 ? "0" + minutes : minutes;
-  var strTime = hours + ":" + minutes + " " + ampm;
+  const strMinutes = minutes < 10 ? "0" + minutes : minutes;
+  const strTime = hours + ":" + strMinutes + " " + ampm;
+
   return strTime;
 }
 

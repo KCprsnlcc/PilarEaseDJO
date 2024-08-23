@@ -406,6 +406,7 @@ button[type="submit"]:hover {
   padding: 10px;
   max-height: calc(100% - 130px);
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .chat-popup .chat-input {
@@ -438,37 +439,94 @@ button[type="submit"]:hover {
   margin-bottom: 10px;
 }
 
-.chat-timestamp {
+/* Timestamp styling */
+.session-timestamp {
   font-size: 0.8em;
   color: #999;
   text-align: center;
+  margin: 10px 0;
+  display: block;
+}
+
+/* Wrapper around message */
+.message-wrapper {
+  position: relative;
   margin-bottom: 10px;
 }
 
-.chatbot-message {
-  background-color: #ffffff;
-  color: #0e2326;
-  padding: 10px;
-  border-radius: 10px;
-  margin-bottom: 5px;
-  display: inline-block;
-  border: 1px solid #0e2326;
-  position: relative;
-  margin-right: 50px;
-}
-
+/* User message styling */
 .user-message {
   background-color: #0e2326;
   color: #ffffff;
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 5px;
   display: inline-block;
   align-self: flex-end;
   border: 1px solid #0e2326;
+  max-width: 70%;
+  text-align: left;
+  margin-left: auto;
+  margin-right: 10px;
+  float: right;
+  clear: both;
   position: relative;
-  margin-left: 290px;
 }
+
+/* Chatbot message styling */
+.chatbot-message {
+  background-color: #ffffff;
+  color: #0e2326;
+  padding: 10px;
+  border-radius: 10px;
+  display: inline-block;
+  border: 1px solid #0e2326;
+  max-width: 70%;
+  text-align: left;
+  margin-left: 10px;
+  float: left;
+  clear: both;
+  position: relative;
+}
+
+/* Loader animation */
+.loader {
+  display: inline-block;
+  width: 40px;
+  text-align: center;
+  margin-left: 10px;
+  margin-bottom: 10px;
+  float: left;
+  clear: both;
+}
+
+.loader .dot {
+  width: 8px;
+  height: 8px;
+  background-color: #0e2326;
+  border-radius: 50%;
+  display: inline-block;
+  animation: loader 1.4s infinite both;
+}
+
+.loader .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loader .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loader {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
 #contactUsModal {
   display: none;
   position: fixed;

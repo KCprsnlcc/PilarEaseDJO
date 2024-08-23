@@ -1,5 +1,34 @@
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("loader-overlay").style.display = "none";
+  function fontsAndIconsLoaded() {
+    const fontNames = ["Aguafina Script", "Gothic A1", "Inter", "Epilogue"];
+
+    const allFontsLoaded = fontNames.every((font) =>
+      document.fonts.check(`1em ${font}`)
+    );
+
+    // Check if Boxicons are loaded by checking if any element using it has been styled
+    const boxiconLoaded = document.fonts.check('1em "boxicons"');
+
+    return allFontsLoaded && boxiconLoaded;
+  }
+
+  // Hide the loader once fonts and icons are loaded
+  document.fonts.ready.then(() => {
+    if (fontsAndIconsLoaded()) {
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    } else {
+      // If not loaded, keep checking
+      const interval = setInterval(() => {
+        if (fontsAndIconsLoaded()) {
+          clearInterval(interval);
+          document.getElementById("loader-overlay").style.display = "none";
+          document.getElementById("overlay").style.display = "none";
+        }
+      }, 100); // Check every 100ms
+    }
+  });
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
   const avatarModal = document.getElementById("avatarModal");

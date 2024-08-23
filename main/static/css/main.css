@@ -444,14 +444,17 @@ button[type="submit"]:hover {
   font-size: 0.8em;
   color: #999;
   text-align: center;
-  margin: 10px 0;
+  margin-top: 10px; /* Space above the timestamp */
+  margin-bottom: 15px; /* Space below the timestamp */
   display: block;
+  clear: both; /* Ensure timestamp is treated as a block element and doesn't stack */
 }
 
 /* Wrapper around message */
 .message-wrapper {
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 20px; /* Space between each message */
+  clear: both; /* Ensure that each message wrapper starts on a new line */
 }
 
 /* User message styling */
@@ -461,15 +464,14 @@ button[type="submit"]:hover {
   padding: 10px;
   border-radius: 10px;
   display: inline-block;
-  align-self: flex-end;
-  border: 1px solid #0e2326;
   max-width: 70%;
   text-align: left;
-  margin-left: auto;
+  margin-left: auto; /* Aligns the user message to the right */
   margin-right: 10px;
   float: right;
-  clear: both;
   position: relative;
+  border: 1px solid #0e2326;
+  clear: both; /* Ensure message starts on a new line */
 }
 
 /* Chatbot message styling */
@@ -479,13 +481,14 @@ button[type="submit"]:hover {
   padding: 10px;
   border-radius: 10px;
   display: inline-block;
-  border: 1px solid #0e2326;
   max-width: 70%;
   text-align: left;
+  margin-right: auto; /* Aligns the chatbot message to the left */
   margin-left: 10px;
   float: left;
-  clear: both;
   position: relative;
+  border: 1px solid #0e2326;
+  clear: both; /* Ensure message starts on a new line */
 }
 
 /* Loader animation */
