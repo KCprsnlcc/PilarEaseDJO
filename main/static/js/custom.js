@@ -92,7 +92,7 @@ function sendMessage() {
     let addTimestamp = false;
 
     // Check if there was inactivity for at least 5 minutes
-    if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
+    if (!lastMessageTime || currentTime - lastMessageTime > 5000) {
       // 5 minutes in milliseconds
       addTimestamp = true;
     }

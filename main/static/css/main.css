@@ -439,7 +439,7 @@ button[type="submit"]:hover {
   margin-bottom: 10px;
 }
 
-/* Timestamp styling */
+/* Timestamp styling with a smooth bouncy animation */
 .session-timestamp {
   font-size: 0.8em;
   color: #999;
@@ -448,16 +448,79 @@ button[type="submit"]:hover {
   margin-bottom: 15px; /* Space below the timestamp */
   display: block;
   clear: both; /* Ensure timestamp is treated as a block element and doesn't stack */
+  animation: fadeInTimestamp 0.5s ease-out; /* Apply the smooth bouncy animation */
 }
 
-/* Wrapper around message */
+/* Existing styles remain the same */
 .message-wrapper {
   position: relative;
   margin-bottom: 20px; /* Space between each message */
   clear: both; /* Ensure that each message wrapper starts on a new line */
 }
 
-/* User message styling */
+@keyframes poptotheleft {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateX(50%);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateX(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateX(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateX(0); /* Final state */
+  }
+}
+
+/* Smooth bouncy pop-in animation for chatbot message (popping to the right) */
+@keyframes poptotheright {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateX(-50%);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateX(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateX(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateX(0); /* Final state */
+  }
+}
+
+/* Smooth bouncy animation for the timestamp */
+@keyframes fadeInTimestamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-10px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateY(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateY(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateY(0); /* Final state */
+  }
+}
+
+/* Apply the pop-in animation for user message */
 .user-message {
   background-color: #0e2326;
   color: #ffffff;
@@ -472,9 +535,10 @@ button[type="submit"]:hover {
   position: relative;
   border: 1px solid #0e2326;
   clear: both; /* Ensure message starts on a new line */
+  animation: poptotheleft 0.5s ease-out; /* Apply the smooth bouncy animation */
 }
 
-/* Chatbot message styling */
+/* Apply the smooth bouncy pop-in animation for chatbot message */
 .chatbot-message {
   background-color: #ffffff;
   color: #0e2326;
@@ -489,6 +553,7 @@ button[type="submit"]:hover {
   position: relative;
   border: 1px solid #0e2326;
   clear: both; /* Ensure message starts on a new line */
+  animation: poptotheright 0.5s ease-out; /* Apply the smooth bouncy animation */
 }
 
 /* Loader animation */
