@@ -50,6 +50,16 @@ class ChatMessage(models.Model):
     def __str__(self):
         return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
 
+class Questionnaire(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    question = models.TextField(null=True, blank=True)
+    answer = models.TextField(null=True, blank=True)
+    response = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Questionnaire for {self.user.username} at {self.timestamp}"
+
 class Status(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)

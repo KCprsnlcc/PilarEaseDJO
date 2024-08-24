@@ -17,7 +17,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, ChatMessage
+from .models import Status, Reply, ContactUs, Referral, ChatMessage, Questionnaire
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -147,7 +147,27 @@ def submit_referral(request):
         return JsonResponse({'success': False, 'error': 'Status not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-    
+
+@csrf_exempt
+def save_questionnaire_data(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        question = data.get('question')
+        answer = data.get('answer')
+        response = data.get('response')
+
+        # Save to the Questionnaire model
+        Questionnaire.objects.create(
+            user=request.user,
+            question=question,
+            answer=answer,
+            response=response
+        )
+
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
 @csrf_exempt
 def send_message(request):
     if request.method == 'POST':

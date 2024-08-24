@@ -81,50 +81,37 @@ floatingButton.addEventListener("click", function () {
   }
 });
 let lastMessageTime = null;
-let greetingDisplayed = false; // Flag to track if the greeting has been displayed
+let greetingDisplayed = false;
 
 document
   .getElementById("floatingButton")
   .addEventListener("click", function () {
-    // Show the chat popup
     document.getElementById("chatPopup").style.display = "block";
-
     const chatBody = document.getElementById("chatBody");
 
-    // If the greeting has already been displayed, skip the greeting
     if (!greetingDisplayed) {
-      // Show the loader
       showLoader(chatBody);
 
-      // Simulate a delay before showing the initial message
       setTimeout(function () {
-        removeLoader(chatBody); // Remove the loader
-
-        // Add the timestamp if needed before generating the first message
+        removeLoader(chatBody);
         addTimestampIfNeeded(chatBody);
-
-        // Display the initial greeting message from Piracle
         generateMessage(
           "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
           "bot"
         );
 
-        // Delay before displaying the options
-        setTimeout(displayOptions, 500); // Adjust delay as needed
-
-        // Set the greetingDisplayed flag to true
+        setTimeout(displayOptions, 500);
         greetingDisplayed = true;
-      }, 1500); // Delay for loader
+      }, 1500);
     }
   });
 
 function displayOptions() {
   const chatBody = document.getElementById("chatBody");
 
-  // Add options for "Start" and "Not Yet"
   const optionsWrapper = document.createElement("div");
   optionsWrapper.className = "message-wrapper options-wrapper pop-up";
-  optionsWrapper.id = "dialogOptions"; // Assign an ID to the options wrapper
+  optionsWrapper.id = "dialogOptions";
 
   const startButton = document.createElement("button");
   startButton.className = "option-button";
@@ -144,40 +131,29 @@ function displayOptions() {
   optionsWrapper.appendChild(notYetButton);
   chatBody.appendChild(optionsWrapper);
 
-  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+  chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function autoSendMessage(message, optionsWrapper) {
-  // Add pop-down animation before removing the options
   optionsWrapper.classList.remove("pop-up");
   optionsWrapper.classList.add("pop-down");
 
   setTimeout(() => {
-    optionsWrapper.remove(); // Remove the options after the animation
+    optionsWrapper.remove();
     const chatInput = document.getElementById("chatInput");
-    chatInput.value = message; // Set the input value
-    sendMessage(); // Automatically send the message
-  }, 300); // Delay matches the pop-down animation duration
+    chatInput.value = message;
+    sendMessage();
+  }, 300);
 }
 
 function sendMessage() {
   const chatInput = document.getElementById("chatInput");
   const chatBody = document.getElementById("chatBody");
-  const messageText = chatInput.value;
+  const messageText = chatInput.value.trim();
 
-  // Remove the dialog options if they exist
-  const optionsWrapper = document.getElementById("dialogOptions");
-  if (optionsWrapper) {
-    optionsWrapper.classList.remove("pop-up");
-    optionsWrapper.classList.add("pop-down");
-    setTimeout(() => optionsWrapper.remove(), 300); // Delay for the pop-down animation
-  }
-
-  if (messageText.trim() !== "") {
-    // Display the user's message
+  if (messageText !== "") {
     generateMessage(messageText, "user");
 
-    // Send the message to the backend for storage
     fetch("/send_message/", {
       method: "POST",
       headers: {
@@ -192,23 +168,39 @@ function sendMessage() {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // Handle specific commands
           if (messageText.toLowerCase() === "start") {
-            // Start the question-answer sequence
             setTimeout(() => {
               showLoader(chatBody);
               setTimeout(() => {
                 removeLoader(chatBody);
                 displayQuestion(0);
-              }, 1500); // Wait for loader animation to finish before generating the question
+              }, 1500);
             }, 1000);
           } else if (messageText.toLowerCase() === "not yet") {
             setTimeout(() => {
               generateMessage("No worries, take your time.", "bot");
             }, 1000);
+          } else {
+            matchAnswerToOptions(messageText);
           }
         }
       });
+    chatInput.value = ""; // Clear the input field after sending
+  }
+}
+
+function matchAnswerToOptions(inputText) {
+  const chatBody = document.getElementById("chatBody");
+  const answersWrapper = document.querySelector(".answers-wrapper");
+
+  if (answersWrapper) {
+    const buttons = answersWrapper.querySelectorAll(".answers-button");
+
+    buttons.forEach((button) => {
+      if (button.textContent.toLowerCase() === inputText.toLowerCase()) {
+        button.click();
+      }
+    });
   }
 }
 
@@ -218,7 +210,7 @@ function showLoader(chatBody) {
   loaderElement.innerHTML =
     '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
   chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+  chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function removeLoader(chatBody) {
@@ -244,7 +236,7 @@ function generateMessage(text, sender) {
   messageWrapper.appendChild(messageElement);
   chatBody.appendChild(messageWrapper);
 
-  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+  chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function displayQuestion(questionIndex) {
@@ -266,17 +258,20 @@ function displayQuestion(questionIndex) {
     return;
   }
 
-  // Show loader before generating the question
+  const currentQuestion = questions[questionIndex];
+
   showLoader(document.getElementById("chatBody"));
   setTimeout(() => {
     removeLoader(document.getElementById("chatBody"));
-    generateMessage(questions[questionIndex], "bot");
+    generateMessage(currentQuestion, "bot");
 
-    // Wait for the question to be generated before showing the answer options
+    // Save the generated question to the database
+    saveQuestionnaireData(currentQuestion, null, null);
+
     setTimeout(() => {
       displayAnswerOptions(questionIndex);
-    }, 500); // Slight delay before displaying options
-  }, 1500); // Wait for loader animation to finish before generating the question
+    }, 500);
+  }, 1500);
 }
 
 function displayAnswerOptions(questionIndex) {
@@ -349,13 +344,12 @@ function displayAnswerOptions(questionIndex) {
   });
 
   chatBody.appendChild(answersWrapper);
-  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+  chatBody.scrollTop = chatBody.scrollHeight;
 }
 
 function handleAnswerSelection(questionIndex, answerIndex, answerText) {
   const chatBody = document.getElementById("chatBody");
 
-  // Remove the answer options with animation
   const answersWrapper = document.querySelector(".answers-wrapper");
   if (answersWrapper) {
     answersWrapper.classList.remove("pop-up");
@@ -363,20 +357,18 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     setTimeout(() => answersWrapper.remove(), 300);
   }
 
-  // Display the selected answer as a user message
   generateMessage(answerText, "user");
 
-  // Generate a response based on the selected answer
   const responses = [
     [
       "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
       "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
-      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
+      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your well-being.",
     ],
     [
       "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
       "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
-      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
+      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your well-being.",
     ],
     [
       "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
@@ -404,7 +396,7 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
       "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
     ],
     [
-      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
+      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for well-being.",
       "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
       "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
     ],
@@ -420,33 +412,51 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     ],
   ];
 
+  // Save the selected answer and response to the database
+  saveQuestionnaireData(
+    null,
+    answerText,
+    responses[questionIndex][answerIndex]
+  );
+
   setTimeout(() => {
     showLoader(chatBody);
     setTimeout(() => {
       removeLoader(chatBody);
       generateMessage(responses[questionIndex][answerIndex], "bot");
 
-      // Proceed to the next question after a delay
       setTimeout(() => {
         displayQuestion(questionIndex + 1);
-      }, 2000); // Delay before the next question
-    }, 1500); // Wait for loader animation to finish before showing the response
-  }, 1000); // Delay before showing the loader for the response
+      }, 2000);
+    }, 1500);
+  }, 1000);
+}
+
+function saveQuestionnaireData(question, answer, response) {
+  fetch("/save_questionnaire_data/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      question: question,
+      answer: answer,
+      response: response,
+    }),
+  });
 }
 
 function addTimestampIfNeeded(chatBody) {
   const currentTime = new Date();
 
-  // Check if it's the first message or more than 5 minutes have passed since the last message
   if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
-    // Add timestamp
     const sessionTimestamp = document.createElement("div");
     sessionTimestamp.className = "session-timestamp";
     sessionTimestamp.textContent = getCurrentTime();
     chatBody.appendChild(sessionTimestamp);
   }
 
-  // Update the last message time
   lastMessageTime = currentTime;
 }
 
@@ -457,7 +467,7 @@ function getCurrentTime() {
   const ampm = hours >= 12 ? "PM" : "AM";
 
   hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = hours ? hours : 12;
   const strMinutes = minutes < 10 ? "0" + minutes : minutes;
   const strTime = hours + ":" + strMinutes + " " + ampm;
 
@@ -468,9 +478,8 @@ function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
     const cookies = document.cookie.split(";");
-    for (let i = 0; cookies.length; i++) {
+    for (let i = 0; i < cookies.length; i++) {
       const cookie = cookies[i].trim();
-      // Does this cookie string begin with the name we want?
       if (cookie.substring(0, name.length + 1) === name + "=") {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
         break;
