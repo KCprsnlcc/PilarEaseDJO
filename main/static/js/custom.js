@@ -94,33 +94,17 @@ document
     // If the greeting has already been displayed, skip the greeting
     if (!greetingDisplayed) {
       // Show the loader
-      const loaderElement = document.createElement("div");
-      loaderElement.className = "loader";
-      loaderElement.innerHTML =
-        '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-      chatBody.appendChild(loaderElement);
-      chatBody.scrollTop = chatBody.scrollHeight;
+      showLoader(chatBody);
 
       // Simulate a delay before showing the initial message
       setTimeout(function () {
-        chatBody.removeChild(loaderElement); // Remove the loader
+        removeLoader(chatBody); // Remove the loader
 
         // Display the initial greeting message from Piracle
-        const botMessageWrapper = document.createElement("div");
-        botMessageWrapper.className = "message-wrapper";
-
-        const botMessageElement = document.createElement("div");
-        botMessageElement.className = "chatbot-message chat-message";
-        botMessageElement.textContent =
-          "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?";
-
-        // Check if timestamp should be added for the first message
-        addTimestampIfNeeded(chatBody);
-
-        botMessageWrapper.appendChild(botMessageElement);
-        chatBody.appendChild(botMessageWrapper);
-
-        chatBody.scrollTop = chatBody.scrollHeight;
+        generateMessage(
+          "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+          "bot"
+        );
 
         // Delay before displaying the options
         setTimeout(displayOptions, 500); // Adjust delay as needed
@@ -187,7 +171,10 @@ function sendMessage() {
   }
 
   if (messageText.trim() !== "") {
-    // Send the message to the backend
+    // Display the user's message
+    generateMessage(messageText, "user");
+
+    // Send the message to the backend for storage
     fetch("/send_message/", {
       method: "POST",
       headers: {
@@ -202,73 +189,249 @@ function sendMessage() {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // Display the message in the chat
-          const messageWrapper = document.createElement("div");
-          messageWrapper.className = "message-wrapper";
-
-          const messageElement = document.createElement("div");
-          messageElement.className = "user-message chat-message";
-          messageElement.textContent = messageText;
-
-          messageWrapper.appendChild(messageElement);
-          chatBody.appendChild(messageWrapper);
-
-          chatInput.value = "";
-          chatBody.scrollTop = chatBody.scrollHeight;
-
-          // Logic for chatbot response
-          setTimeout(() => {
-            generateChatbotResponse("Thank you for your message.");
-          }, 1000);
+          // Handle specific commands
+          if (messageText.toLowerCase() === "start") {
+            // Start the question-answer sequence
+            setTimeout(() => {
+              showLoader(chatBody);
+              setTimeout(() => {
+                removeLoader(chatBody);
+                displayQuestion(0);
+              }, 1500); // Wait for loader animation to finish before generating the question
+            }, 1000);
+          } else if (messageText.toLowerCase() === "not yet") {
+            setTimeout(() => {
+              generateMessage("No worries, take your time.", "bot");
+            }, 1000);
+          }
         }
       });
   }
 }
 
-function generateChatbotResponse(responseText) {
-  const chatBody = document.getElementById("chatBody");
-
-  // Show loader
+function showLoader(chatBody) {
   const loaderElement = document.createElement("div");
   loaderElement.className = "loader";
   loaderElement.innerHTML =
     '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
   chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight;
+  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+}
 
-  setTimeout(function () {
-    chatBody.removeChild(loaderElement); // Remove the loader
+function removeLoader(chatBody) {
+  const loaderElement = chatBody.querySelector(".loader");
+  if (loaderElement) {
+    chatBody.removeChild(loaderElement);
+  }
+}
 
-    // Send the bot's message to the backend
-    fetch("/send_message/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        message: responseText,
-        is_bot_message: true,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // Display the bot's message in the chat
-          const botMessageWrapper = document.createElement("div");
-          botMessageWrapper.className = "message-wrapper";
+function generateMessage(text, sender) {
+  const chatBody = document.getElementById("chatBody");
 
-          const botMessageElement = document.createElement("div");
-          botMessageElement.className = "chatbot-message chat-message";
-          botMessageElement.textContent = responseText;
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
 
-          botMessageWrapper.appendChild(botMessageElement);
-          chatBody.appendChild(botMessageWrapper);
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
 
-          chatBody.scrollTop = chatBody.scrollHeight;
-        }
-      });
-  }, 2000); // Simulate typing delay
+  messageWrapper.appendChild(messageElement);
+  chatBody.appendChild(messageWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+
+  // Add timestamp if needed
+  addTimestampIfNeeded(chatBody);
+}
+
+function displayQuestion(questionIndex) {
+  const questions = [
+    "What aspects of your academic life cause you the most stress?",
+    "How would you describe your overall emotional state in the past month?",
+    "How comfortable do you feel talking to friends or family about your mental health?",
+    "How frequently do you experience feelings of anxiety or worry related to school?",
+    "How many hours of sleep do you usually get on a school night?",
+    "How confident do you feel in your academic abilities?",
+    "How do you usually feel about changes in your academic or personal life?",
+    "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+    "How motivated do you feel to complete your academic tasks?",
+    "Are you aware of the mental health resources available at your school?",
+  ];
+
+  if (questionIndex >= questions.length) {
+    generateMessage("Thank you for answering all the questions!", "bot");
+    return;
+  }
+
+  // Show loader before generating the question
+  showLoader(document.getElementById("chatBody"));
+  setTimeout(() => {
+    removeLoader(document.getElementById("chatBody"));
+    generateMessage(questions[questionIndex], "bot");
+
+    // Wait for the question to be generated before showing the answer options
+    setTimeout(() => {
+      displayAnswerOptions(questionIndex);
+    }, 500); // Slight delay before displaying options
+  }, 1500); // Wait for loader animation to finish before generating the question
+}
+
+function displayAnswerOptions(questionIndex) {
+  const answers = [
+    [
+      "Managing multiple assignments and deadlines.",
+      "Understanding difficult subjects or topics.",
+      "Balancing academics with extracurricular activities.",
+    ],
+    [
+      "Generally positive, with only occasional low moods.",
+      "Mixed, with frequent ups and downs.",
+      "Often stressed or anxious.",
+    ],
+    [
+      "Very comfortable, I often share how I’m feeling.",
+      "Somewhat comfortable, I share occasionally.",
+      "Not comfortable, I usually keep things to myself.",
+    ],
+    [
+      "Almost daily, it’s a constant presence.",
+      "Occasionally, but only around stressful times like exams.",
+      "Rarely, I don’t get anxious easily.",
+    ],
+    [
+      "Less than 6 hours, I often stay up late.",
+      "Between 6 and 8 hours, it varies.",
+      "More than 8 hours, I prioritize my sleep.",
+    ],
+    [
+      "Very confident, I believe in my abilities.",
+      "Somewhat confident, but I have doubts sometimes.",
+      "Not very confident, I often worry about my performance.",
+    ],
+    [
+      "Excited and ready to adapt.",
+      "Nervous but willing to adjust.",
+      "Stressed and resistant to change.",
+    ],
+    [
+      "I create a schedule and stick to it as much as possible.",
+      "I try to balance things, but it’s a challenge.",
+      "I often struggle to manage my time effectively.",
+    ],
+    [
+      "Highly motivated, I’m eager to succeed.",
+      "Moderately motivated, but it depends on the task.",
+      "Often unmotivated, I struggle to find the drive.",
+    ],
+    [
+      "Yes, I know where to find help if I need it.",
+      "Somewhat, I’ve heard of some resources but haven’t explored them.",
+      "No, I’m not aware of the available resources.",
+    ],
+  ];
+
+  const chatBody = document.getElementById("chatBody");
+
+  const answersWrapper = document.createElement("div");
+  answersWrapper.className = "message-wrapper answers-wrapper";
+
+  answers[questionIndex].forEach((answerText, index) => {
+    const answerButton = document.createElement("button");
+    answerButton.className = "answers-button";
+    answerButton.textContent = answerText;
+    answerButton.onclick = function () {
+      handleAnswerSelection(questionIndex, index, answerText);
+    };
+    answersWrapper.appendChild(answerButton);
+  });
+
+  chatBody.appendChild(answersWrapper);
+  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+}
+
+function handleAnswerSelection(questionIndex, answerIndex, answerText) {
+  const chatBody = document.getElementById("chatBody");
+
+  // Remove the answer options with animation
+  const answersWrapper = document.querySelector(".answers-wrapper");
+  if (answersWrapper) {
+    answersWrapper.classList.remove("pop-up");
+    answersWrapper.classList.add("pop-down");
+    setTimeout(() => answersWrapper.remove(), 300);
+  }
+
+  // Display the selected answer as a user message
+  generateMessage(answerText, "user");
+
+  // Generate a response based on the selected answer
+  const responses = [
+    [
+      "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
+      "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
+      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
+    ],
+    [
+      "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
+      "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
+      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
+    ],
+    [
+      "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
+      "It’s good that you share your feelings sometimes. Being open about your mental health can provide relief and support, which are important for emotional well-being.",
+      "Keeping your feelings to yourself can lead to increased stress and affect your mental health. Consider finding a trusted person to talk to, as sharing can be very beneficial.",
+    ],
+    [
+      "Experiencing daily anxiety can significantly impact your mental health. It's important to seek ways to reduce this anxiety, as prolonged stress can have serious effects on your well-being.",
+      "Feeling anxious during stressful times like exams is common, but managing this anxiety is key to protecting your mental health during these periods.",
+      "It's great that you rarely experience anxiety. Maintaining this level of calm is beneficial for your mental health, and it’s important to continue practicing whatever keeps you feeling this way.",
+    ],
+    [
+      "Getting less than 6 hours of sleep can negatively affect your mental health, leading to increased stress and reduced emotional resilience. Prioritizing sleep is crucial for your well-being.",
+      "Getting between 6 and 8 hours of sleep is important, but inconsistency can impact your mental health. A regular sleep routine can improve your emotional stability and reduce stress.",
+      "Prioritizing sleep is one of the best things you can do for your mental health. It helps maintain emotional balance and resilience, which are key to handling stress.",
+    ],
+    [
+      "Feeling confident in your abilities is excellent for your mental health. It can reduce anxiety and stress, contributing to a more positive and balanced state of mind.",
+      "Having some doubts is normal, but too much self-doubt can negatively impact your mental health. Building confidence through small successes can help improve your overall well-being.",
+      "Constant worry about your performance can lead to anxiety and stress, affecting your mental health. It's important to address these worries and work on building self-confidence.",
+    ],
+    [
+      "Being excited about change is a positive sign for your mental health. Adaptability and a positive outlook can help you manage stress and maintain emotional well-being.",
+      "It’s normal to feel nervous about change, but being willing to adjust is important for your mental health. Embracing change gradually can help reduce stress and anxiety.",
+      "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
+    ],
+    [
+      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
+      "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
+      "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
+    ],
+    [
+      "High motivation is a great indicator of good mental health. Staying motivated helps you manage stress and keep a positive outlook.",
+      "It's normal for motivation to vary, but staying engaged in your tasks can support your mental health by providing a sense of accomplishment.",
+      "Struggling with motivation can be a sign of mental fatigue or stress. It’s important to address these feelings to prevent them from negatively impacting your mental health.",
+    ],
+    [
+      "It’s great that you’re aware of the mental health resources available. Knowing where to get help is crucial for maintaining your mental well-being.",
+      "It’s good that you’re somewhat aware, but exploring these resources further can ensure you have the support you need when challenges arise.",
+      "It’s important to be informed about mental health resources, as they can provide crucial support when needed. Taking the time to learn about them can make a big difference.",
+    ],
+  ];
+
+  setTimeout(() => {
+    showLoader(chatBody);
+    setTimeout(() => {
+      removeLoader(chatBody);
+      generateMessage(responses[questionIndex][answerIndex], "bot");
+
+      // Proceed to the next question after a delay
+      setTimeout(() => {
+        displayQuestion(questionIndex + 1);
+      }, 2000); // Delay before the next question
+    }, 1500); // Wait for loader animation to finish before showing the response
+  }, 1000); // Delay before showing the loader for the response
 }
 
 function addTimestampIfNeeded(chatBody) {
@@ -299,6 +462,22 @@ function getCurrentTime() {
   const strTime = hours + ":" + strMinutes + " " + ampm;
 
   return strTime;
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 
 document.addEventListener("DOMContentLoaded", updateChatPosition);

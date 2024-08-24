@@ -444,11 +444,11 @@ button[type="submit"]:hover {
   font-size: 0.8em;
   color: #999;
   text-align: center;
-  margin-top: 10px; /* Space above the timestamp */
-  margin-bottom: 15px; /* Space below the timestamp */
+  margin-top: 10px;
+  margin-bottom: 15px;
   display: block;
-  clear: both; /* Ensure timestamp is treated as a block element and doesn't stack */
-  animation: fadeInTimestamp 0.5s ease-out; /* Apply the smooth bouncy animation */
+  clear: both;
+  animation: fadeInTimestamp 0.5s ease-out;
 }
 
 /* Existing styles remain the same */
@@ -547,13 +547,13 @@ button[type="submit"]:hover {
   display: inline-block;
   max-width: 70%;
   text-align: left;
-  margin-right: auto; /* Aligns the chatbot message to the left */
+  margin-right: auto;
   margin-left: 10px;
   float: left;
   position: relative;
   border: 1px solid #0e2326;
-  clear: both; /* Ensure message starts on a new line */
-  animation: poptotheright 0.5s ease-out; /* Apply the smooth bouncy animation */
+  clear: both;
+  animation: poptotheright 0.5s ease-out;
 }
 
 /* Loader animation */
@@ -593,6 +593,33 @@ button[type="submit"]:hover {
   40% {
     transform: scale(1);
   }
+}
+
+.answers-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Align to the right like user messages */
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+.answers-button {
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin: 5px;
+  text-align: left;
+  animation: poptotheleft 0.5s ease-out;
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.answers-button:hover {
+  background-color: #0e2326; /* Change background color on hover */
+  color: #ffffff; /* Change text color on hover */
+  transform: scale(1.1); /* Enlarge the button on hover */
 }
 
 /* Option buttons styling */

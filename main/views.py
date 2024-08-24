@@ -149,6 +149,26 @@ def submit_referral(request):
         return JsonResponse({'success': False, 'error': str(e)})
     
 @csrf_exempt
+def send_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+        is_bot_message = data.get('is_bot_message')
+
+        if message:
+            # Save the message to the database
+            ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                created_at=timezone.now()
+            )
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'No message provided'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
 def send_chat_message(request):
     if request.method == 'POST':
         data = json.loads(request.body)
