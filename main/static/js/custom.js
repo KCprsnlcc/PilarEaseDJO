@@ -111,6 +111,9 @@ document
       botMessageElement.textContent =
         "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?";
 
+      // Check if timestamp should be added for the first message
+      addTimestampIfNeeded(chatBody);
+
       botMessageWrapper.appendChild(botMessageElement);
       chatBody.appendChild(botMessageWrapper);
 
@@ -177,22 +180,8 @@ function sendMessage() {
   }
 
   if (messageText.trim() !== "") {
-    const currentTime = new Date();
-    let addTimestamp = false;
-
-    // Check if there was inactivity for at least 5 minutes
-    if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
-      addTimestamp = true;
-    }
-
-    lastMessageTime = currentTime;
-
-    if (addTimestamp) {
-      const sessionTimestamp = document.createElement("div");
-      sessionTimestamp.className = "session-timestamp";
-      sessionTimestamp.textContent = getCurrentTime();
-      chatBody.appendChild(sessionTimestamp);
-    }
+    // Check if timestamp should be added for the user's message
+    addTimestampIfNeeded(chatBody);
 
     const messageWrapper = document.createElement("div");
     messageWrapper.className = "message-wrapper";
@@ -233,6 +222,9 @@ function generateChatbotResponse(responseText) {
   setTimeout(function () {
     chatBody.removeChild(loaderElement); // Remove the loader
 
+    // Check if timestamp should be added for the chatbot's response
+    addTimestampIfNeeded(chatBody);
+
     const botMessageWrapper = document.createElement("div");
     botMessageWrapper.className = "message-wrapper";
 
@@ -245,6 +237,22 @@ function generateChatbotResponse(responseText) {
 
     chatBody.scrollTop = chatBody.scrollHeight;
   }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
+}
+
+function addTimestampIfNeeded(chatBody) {
+  const currentTime = new Date();
+
+  // Check if it's the first message or more than 5 minutes have passed since the last message
+  if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
+    // Add timestamp
+    const sessionTimestamp = document.createElement("div");
+    sessionTimestamp.className = "session-timestamp";
+    sessionTimestamp.textContent = getCurrentTime();
+    chatBody.appendChild(sessionTimestamp);
+  }
+
+  // Update the last message time
+  lastMessageTime = currentTime;
 }
 
 function getCurrentTime() {

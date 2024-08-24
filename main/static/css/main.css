@@ -604,11 +604,12 @@ button[type="submit"]:hover {
   border-radius: 20px;
   cursor: pointer;
   margin: 5px;
-  transition: background-color 0.3s ease;
+  transition: transform 0.3s ease; /* Smooth transition for scaling */
 }
 
+/* Hover effect to enlarge the button */
 .option-button:hover {
-  background-color: #145b64;
+  transform: scale(1.1); /* Enlarge the button slightly */
 }
 
 /* Options wrapper for buttons, positioned like user messages */
