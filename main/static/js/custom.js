@@ -228,6 +228,33 @@ function generateMessage(text, sender) {
   chatBody.appendChild(messageWrapper);
 
   chatBody.scrollTop = chatBody.scrollHeight;
+
+  // Save chat session
+  saveChatSession();
+}
+
+function saveChatSession() {
+  const chatBody = document.getElementById("chatBody");
+  const messages = chatBody.querySelectorAll(".chat-message");
+  const chatHistory = [];
+
+  messages.forEach((message) => {
+    chatHistory.push({
+      message: message.textContent,
+      sender: message.classList.contains("user-message") ? "user" : "bot",
+    });
+  });
+
+  fetch("/save_chat_session/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      session_data: chatHistory,
+    }),
+  });
 }
 
 function displayQuestion(questionIndex) {
@@ -475,6 +502,20 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const chatBody = document.getElementById("chatBody");
+
+  // Load chat history from the template context
+  const chatHistory = JSON.parse("{{ chat_history|escapejs }}");
+
+  // Repopulate the chat body with the saved messages
+  chatHistory.forEach((entry) => {
+    generateMessage(entry.message, entry.sender);
+  });
+
+  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+});
 
 document.addEventListener("DOMContentLoaded", updateChatPosition);
 

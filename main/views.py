@@ -17,7 +17,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, ChatMessage, Questionnaire
+from .models import Status, Reply, ContactUs, Referral, ChatMessage, Questionnaire, ChatSession
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -147,6 +147,31 @@ def submit_referral(request):
         return JsonResponse({'success': False, 'error': 'Status not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def chat_view(request):
+    # Get or create a chat session for the user
+    chat_session, created = ChatSession.objects.get_or_create(user=request.user)
+    
+    # Convert the chat session data from JSON to Python objects
+    chat_history = chat_session.session_data if chat_session.session_data else []
+
+    return render(request, 'chat.html', {'chat_history': json.dumps(chat_history)})
+
+@login_required
+@csrf_exempt
+def save_chat_session(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        session_data = data.get('session_data', [])
+
+        # Get or create the chat session
+        chat_session, _ = ChatSession.objects.get_or_create(user=request.user)
+        chat_session.session_data = session_data
+        chat_session.save()
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
 
 @csrf_exempt
 def save_questionnaire(request):
