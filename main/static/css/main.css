@@ -595,6 +595,71 @@ button[type="submit"]:hover {
   }
 }
 
+/* Option buttons styling */
+.option-button {
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.option-button:hover {
+  background-color: #145b64;
+}
+
+/* Options wrapper for buttons, positioned like user messages */
+.options-wrapper {
+  display: flex;
+  justify-content: flex-end; /* Align to the right */
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+/* Animation for pop-up and pop-down */
+@keyframes popUp {
+  from {
+    transform: scale(0.5) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popDown {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.5) translateY(100%);
+    opacity: 0;
+  }
+}
+
+.pop-up {
+  animation: popUp 0.3s ease-out;
+}
+
+.pop-down {
+  animation: popDown 0.3s ease-out;
+}
+
+/* Smooth bouncy pop-in animation for chatbot message (popping to the right) */
+.chatbot-message {
+  margin-left: 10px;
+}
+
+/* Smooth bouncy pop-in animation for user message */
+.user-message {
+  margin-right: 10px;
+}
+
 #contactUsModal {
   display: none;
   position: fixed;

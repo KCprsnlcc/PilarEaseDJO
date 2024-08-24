@@ -82,51 +82,15 @@ floatingButton.addEventListener("click", function () {
 });
 let lastMessageTime = null;
 
-function sendMessage() {
-  const chatInput = document.getElementById("chatInput");
-  const chatBody = document.getElementById("chatBody");
-  const message = chatInput.value;
+document
+  .getElementById("floatingButton")
+  .addEventListener("click", function () {
+    // Show the chat popup
+    document.getElementById("chatPopup").style.display = "block";
 
-  if (message.trim() !== "") {
-    const currentTime = new Date();
-    let addTimestamp = false;
+    const chatBody = document.getElementById("chatBody");
 
-    // Check if there was inactivity for at least 5 minutes
-    if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
-      // 5 minutes in milliseconds
-      addTimestamp = true;
-    }
-
-    // Update the last message time
-    lastMessageTime = currentTime;
-
-    // If a timestamp is needed, create and append it to the chat body before the message
-    if (addTimestamp) {
-      const sessionTimestamp = document.createElement("div");
-      sessionTimestamp.className = "session-timestamp";
-      sessionTimestamp.textContent = getCurrentTime();
-      chatBody.appendChild(sessionTimestamp);
-    }
-
-    // Create a wrapper for the message
-    const messageWrapper = document.createElement("div");
-    messageWrapper.className = "message-wrapper";
-
-    // Add the user message, aligned to the right
-    const messageElement = document.createElement("div");
-    messageElement.className = "user-message chat-message";
-    messageElement.textContent = message;
-
-    // Append the user's message to the wrapper
-    messageWrapper.appendChild(messageElement);
-
-    // Now append the message wrapper to the chat body
-    chatBody.appendChild(messageWrapper);
-
-    chatInput.value = "";
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    // Show loader while the bot is generating a response
+    // Show the loader
     const loaderElement = document.createElement("div");
     loaderElement.className = "loader";
     loaderElement.innerHTML =
@@ -134,31 +98,153 @@ function sendMessage() {
     chatBody.appendChild(loaderElement);
     chatBody.scrollTop = chatBody.scrollHeight;
 
-    // Simulate a delay before showing the bot's message, aligned to the left
+    // Simulate a delay before showing the initial message
     setTimeout(function () {
       chatBody.removeChild(loaderElement); // Remove the loader
 
-      // Create a wrapper for the chatbot message
+      // Display the initial greeting message from Piracle
       const botMessageWrapper = document.createElement("div");
       botMessageWrapper.className = "message-wrapper";
 
       const botMessageElement = document.createElement("div");
       botMessageElement.className = "chatbot-message chat-message";
       botMessageElement.textContent =
-        "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today?";
+        "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?";
 
-      // Append the chatbot's message to the wrapper
       botMessageWrapper.appendChild(botMessageElement);
-
-      // Append the chatbot message wrapper to the chat body
       chatBody.appendChild(botMessageWrapper);
 
-      // Update the last message time after the chatbot's response
-      lastMessageTime = new Date();
-
       chatBody.scrollTop = chatBody.scrollHeight;
-    }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
+
+      // Delay before displaying the options
+      setTimeout(displayOptions, 500); // Adjust delay as needed
+    }, 1500); // Delay for loader
+  });
+
+function displayOptions() {
+  const chatBody = document.getElementById("chatBody");
+
+  // Add options for "Start" and "Not Yet"
+  const optionsWrapper = document.createElement("div");
+  optionsWrapper.className = "message-wrapper options-wrapper pop-up";
+  optionsWrapper.id = "dialogOptions"; // Assign an ID to the options wrapper
+
+  const startButton = document.createElement("button");
+  startButton.className = "option-button";
+  startButton.textContent = "Start";
+  startButton.onclick = function () {
+    autoSendMessage("Start", optionsWrapper);
+  };
+
+  const notYetButton = document.createElement("button");
+  notYetButton.className = "option-button";
+  notYetButton.textContent = "Not Yet";
+  notYetButton.onclick = function () {
+    autoSendMessage("Not Yet", optionsWrapper);
+  };
+
+  optionsWrapper.appendChild(startButton);
+  optionsWrapper.appendChild(notYetButton);
+  chatBody.appendChild(optionsWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
+}
+
+function autoSendMessage(message, optionsWrapper) {
+  // Add pop-down animation before removing the options
+  optionsWrapper.classList.remove("pop-up");
+  optionsWrapper.classList.add("pop-down");
+
+  setTimeout(() => {
+    optionsWrapper.remove(); // Remove the options after the animation
+    const chatInput = document.getElementById("chatInput");
+    chatInput.value = message; // Set the input value
+    sendMessage(); // Automatically send the message
+  }, 300); // Delay matches the pop-down animation duration
+}
+
+function sendMessage() {
+  const chatInput = document.getElementById("chatInput");
+  const chatBody = document.getElementById("chatBody");
+  const messageText = chatInput.value;
+
+  // Remove the dialog options if they exist
+  const optionsWrapper = document.getElementById("dialogOptions");
+  if (optionsWrapper) {
+    optionsWrapper.classList.remove("pop-up");
+    optionsWrapper.classList.add("pop-down");
+    setTimeout(() => optionsWrapper.remove(), 300); // Delay for the pop-down animation
   }
+
+  if (messageText.trim() !== "") {
+    const currentTime = new Date();
+    let addTimestamp = false;
+
+    // Check if there was inactivity for at least 5 minutes
+    if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
+      addTimestamp = true;
+    }
+
+    lastMessageTime = currentTime;
+
+    if (addTimestamp) {
+      const sessionTimestamp = document.createElement("div");
+      sessionTimestamp.className = "session-timestamp";
+      sessionTimestamp.textContent = getCurrentTime();
+      chatBody.appendChild(sessionTimestamp);
+    }
+
+    const messageWrapper = document.createElement("div");
+    messageWrapper.className = "message-wrapper";
+
+    const messageElement = document.createElement("div");
+    messageElement.className = "user-message chat-message";
+    messageElement.textContent = messageText;
+
+    messageWrapper.appendChild(messageElement);
+    chatBody.appendChild(messageWrapper);
+
+    chatInput.value = "";
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    if (messageText.toLowerCase() === "start") {
+      // Logic for starting the conversation or any specific action
+      setTimeout(() => {
+        generateChatbotResponse("Great! Let's begin.");
+      }, 1000);
+    } else if (messageText.toLowerCase() === "not yet") {
+      setTimeout(() => {
+        generateChatbotResponse("No worries, take your time.");
+      }, 1000);
+    }
+  }
+}
+
+function generateChatbotResponse(responseText) {
+  const chatBody = document.getElementById("chatBody");
+
+  const loaderElement = document.createElement("div");
+  loaderElement.className = "loader";
+  loaderElement.innerHTML =
+    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  chatBody.appendChild(loaderElement);
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  setTimeout(function () {
+    chatBody.removeChild(loaderElement); // Remove the loader
+
+    const botMessageWrapper = document.createElement("div");
+    botMessageWrapper.className = "message-wrapper";
+
+    const botMessageElement = document.createElement("div");
+    botMessageElement.className = "chatbot-message chat-message";
+    botMessageElement.textContent = responseText;
+
+    botMessageWrapper.appendChild(botMessageElement);
+    chatBody.appendChild(botMessageWrapper);
+
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
 }
 
 function getCurrentTime() {
