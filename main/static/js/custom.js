@@ -265,9 +265,6 @@ function displayQuestion(questionIndex) {
     removeLoader(document.getElementById("chatBody"));
     generateMessage(currentQuestion, "bot");
 
-    // Save the generated question to the database
-    saveQuestionnaireData(currentQuestion, null, null);
-
     setTimeout(() => {
       displayAnswerOptions(questionIndex);
     }, 500);
@@ -412,18 +409,15 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     ],
   ];
 
-  // Save the selected answer and response to the database
-  saveQuestionnaireData(
-    null,
-    answerText,
-    responses[questionIndex][answerIndex]
-  );
+  const currentResponse = responses[questionIndex][answerIndex];
+
+  saveQuestionnaireData(questions[questionIndex], answerText, currentResponse);
 
   setTimeout(() => {
     showLoader(chatBody);
     setTimeout(() => {
       removeLoader(chatBody);
-      generateMessage(responses[questionIndex][answerIndex], "bot");
+      generateMessage(currentResponse, "bot");
 
       setTimeout(() => {
         displayQuestion(questionIndex + 1);

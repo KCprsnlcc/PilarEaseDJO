@@ -52,9 +52,9 @@ class ChatMessage(models.Model):
 
 class Questionnaire(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    question = models.TextField(null=True, blank=True)
-    answer = models.TextField(null=True, blank=True)
-    response = models.TextField(null=True, blank=True)
+    question = models.TextField(default="No question provided")
+    answer = models.TextField(default="No answer provided")
+    response = models.TextField(default="No response provided")
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
