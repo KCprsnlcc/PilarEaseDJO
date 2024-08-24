@@ -82,11 +82,13 @@ floatingButton.addEventListener("click", function () {
 });
 let lastMessageTime = null;
 let greetingDisplayed = false;
+let currentQuestionIndex = -1;
 
 document
   .getElementById("floatingButton")
   .addEventListener("click", function () {
     document.getElementById("chatPopup").style.display = "block";
+
     const chatBody = document.getElementById("chatBody");
 
     if (!greetingDisplayed) {
@@ -149,9 +151,16 @@ function autoSendMessage(message, optionsWrapper) {
 function sendMessage() {
   const chatInput = document.getElementById("chatInput");
   const chatBody = document.getElementById("chatBody");
-  const messageText = chatInput.value.trim();
+  const messageText = chatInput.value;
 
-  if (messageText !== "") {
+  const optionsWrapper = document.getElementById("dialogOptions");
+  if (optionsWrapper) {
+    optionsWrapper.classList.remove("pop-up");
+    optionsWrapper.classList.add("pop-down");
+    setTimeout(() => optionsWrapper.remove(), 300);
+  }
+
+  if (messageText.trim() !== "") {
     generateMessage(messageText, "user");
 
     fetch("/send_message/", {
@@ -180,27 +189,9 @@ function sendMessage() {
             setTimeout(() => {
               generateMessage("No worries, take your time.", "bot");
             }, 1000);
-          } else {
-            matchAnswerToOptions(messageText);
           }
         }
       });
-    chatInput.value = ""; // Clear the input field after sending
-  }
-}
-
-function matchAnswerToOptions(inputText) {
-  const chatBody = document.getElementById("chatBody");
-  const answersWrapper = document.querySelector(".answers-wrapper");
-
-  if (answersWrapper) {
-    const buttons = answersWrapper.querySelectorAll(".answers-button");
-
-    buttons.forEach((button) => {
-      if (button.textContent.toLowerCase() === inputText.toLowerCase()) {
-        button.click();
-      }
-    });
   }
 }
 
@@ -258,12 +249,12 @@ function displayQuestion(questionIndex) {
     return;
   }
 
-  const currentQuestion = questions[questionIndex];
+  currentQuestionIndex = questionIndex;
 
   showLoader(document.getElementById("chatBody"));
   setTimeout(() => {
     removeLoader(document.getElementById("chatBody"));
-    generateMessage(currentQuestion, "bot");
+    generateMessage(questions[questionIndex], "bot");
 
     setTimeout(() => {
       displayAnswerOptions(questionIndex);
@@ -360,12 +351,12 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     [
       "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
       "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
-      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your well-being.",
+      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
     ],
     [
       "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
       "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
-      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your well-being.",
+      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
     ],
     [
       "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
@@ -393,7 +384,7 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
       "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
     ],
     [
-      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for well-being.",
+      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
       "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
       "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
     ],
@@ -409,15 +400,17 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     ],
   ];
 
-  const currentResponse = responses[questionIndex][answerIndex];
-
-  saveQuestionnaireData(questions[questionIndex], answerText, currentResponse);
-
   setTimeout(() => {
     showLoader(chatBody);
     setTimeout(() => {
       removeLoader(chatBody);
-      generateMessage(currentResponse, "bot");
+      generateMessage(responses[questionIndex][answerIndex], "bot");
+
+      saveToDatabase(
+        currentQuestionIndex,
+        answerText,
+        responses[questionIndex][answerIndex]
+      );
 
       setTimeout(() => {
         displayQuestion(questionIndex + 1);
@@ -426,17 +419,17 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
   }, 1000);
 }
 
-function saveQuestionnaireData(question, answer, response) {
-  fetch("/save_questionnaire_data/", {
+function saveToDatabase(questionIndex, answerText, responseText) {
+  fetch("/save_questionnaire/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
     body: JSON.stringify({
-      question: question,
-      answer: answer,
-      response: response,
+      question_index: questionIndex,
+      answer: answerText || "No answer provided",
+      response: responseText || "No response provided",
     }),
   });
 }
@@ -472,7 +465,7 @@ function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
     const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
+    for (let i = 0; cookies.length; i++) {
       const cookie = cookies[i].trim();
       if (cookie.substring(0, name.length + 1) === name + "=") {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));

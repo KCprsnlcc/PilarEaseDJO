@@ -149,24 +149,41 @@ def submit_referral(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 @csrf_exempt
-def save_questionnaire_data(request):
+def save_questionnaire(request):
     if request.method == "POST":
         data = json.loads(request.body)
-        question = data.get('question')
-        answer = data.get('answer')
-        response = data.get('response')
+        question_index = data.get("question_index")
+        answer = data.get("answer", "No answer provided")
+        response = data.get("response", "No response provided")
 
-        # Save to the Questionnaire model
+        # Define the questions list (ensure it matches the JavaScript)
+        questions = [
+            "What aspects of your academic life cause you the most stress?",
+            "How would you describe your overall emotional state in the past month?",
+            "How comfortable do you feel talking to friends or family about your mental health?",
+            "How frequently do you experience feelings of anxiety or worry related to school?",
+            "How many hours of sleep do you usually get on a school night?",
+            "How confident do you feel in your academic abilities?",
+            "How do you usually feel about changes in your academic or personal life?",
+            "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+            "How motivated do you feel to complete your academic tasks?",
+            "Are you aware of the mental health resources available at your school?",
+        ]
+
+        # Fetch the corresponding question text
+        question_text = questions[question_index]
+
+        # Save the data into the Questionnaire model
         Questionnaire.objects.create(
             user=request.user,
-            question=question,
+            question=question_text,
             answer=answer,
             response=response
         )
 
-        return JsonResponse({'success': True})
+        return JsonResponse({"success": True})
 
-    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    return JsonResponse({"success": False}, status=400)
 
 @csrf_exempt
 def send_message(request):
