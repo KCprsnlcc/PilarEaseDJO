@@ -81,6 +81,7 @@ floatingButton.addEventListener("click", function () {
   }
 });
 let lastMessageTime = null;
+let greetingDisplayed = false; // Flag to track if the greeting has been displayed
 
 document
   .getElementById("floatingButton")
@@ -90,38 +91,44 @@ document
 
     const chatBody = document.getElementById("chatBody");
 
-    // Show the loader
-    const loaderElement = document.createElement("div");
-    loaderElement.className = "loader";
-    loaderElement.innerHTML =
-      '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-    chatBody.appendChild(loaderElement);
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    // Simulate a delay before showing the initial message
-    setTimeout(function () {
-      chatBody.removeChild(loaderElement); // Remove the loader
-
-      // Display the initial greeting message from Piracle
-      const botMessageWrapper = document.createElement("div");
-      botMessageWrapper.className = "message-wrapper";
-
-      const botMessageElement = document.createElement("div");
-      botMessageElement.className = "chatbot-message chat-message";
-      botMessageElement.textContent =
-        "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?";
-
-      // Check if timestamp should be added for the first message
-      addTimestampIfNeeded(chatBody);
-
-      botMessageWrapper.appendChild(botMessageElement);
-      chatBody.appendChild(botMessageWrapper);
-
+    // If the greeting has already been displayed, skip the greeting
+    if (!greetingDisplayed) {
+      // Show the loader
+      const loaderElement = document.createElement("div");
+      loaderElement.className = "loader";
+      loaderElement.innerHTML =
+        '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+      chatBody.appendChild(loaderElement);
       chatBody.scrollTop = chatBody.scrollHeight;
 
-      // Delay before displaying the options
-      setTimeout(displayOptions, 500); // Adjust delay as needed
-    }, 1500); // Delay for loader
+      // Simulate a delay before showing the initial message
+      setTimeout(function () {
+        chatBody.removeChild(loaderElement); // Remove the loader
+
+        // Display the initial greeting message from Piracle
+        const botMessageWrapper = document.createElement("div");
+        botMessageWrapper.className = "message-wrapper";
+
+        const botMessageElement = document.createElement("div");
+        botMessageElement.className = "chatbot-message chat-message";
+        botMessageElement.textContent =
+          "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?";
+
+        // Check if timestamp should be added for the first message
+        addTimestampIfNeeded(chatBody);
+
+        botMessageWrapper.appendChild(botMessageElement);
+        chatBody.appendChild(botMessageWrapper);
+
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        // Delay before displaying the options
+        setTimeout(displayOptions, 500); // Adjust delay as needed
+
+        // Set the greetingDisplayed flag to true
+        greetingDisplayed = true;
+      }, 1500); // Delay for loader
+    }
   });
 
 function displayOptions() {
