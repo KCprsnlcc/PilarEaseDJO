@@ -100,6 +100,9 @@ document
       setTimeout(function () {
         removeLoader(chatBody); // Remove the loader
 
+        // Add the timestamp if needed before generating the first message
+        addTimestampIfNeeded(chatBody);
+
         // Display the initial greeting message from Piracle
         generateMessage(
           "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
@@ -242,9 +245,6 @@ function generateMessage(text, sender) {
   chatBody.appendChild(messageWrapper);
 
   chatBody.scrollTop = chatBody.scrollHeight; // Scroll to the bottom
-
-  // Add timestamp if needed
-  addTimestampIfNeeded(chatBody);
 }
 
 function displayQuestion(questionIndex) {
@@ -468,7 +468,7 @@ function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
     const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
+    for (let i = 0; cookies.length; i++) {
       const cookie = cookies[i].trim();
       // Does this cookie string begin with the name we want?
       if (cookie.substring(0, name.length + 1) === name + "=") {
