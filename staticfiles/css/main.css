@@ -439,53 +439,121 @@ button[type="submit"]:hover {
   margin-bottom: 10px;
 }
 
-/* Timestamp styling */
+/* Timestamp styling with a smooth bouncy animation */
 .session-timestamp {
   font-size: 0.8em;
   color: #999;
   text-align: center;
-  margin: 10px 0;
+  margin-top: 10px;
+  margin-bottom: 15px;
   display: block;
+  clear: both;
+  animation: fadeInTimestamp 0.5s ease-out;
 }
 
-/* Wrapper around message */
+/* Existing styles remain the same */
 .message-wrapper {
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 20px; /* Space between each message */
+  clear: both; /* Ensure that each message wrapper starts on a new line */
 }
 
-/* User message styling */
+@keyframes poptotheleft {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateX(50%);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateX(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateX(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateX(0); /* Final state */
+  }
+}
+
+/* Smooth bouncy pop-in animation for chatbot message (popping to the right) */
+@keyframes poptotheright {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateX(-50%);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateX(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateX(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateX(0); /* Final state */
+  }
+}
+
+/* Smooth bouncy animation for the timestamp */
+@keyframes fadeInTimestamp {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(-10px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0); /* Slight overshoot */
+  }
+  75% {
+    transform: scale(0.98) translateY(0); /* Slight bounce back */
+  }
+  90% {
+    transform: scale(1.02) translateY(0); /* Slight overshoot again */
+  }
+  100% {
+    transform: scale(1) translateY(0); /* Final state */
+  }
+}
+
+/* Apply the pop-in animation for user message */
 .user-message {
   background-color: #0e2326;
   color: #ffffff;
   padding: 10px;
   border-radius: 10px;
   display: inline-block;
-  align-self: flex-end;
-  border: 1px solid #0e2326;
   max-width: 70%;
   text-align: left;
-  margin-left: auto;
+  margin-left: auto; /* Aligns the user message to the right */
   margin-right: 10px;
   float: right;
-  clear: both;
   position: relative;
+  border: 1px solid #0e2326;
+  clear: both; /* Ensure message starts on a new line */
+  animation: poptotheleft 0.5s ease-out; /* Apply the smooth bouncy animation */
 }
 
-/* Chatbot message styling */
+/* Apply the smooth bouncy pop-in animation for chatbot message */
 .chatbot-message {
   background-color: #ffffff;
   color: #0e2326;
   padding: 10px;
   border-radius: 10px;
   display: inline-block;
-  border: 1px solid #0e2326;
   max-width: 70%;
   text-align: left;
+  margin-right: auto;
   margin-left: 10px;
   float: left;
-  clear: both;
   position: relative;
+  border: 1px solid #0e2326;
+  clear: both;
+  animation: poptotheright 0.5s ease-out;
 }
 
 /* Loader animation */
@@ -525,6 +593,99 @@ button[type="submit"]:hover {
   40% {
     transform: scale(1);
   }
+}
+
+.answers-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Align to the right like user messages */
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+.answers-button {
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin: 5px;
+  text-align: left;
+  animation: poptotheleft 0.5s ease-out;
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.answers-button:hover {
+  background-color: #0e2326; /* Change background color on hover */
+  color: #ffffff; /* Change text color on hover */
+  transform: scale(1.1); /* Enlarge the button on hover */
+}
+
+/* Option buttons styling */
+.option-button {
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  margin: 5px;
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.option-button:hover {
+  background-color: #0e2326; /* Change background color on hover */
+  color: #ffffff; /* Change text color on hover */
+  transform: scale(1.1); /* Enlarge the button on hover */
+}
+/* Options wrapper for buttons, positioned like user messages */
+.options-wrapper {
+  display: flex;
+  justify-content: flex-end; /* Align to the right */
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+/* Animation for pop-up and pop-down */
+@keyframes popUp {
+  from {
+    transform: scale(0.5) translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popDown {
+  from {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.5) translateY(100%);
+    opacity: 0;
+  }
+}
+
+.pop-up {
+  animation: popUp 0.3s ease-out;
+}
+
+.pop-down {
+  animation: popDown 0.3s ease-out;
+}
+
+/* Smooth bouncy pop-in animation for chatbot message (popping to the right) */
+.chatbot-message {
+  margin-left: 10px;
+}
+
+/* Smooth bouncy pop-in animation for user message */
+.user-message {
+  margin-right: 10px;
 }
 
 #contactUsModal {
