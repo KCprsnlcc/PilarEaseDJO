@@ -41,6 +41,15 @@ class UserProfile(models.Model):
 
 User = get_user_model()
 
+class ChatMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_bot_message = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
+
 class Status(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)

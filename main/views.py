@@ -17,7 +17,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral
+from .models import Status, Reply, ContactUs, Referral, ChatMessage
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -148,6 +148,36 @@ def submit_referral(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
     
+@csrf_exempt
+def send_chat_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message', '')
+        is_bot_message = data.get('is_bot_message', False)
+
+        if message:
+            chat_message = ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                timestamp=timezone.now()
+            )
+            return JsonResponse({'success': True, 'message_id': chat_message.id})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def get_chat_messages(request):
+    if request.method == 'GET':
+        messages = ChatMessage.objects.all().order_by('timestamp')
+        message_data = [{
+            'id': msg.id,
+            'user': msg.user.username if msg.user else 'Bot',
+            'message': msg.message,
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'is_bot_message': msg.is_bot_message
+        } for msg in messages]
+        return JsonResponse({'messages': message_data})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @login_required
 @require_POST

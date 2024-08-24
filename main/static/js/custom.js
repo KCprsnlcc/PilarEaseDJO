@@ -187,38 +187,48 @@ function sendMessage() {
   }
 
   if (messageText.trim() !== "") {
-    // Check if timestamp should be added for the user's message
-    addTimestampIfNeeded(chatBody);
+    // Send the message to the backend
+    fetch("/send_message/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        message: messageText,
+        is_bot_message: false,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Display the message in the chat
+          const messageWrapper = document.createElement("div");
+          messageWrapper.className = "message-wrapper";
 
-    const messageWrapper = document.createElement("div");
-    messageWrapper.className = "message-wrapper";
+          const messageElement = document.createElement("div");
+          messageElement.className = "user-message chat-message";
+          messageElement.textContent = messageText;
 
-    const messageElement = document.createElement("div");
-    messageElement.className = "user-message chat-message";
-    messageElement.textContent = messageText;
+          messageWrapper.appendChild(messageElement);
+          chatBody.appendChild(messageWrapper);
 
-    messageWrapper.appendChild(messageElement);
-    chatBody.appendChild(messageWrapper);
+          chatInput.value = "";
+          chatBody.scrollTop = chatBody.scrollHeight;
 
-    chatInput.value = "";
-    chatBody.scrollTop = chatBody.scrollHeight;
-
-    if (messageText.toLowerCase() === "start") {
-      // Logic for starting the conversation or any specific action
-      setTimeout(() => {
-        generateChatbotResponse("Great! Let's begin.");
-      }, 1000);
-    } else if (messageText.toLowerCase() === "not yet") {
-      setTimeout(() => {
-        generateChatbotResponse("No worries, take your time.");
-      }, 1000);
-    }
+          // Logic for chatbot response
+          setTimeout(() => {
+            generateChatbotResponse("Thank you for your message.");
+          }, 1000);
+        }
+      });
   }
 }
 
 function generateChatbotResponse(responseText) {
   const chatBody = document.getElementById("chatBody");
 
+  // Show loader
   const loaderElement = document.createElement("div");
   loaderElement.className = "loader";
   loaderElement.innerHTML =
@@ -229,21 +239,36 @@ function generateChatbotResponse(responseText) {
   setTimeout(function () {
     chatBody.removeChild(loaderElement); // Remove the loader
 
-    // Check if timestamp should be added for the chatbot's response
-    addTimestampIfNeeded(chatBody);
+    // Send the bot's message to the backend
+    fetch("/send_message/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        message: responseText,
+        is_bot_message: true,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Display the bot's message in the chat
+          const botMessageWrapper = document.createElement("div");
+          botMessageWrapper.className = "message-wrapper";
 
-    const botMessageWrapper = document.createElement("div");
-    botMessageWrapper.className = "message-wrapper";
+          const botMessageElement = document.createElement("div");
+          botMessageElement.className = "chatbot-message chat-message";
+          botMessageElement.textContent = responseText;
 
-    const botMessageElement = document.createElement("div");
-    botMessageElement.className = "chatbot-message chat-message";
-    botMessageElement.textContent = responseText;
+          botMessageWrapper.appendChild(botMessageElement);
+          chatBody.appendChild(botMessageWrapper);
 
-    botMessageWrapper.appendChild(botMessageElement);
-    chatBody.appendChild(botMessageWrapper);
-
-    chatBody.scrollTop = chatBody.scrollHeight;
-  }, 2000); // Adjust the delay time as necessary to simulate the chatbot typing
+          chatBody.scrollTop = chatBody.scrollHeight;
+        }
+      });
+  }, 2000); // Simulate typing delay
 }
 
 function addTimestampIfNeeded(chatBody) {
