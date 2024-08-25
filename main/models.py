@@ -41,25 +41,15 @@ class UserProfile(models.Model):
 CustomUser = get_user_model()
 
 User = get_user_model()
-
-class ChatMessage(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_bot_message = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
-
-
 class ChatSession(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    session_data = models.JSONField(default=list)  # Set default to an empty list
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    session_data = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
-        return f"Chat session for {self.user.username} at {self.created_at}"
+        return f"ChatSession for {self.user.username} at {self.created_at}"
+
 class Questionnaire(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     question = models.TextField()

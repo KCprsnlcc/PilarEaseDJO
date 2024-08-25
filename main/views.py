@@ -17,7 +17,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, ChatMessage, Questionnaire, ChatSession
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -148,30 +148,29 @@ def submit_referral(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-@login_required
-def chat_view(request):
-    # Get or create a chat session for the user
-    chat_session, created = ChatSession.objects.get_or_create(user=request.user)
-    
-    # Convert the chat session data from JSON to Python objects
-    chat_history = chat_session.session_data if chat_session.session_data else []
-
-    return render(request, 'chat.html', {'chat_history': json.dumps(chat_history)})
-
-@login_required
 @csrf_exempt
 def save_chat_session(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         data = json.loads(request.body)
-        session_data = data.get('session_data', [])
-
-        # Get or create the chat session
-        chat_session, _ = ChatSession.objects.get_or_create(user=request.user)
+        session_data = data.get("session_data", [])
+        
+        chat_session, created = ChatSession.objects.get_or_create(
+            user=request.user
+        )
         chat_session.session_data = session_data
         chat_session.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
 
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
+@csrf_exempt
+def load_chat_session(request):
+    if request.method == "GET" and request.user.is_authenticated:
+        try:
+            chat_session = ChatSession.objects.get(user=request.user)
+            return JsonResponse({"success": True, "session_data": chat_session.session_data})
+        except ChatSession.DoesNotExist:
+            return JsonResponse({"success": False, "session_data": []})
+    return JsonResponse({"success": False, "session_data": []}, status=400)
 
 @csrf_exempt
 def save_questionnaire(request):
@@ -209,57 +208,6 @@ def save_questionnaire(request):
         return JsonResponse({"success": True})
 
     return JsonResponse({"success": False}, status=400)
-
-@csrf_exempt
-def send_message(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        message = data.get('message')
-        is_bot_message = data.get('is_bot_message')
-
-        if message:
-            # Save the message to the database
-            ChatMessage.objects.create(
-                user=request.user if not is_bot_message else None,
-                message=message,
-                is_bot_message=is_bot_message,
-                created_at=timezone.now()
-            )
-            return JsonResponse({'success': True})
-        else:
-            return JsonResponse({'success': False, 'error': 'No message provided'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-@csrf_exempt
-def send_chat_message(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        message = data.get('message', '')
-        is_bot_message = data.get('is_bot_message', False)
-
-        if message:
-            chat_message = ChatMessage.objects.create(
-                user=request.user if not is_bot_message else None,
-                message=message,
-                is_bot_message=is_bot_message,
-                timestamp=timezone.now()
-            )
-            return JsonResponse({'success': True, 'message_id': chat_message.id})
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-
-@csrf_exempt
-def get_chat_messages(request):
-    if request.method == 'GET':
-        messages = ChatMessage.objects.all().order_by('timestamp')
-        message_data = [{
-            'id': msg.id,
-            'user': msg.user.username if msg.user else 'Bot',
-            'message': msg.message,
-            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            'is_bot_message': msg.is_bot_message
-        } for msg in messages]
-        return JsonResponse({'messages': message_data})
-    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @login_required
 @require_POST
