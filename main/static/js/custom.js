@@ -83,8 +83,8 @@ floatingButton.addEventListener("click", function () {
 let lastMessageTime = null;
 let greetingDisplayed = false;
 let currentQuestionIndex = -1;
-let sessionId = null;
 let sessionData = [];
+let sessionId = null;
 
 // Function to load the existing session if available
 function loadChatSession() {
@@ -106,28 +106,30 @@ function loadChatSession() {
 
 function restoreSession() {
   const chatBody = document.getElementById("chatBody");
-  sessionData.forEach((entry) => {
-    if (entry.sender === "timestamp") {
+  let lastMessageType = null;
+
+  sessionData.forEach((message, index) => {
+    if (
+      index > 0 &&
+      sessionData[index - 1].text === message.text &&
+      sessionData[index - 1].sender === message.sender
+    ) {
+      return;
+    }
+
+    if (message.sender === "timestamp") {
       addTimestampIfNeeded(chatBody);
     } else {
-      generateMessage(entry.text, entry.sender);
-      currentQuestionIndex = entry.question_index;
+      generateMessage(message.text, message.sender);
+      lastMessageType = message.sender;
+
+      if (message.sender === "bot" && message.questionIndex !== -1) {
+        currentQuestionIndex = message.questionIndex;
+      }
     }
   });
 
-  const lastEntry = sessionData[sessionData.length - 1];
-  if (lastEntry) {
-    if (
-      lastEntry.sender === "bot" &&
-      lastEntry.text.includes("Welcome to Piracle")
-    ) {
-      setTimeout(displayOptions, 500);
-    } else if (lastEntry.sender === "bot" && currentQuestionIndex >= 0) {
-      setTimeout(() => {
-        displayAnswerOptions(currentQuestionIndex);
-      }, 500);
-    }
-  }
+  checkLatestMessageType(); // Check the latest message type and display options accordingly
 }
 
 // Function to render the saved chat session
@@ -149,59 +151,62 @@ document
   .getElementById("floatingButton")
   .addEventListener("click", function () {
     document.getElementById("chatPopup").style.display = "block";
-    const chatBody = document.getElementById("chatBody");
 
-    if (!greetingDisplayed) {
-      loadChatSession().then(() => {
-        if (sessionData.length === 0) {
-          // No session found, display greeting
-          showLoader(chatBody);
-          setTimeout(() => {
-            removeLoader(chatBody);
-            addTimestampIfNeeded(chatBody);
-            generateMessage(
-              "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
-              "bot"
-            );
-            saveChatSessionData(
-              "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
-              "bot"
-            );
-            setTimeout(displayOptions, 500);
-            greetingDisplayed = true;
-          }, 1500);
-        } else {
-          restoreSession();
-        }
-      });
-    }
+    loadChatSession().then(() => {
+      if (!greetingDisplayed && sessionData.length === 0) {
+        showLoader(chatBody);
+
+        setTimeout(function () {
+          removeLoader(chatBody);
+          addTimestampIfNeeded(chatBody);
+          generateMessage(
+            "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+            "bot"
+          );
+          saveChatSessionData(
+            "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+            "bot"
+          );
+
+          setTimeout(displayOptions, 500);
+          greetingDisplayed = true;
+        }, 1500);
+      } else {
+        restoreSession();
+        checkLatestMessageType(); // Ensure options are shown correctly after restoring session
+      }
+    });
   });
 
 function displayOptions() {
   const chatBody = document.getElementById("chatBody");
-  const optionsWrapper = document.createElement("div");
-  optionsWrapper.className = "message-wrapper options-wrapper pop-up";
-  optionsWrapper.id = "dialogOptions";
 
-  const startButton = document.createElement("button");
-  startButton.className = "option-button";
-  startButton.textContent = "Start";
-  startButton.onclick = function () {
-    autoSendMessage("Start", optionsWrapper);
-  };
+  // Check if options are already present
+  if (!document.getElementById("dialogOptions")) {
+    const optionsWrapper = document.createElement("div");
+    optionsWrapper.className = "message-wrapper options-wrapper pop-up";
+    optionsWrapper.id = "dialogOptions";
 
-  const notYetButton = document.createElement("button");
-  notYetButton.className = "option-button";
-  notYetButton.textContent = "Not Yet";
-  notYetButton.onclick = function () {
-    autoSendMessage("Not Yet", optionsWrapper);
-  };
+    const startButton = document.createElement("button");
+    startButton.className = "option-button";
+    startButton.textContent = "Start";
+    startButton.onclick = function () {
+      autoSendMessage("Start", optionsWrapper);
+    };
 
-  optionsWrapper.appendChild(startButton);
-  optionsWrapper.appendChild(notYetButton);
-  chatBody.appendChild(optionsWrapper);
+    const notYetButton = document.createElement("button");
+    notYetButton.className = "option-button";
+    notYetButton.textContent = "Not Yet";
+    notYetButton.onclick = function () {
+      autoSendMessage("Not Yet", optionsWrapper);
+    };
 
-  chatBody.scrollTop = chatBody.scrollHeight;
+    optionsWrapper.appendChild(startButton);
+    optionsWrapper.appendChild(notYetButton);
+    chatBody.appendChild(optionsWrapper);
+
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
 }
 
 function autoSendMessage(message, optionsWrapper) {
@@ -246,8 +251,8 @@ function sendMessage() {
         saveChatSessionData("No worries, take your time.", "bot");
       }, 1000);
     }
-    chatInput.value = ""; // Clear input field after sending the message
   }
+  chatInput.value = ""; // Clear the input field after sending
 }
 
 function startQuestionnaire() {
@@ -323,6 +328,60 @@ function removeLoader(chatBody) {
   }
 }
 
+function loadSession() {
+  fetch("/load_session/")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        const chatBody = document.getElementById("chatBody");
+        const sessionData = data.session_data;
+
+        sessionData.forEach((message) => {
+          if (message.sender === "timestamp") {
+            addTimestamp(chatBody, message.text);
+          } else {
+            generateMessage(message.text, message.sender);
+          }
+        });
+
+        // Check the last message type and restore options accordingly
+        const lastMessage = sessionData[sessionData.length - 1];
+        if (
+          lastMessage.sender === "bot" &&
+          lastMessage.text.includes("Hello! Welcome to Piracle")
+        ) {
+          setTimeout(displayOptions, 500);
+        } else if (
+          lastMessage.sender === "bot" &&
+          currentQuestionIndex >= 0 &&
+          currentQuestionIndex < questions.length
+        ) {
+          setTimeout(displayAnswerOptions, 500, currentQuestionIndex);
+        }
+      }
+    });
+}
+
+function addTimestamp(chatBody, time) {
+  const sessionTimestamp = document.createElement("div");
+  sessionTimestamp.className = "session-timestamp";
+  sessionTimestamp.textContent = time;
+  chatBody.appendChild(sessionTimestamp);
+}
+
+function saveSession() {
+  fetch("/save_session/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      session_data: sessionData,
+    }),
+  });
+}
+
 function generateMessage(text, sender) {
   const chatBody = document.getElementById("chatBody");
 
@@ -340,6 +399,14 @@ function generateMessage(text, sender) {
   chatBody.appendChild(messageWrapper);
 
   chatBody.scrollTop = chatBody.scrollHeight;
+
+  sessionData.push({
+    text: text,
+    sender: sender,
+    timestamp: new Date().toISOString(),
+  });
+
+  saveSession(); // Save each message to the session
 }
 
 function displayQuestion(questionIndex) {
@@ -376,82 +443,126 @@ function displayQuestion(questionIndex) {
   }, 1500);
 }
 
+// Ensure no duplicate answer options are appended
 function displayAnswerOptions(questionIndex) {
-  const answers = [
-    [
-      "Managing multiple assignments and deadlines.",
-      "Understanding difficult subjects or topics.",
-      "Balancing academics with extracurricular activities.",
-    ],
-    [
-      "Generally positive, with only occasional low moods.",
-      "Mixed, with frequent ups and downs.",
-      "Often stressed or anxious.",
-    ],
-    [
-      "Very comfortable, I often share how I’m feeling.",
-      "Somewhat comfortable, I share occasionally.",
-      "Not comfortable, I usually keep things to myself.",
-    ],
-    [
-      "Almost daily, it’s a constant presence.",
-      "Occasionally, but only around stressful times like exams.",
-      "Rarely, I don’t get anxious easily.",
-    ],
-    [
-      "Less than 6 hours, I often stay up late.",
-      "Between 6 and 8 hours, it varies.",
-      "More than 8 hours, I prioritize my sleep.",
-    ],
-    [
-      "Very confident, I believe in my abilities.",
-      "Somewhat confident, but I have doubts sometimes.",
-      "Not very confident, I often worry about my performance.",
-    ],
-    [
-      "Excited and ready to adapt.",
-      "Nervous but willing to adjust.",
-      "Stressed and resistant to change.",
-    ],
-    [
-      "I create a schedule and stick to it as much as possible.",
-      "I try to balance things, but it’s a challenge.",
-      "I often struggle to manage my time effectively.",
-    ],
-    [
-      "Highly motivated, I’m eager to succeed.",
-      "Moderately motivated, but it depends on the task.",
-      "Often unmotivated, I struggle to find the drive.",
-    ],
-    [
-      "Yes, I know where to find help if I need it.",
-      "Somewhat, I’ve heard of some resources but haven’t explored them.",
-      "No, I’m not aware of the available resources.",
-    ],
-  ];
-
   const chatBody = document.getElementById("chatBody");
 
-  const answersWrapper = document.createElement("div");
-  answersWrapper.className = "message-wrapper answers-wrapper";
+  // Check if answer options are already present
+  if (!document.querySelector(".answers-wrapper")) {
+    const answersWrapper = document.createElement("div");
+    answersWrapper.className = "message-wrapper answers-wrapper";
 
-  answers[questionIndex].forEach((answerText, index) => {
-    const answerButton = document.createElement("button");
-    answerButton.className = "answers-button";
-    answerButton.textContent = answerText;
-    answerButton.onclick = function () {
-      handleAnswerSelection(questionIndex, index, answerText);
-    };
-    answersWrapper.appendChild(answerButton);
-  });
+    const answers = [
+      [
+        "Managing multiple assignments and deadlines.",
+        "Understanding difficult subjects or topics.",
+        "Balancing academics with extracurricular activities.",
+      ],
+      [
+        "Generally positive, with only occasional low moods.",
+        "Mixed, with frequent ups and downs.",
+        "Often stressed or anxious.",
+      ],
+      [
+        "Very comfortable, I often share how I’m feeling.",
+        "Somewhat comfortable, I share occasionally.",
+        "Not comfortable, I usually keep things to myself.",
+      ],
+      [
+        "Almost daily, it’s a constant presence.",
+        "Occasionally, but only around stressful times like exams.",
+        "Rarely, I don’t get anxious easily.",
+      ],
+      [
+        "Less than 6 hours, I often stay up late.",
+        "Between 6 and 8 hours, it varies.",
+        "More than 8 hours, I prioritize my sleep.",
+      ],
+      [
+        "Very confident, I believe in my abilities.",
+        "Somewhat confident, but I have doubts sometimes.",
+        "Not very confident, I often worry about my performance.",
+      ],
+      [
+        "Excited and ready to adapt.",
+        "Nervous but willing to adjust.",
+        "Stressed and resistant to change.",
+      ],
+      [
+        "I create a schedule and stick to it as much as possible.",
+        "I try to balance things, but it’s a challenge.",
+        "I often struggle to manage my time effectively.",
+      ],
+      [
+        "Highly motivated, I’m eager to succeed.",
+        "Moderately motivated, but it depends on the task.",
+        "Often unmotivated, I struggle to find the drive.",
+      ],
+      [
+        "Yes, I know where to find help if I need it.",
+        "Somewhat, I’ve heard of some resources but haven’t explored them.",
+        "No, I’m not aware of the available resources.",
+      ],
+    ];
 
-  chatBody.appendChild(answersWrapper);
-  chatBody.scrollTop = chatBody.scrollHeight;
+    answers[questionIndex].forEach((answerText, index) => {
+      const answerButton = document.createElement("button");
+      answerButton.className = "answers-button";
+      answerButton.textContent = answerText;
+      answerButton.onclick = function () {
+        handleAnswerSelection(questionIndex, index, answerText);
+      };
+      answersWrapper.appendChild(answerButton);
+    });
+
+    chatBody.appendChild(answersWrapper);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+}
+
+function checkLastGeneratedMessage() {
+  const lastMessage = sessionData[sessionData.length - 1];
+
+  // Check if the last message is the greeting message
+  if (
+    lastMessage.text.includes(
+      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
+    ) &&
+    currentQuestionIndex === -1
+  ) {
+    setTimeout(displayOptions, 500);
+  } else {
+    checkLastGeneratedMessage();
+    // Check if the last message is a question and display corresponding answer options
+    const questions = [
+      "What aspects of your academic life cause you the most stress?",
+      "How would you describe your overall emotional state in the past month?",
+      "How comfortable do you feel talking to friends or family about your mental health?",
+      "How frequently do you experience feelings of anxiety or worry related to school?",
+      "How many hours of sleep do you usually get on a school night?",
+      "How confident do you feel in your academic abilities?",
+      "How do you usually feel about changes in your academic or personal life?",
+      "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+      "How motivated do you feel to complete your academic tasks?",
+      "Are you aware of the mental health resources available at your school?",
+    ];
+
+    // Find the question index if the last message matches any question
+    const questionIndex = questions.findIndex((q) => q === lastMessage.text);
+
+    if (questionIndex !== -1) {
+      currentQuestionIndex = questionIndex;
+      setTimeout(() => {
+        displayAnswerOptions(questionIndex);
+      }, 500);
+    }
+  }
 }
 
 function handleAnswerSelection(questionIndex, answerIndex, answerText) {
   const chatBody = document.getElementById("chatBody");
 
+  // Remove the answer options
   const answersWrapper = document.querySelector(".answers-wrapper");
   if (answersWrapper) {
     answersWrapper.classList.remove("pop-up");
@@ -459,9 +570,32 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
     setTimeout(() => answersWrapper.remove(), 300);
   }
 
+  // Display the selected answer as a user message
   generateMessage(answerText, "user");
-  saveChatSessionData(answerText, "user");
 
+  // Predefined responses based on the question and selected answer
+  const responses = getResponses(questionIndex);
+  const selectedResponse = responses[answerIndex];
+
+  setTimeout(() => {
+    showLoader(chatBody);
+    setTimeout(() => {
+      removeLoader(chatBody);
+      // Display the bot's response
+      generateMessage(selectedResponse, "bot");
+
+      // Save the question, selected answer, and response to the database
+      saveToDatabase(questionIndex, answerText, selectedResponse);
+
+      // Proceed to the next question if available
+      setTimeout(() => {
+        displayQuestion(questionIndex + 1);
+      }, 2000);
+    }, 1500);
+  }, 1000);
+}
+
+function getResponses(questionIndex) {
   const responses = [
     [
       "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
@@ -514,31 +648,40 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
       "It’s important to be informed about mental health resources, as they can provide crucial support when needed. Taking the time to learn about them can make a big difference.",
     ],
   ];
+  return responses[questionIndex];
+}
 
-  setTimeout(() => {
-    showLoader(chatBody);
-    setTimeout(() => {
-      removeLoader(chatBody);
-      generateMessage(responses[questionIndex][answerIndex], "bot");
-      saveChatSessionData(responses[questionIndex][answerIndex], "bot");
+function checkLatestMessageType() {
+  if (sessionData.length === 0) return;
 
-      setTimeout(() => {
-        displayQuestion(questionIndex + 1);
-      }, 2000);
-    }, 1500);
-  }, 1000);
+  const lastMessage = sessionData[sessionData.length - 1];
+
+  if (lastMessage.sender === "bot") {
+    // Check if the last message is a greeting
+    if (
+      lastMessage.sender === "bot" &&
+      lastMessage.text.includes("Hello! Welcome to Piracle") &&
+      currentQuestionIndex === -1
+    ) {
+      displayOptions(); // Display Start/Not Yet options
+    }
+    // Check if the last message is a question
+    else if (
+      lastMessage.questionIndex !== null &&
+      lastMessage.questionIndex >= 0
+    ) {
+      displayAnswerOptions(lastMessage.questionIndex); // Display answer options
+    }
+  }
 }
 
 function saveChatSessionData(text, sender) {
-  const chatEntry = {
-    text: text,
-    sender: sender,
-    timestamp: new Date().toISOString(),
-    question_index: currentQuestionIndex,
-  };
-
-  sessionData.push(chatEntry);
-
+  sessionData.push({
+    text,
+    sender,
+    timestamp: getCurrentTime(),
+    questionIndex: currentQuestionIndex,
+  });
   fetch("/save_chat_session/", {
     method: "POST",
     headers: {
@@ -546,12 +689,26 @@ function saveChatSessionData(text, sender) {
       "X-CSRFToken": getCookie("csrftoken"),
     },
     body: JSON.stringify({
+      session_id: sessionId,
       session_data: sessionData,
     }),
+  });
+}
+
+function loadChatSession() {
+  return fetch("/load_chat_session/", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
   })
     .then((response) => response.json())
     .then((data) => {
-      sessionId = data.session_id;
+      if (data.session_data) {
+        sessionId = data.session_id;
+        sessionData = data.session_data;
+      }
     });
 }
 
@@ -559,10 +716,12 @@ function addTimestampIfNeeded(chatBody) {
   const currentTime = new Date();
 
   if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
-    const sessionTimestamp = document.createElement("div");
-    sessionTimestamp.className = "session-timestamp";
-    sessionTimestamp.textContent = getCurrentTime();
-    chatBody.appendChild(sessionTimestamp);
+    addTimestamp(chatBody, getCurrentTime());
+    sessionData.push({
+      text: getCurrentTime(),
+      sender: "timestamp",
+    });
+    saveSession();
   }
 
   lastMessageTime = currentTime;
@@ -575,11 +734,9 @@ function getCurrentTime() {
   const ampm = hours >= 12 ? "PM" : "AM";
 
   hours = hours % 12;
-  hours = hours ? hours : 12;
+  hours = hours ? 12 : 0; // the hour '0' should be '12'
   const strMinutes = minutes < 10 ? "0" + minutes : minutes;
-  const strTime = hours + ":" + strMinutes + " " + ampm;
-
-  return strTime;
+  return hours + ":" + strMinutes + " " + ampm;
 }
 
 function getCookie(name) {
