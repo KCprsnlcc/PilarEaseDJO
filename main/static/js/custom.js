@@ -86,24 +86,6 @@ let currentQuestionIndex = -1;
 let sessionData = [];
 let sessionId = null;
 
-// Function to load the existing session if available
-function loadChatSession() {
-  return fetch("/load_chat_session/", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.session_data) {
-        sessionData = data.session_data;
-        sessionId = data.session_id;
-      }
-    });
-}
-
 function restoreSession() {
   const chatBody = document.getElementById("chatBody");
   let lastMessageType = null;
@@ -181,7 +163,6 @@ document
 function displayOptions() {
   const chatBody = document.getElementById("chatBody");
 
-  // Check if options are already present
   if (!document.getElementById("dialogOptions")) {
     const optionsWrapper = document.createElement("div");
     optionsWrapper.className = "message-wrapper options-wrapper pop-up";
@@ -547,7 +528,6 @@ function checkLastGeneratedMessage() {
       "Are you aware of the mental health resources available at your school?",
     ];
 
-    // Find the question index if the last message matches any question
     const questionIndex = questions.findIndex((q) => q === lastMessage.text);
 
     if (questionIndex !== -1) {
@@ -705,9 +685,9 @@ function loadChatSession() {
   })
     .then((response) => response.json())
     .then((data) => {
-      if (data.session_data) {
-        sessionId = data.session_id;
+      if (data.success && data.session_data) {
         sessionData = data.session_data;
+        sessionId = data.session_id;
       }
     });
 }
