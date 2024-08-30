@@ -104,3 +104,105 @@ for lr, bs, epochs, result in results:
 results_df = pd.DataFrame([(lr, bs, epochs, result) for lr, bs, epochs, result in results],
                           columns=['learning_rate', 'batch_size', 'num_epochs', 'report'])
 results_df.to_csv('fine-tuning-results.csv', index=False)
+
+
+# import torch
+# from transformers import RobertaTokenizer, RobertaForSequenceClassification, Trainer, TrainingArguments, DataCollatorWithPadding
+# from datasets import load_dataset, load_metric
+# from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+# import numpy as np
+
+# # 1. Load and Preprocess Dataset
+# dataset = load_dataset('emotion')
+# train_testvalid = dataset['train'].train_test_split(test_size=0.2)
+# test_valid = train_testvalid['test'].train_test_split(test_size=0.5)
+# train_dataset = train_testvalid['train']
+# valid_dataset = test_valid['train']
+# test_dataset = test_valid['test']
+
+# # 2. Load Pre-trained Model and Tokenizer
+# model_name = "roberta-large"
+# tokenizer = RobertaTokenizer.from_pretrained(model_name)
+# model = RobertaForSequenceClassification.from_pretrained(model_name, num_labels=len(dataset['train'].features['label'].names))
+
+# # 3. Advanced Tokenization with Padding
+# def tokenize_function(examples):
+#     return tokenizer(examples['text'], truncation=True, padding=True, max_length=128)
+
+# train_dataset = train_dataset.map(tokenize_function, batched=True)
+# valid_dataset = valid_dataset.map(tokenize_function, batched=True)
+# test_dataset = test_dataset.map(tokenize_function, batched=True)
+
+# # 4. Data Collator for Dynamic Padding
+# data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+
+# # 5. Fine-Tuning Hyperparameters and Trainer Setup
+# training_args = TrainingArguments(
+#     output_dir='./results',
+#     evaluation_strategy="epoch",
+#     learning_rate=2e-5,
+#     per_device_train_batch_size=8,  # Reduce batch size to fit large model in memory
+#     per_device_eval_batch_size=16,
+#     num_train_epochs=5,  # Reduced number of epochs due to larger model size
+#     weight_decay=0.01,
+#     save_total_limit=3,
+#     load_best_model_at_end=True,
+#     metric_for_best_model="accuracy",
+#     logging_dir='./logs',
+#     logging_steps=10,
+# )
+
+# def compute_metrics(eval_pred):
+#     logits, labels = eval_pred
+#     predictions = np.argmax(logits, axis=-1)
+#     accuracy = accuracy_score(labels, predictions)
+#     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average='weighted')
+#     return {"accuracy": accuracy, "precision": precision, "recall": recall, "f1": f1}
+
+# trainer = Trainer(
+#     model=model,
+#     args=training_args,
+#     train_dataset=train_dataset,
+#     eval_dataset=valid_dataset,
+#     tokenizer=tokenizer,
+#     data_collator=data_collator,
+#     compute_metrics=compute_metrics
+# )
+
+# # 6. Model Training with Early Stopping and Gradient Accumulation
+# trainer.train()
+
+# # 7. Evaluate Model on Test Set
+# eval_results = trainer.evaluate(eval_dataset=test_dataset)
+# print(f"Test Accuracy: {eval_results['eval_accuracy']:.4f}")
+# print(f"Test F1-Score: {eval_results['eval_f1']:.4f}")
+
+# # 8. Post-Processing - Adjust Decision Thresholds for Multi-class Classification
+# def adjust_thresholds(model, eval_dataset, target_f1=0.9):
+#     logits = trainer.predict(eval_dataset).predictions
+#     probabilities = torch.nn.functional.softmax(torch.tensor(logits), dim=-1)
+#     thresholds = np.arange(0.1, 1.0, 0.1)
+#     best_f1 = 0
+#     best_threshold = 0.5
+
+#     for threshold in thresholds:
+#         predictions = (probabilities > threshold).int()
+#         f1 = precision_recall_fscore_support(eval_dataset['label'], predictions.numpy(), average='weighted')[2]
+#         if f1 > best_f1:
+#             best_f1 = f1
+#             best_threshold = threshold
+
+#     return best_threshold, best_f1
+
+# best_threshold, best_f1 = adjust_thresholds(model, test_dataset)
+# print(f"Best Threshold: {best_threshold}, Best F1: {best_f1}")
+
+# # 9. Model Calibration (e.g., Platt Scaling) - Improves Calibration of Probabilities
+# # Placeholder for implementation, Platt scaling usually needs a separate logistic regression step.
+
+# # 10. Save the Fine-Tuned Model and Tokenizer
+# model.save_pretrained('./fine_tuned_roberta_large_model')
+# tokenizer.save_pretrained('./fine_tuned_roberta_large_model')
+
+# # 11. (Optional) Continual Learning - Incorporate Additional Data Over Time
+# # Add new data and incrementally train the model using the trainer instance.
