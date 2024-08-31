@@ -47,6 +47,7 @@ from django.conf import settings
 from django.templatetags.static import static
 from email.mime.image import MIMEImage
 from django.utils.html import strip_tags
+from .tasks import send_password_reset_email
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -106,41 +107,15 @@ def custom_password_reset_view(request):
                 f"/reset/{uid}/{token}/"
             )
 
-            # Render email content
             email_subject = "Password Reset Requested"
             email_html_content = render_to_string("password_reset_email.html", {
                 "user": user,
                 "reset_link": reset_link,
                 "site_name": "PilarEase",
             })
-            email_text_content = strip_tags(email_html_content)
 
-            # Create the email message object
-            email_message = EmailMultiAlternatives(
-                email_subject,
-                email_text_content,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-            )
-            email_message.attach_alternative(email_html_content, "text/html")
+            send_password_reset_email.delay(user.email, email_subject, email_html_content)
 
-            # Attach the images inline
-            logo_path = os.path.join(settings.STATIC_ROOT, 'images/PilarLogo.png')
-            with open(logo_path, 'rb') as logo_file:
-                logo_image = MIMEImage(logo_file.read())
-                logo_image.add_header('Content-ID', '<PilarLogo>')
-                email_message.attach(logo_image)
-
-            ease_logo_path = os.path.join(settings.STATIC_ROOT, 'images/PilarEaseLogo.png')
-            with open(ease_logo_path, 'rb') as ease_logo_file:
-                ease_logo_image = MIMEImage(ease_logo_file.read())
-                ease_logo_image.add_header('Content-ID', '<PilarEaseLogo>')
-                email_message.attach(ease_logo_image)
-
-            # Send the email
-            email_message.send()
-
-            # Store the current time in session to track the cooldown for this email
             request.session[f'last_password_reset_email_{email}'] = str(timezone.now())
 
             return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
