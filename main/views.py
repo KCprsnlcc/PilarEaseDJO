@@ -116,15 +116,16 @@ def custom_password_reset_view(request):
             email_body = render_to_string("password_reset_email.html", {
                 "user": user,
                 "reset_link": reset_link,
-                "site_name": "Your Site Name"
+                "site_name": "PilarEase"
             })
 
             send_mail(
-                email_subject,
-                email_body,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
+    email_subject,
+    email_body,  # This will be used as a fallback if the recipient's email client does not support HTML emails
+    settings.DEFAULT_FROM_EMAIL,
+    [user.email],
+    fail_silently=False,
+    html_message=email_body
             )
 
             # Store the current time in session to track the cooldown for this email
