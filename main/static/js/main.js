@@ -74,6 +74,32 @@ document.addEventListener("DOMContentLoaded", function () {
   let hasNext = true;
   let activeCategory = "recent";
 
+  document.addEventListener("DOMContentLoaded", function () {
+    const rememberMeCheckbox = document.getElementById("rememberMe");
+    const usernameField = document.querySelector('input[name="username"]');
+    const passwordField = document.querySelector('input[name="password"]');
+
+    // Check if credentials are stored
+    if (localStorage.getItem("rememberMe") === "true") {
+      usernameField.value = localStorage.getItem("username");
+      passwordField.value = localStorage.getItem("password");
+      rememberMeCheckbox.checked = true;
+    }
+
+    // Save credentials if "Remember Me" is checked
+    document.getElementById("loginForm").onsubmit = function () {
+      if (rememberMeCheckbox.checked) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("username", usernameField.value);
+        localStorage.setItem("password", passwordField.value);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("username");
+        localStorage.removeItem("password");
+      }
+    };
+  });
+
   // Get the relevant elements
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
   const forgotPasswordModal = document.getElementById("forgotPasswordModal");

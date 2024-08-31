@@ -3161,18 +3161,20 @@ nav.open .nav-content span {
   width: 219px;
   opacity: 1;
   position: absolute;
-  top: 418px;
+  top: 430px;
   left: 327px;
   border: 1px solid rgba(222, 225, 230, 1);
 }
+
 .v53_170 {
   width: 221px;
   opacity: 1;
   position: absolute;
-  top: 418px;
+  top: 430px;
   left: 64px;
   border: 1px solid rgba(222, 225, 230, 1);
 }
+
 .v53_171 {
   width: 200px;
   color: rgba(23, 26, 31, 1);
@@ -3185,11 +3187,12 @@ nav.open .nav-content span {
   opacity: 1;
   text-align: left;
 }
+
 .v53_172 {
   width: 20px;
   color: rgba(144, 149, 160, 1);
   position: absolute;
-  top: 407px;
+  top: 419px;
   left: 296px;
   font-family: Inter;
   font-weight: Regular;
@@ -3345,7 +3348,7 @@ nav.open .nav-content span {
   background: rgba(104, 158, 75, 1);
   opacity: 1;
   position: absolute;
-  top: 347px;
+  top: 342px;
   left: 161px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -3371,8 +3374,9 @@ nav.open .nav-content span {
   width: auto;
   color: rgba(23, 26, 31, 1);
   position: absolute;
-  top: 370px; /* Adjusted for better positioning */
-  left: 161px;
+  top: 399px;
+  margin-top: 10x;
+  left: 326px;
   font-family: Inter, sans-serif;
   font-weight: Regular;
   font-size: 14px;
@@ -3380,6 +3384,85 @@ nav.open .nav-content span {
   text-align: left;
   cursor: pointer;
   text-decoration: none;
+}
+
+.v53_189 {
+  position: absolute;
+  top: 395px;
+  left: 160px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: rgba(23, 26, 31, 1);
+  display: flex;
+  align-items: center;
+}
+
+/* Style for the checkbox */
+.v53_189_checkbox {
+  width: 18px; /* Reduced size */
+  height: 18px; /* Reduced size */
+  appearance: none; /* Remove default checkbox styling */
+  background-color: #ffffff;
+  border: 2px solid #689e4b;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Checkmark styling (using a pseudo-element) */
+.v53_189_checkbox::after {
+  content: "";
+  position: absolute;
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  width: 4px; /* Adjust size for smaller checkbox */
+  height: 8px; /* Adjust size for smaller checkbox */
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) scale(0) rotate(45deg); /* Align to center and scale down */
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Fill animation when checkbox is checked */
+.v53_189_checkbox:checked {
+  background-color: #689e4b;
+  border-color: #689e4b;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Animate the checkmark (fill-in) */
+.v53_189_checkbox:checked::after {
+  transform: translate(-50%, -50%) scale(1) rotate(45deg);
+  opacity: 1;
+  transition: transform 0.3s ease 0.15s, opacity 0.3s ease 0.15s;
+}
+
+/* Animate the fill-out when unchecked */
+.v53_189_checkbox:not(:checked) {
+  background-color: #ffffff;
+  border-color: #689e4b;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Animate the checkmark (fill-out) */
+.v53_189_checkbox:not(:checked)::after {
+  transform: translate(-50%, -50%) scale(0) rotate(45deg);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Optional: Style the label */
+.v53_189_label {
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+/* Checkbox hover effect */
+.v53_189_checkbox:hover {
+  border-color: #557c3b; /* Darker shade of green for hover */
 }
 
 .v53_200 {
