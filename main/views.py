@@ -94,16 +94,13 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
-        last_sent = request.session.get('last_password_reset_email', None)
+        last_sent = request.session.get(f'last_password_reset_email_{email}', None)
 
-        # Check if the last email was sent less than 3 minutes ago
+        # Check if the last email to this address was sent less than 3 minutes ago
         if last_sent:
             last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
             if timezone.now() - last_sent_time < timedelta(minutes=3):
-                return JsonResponse({
-                    "success": False, 
-                    "error": "You can request a new password reset link every 3 minutes."
-                })
+                return JsonResponse({"success": False, "error": "You can request a new password reset link every 3 minutes."})
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -130,19 +127,14 @@ def custom_password_reset_view(request):
                 fail_silently=False,
             )
 
-            # Store the current time in session to track the cooldown
-            request.session['last_password_reset_email'] = str(timezone.now())
+            # Store the current time in session to track the cooldown for this email
+            request.session[f'last_password_reset_email_{email}'] = str(timezone.now())
 
-            return JsonResponse({
-                "success": True, 
-                "message": "Password reset link has been sent to your email."
-            })
+            return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
         except CustomUser.DoesNotExist:
-            return JsonResponse({
-                "success": False, 
-                "error": "No user is associated with this email address."
-            })
+            return JsonResponse({"success": False, "error": "No user is associated with this email address."})
     return render(request, "password_reset_form.html")
+
 def custom_password_reset_done_view(request):
     return render(request, "password_reset_done.html")
 

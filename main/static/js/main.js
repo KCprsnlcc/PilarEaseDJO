@@ -140,6 +140,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "[name=csrfmiddlewaretoken]"
       ).value;
 
+      // Show the loader
+      showForgotPassLoader();
+
       // Disable the button
       submitButton.disabled = true;
 
@@ -154,15 +157,15 @@ document.addEventListener("DOMContentLoaded", function () {
       })
         .then((response) => response.json())
         .then((data) => {
+          // Hide the loader
+          hideForgotPassLoader();
+
           if (data.success) {
-            // Show success dialog with message
             forgotPasswordSuccessBox(data.message);
           } else {
-            // Check if the error is related to cooldown
             if (data.error.includes("3 minutes")) {
               forgotPasswordCooldownBox(data.error);
             } else {
-              // Show error dialog with error message
               forgotPasswordErrorBox(data.error);
             }
           }
@@ -173,6 +176,7 @@ document.addEventListener("DOMContentLoaded", function () {
           }, 3600); // 3000ms for dialog visibility + 300ms for pop-out animation
         })
         .catch((error) => {
+          hideForgotPassLoader(); // Ensure loader is hidden on error
           console.error("Error:", error);
           forgotPasswordErrorBox("An error occurred. Please try again later.");
           setTimeout(() => {
@@ -180,6 +184,14 @@ document.addEventListener("DOMContentLoaded", function () {
           }, 3600);
         });
     });
+
+  function showForgotPassLoader() {
+    document.getElementById("forgotpassOverlay").style.display = "block";
+  }
+
+  function hideForgotPassLoader() {
+    document.getElementById("forgotpassOverlay").style.display = "none";
+  }
 
   // Function to show success dialog with pop-in and pop-out animation
   function forgotPasswordSuccessBox(message) {
