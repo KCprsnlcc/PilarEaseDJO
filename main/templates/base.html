@@ -159,6 +159,7 @@
         <button type="submit" class="v53_186" id="loginButton">
           <span class="v53_187">Login</span>
         </button>
+        <a href="#" id="forgotPasswordLink" class="v53_188">Forgot Password?</a>
       </form>
       <div class="v53_190" id="closeLoginModal">
         <img
@@ -182,6 +183,61 @@
         style="display: none"
       >
         <div id="loginSuccessContent"></div>
+      </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="v53_200 modal" id="forgotPasswordModal" style="display: none">
+      <div class="v53_201"></div>
+      <div class="v53_202"></div>
+      <span class="v53_203">Forgot Your Password?</span>
+      <span class="v53_204">
+        Please enter your registered email address. We will send you a link to
+        reset your password.
+      </span>
+      <form
+        id="forgotPasswordForm"
+        action="{% url 'password_reset' %}"
+        method="post"
+      >
+        {% csrf_token %}
+        <span class="v53_205">Email Address</span>
+        <div class="v53_206">
+          <input
+            type="email"
+            name="email"
+            class="input-field"
+            placeholder="Email Address"
+            required
+          />
+        </div>
+        <button type="submit" class="v53_207">
+          <span class="v53_208">Send Reset Link</span>
+        </button>
+      </form>
+      <div class="v53_209" id="closeForgotPasswordModal">
+        <img
+          src="{% static 'images/close2.png' %}"
+          class="close-button"
+          alt="Close"
+        />
+      </div>
+      <!-- Success Notification Dialog -->
+      <div
+        id="forgotPasswordSuccessBox"
+        class="flat-ui-dialog success"
+        style="display: none"
+      >
+        <div id="forgotPasswordSuccessContent"></div>
+      </div>
+
+      <!-- Error Notification Dialog -->
+      <div
+        id="forgotPasswordErrorBox"
+        class="flat-ui-dialog error"
+        style="display: none"
+      >
+        <div id="forgotPasswordErrorContent"></div>
       </div>
     </div>
 

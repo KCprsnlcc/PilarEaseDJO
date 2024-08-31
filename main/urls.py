@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.home, name='home'),  # Your home view
     path('register/', register_view, name='register'),
     path('login/', login_view, name='login'),
+    path('password-reset/', views.forgot_password, name='password_reset'),
     path('submit_status/', views.submit_status, name='submit_status'),
     path('check_profanity/', views.check_profanity, name='check_profanity'),
     path('get_all_statuses/', views.get_all_statuses, name='get_all_statuses'), 

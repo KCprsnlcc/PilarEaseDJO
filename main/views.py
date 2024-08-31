@@ -34,6 +34,11 @@ from django.shortcuts import render
 from scipy.special import softmax
 from django.db.models import Avg, Count
 from better_profanity import profanity
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -80,6 +85,28 @@ def login_view(request):
 def strip_html_tags(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, '', text)
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            reset_link = request.build_absolute_uri(f'/reset/{uid}/{token}/')
+            
+            # Send reset email
+            subject = 'Password Reset Request'
+            message = render_to_string('password_reset_email.html', {
+                'user': user,
+                'reset_link': reset_link
+            })
+            send_mail(subject, message, 'admin@example.com', [user.email])
+
+            return JsonResponse({'success': True, 'message': 'A password reset link has been sent to your email.'})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'No account found with this email.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request.'})
 
 model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
