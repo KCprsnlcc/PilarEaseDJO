@@ -190,9 +190,6 @@ COMPRESS_URL = STATIC_URL
 COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_OFFLINE = True
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-
 def get_hashed_css_files():
     css_dir = os.path.join(BASE_DIR, 'main', 'static', 'css')
     hashed_files = []
