@@ -88,30 +88,17 @@ let sessionId = null;
 
 function restoreSession() {
   const chatBody = document.getElementById("chatBody");
-  let lastMessageType = null;
-
   sessionData.forEach((message, index) => {
-    if (
-      index > 0 &&
-      sessionData[index - 1].text === message.text &&
-      sessionData[index - 1].sender === message.sender
-    ) {
-      return;
-    }
-
     if (message.sender === "timestamp") {
-      addTimestampIfNeeded(chatBody);
+      addTimestamp(chatBody, message.text);
     } else {
       generateMessage(message.text, message.sender);
-      lastMessageType = message.sender;
-
       if (message.sender === "bot" && message.questionIndex !== -1) {
         currentQuestionIndex = message.questionIndex;
       }
     }
   });
-
-  checkLatestMessageType(); // Check the latest message type and display options accordingly
+  checkLatestMessageType(); // Ensure options are shown correctly after restoring session
 }
 
 // Function to render the saved chat session
@@ -133,36 +120,36 @@ document
   .getElementById("floatingButton")
   .addEventListener("click", function () {
     document.getElementById("chatPopup").style.display = "block";
-
     loadChatSession().then(() => {
       if (!greetingDisplayed && sessionData.length === 0) {
-        showLoader(chatBody);
-
-        setTimeout(function () {
-          removeLoader(chatBody);
-          addTimestampIfNeeded(chatBody);
-          generateMessage(
-            "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
-            "bot"
-          );
-          saveChatSessionData(
-            "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
-            "bot"
-          );
-
-          setTimeout(displayOptions, 500);
-          greetingDisplayed = true;
-        }, 1500);
+        displayGreeting();
       } else {
         restoreSession();
-        checkLatestMessageType(); // Ensure options are shown correctly after restoring session
       }
     });
   });
 
+function displayGreeting() {
+  const chatBody = document.getElementById("chatBody");
+  showLoader(chatBody);
+  setTimeout(function () {
+    removeLoader(chatBody);
+    addTimestampIfNeeded(chatBody);
+    generateMessage(
+      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+      "bot"
+    );
+    saveChatSessionData(
+      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+      "bot"
+    );
+    setTimeout(displayOptions, 500);
+    greetingDisplayed = true;
+  }, 1500);
+}
+
 function displayOptions() {
   const chatBody = document.getElementById("chatBody");
-
   if (!document.getElementById("dialogOptions")) {
     const optionsWrapper = document.createElement("div");
     optionsWrapper.className = "message-wrapper options-wrapper pop-up";
@@ -207,13 +194,6 @@ function sendMessage() {
   const chatBody = document.getElementById("chatBody");
   const messageText = chatInput.value;
 
-  const optionsWrapper = document.getElementById("dialogOptions");
-  if (optionsWrapper) {
-    optionsWrapper.classList.remove("pop-up");
-    optionsWrapper.classList.add("pop-down");
-    setTimeout(() => optionsWrapper.remove(), 300);
-  }
-
   if (messageText.trim() !== "") {
     generateMessage(messageText, "user");
     saveChatSessionData(messageText, "user");
@@ -223,7 +203,7 @@ function sendMessage() {
         showLoader(chatBody);
         setTimeout(() => {
           removeLoader(chatBody);
-          displayQuestion(0);
+          displayQuestion(0); // Start the questionnaire from the first question
         }, 1500);
       }, 1000);
     } else if (messageText.toLowerCase() === "not yet") {
@@ -351,7 +331,20 @@ function addTimestamp(chatBody, time) {
 }
 
 function saveSession() {
-  fetch("/save_session/", {
+  fetch("/save_chat_session/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      session_data: sessionData,
+    }),
+  });
+}
+
+function saveSession() {
+  fetch("/save_chat_session/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -411,7 +404,6 @@ function displayQuestion(questionIndex) {
   }
 
   currentQuestionIndex = questionIndex;
-
   showLoader(document.getElementById("chatBody"));
   setTimeout(() => {
     removeLoader(document.getElementById("chatBody"));
@@ -428,7 +420,6 @@ function displayQuestion(questionIndex) {
 function displayAnswerOptions(questionIndex) {
   const chatBody = document.getElementById("chatBody");
 
-  // Check if answer options are already present
   if (!document.querySelector(".answers-wrapper")) {
     const answersWrapper = document.createElement("div");
     answersWrapper.className = "message-wrapper answers-wrapper";
@@ -568,9 +559,17 @@ function handleAnswerSelection(questionIndex, answerIndex, answerText) {
       saveToDatabase(questionIndex, answerText, selectedResponse);
 
       // Proceed to the next question if available
-      setTimeout(() => {
-        displayQuestion(questionIndex + 1);
-      }, 2000);
+      if (questionIndex < questions.length - 1) {
+        setTimeout(() => {
+          displayQuestion(questionIndex + 1);
+        }, 2000);
+      } else {
+        generateMessage("Thank you for answering all the questions!", "bot");
+        saveChatSessionData(
+          "Thank you for answering all the questions!",
+          "bot"
+        );
+      }
     }, 1500);
   }, 1000);
 }
@@ -636,21 +635,24 @@ function checkLatestMessageType() {
 
   const lastMessage = sessionData[sessionData.length - 1];
 
-  if (lastMessage.sender === "bot") {
-    // Check if the last message is a greeting
-    if (
-      lastMessage.sender === "bot" &&
-      lastMessage.text.includes("Hello! Welcome to Piracle") &&
-      currentQuestionIndex === -1
-    ) {
-      displayOptions(); // Display Start/Not Yet options
-    }
-    // Check if the last message is a question
-    else if (
-      lastMessage.questionIndex !== null &&
-      lastMessage.questionIndex >= 0
-    ) {
-      displayAnswerOptions(lastMessage.questionIndex); // Display answer options
+  if (
+    lastMessage.text.includes(
+      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
+    ) &&
+    currentQuestionIndex === -1
+  ) {
+    setTimeout(displayOptions, 500);
+  } else if (
+    lastMessage.sender === "bot" &&
+    lastMessage.questionIndex !== null
+  ) {
+    if (currentQuestionIndex < questions.length - 1) {
+      setTimeout(() => {
+        displayAnswerOptions(currentQuestionIndex);
+      }, 500);
+    } else {
+      generateMessage("Thank you for answering all the questions!", "bot");
+      saveChatSessionData("Thank you for answering all the questions!", "bot");
     }
   }
 }
@@ -659,20 +661,10 @@ function saveChatSessionData(text, sender) {
   sessionData.push({
     text,
     sender,
-    timestamp: getCurrentTime(),
+    timestamp: new Date().toISOString(),
     questionIndex: currentQuestionIndex,
   });
-  fetch("/save_chat_session/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      session_id: sessionId,
-      session_data: sessionData,
-    }),
-  });
+  saveSession();
 }
 
 function loadChatSession() {
@@ -694,7 +686,6 @@ function loadChatSession() {
 
 function addTimestampIfNeeded(chatBody) {
   const currentTime = new Date();
-
   if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
     addTimestamp(chatBody, getCurrentTime());
     sessionData.push({
@@ -703,7 +694,6 @@ function addTimestampIfNeeded(chatBody) {
     });
     saveSession();
   }
-
   lastMessageTime = currentTime;
 }
 
