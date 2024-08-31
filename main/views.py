@@ -38,7 +38,11 @@ from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_str, force_bytes  # Replace force_text with force_str
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.translation import gettext as _
+from django.contrib.auth import get_user_model
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -86,27 +90,86 @@ def strip_html_tags(text):
     clean = re.compile('<.*?>')
     return re.sub(clean, '', text)
 
-def forgot_password(request):
-    if request.method == 'POST':
+def custom_password_reset_view(request):
+    if request.method == "POST":
         email = request.POST.get('email')
         try:
             user = CustomUser.objects.get(email=email)
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_link = request.build_absolute_uri(f'/reset/{uid}/{token}/')
-            
-            # Send reset email
-            subject = 'Password Reset Request'
-            message = render_to_string('password_reset_email.html', {
-                'user': user,
-                'reset_link': reset_link
-            })
-            send_mail(subject, message, 'admin@example.com', [user.email])
 
-            return JsonResponse({'success': True, 'message': 'A password reset link has been sent to your email.'})
+            reset_link = request.build_absolute_uri(
+                f"/reset/{uid}/{token}/"
+            )
+
+            # Render email content and send the email
+            email_subject = "Password Reset Requested"
+            email_body = render_to_string("password_reset_email.html", {
+                "user": user,
+                "reset_link": reset_link,
+                "site_name": "PilarEase"
+            })
+
+            send_mail(
+                email_subject,
+                email_body,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+
+            return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
         except CustomUser.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'No account found with this email.'})
-    return JsonResponse({'success': False, 'error': 'Invalid request.'})
+            return JsonResponse({"success": False, "error": "No user is associated with this email address."})
+    return render(request, "password_reset_form.html")
+
+def custom_password_reset_done_view(request):
+    return render(request, "password_reset_done.html")
+
+def custom_password_reset_confirm_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))  # Use force_str here
+        user = CustomUser.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            if request.method == "POST":
+                new_password = request.POST.get("new_password")
+                user.set_password(new_password)
+                user.save()
+                return redirect("password_reset_complete")
+            return render(request, "password_reset_confirm.html", {"validlink": True, "user": user})
+        else:
+            return render(request, "password_reset_confirm.html", {"validlink": False})
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "password_reset_confirm.html", {"validlink": False})
+
+def custom_password_reset_complete_view(request):
+    return render(request, "password_reset_complete.html")
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = CustomUser.objects.get(email=email)
+            # Generate reset link
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            current_site = get_current_site(request)
+            domain = current_site.domain
+            reset_link = f"http://{domain}/reset/{uid}/{token}/"
+
+            # Send reset email
+            subject = _('Password Reset Request')
+            message = render_to_string('main/password_reset_email.html', {
+                'user': user,
+                'reset_link': reset_link,
+            })
+            send_mail(subject, message, 'no-reply@gmail.com', [user.email])
+
+            # Return success response
+            return JsonResponse({'success': True})
+        except CustomUser.DoesNotExist:
+            # Return error response
+            return JsonResponse({'success': False, 'error': 'Email not found'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")

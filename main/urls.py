@@ -1,6 +1,16 @@
-from django.urls import path, include
-from main import views  # Adjust this import if your views are in a different app
-from .views import register_view, login_view, logout_view, contact_us_view, get_status, refer_status, save_questionnaire
+from django.urls import path
+from main import views  # Import your views here
+from .views import (
+    register_view, 
+    login_view, 
+    logout_view, 
+    contact_us_view, 
+    get_status, 
+    custom_password_reset_view, 
+    custom_password_reset_done_view,
+    custom_password_reset_confirm_view,
+    custom_password_reset_complete_view
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -8,7 +18,10 @@ urlpatterns = [
     path('', views.home, name='home'),  # Your home view
     path('register/', register_view, name='register'),
     path('login/', login_view, name='login'),
-    path('password-reset/', views.forgot_password, name='password_reset'),
+    path('password-reset/', custom_password_reset_view, name='password_reset'),  # Custom password reset view
+    path('password-reset/done/', custom_password_reset_done_view, name='password_reset_done'),  # Custom password reset done view
+    path('reset/<uidb64>/<token>/', custom_password_reset_confirm_view, name='password_reset_confirm'),  # Custom password reset confirm view
+    path('reset/done/', custom_password_reset_complete_view, name='password_reset_complete'),  # Custom password reset complete view
     path('submit_status/', views.submit_status, name='submit_status'),
     path('check_profanity/', views.check_profanity, name='check_profanity'),
     path('get_all_statuses/', views.get_all_statuses, name='get_all_statuses'), 

@@ -128,61 +128,81 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300); // Duration should match the animation time
     };
   }
-  // Function to display the success notification
-  function forgotPasswordSuccessBox() {
-    const notificationBox = document.getElementById("forgotPasswordSuccessBox");
-    notificationBox.style.display = "block";
-    notificationBox.classList.add("show-modal");
-    setTimeout(() => {
-      notificationBox.classList.add("hide-modal");
-      setTimeout(() => {
-        notificationBox.style.display = "none";
-        notificationBox.classList.remove("hide-modal", "show-modal");
-      }, 300); // Match the duration of your popout animation
-    }, 3000); // How long the notification should stay visible
-  }
-
-  // Function to display the error notification
-  function forgotPasswordErrorBox() {
-    const notificationBox = document.getElementById("forgotPasswordErrorBox");
-    notificationBox.style.display = "block";
-    notificationBox.classList.add("show-modal");
-    setTimeout(() => {
-      notificationBox.classList.add("hide-modal");
-      setTimeout(() => {
-        notificationBox.style.display = "none";
-        notificationBox.classList.remove("hide-modal", "show-modal");
-      }, 300); // Match the duration of your popout animation
-    }, 3000); // How long the notification should stay visible
-  }
-
   document
     .getElementById("forgotPasswordForm")
-    .addEventListener("submit", function (e) {
-      e.preventDefault();
+    .addEventListener("submit", function (event) {
+      event.preventDefault(); // Prevent the default form submission
 
-      const formData = new FormData(this);
+      const emailInput = document.querySelector('input[name="email"]');
+      const email = emailInput.value;
 
-      fetch("{% url 'password_reset' %}", {
+      const csrfToken = document.querySelector(
+        "[name=csrfmiddlewaretoken]"
+      ).value;
+
+      fetch("/password-reset/", {
+        // Use the correct URL path
         method: "POST",
-        body: formData,
         headers: {
-          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
         },
+        body: new URLSearchParams({ email: email }),
       })
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            document.getElementById("forgotPasswordSuccessContent").innerText =
-              data.message;
-            forgotPasswordSuccessBox(); // Call success notification function
+            forgotPasswordSuccessBox(data.message);
           } else {
-            document.getElementById("forgotPasswordErrorContent").innerText =
-              data.error;
-            forgotPasswordErrorBox(); // Call error notification function
+            forgotPasswordErrorBox(data.error);
           }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          forgotPasswordErrorBox("Network error. Please try again.");
         });
     });
+
+  // Function to show success dialog with pop-in and pop-out animation
+  function forgotPasswordSuccessBox(message) {
+    const successBox = document.getElementById("forgotPasswordSuccessBox");
+    document.getElementById("forgotPasswordSuccessContent").innerText = message;
+    successBox.classList.remove("pop-out");
+    successBox.classList.add("pop-in");
+    successBox.style.display = "block";
+
+    setTimeout(() => {
+      successBox.classList.remove("pop-in");
+      successBox.classList.add("pop-out");
+
+      // Hide the dialog and refresh the page
+      setTimeout(() => {
+        successBox.style.display = "none";
+        successBox.classList.remove("pop-in", "pop-out");
+        window.location.reload(); // Refresh the browser
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to show error dialog with pop-in and pop-out animation
+  function forgotPasswordErrorBox(error) {
+    const errorBox = document.getElementById("forgotPasswordErrorBox");
+    document.getElementById("forgotPasswordErrorContent").innerText = error;
+    errorBox.classList.remove("pop-out");
+    errorBox.classList.add("pop-in");
+    errorBox.style.display = "block";
+
+    setTimeout(() => {
+      errorBox.classList.remove("pop-in");
+      errorBox.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorBox.style.display = "none";
+        errorBox.classList.remove("pop-in", "pop-out");
+      }, 300);
+    }, 3000);
+  }
 
   // Show modal when Contact Us button is clicked
   contactUsButton.addEventListener("click", function (event) {
