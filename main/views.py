@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from datetime import timedelta
 from datetime import datetime
 import pytz
 import json
@@ -93,6 +94,17 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
+        last_sent = request.session.get('last_password_reset_email', None)
+
+        # Check if the last email was sent less than 3 minutes ago
+        if last_sent:
+            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
+            if timezone.now() - last_sent_time < timedelta(minutes=3):
+                return JsonResponse({
+                    "success": False, 
+                    "error": "You can request a new password reset link every 3 minutes."
+                })
+
         try:
             user = CustomUser.objects.get(email=email)
             token = default_token_generator.make_token(user)
@@ -107,7 +119,7 @@ def custom_password_reset_view(request):
             email_body = render_to_string("password_reset_email.html", {
                 "user": user,
                 "reset_link": reset_link,
-                "site_name": "PilarEase"
+                "site_name": "Your Site Name"
             })
 
             send_mail(
@@ -118,11 +130,19 @@ def custom_password_reset_view(request):
                 fail_silently=False,
             )
 
-            return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
-        except CustomUser.DoesNotExist:
-            return JsonResponse({"success": False, "error": "No user is associated with this email address."})
-    return render(request, "password_reset_form.html")
+            # Store the current time in session to track the cooldown
+            request.session['last_password_reset_email'] = str(timezone.now())
 
+            return JsonResponse({
+                "success": True, 
+                "message": "Password reset link has been sent to your email."
+            })
+        except CustomUser.DoesNotExist:
+            return JsonResponse({
+                "success": False, 
+                "error": "No user is associated with this email address."
+            })
+    return render(request, "password_reset_form.html")
 def custom_password_reset_done_view(request):
     return render(request, "password_reset_done.html")
 

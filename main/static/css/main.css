@@ -3567,6 +3567,20 @@ nav.open .nav-content span {
   left: 495px;
 }
 
+#forgotPasswordSuccessBox {
+  top: 120px;
+  left: 75px;
+}
+
+#forgotPasswordErrorBox {
+  top: 120px;
+  left: 75px;
+}
+#forgotPasswordCooldownBox {
+  top: 120px;
+  left: 30px;
+}
+
 .v1_118 {
   width: 229px;
   color: rgba(19, 46, 50, 1);

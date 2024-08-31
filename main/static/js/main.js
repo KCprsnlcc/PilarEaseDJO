@@ -135,10 +135,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const emailInput = document.querySelector('input[name="email"]');
       const email = emailInput.value;
-
+      const submitButton = document.querySelector(".v53_207");
       const csrfToken = document.querySelector(
         "[name=csrfmiddlewaretoken]"
       ).value;
+
+      // Disable the button
+      submitButton.disabled = true;
 
       fetch("/password-reset/", {
         // Use the correct URL path
@@ -152,14 +155,29 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
+            // Show success dialog with message
             forgotPasswordSuccessBox(data.message);
           } else {
-            forgotPasswordErrorBox(data.error);
+            // Check if the error is related to cooldown
+            if (data.error.includes("3 minutes")) {
+              forgotPasswordCooldownBox(data.error);
+            } else {
+              // Show error dialog with error message
+              forgotPasswordErrorBox(data.error);
+            }
           }
+
+          // Re-enable the button after the animation finishes
+          setTimeout(() => {
+            submitButton.disabled = false;
+          }, 3600); // 3000ms for dialog visibility + 300ms for pop-out animation
         })
         .catch((error) => {
           console.error("Error:", error);
-          forgotPasswordErrorBox("Network error. Please try again.");
+          forgotPasswordErrorBox("An error occurred. Please try again later.");
+          setTimeout(() => {
+            submitButton.disabled = false;
+          }, 3600);
         });
     });
 
@@ -200,6 +218,27 @@ document.addEventListener("DOMContentLoaded", function () {
       setTimeout(() => {
         errorBox.style.display = "none";
         errorBox.classList.remove("pop-in", "pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to show cooldown notification dialog with pop-in and pop-out animation
+  function forgotPasswordCooldownBox(message) {
+    const cooldownBox = document.getElementById("forgotPasswordCooldownBox");
+    document.getElementById("forgotPasswordCooldownContent").innerText =
+      message;
+    cooldownBox.classList.remove("pop-out");
+    cooldownBox.classList.add("pop-in");
+    cooldownBox.style.display = "block";
+
+    setTimeout(() => {
+      cooldownBox.classList.remove("pop-in");
+      cooldownBox.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        cooldownBox.style.display = "none";
+        cooldownBox.classList.remove("pop-in", "pop-out");
       }, 300);
     }, 3000);
   }
