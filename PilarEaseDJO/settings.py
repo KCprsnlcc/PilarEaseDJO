@@ -139,7 +139,6 @@ EMAIL_HOST_USER = 'pilareasecounseling@gmail.com'
 EMAIL_HOST_PASSWORD = 'jhge mokc nuli ioew'
 DEFAULT_FROM_EMAIL = 'pilareasecounseling@gmail.com'
 
-LOGIN_URL = '/login/'
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
