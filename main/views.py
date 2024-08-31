@@ -18,7 +18,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -35,7 +35,7 @@ from django.shortcuts import render
 from scipy.special import softmax
 from django.db.models import Avg, Count
 from better_profanity import profanity
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
@@ -44,6 +44,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.templatetags.static import static
+from email.mime.image import MIMEImage
+from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
@@ -94,14 +97,6 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
-        last_sent = request.session.get(f'last_password_reset_email_{email}', None)
-
-        # Check if the last email to this address was sent less than 3 minutes ago
-        if last_sent:
-            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
-            if timezone.now() - last_sent_time < timedelta(minutes=3):
-                return JsonResponse({"success": False, "error": "You can request a new password reset link every 3 minutes."})
-
         try:
             user = CustomUser.objects.get(email=email)
             token = default_token_generator.make_token(user)
@@ -111,22 +106,39 @@ def custom_password_reset_view(request):
                 f"/reset/{uid}/{token}/"
             )
 
-            # Render email content and send the email
+            # Render email content
             email_subject = "Password Reset Requested"
-            email_body = render_to_string("password_reset_email.html", {
+            email_html_content = render_to_string("password_reset_email.html", {
                 "user": user,
                 "reset_link": reset_link,
-                "site_name": "PilarEase"
+                "site_name": "PilarEase",
             })
+            email_text_content = strip_tags(email_html_content)
 
-            send_mail(
-    email_subject,
-    email_body,  # This will be used as a fallback if the recipient's email client does not support HTML emails
-    settings.DEFAULT_FROM_EMAIL,
-    [user.email],
-    fail_silently=False,
-    html_message=email_body
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
             )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Attach the images inline
+            logo_path = os.path.join(settings.STATIC_ROOT, 'images/PilarLogo.png')
+            with open(logo_path, 'rb') as logo_file:
+                logo_image = MIMEImage(logo_file.read())
+                logo_image.add_header('Content-ID', '<PilarLogo>')
+                email_message.attach(logo_image)
+
+            ease_logo_path = os.path.join(settings.STATIC_ROOT, 'images/PilarEaseLogo.png')
+            with open(ease_logo_path, 'rb') as ease_logo_file:
+                ease_logo_image = MIMEImage(ease_logo_file.read())
+                ease_logo_image.add_header('Content-ID', '<PilarEaseLogo>')
+                email_message.attach(ease_logo_image)
+
+            # Send the email
+            email_message.send()
 
             # Store the current time in session to track the cooldown for this email
             request.session[f'last_password_reset_email_{email}'] = str(timezone.now())

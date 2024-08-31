@@ -31,6 +31,9 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
+    def get_full_name(self):
+        return self.full_name or self.username   
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
@@ -113,6 +116,8 @@ class ContactUs(models.Model):
     def __str__(self):
         return self.subject
     
+ 
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 

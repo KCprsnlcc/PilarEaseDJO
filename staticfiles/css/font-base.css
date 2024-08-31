@@ -1,0 +1,281 @@
+
+            @font-face {
+                font-family: 'AguafinaScript-Regular';
+                src: url('../fonts/Aguafina_Script/AguafinaScript-Regular.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Black';
+                src: url('../fonts/Epilogue/Epilogue-Black.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-BlackItalic';
+                src: url('../fonts/Epilogue/Epilogue-BlackItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Bold';
+                src: url('../fonts/Epilogue/Epilogue-Bold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-BoldItalic';
+                src: url('../fonts/Epilogue/Epilogue-BoldItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-ExtraBold';
+                src: url('../fonts/Epilogue/Epilogue-ExtraBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-ExtraBoldItalic';
+                src: url('../fonts/Epilogue/Epilogue-ExtraBoldItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-ExtraLight';
+                src: url('../fonts/Epilogue/Epilogue-ExtraLight.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-ExtraLightItalic';
+                src: url('../fonts/Epilogue/Epilogue-ExtraLightItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Italic-VariableFont_wght';
+                src: url('../fonts/Epilogue/Epilogue-Italic-VariableFont_wght.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Italic';
+                src: url('../fonts/Epilogue/Epilogue-Italic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Light';
+                src: url('../fonts/Epilogue/Epilogue-Light.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-LightItalic';
+                src: url('../fonts/Epilogue/Epilogue-LightItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Medium';
+                src: url('../fonts/Epilogue/Epilogue-Medium.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-MediumItalic';
+                src: url('../fonts/Epilogue/Epilogue-MediumItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Regular';
+                src: url('../fonts/Epilogue/Epilogue-Regular.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-SemiBold';
+                src: url('../fonts/Epilogue/Epilogue-SemiBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-SemiBoldItalic';
+                src: url('../fonts/Epilogue/Epilogue-SemiBoldItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-Thin';
+                src: url('../fonts/Epilogue/Epilogue-Thin.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-ThinItalic';
+                src: url('../fonts/Epilogue/Epilogue-ThinItalic.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Epilogue-VariableFont_wght';
+                src: url('../fonts/Epilogue/Epilogue-VariableFont_wght.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Black';
+                src: url('../fonts/Gothic_A1/GothicA1-Black.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Bold';
+                src: url('../fonts/Gothic_A1/GothicA1-Bold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-ExtraBold';
+                src: url('../fonts/Gothic_A1/GothicA1-ExtraBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-ExtraLight';
+                src: url('../fonts/Gothic_A1/GothicA1-ExtraLight.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Light';
+                src: url('../fonts/Gothic_A1/GothicA1-Light.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Medium';
+                src: url('../fonts/Gothic_A1/GothicA1-Medium.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Regular';
+                src: url('../fonts/Gothic_A1/GothicA1-Regular.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-SemiBold';
+                src: url('../fonts/Gothic_A1/GothicA1-SemiBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'GothicA1-Thin';
+                src: url('../fonts/Gothic_A1/GothicA1-Thin.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Black';
+                src: url('../fonts/Inter/Inter-Black.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Bold';
+                src: url('../fonts/Inter/Inter-Bold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-ExtraBold';
+                src: url('../fonts/Inter/Inter-ExtraBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-ExtraLight';
+                src: url('../fonts/Inter/Inter-ExtraLight.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Light';
+                src: url('../fonts/Inter/Inter-Light.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Medium';
+                src: url('../fonts/Inter/Inter-Medium.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Regular';
+                src: url('../fonts/Inter/Inter-Regular.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-SemiBold';
+                src: url('../fonts/Inter/Inter-SemiBold.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-Thin';
+                src: url('../fonts/Inter/Inter-Thin.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
+            @font-face {
+                font-family: 'Inter-VariableFont_slnt,wght';
+                src: url('../fonts/Inter/Inter-VariableFont_slnt,wght.ttf') format('truetype');
+                font-weight: normal;
+                font-style: normal;
+            }
+            
