@@ -61,9 +61,7 @@ document
     const passwordStrengthRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     if (!passwordStrengthRegex.test(newPassword)) {
-      showResetPasswordError(
-        "Use at least 8 characters, with uppercase, lowercase, and a number."
-      );
+      showResetPasswordError("Password doesn't meet the criteria.");
       return;
     }
 
