@@ -97,6 +97,17 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
+        last_sent = request.session.get(f'last_password_reset_email_{email}', None)
+
+        # Check if the last email to this address was sent less than 3 minutes ago
+        if last_sent:
+            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
+            if timezone.now() - last_sent_time < timedelta(minutes=3):
+                return JsonResponse({
+                    "success": False, 
+                    "error": "You can request a new password reset link every 3 minutes."
+                })
+
         try:
             user = CustomUser.objects.get(email=email)
             token = default_token_generator.make_token(user)
@@ -117,9 +128,10 @@ def custom_password_reset_view(request):
             email_message = EmailMultiAlternatives(
                 email_subject,
                 email_text_content,
-                'PilarEase <pilareasecounseling@gmail.com>',
+                'PilarEase <no-reply@pilarease.com>',  # Use a no-reply email address here
                 [user.email],
             )
+            email_message.reply_to = ['support@pilarease.com']
             email_message.attach_alternative(email_html_content, "text/html")
 
             # Send the email
