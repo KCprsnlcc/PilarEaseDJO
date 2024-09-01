@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   // List of random tips
   const tips = [
-    "Use a combination of letters, numbers, and special characters for a strong password.",
+    "Use a combination of letters and numbers for a strong password.",
     "Avoid using the same password for multiple accounts.",
     "Consider using a password manager to store and manage your passwords securely.",
     "Change your passwords regularly, especially for sensitive accounts.",
@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Set interval to change the tip every 3 seconds
   setInterval(displayRandomTip, 3000);
+
   document.querySelectorAll(".curved-line path").forEach(function (path) {
     var controlPointX1 = Math.random() * 50;
     var controlPointY1 = Math.random() * 50;
@@ -58,10 +59,10 @@ document
 
     // Validate password strength
     const passwordStrengthRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
     if (!passwordStrengthRegex.test(newPassword)) {
       showResetPasswordError(
-        "Password must be at least 8 characters long, contain both uppercase and lowercase letters, include at least one numeric digit, and one special character."
+        "Use at least 8 characters, with uppercase, lowercase, and a number."
       );
       return;
     }
@@ -85,7 +86,6 @@ document
     })
       .then((response) => {
         if (response.ok) {
-          // Transition to the password reset complete page with smooth animation
           smoothTransitionToCompletePage();
         } else {
           return response.text().then((text) => {
@@ -96,7 +96,7 @@ document
         }
       })
       .catch((error) => {
-        hideResetPassLoader(); // Ensure loader is hidden on error
+        hideResetPassLoader();
         console.error("Error:", error);
         showResetPasswordError("An error occurred. Please try again later.");
         submitButton.disabled = false;
@@ -122,7 +122,6 @@ function showResetPasswordError(message) {
     errorBox.classList.remove("pop-in");
     errorBox.classList.add("pop-out");
 
-    // Hide the dialog after the animation is done
     setTimeout(() => {
       errorBox.style.display = "none";
       errorBox.classList.remove("pop-in", "pop-out");
