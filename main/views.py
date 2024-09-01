@@ -102,9 +102,7 @@ def custom_password_reset_view(request):
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            reset_link = request.build_absolute_uri(
-                f"/reset/{uid}/{token}/"
-            )
+            reset_link = request.build_absolute_uri(f"/reset/{uid}/{token}/")
 
             # Render email content
             email_subject = "Password Reset Requested"
@@ -119,7 +117,7 @@ def custom_password_reset_view(request):
             email_message = EmailMultiAlternatives(
                 email_subject,
                 email_text_content,
-                settings.DEFAULT_FROM_EMAIL,
+                'PilarEase <pilareasecounseling@gmail.com>',
                 [user.email],
             )
             email_message.attach_alternative(email_html_content, "text/html")
