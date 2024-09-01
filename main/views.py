@@ -38,7 +38,7 @@ from better_profanity import profanity
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
 from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_str, force_bytes  # Replace force_text with force_str
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.translation import gettext as _
@@ -97,8 +97,15 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
-
-
+        last_sent = request.session.get('last_password_reset_email', None)
+        # Check if the last email was sent less than 3 minutes ago
+        if last_sent:
+            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
+            if timezone.now() - last_sent_time < timedelta(minutes=3):
+                return JsonResponse({
+                    "success": False, 
+                    "error": "You can request a new password reset link every 3 minutes."
+                })
         try:
             user = CustomUser.objects.get(email=email)
             token = default_token_generator.make_token(user)
@@ -141,16 +148,25 @@ def custom_password_reset_done_view(request):
 
 def custom_password_reset_confirm_view(request, uidb64, token):
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))  # Decode the uid
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
-        # Check if the token is valid and not expired
         if default_token_generator.check_token(user, token):
             if request.method == "POST":
                 new_password = request.POST.get("new_password")
-                user.set_password(new_password)
-                user.save()
-                return redirect("password_reset_complete")
+                new_password_confirm = request.POST.get("new_password_confirm")
+
+                if new_password and new_password == new_password_confirm:
+                    user.set_password(new_password)
+                    user.save()
+                    return redirect("password_reset_complete")
+                else:
+                    # Handle password mismatch
+                    return render(
+                        request, 
+                        "password_reset_confirm.html", 
+                        {"validlink": True, "user": user, "error": "Passwords do not match."}
+                    )
             return render(request, "password_reset_confirm.html", {"validlink": True, "user": user})
         else:
             return render(request, "password_reset_confirm.html", {"validlink": False})
