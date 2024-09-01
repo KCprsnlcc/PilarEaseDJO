@@ -97,16 +97,7 @@ def strip_html_tags(text):
 def custom_password_reset_view(request):
     if request.method == "POST":
         email = request.POST.get('email')
-        last_sent = request.session.get(f'last_password_reset_email_{email}', None)
 
-        # Check if the last email to this address was sent less than 3 minutes ago
-        if last_sent:
-            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
-            if timezone.now() - last_sent_time < timedelta(minutes=3):
-                return JsonResponse({
-                    "success": False, 
-                    "error": "You can request a new password reset link every 3 minutes."
-                })
 
         try:
             user = CustomUser.objects.get(email=email)
@@ -150,9 +141,10 @@ def custom_password_reset_done_view(request):
 
 def custom_password_reset_confirm_view(request, uidb64, token):
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))  # Use force_str here
+        uid = force_str(urlsafe_base64_decode(uidb64))  # Decode the uid
         user = CustomUser.objects.get(pk=uid)
 
+        # Check if the token is valid and not expired
         if default_token_generator.check_token(user, token):
             if request.method == "POST":
                 new_password = request.POST.get("new_password")
@@ -167,31 +159,6 @@ def custom_password_reset_confirm_view(request, uidb64, token):
 
 def custom_password_reset_complete_view(request):
     return render(request, "password_reset_complete.html")
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        try:
-            user = CustomUser.objects.get(email=email)
-            # Generate reset link
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            current_site = get_current_site(request)
-            domain = current_site.domain
-            reset_link = f"http://{domain}/reset/{uid}/{token}/"
-
-            # Send reset email
-            subject = _('Password Reset Request')
-            message = render_to_string('main/password_reset_email.html', {
-                'user': user,
-                'reset_link': reset_link,
-            })
-            send_mail(subject, message, 'no-reply@gmail.com', [user.email])
-
-            # Return success response
-            return JsonResponse({'success': True})
-        except CustomUser.DoesNotExist:
-            # Return error response
-            return JsonResponse({'success': False, 'error': 'Email not found'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
