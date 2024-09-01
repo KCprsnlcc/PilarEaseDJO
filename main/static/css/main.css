@@ -2901,6 +2901,55 @@ button#generatePassword:hover {
   transition: opacity 0.3s ease;
 }
 
+#loginOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.9
+  ); /* White background with 90% opacity */
+  z-index: 10000;
+  display: none; /* Initially hidden */
+}
+
+#loginLoader {
+  position: absolute;
+  animation: rotate 2s infinite;
+  height: 50px;
+  top: 240px;
+  left: 285px;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  z-index: 10001;
+}
+
+#loginLoader:before,
+#loginLoader:after {
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 20px;
+  width: 20px;
+}
+
+#loginLoader:before {
+  animation: ball1 2s infinite;
+  background-color: #689e4b;
+  box-shadow: 30px 0 0 #0f2326;
+  margin-bottom: 10px;
+}
+
+#loginLoader:after {
+  animation: ball2 2s infinite;
+  background-color: #0f2326;
+  box-shadow: 30px 0 0 #689e4b;
+}
+
 #registerDialogBox,
 #registerSuccessBox {
   top: 310px;
