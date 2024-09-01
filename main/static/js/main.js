@@ -2453,26 +2453,14 @@ document
   .addEventListener("submit", function (event) {
     event.preventDefault();
     const formData = new FormData(this);
-    const submitButton = document.querySelector(".btn");
-
-    // Show the loader and overlay
-    showLoginLoader();
-
-    // Disable the button to prevent multiple submissions
-    submitButton.disabled = true;
-
-    // Validate the form fields (if needed)
     let errorMessage = checkEmptyFields(formData, {
       username: "Username",
       password: "Password",
     });
     if (errorMessage) {
-      hideLoginLoader();
       showError(errorMessage, "login");
-      submitButton.disabled = false;
       return;
     }
-
     fetch(this.action, {
       method: "POST",
       headers: {
@@ -2483,34 +2471,29 @@ document
     })
       .then((response) => response.json())
       .then((data) => {
-        hideLoginLoader();
         if (data.success) {
           showSuccess("Login successful!", "login");
           setTimeout(() => {
             document.getElementById("loginForm").reset();
-            // Redirect or close modal after showing success
-            window.location.href = data.redirect_url;
+            loginModal.classList.add("pop-out");
+            overlay.classList.add("fade-in");
+            setTimeout(() => {
+              loginModal.style.display = "none";
+              overlay.style.display = "none";
+              loginModal.classList.remove("pop-in", "pop-out");
+              overlay.classList.remove("fade-in", "fade-out");
+              window.location.href = data.redirect_url;
+            }, 300);
           }, 1500);
         } else {
           let errorMessage = parseErrorMessages(data.error_message);
           showError(errorMessage, "login");
-          submitButton.disabled = false;
         }
       })
       .catch((error) => {
-        hideLoginLoader();
         showError("An error occurred. Please try again.", "login");
-        submitButton.disabled = false;
       });
   });
-
-function showLoginLoader() {
-  document.getElementById("loginOverlay").style.display = "block";
-}
-
-function hideLoginLoader() {
-  document.getElementById("loginOverlay").style.display = "none";
-}
 
 document.querySelectorAll(".logout-link").forEach((item) => {
   item.addEventListener("click", function (event) {
