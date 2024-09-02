@@ -1,3 +1,7 @@
+@import url("https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Gothic+A1&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Inter&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Epilogue&display=swap");
 * {
   box-sizing: border-box;
 }
@@ -2897,6 +2901,55 @@ button#generatePassword:hover {
   transition: opacity 0.3s ease;
 }
 
+#loginOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.9
+  ); /* White background with 90% opacity */
+  z-index: 10000;
+  display: none; /* Initially hidden */
+}
+
+#loginLoader {
+  position: absolute;
+  animation: rotate 2s infinite;
+  height: 50px;
+  top: 240px;
+  left: 285px;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  z-index: 10001;
+}
+
+#loginLoader:before,
+#loginLoader:after {
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 20px;
+  width: 20px;
+}
+
+#loginLoader:before {
+  animation: ball1 2s infinite;
+  background-color: #689e4b;
+  box-shadow: 30px 0 0 #0f2326;
+  margin-bottom: 10px;
+}
+
+#loginLoader:after {
+  animation: ball2 2s infinite;
+  background-color: #0f2326;
+  box-shadow: 30px 0 0 #689e4b;
+}
+
 #registerDialogBox,
 #registerSuccessBox {
   top: 310px;
@@ -3300,10 +3353,66 @@ nav.open .nav-content span {
   font-size: 14px; /* Match font size */
   color: rgba(23, 26, 31, 1); /* Match text color */
   outline: none; /* Remove default outline */
+  transition: border 0.3s ease, box-shadow 0.3s ease;
 }
 
+.input-tip {
+  position: absolute;
+  top: -25px;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.input-field.valid + .input-tip {
+  background-color: #689e4b; /* Green for valid */
+}
+
+.input-field.invalid + .input-tip {
+  background-color: #e74c3c; /* Red for invalid */
+}
+
+.input-field.valid:focus + .input-tip,
+.input-field.invalid:focus + .input-tip {
+  opacity: 1; /* Show the tip when the field is focused */
+}
+
+.input-field.valid {
+  border: 2px solid #689e4b;
+  box-shadow: 0 0 5px #689e4b;
+}
+
+.input-field.invalid {
+  border: 2px solid #e74c3c;
+  box-shadow: 0 0 5px #e74c3c;
+  animation: vibrate 0.3s ease-in-out;
+}
 .input-field::placeholder {
   color: rgba(188, 193, 202, 1); /* Match placeholder text color */
+}
+
+@keyframes vibrate {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
 }
 
 .v53_182 {

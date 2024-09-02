@@ -1967,7 +1967,6 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.style.display = "block";
   });
 });
-
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");
@@ -1997,7 +1996,7 @@ passwordForm.addEventListener("submit", function (event) {
   const repeatPassword = repeatPasswordInput.value;
 
   if (newPassword !== repeatPassword) {
-    showError("Passwords do not match.");
+    updatepassError("Passwords do not match.");
     return;
   }
 
@@ -2018,16 +2017,16 @@ passwordForm.addEventListener("submit", function (event) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        showSuccess("Password updated successfully!");
+        updatepassSuccess("Password updated successfully!");
         passwordForm.reset();
         updateStrengthBar(0);
       } else {
-        showError("Please check your current password.");
+        updatepassError("Please check your current password.");
       }
     })
     .catch((error) => {
       console.error("Error:", error);
-      showError("Please check your current password.");
+      updatepassError("Please check your current password.");
     });
 });
 
@@ -2056,7 +2055,7 @@ function generateSecurePassword() {
   return password;
 }
 
-function showSuccess(message) {
+function updatepassSuccess(message) {
   const dialogBox = document.getElementById("updatepasssuccess");
   const dialogContent = document.getElementById("updatepasssuccessContent");
   dialogContent.innerHTML = message;
@@ -2070,7 +2069,7 @@ function showSuccess(message) {
   }, 3000);
 }
 
-function showError(message) {
+function updatepassError(message) {
   const dialogBox = document.getElementById("updatepasserror");
   const dialogContent = document.getElementById("updatepasserrorContent");
   dialogContent.innerHTML = message;
@@ -2312,6 +2311,15 @@ function showError(message, type) {
   dialogBox.classList.remove("pop-out");
   dialogBox.classList.add("pop-in");
 
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+
   if (type === "session") {
     overlay.style.display = "flex";
     overlay.classList.add("fade-in");
@@ -2369,6 +2377,10 @@ function showSuccess(message, type) {
     setTimeout(() => {
       successBox.style.display = "none";
       successBox.classList.remove("pop-out");
+      // Wait for the animation to finish before reloading
+      if (type === "login") {
+        window.location.reload();
+      }
     }, 300);
   }, 3000);
 
@@ -2448,53 +2460,120 @@ document
         showError("An error occurred. Please try again.", "register");
       });
   });
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.querySelector('input[name="username"]');
+  const passwordField = document.querySelector('input[name="password"]');
+  const loginButton = document.getElementById("loginButton");
 
-document
-  .getElementById("loginForm")
-  .addEventListener("submit", function (event) {
-    event.preventDefault();
-    const formData = new FormData(this);
-    let errorMessage = checkEmptyFields(formData, {
-      username: "Username",
-      password: "Password",
-    });
-    if (errorMessage) {
-      showError(errorMessage, "login");
-      return;
+  usernameField.addEventListener("input", validateField);
+  passwordField.addEventListener("input", validateField);
+
+  function validateField(event) {
+    const field = event.target;
+    const tipElement = document.getElementById(field.name + "Tip");
+
+    if (field.name === "username" || field.name === "password") {
+      if (field.value.trim() === "") {
+        field.classList.remove("valid");
+        field.classList.add("invalid");
+        tipElement.textContent =
+          field.name.charAt(0).toUpperCase() +
+          field.name.slice(1) +
+          " is required.";
+      } else if (field.name === "password" && field.value.length < 8) {
+        field.classList.remove("valid");
+        field.classList.add("invalid");
+        tipElement.textContent = "Password must be at least 8 characters long.";
+      } else {
+        field.classList.remove("invalid");
+        field.classList.add("valid");
+        tipElement.textContent =
+          field.name.charAt(0).toUpperCase() +
+          field.name.slice(1) +
+          " looks good!";
+      }
     }
-    fetch(this.action, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrftoken,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(formData).toString(),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showSuccess("Login successful!", "login");
-          setTimeout(() => {
-            document.getElementById("loginForm").reset();
-            loginModal.classList.add("pop-out");
-            overlay.classList.add("fade-in");
-            setTimeout(() => {
-              loginModal.style.display = "none";
-              overlay.style.display = "none";
-              loginModal.classList.remove("pop-in", "pop-out");
-              overlay.classList.remove("fade-in", "fade-out");
-              window.location.href = data.redirect_url;
-            }, 300);
-          }, 1500);
-        } else {
-          let errorMessage = parseErrorMessages(data.error_message);
-          showError(errorMessage, "login");
-        }
-      })
-      .catch((error) => {
-        showError("An error occurred. Please try again.", "login");
+
+    // Show the tip when the field is focused
+    if (field === document.activeElement) {
+      tipElement.style.opacity = 1;
+    }
+  }
+
+  document
+    .getElementById("loginForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(this);
+      loginButton.disabled = true; // Disable the button initially
+
+      let errorMessage = checkEmptyFields(formData, {
+        username: "Username",
+        password: "Password",
       });
-  });
+
+      if (errorMessage) {
+        showError(errorMessage, "login");
+        loginButton.disabled = false; // Re-enable if there's an error
+        return;
+      }
+
+      // Show the loader
+      showLoginLoader();
+
+      fetch(this.action, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(formData).toString(),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          hideLoginLoader();
+
+          if (data.success) {
+            showSuccess("Login successful!", "login");
+            setTimeout(() => {
+              document.getElementById("loginForm").reset();
+              loginModal.classList.add("pop-out");
+              overlay.classList.add("fade-in");
+              setTimeout(() => {
+                loginModal.style.display = "none";
+                overlay.style.display = "none";
+                loginModal.classList.remove("pop-in", "pop-out");
+                overlay.classList.remove("fade-in", "fade-out");
+                window.location.href = data.redirect_url;
+              }, 300); // Wait for pop-out animation to complete
+            }, 1500);
+          } else {
+            let errorMessage = parseErrorMessages(data.error_message);
+            showError(errorMessage, "login");
+          }
+        })
+        .catch((error) => {
+          hideLoginLoader();
+          showError("An error occurred. Please try again.", "login");
+        })
+        .finally(() => {
+          setTimeout(() => {
+            loginButton.disabled = false;
+          }, 3600); // Enable button after animations are complete
+        });
+    });
+
+  function showLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "block";
+  }
+
+  function hideLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "none";
+  }
+});
 
 document.querySelectorAll(".logout-link").forEach((item) => {
   item.addEventListener("click", function (event) {

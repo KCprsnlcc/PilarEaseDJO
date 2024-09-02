@@ -2467,6 +2467,8 @@ document
 
     const formData = new FormData(this);
     const loginButton = document.getElementById("loginButton");
+    loginButton.disabled = true; // Disable the button initially
+
     let errorMessage = checkEmptyFields(formData, {
       username: "Username",
       password: "Password",
@@ -2516,6 +2518,7 @@ document
         showError("An error occurred. Please try again.", "login");
       })
       .finally(() => {
+        // Re-enable the button after all animations are done
         setTimeout(() => {
           loginButton.disabled = false;
         }, 3600); // Enable button after animations are complete
