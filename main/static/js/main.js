@@ -2311,6 +2311,15 @@ function showError(message, type) {
   dialogBox.classList.remove("pop-out");
   dialogBox.classList.add("pop-in");
 
+  setTimeout(() => {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+
   if (type === "session") {
     overlay.style.display = "flex";
     overlay.classList.add("fade-in");
@@ -2368,6 +2377,10 @@ function showSuccess(message, type) {
     setTimeout(() => {
       successBox.style.display = "none";
       successBox.classList.remove("pop-out");
+      // Wait for the animation to finish before reloading
+      if (type === "login") {
+        window.location.reload();
+      }
     }, 300);
   }, 3000);
 
@@ -2451,15 +2464,22 @@ document
   .getElementById("loginForm")
   .addEventListener("submit", function (event) {
     event.preventDefault();
+
     const formData = new FormData(this);
+    const loginButton = document.getElementById("loginButton");
     let errorMessage = checkEmptyFields(formData, {
       username: "Username",
       password: "Password",
     });
+
     if (errorMessage) {
       showError(errorMessage, "login");
       return;
     }
+
+    // Show the loader
+    showLoginLoader();
+
     fetch(this.action, {
       method: "POST",
       headers: {
@@ -2470,6 +2490,8 @@ document
     })
       .then((response) => response.json())
       .then((data) => {
+        hideLoginLoader();
+
         if (data.success) {
           showSuccess("Login successful!", "login");
           setTimeout(() => {
@@ -2482,7 +2504,7 @@ document
               loginModal.classList.remove("pop-in", "pop-out");
               overlay.classList.remove("fade-in", "fade-out");
               window.location.href = data.redirect_url;
-            }, 300);
+            }, 300); // Wait for pop-out animation to complete
           }, 1500);
         } else {
           let errorMessage = parseErrorMessages(data.error_message);
@@ -2490,9 +2512,25 @@ document
         }
       })
       .catch((error) => {
+        hideLoginLoader();
         showError("An error occurred. Please try again.", "login");
+      })
+      .finally(() => {
+        setTimeout(() => {
+          loginButton.disabled = false;
+        }, 3600); // Enable button after animations are complete
       });
   });
+
+function showLoginLoader() {
+  const loginOverlay = document.getElementById("loginOverlay");
+  loginOverlay.style.display = "block";
+}
+
+function hideLoginLoader() {
+  const loginOverlay = document.getElementById("loginOverlay");
+  loginOverlay.style.display = "none";
+}
 
 document.querySelectorAll(".logout-link").forEach((item) => {
   item.addEventListener("click", function (event) {
