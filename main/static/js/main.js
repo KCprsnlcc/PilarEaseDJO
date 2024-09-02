@@ -1967,7 +1967,6 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.style.display = "block";
   });
 });
-
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
 const currentPasswordInput = document.getElementById("currentPassword");
@@ -1997,7 +1996,7 @@ passwordForm.addEventListener("submit", function (event) {
   const repeatPassword = repeatPasswordInput.value;
 
   if (newPassword !== repeatPassword) {
-    showError("Passwords do not match.");
+    updatepassError("Passwords do not match.");
     return;
   }
 
@@ -2018,16 +2017,16 @@ passwordForm.addEventListener("submit", function (event) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        showSuccess("Password updated successfully!");
+        updatepassSuccess("Password updated successfully!");
         passwordForm.reset();
         updateStrengthBar(0);
       } else {
-        showError("Please check your current password.");
+        updatepassError("Please check your current password.");
       }
     })
     .catch((error) => {
       console.error("Error:", error);
-      showError("Please check your current password.");
+      updatepassError("Please check your current password.");
     });
 });
 
@@ -2056,7 +2055,7 @@ function generateSecurePassword() {
   return password;
 }
 
-function showSuccess(message) {
+function updatepassSuccess(message) {
   const dialogBox = document.getElementById("updatepasssuccess");
   const dialogContent = document.getElementById("updatepasssuccessContent");
   dialogContent.innerHTML = message;
@@ -2070,7 +2069,7 @@ function showSuccess(message) {
   }, 3000);
 }
 
-function showError(message) {
+function updatepassError(message) {
   const dialogBox = document.getElementById("updatepasserror");
   const dialogContent = document.getElementById("updatepasserrorContent");
   dialogContent.innerHTML = message;
