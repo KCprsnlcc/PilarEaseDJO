@@ -2460,80 +2460,101 @@ document
         showError("An error occurred. Please try again.", "register");
       });
   });
-document
-  .getElementById("loginForm")
-  .addEventListener("submit", function (event) {
-    event.preventDefault();
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.querySelector('input[name="username"]');
+  const passwordField = document.querySelector('input[name="password"]');
+  const loginButton = document.getElementById("loginButton");
 
-    const formData = new FormData(this);
-    const loginButton = document.getElementById("loginButton");
-    loginButton.disabled = true; // Disable the button initially
+  usernameField.addEventListener("input", validateField);
+  passwordField.addEventListener("input", validateField);
 
-    let errorMessage = checkEmptyFields(formData, {
-      username: "Username",
-      password: "Password",
+  document
+    .getElementById("loginForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(this);
+      loginButton.disabled = true; // Disable the button initially
+
+      let errorMessage = checkEmptyFields(formData, {
+        username: "Username",
+        password: "Password",
+      });
+
+      if (errorMessage) {
+        showError(errorMessage, "login");
+        loginButton.disabled = false; // Re-enable if there's an error
+        return;
+      }
+
+      // Show the loader
+      showLoginLoader();
+
+      fetch(this.action, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(formData).toString(),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          hideLoginLoader();
+
+          if (data.success) {
+            showSuccess("Login successful!", "login");
+            setTimeout(() => {
+              document.getElementById("loginForm").reset();
+              loginModal.classList.add("pop-out");
+              overlay.classList.add("fade-in");
+              setTimeout(() => {
+                loginModal.style.display = "none";
+                overlay.style.display = "none";
+                loginModal.classList.remove("pop-in", "pop-out");
+                overlay.classList.remove("fade-in", "fade-out");
+                window.location.href = data.redirect_url;
+              }, 300); // Wait for pop-out animation to complete
+            }, 1500);
+          } else {
+            let errorMessage = parseErrorMessages(data.error_message);
+            showError(errorMessage, "login");
+          }
+        })
+        .catch((error) => {
+          hideLoginLoader();
+          showError("An error occurred. Please try again.", "login");
+        })
+        .finally(() => {
+          setTimeout(() => {
+            loginButton.disabled = false;
+          }, 3600); // Enable button after animations are complete
+        });
     });
 
-    if (errorMessage) {
-      showError(errorMessage, "login");
-      return;
+  function validateField(event) {
+    const field = event.target;
+    if (field.name === "username" || field.name === "password") {
+      if (field.value.trim() === "") {
+        field.classList.remove("valid");
+        field.classList.add("invalid");
+      } else {
+        field.classList.remove("invalid");
+        field.classList.add("valid");
+      }
     }
+  }
 
-    // Show the loader
-    showLoginLoader();
+  function showLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "block";
+  }
 
-    fetch(this.action, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrftoken,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(formData).toString(),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        hideLoginLoader();
-
-        if (data.success) {
-          showSuccess("Login successful!", "login");
-          setTimeout(() => {
-            document.getElementById("loginForm").reset();
-            loginModal.classList.add("pop-out");
-            overlay.classList.add("fade-in");
-            setTimeout(() => {
-              loginModal.style.display = "none";
-              overlay.style.display = "none";
-              loginModal.classList.remove("pop-in", "pop-out");
-              overlay.classList.remove("fade-in", "fade-out");
-              window.location.href = data.redirect_url;
-            }, 300); // Wait for pop-out animation to complete
-          }, 1500);
-        } else {
-          let errorMessage = parseErrorMessages(data.error_message);
-          showError(errorMessage, "login");
-        }
-      })
-      .catch((error) => {
-        hideLoginLoader();
-        showError("An error occurred. Please try again.", "login");
-      })
-      .finally(() => {
-        // Re-enable the button after all animations are done
-        setTimeout(() => {
-          loginButton.disabled = false;
-        }, 3600); // Enable button after animations are complete
-      });
-  });
-
-function showLoginLoader() {
-  const loginOverlay = document.getElementById("loginOverlay");
-  loginOverlay.style.display = "block";
-}
-
-function hideLoginLoader() {
-  const loginOverlay = document.getElementById("loginOverlay");
-  loginOverlay.style.display = "none";
-}
+  function hideLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "none";
+  }
+});
 
 document.querySelectorAll(".logout-link").forEach((item) => {
   item.addEventListener("click", function (event) {
