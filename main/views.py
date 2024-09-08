@@ -84,15 +84,24 @@ def verify_email(request, uidb64, token):
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
+        # Define the token expiration time (60 minutes)
+        token_expiration_time = timedelta(minutes=60)
+
+        # Check if the token is valid and not expired
         if default_token_generator.check_token(user, token):
-            # Mark email as verified
-            user.profile.is_email_verified = True
-            user.profile.save()
-            return JsonResponse({'success': True, 'message': 'Email verified successfully!'})
+            # Calculate the age of the token
+            token_age = timezone.now() - user.date_joined  # Use the `date_joined` or other user-related field
+            if token_age > token_expiration_time:
+                return render(request, "email_verification_complete.html", {"expired": True})
+            else:
+                # Mark the email as verified
+                user.profile.is_email_verified = True
+                user.profile.save()
+                return render(request, "email_verification_complete.html", {"verified": True})
         else:
-            return JsonResponse({'success': False, 'error': 'Invalid or expired token.'})
+            return render(request, "email_verification_complete.html", {"invalid": True})
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        return JsonResponse({'success': False, 'error': 'User not found.'})
+        return render(request, "email_verification_complete.html", {"invalid": True})
     
 def send_verification_email(request):
     if request.method == 'POST':
