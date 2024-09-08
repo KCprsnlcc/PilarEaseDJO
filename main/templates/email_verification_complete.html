@@ -10,6 +10,30 @@
     {% endcompress %}
   </head>
   <body>
+    <svg class="curved-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M0,0 C20,40 40,40 60,0" />
+    </svg>
+    <svg
+      class="curved-line bottom-left"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg
+      class="curved-line bottom-right"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg
+      class="curved-line top-left"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,0 C30,30 70,30 100,0" />
+    </svg>
     <div id="verification-container">
       <header id="verification-header">
         <img
@@ -30,20 +54,21 @@
           Your email has been successfully verified. You can now
           <a href="/" style="color: #689e4b">return to the homepage</a>.
         </p>
-        {% elif expired %}
-        <h2 style="color: #e74c3c">Email Verification Expired</h2>
+        {% elif verified_already %}
+        <h2 style="color: #f39c12">Email Already Verified</h2>
         <p>
-          Unfortunately, the verification link has expired. Please request a new
-          verification link.
+          Your email was already verified. You can now
+          <a href="/" style="color: #689e4b">return to the homepage</a>.
         </p>
         {% elif invalid %}
-        <h2 style="color: #e74c3c">Invalid Verification Link</h2>
+        <h2 style="color: #e74c3c">Invalid or Expired Verification Link</h2>
         <p>
           The verification link is invalid or has already been used. Please
           request a new verification link.
         </p>
         {% endif %}
       </div>
+
       <footer id="verification-footer">
         <p id="randomTip">
           Tip: Keep your contact information up to date for smooth

@@ -81,24 +81,22 @@ def check_email_verification(request):
 
 def verify_email(request, uidb64, token):
     try:
+        # Decode the user ID from the base64-encoded string
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
-        # Define the token expiration time (60 minutes)
-        token_expiration_time = timedelta(minutes=60)
-
-        # Check if the token is valid and not expired
+        # Check if the token is valid and if it has expired using Django's built-in mechanism
         if default_token_generator.check_token(user, token):
-            # Calculate the age of the token
-            token_age = timezone.now() - user.date_joined  # Use the `date_joined` or other user-related field
-            if token_age > token_expiration_time:
-                return render(request, "email_verification_complete.html", {"expired": True})
-            else:
-                # Mark the email as verified
-                user.profile.is_email_verified = True
-                user.profile.save()
-                return render(request, "email_verification_complete.html", {"verified": True})
+            # Check if the user profile is already verified
+            if user.profile.is_email_verified:
+                return render(request, "email_verification_complete.html", {"verified_already": True})
+            
+            # Mark email as verified
+            user.profile.is_email_verified = True
+            user.profile.save()
+            return render(request, "email_verification_complete.html", {"verified": True})
         else:
+            # If token is invalid or expired, show the error message
             return render(request, "email_verification_complete.html", {"invalid": True})
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
         return render(request, "email_verification_complete.html", {"invalid": True})
