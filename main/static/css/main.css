@@ -2497,8 +2497,8 @@ button#generatePassword:hover {
   display: none;
   position: fixed;
   z-index: 1000100;
-  left: 50%;
-  top: 50%;
+  left: 900px;
+  top: 400px;
   transform: translate(-50%, -50%);
   width: 80%;
   max-width: 500px;
