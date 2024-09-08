@@ -2837,11 +2837,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to display random profile tips in the footer
   const tips = [
-    "Use a combination of letters and numbers for a strong password.",
-    "Avoid using the same password for multiple accounts.",
     "Keep your contact information up to date to receive important notifications.",
     "Ensure your academic year level is accurate for proper service.",
     "Use a unique email for secure account recovery.",
+    "Double-check your email address to make sure you receive all communications.",
+    "Keep your profile details updated to avoid disruptions in service.",
+    "Review your academic year information each term to reflect your current status.",
+    "Update your contact number immediately if it changes to avoid missing important updates.",
+    "Ensure your username is unique and easy to remember.",
+    "Always use your most active email for school notifications.",
+    "Verify your contact details regularly to ensure smooth communication.",
   ];
 
   function displayRandomTip() {
