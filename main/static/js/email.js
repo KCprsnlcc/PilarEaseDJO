@@ -1,11 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
   // List of random tips
   const tips = [
-    "Keep your contact information up to date for smooth communication.",
-    "Ensure your email is verified to receive notifications.",
-    "Use a strong password for your account security.",
+    "Keep your contact info up to date for smooth communication.",
+    "Verify your email to receive important notifications.",
+    "Use a strong password for better account security.",
     "Avoid sharing sensitive information online.",
-    "Update your profile regularly to stay connected.",
+    "Update your profile often to stay connected.",
+    "Enable two-factor authentication for added email security.",
+    "Review your email security settings regularly.",
+    "Use a secure email for account recovery.",
+    "Avoid clicking suspicious email links.",
+    "Update your email password regularly to stay secure.",
   ];
 
   // Function to display a random tip with pop-in animation
