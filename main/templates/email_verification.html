@@ -5,49 +5,172 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email Verification</title>
     <style>
-      /* Basic email styling */
+      @font-face {
+        font-family: "Aguafina Script";
+        src: url("https://fonts.gstatic.com/s/aguafinascript/v10/If2RXTr6YS-zF4S-kcSWSVi_szM0W5_p9_o_.woff2")
+          format("woff2");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Inter";
+        src: url("https://fonts.gstatic.com/s/inter/v12/UcCO3FwrCzRtDZSXXZp6Lrv-CA.woff2")
+          format("woff2");
+        font-weight: normal;
+        font-style: normal;
+      }
+
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        color: #333;
+        font-family: "Inter", sans-serif;
+        background-color: rgb(244, 244, 244);
+        color: rgb(15, 35, 38);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
+
       #email-container {
-        background-color: #ffffff;
+        background-color: rgb(255, 255, 255);
         padding: 20px;
-        max-width: 600px;
-        margin: 0 auto;
-        text-align: center;
-        border-radius: 10px;
+        border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        margin: auto;
       }
-      .btn {
+
+      #email-header {
+        background-color: rgb(14, 35, 38);
+        color: rgb(255, 255, 255);
+        padding: 5px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #email-header img {
+        max-height: 50px;
+        display: inline-block;
+      }
+
+      #email-header #title {
+        font-family: "Aguafina Script";
+        font-size: 32px;
+        margin: 0;
+        color: rgba(255, 255, 255, 1);
+        font-weight: normal;
+        opacity: 1;
+        text-align: center;
+      }
+
+      #email-body {
+        margin-top: 20px;
+        color: rgb(15, 35, 38);
+      }
+
+      #email-body a {
+        color: #689e4b;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+      }
+
+      #email-body .btn {
         display: inline-block;
         padding: 12px 24px;
         background-color: #689e4b;
         color: white;
         text-decoration: none;
         border-radius: 5px;
-        font-family: "Arial", sans-serif;
+        font-family: "Inter", sans-serif;
         font-size: 14px;
         font-weight: bold;
+        text-align: center;
         cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
-      .btn:hover {
+
+      #email-body .btn:hover {
         background-color: #3b5a2b;
+      }
+
+      #warning {
+        margin-top: 10px;
+        color: #ff0000;
+        font-weight: bold;
+      }
+
+      #email-footer {
+        margin-top: 30px;
+        font-size: 12px;
+        background-color: #0f2326;
+        padding: 20px;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        color: #ffffff;
+      }
+
+      #email-footer p {
+        margin: 5px 0;
+        color: #ffffff;
+      }
+
+      #email-footer a {
+        color: #689e4b;
+        text-decoration: none;
+      }
+
+      #email-footer a:hover {
+        color: #3b5a2b;
       }
     </style>
   </head>
   <body>
     <div id="email-container">
-      <h2>Email Verification</h2>
-      <p>Hello {{ user.get_full_name }},</p>
-      <p>
-        You're receiving this email because you registered an account at
-        PilarEase. Please click the button below to verify your email address:
-      </p>
-      <a href="{{ verification_link }}" class="btn">Verify Your Email</a>
-      <p>Thank you for using our platform!</p>
-      <p>- The PilarEase Team</p>
+      <div id="email-header">
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarLogo.png"
+          alt="Pilar Logo"
+        />
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarEaseLogo.png"
+          alt="PilarEase Logo"
+        />
+        <span id="title">PilarEase</span>
+      </div>
+      <div id="email-body">
+        <h2 style="color: rgb(104, 158, 75)">Email Verification</h2>
+        <p>Hello {{ user.get_full_name }},</p>
+        <p>
+          Thank you for registering with PilarEase. To complete your
+          registration, please verify your email address by clicking the link
+          below:
+        </p>
+        <a href="{{ verification_link }}" class="btn">Verify Your Email</a>
+        <p id="warning">Note: This link will expire in 60 minutes.</p>
+      </div>
+      <div id="email-footer">
+        <p>Thank you for using our site! The PilarEase Team</p>
+        <p>
+          This is an automated message. Please do not reply to this email. If
+          you need assistance, contact us at
+          <a href="mailto:support@pilarease.com">support@pilarease.com</a>.
+        </p>
+        <p>
+          If you're having trouble clicking the email verification link, copy
+          and paste the URL below into your web browser:
+        </p>
+        <p><a href="{{ verification_link }}">{{ verification_link }}</a></p>
+      </div>
     </div>
   </body>
 </html>
