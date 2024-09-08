@@ -1810,6 +1810,37 @@ button[type="submit"]:hover {
   border: 2px solid #0f2326;
 }
 
+.instructions {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-radius: 10px;
+}
+
+#profile-footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #0e2326;
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+#profile-footer p {
+  margin: 0;
+  color: #0e2326;
+}
+
+#profile-footer a {
+  color: #689e4b;
+  text-decoration: none;
+}
+
+#profile-footer a:hover {
+  color: #3b5a2b;
+}
+
 .modal-content.profile h2 {
   margin-bottom: 20px;
 }
@@ -1897,8 +1928,8 @@ button[type="submit"]:hover {
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: calc(100% - 200px); /* Adjust height to fit within the modal */
-  padding-right: 10px; /* Add padding to avoid overlay on the scrollbar */
+  max-height: calc(100% - 315px); /* Adjust height to allow space for footer */
+  padding-right: 10px;
 }
 
 /* Custom Scrollbar Styles */

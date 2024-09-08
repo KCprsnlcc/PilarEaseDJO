@@ -1938,34 +1938,6 @@ document.addEventListener("DOMContentLoaded", function () {
     avatarModal.classList.add("slide-upSolid");
     avatarModal.classList.remove("slide-downSolid");
   });
-
-  const profileIcon = document.getElementById("profileIcon");
-  const tooltip = document.getElementById("profileTooltip");
-
-  profileIcon.addEventListener("mouseenter", function () {
-    tooltip.classList.remove("popOut");
-    tooltip.classList.add("popIn");
-    tooltip.style.visibility = "visible";
-  });
-
-  profileIcon.addEventListener("mouseleave", function () {
-    tooltip.classList.remove("popIn");
-    tooltip.classList.add("popOut");
-    tooltip.addEventListener(
-      "animationend",
-      function () {
-        tooltip.style.visibility = "hidden";
-      },
-      { once: true }
-    );
-  });
-
-  profileIcon.addEventListener("click", function () {
-    fetchUserProfile();
-    avatarModal.classList.add("slide-downSolid");
-    avatarModal.classList.remove("slide-upSolid");
-    avatarModal.style.display = "block";
-  });
 });
 const newPasswordInput = document.getElementById("newPassword");
 const repeatPasswordInput = document.getElementById("repeatPassword");
@@ -2816,135 +2788,193 @@ document.querySelectorAll(".curved-line path").forEach(function (path) {
   path.setAttribute("d", d);
 });
 
-// Function to fetch user profile data
-function fetchUserProfile() {
-  const avatarLoader = document.getElementById("avatarLoader");
-  const profileIconImage = document.getElementById("profileIconImage");
-  const placeholderUrl = profileIconImage.src;
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.getElementById("username");
+  const contactNumberField = document.getElementById("contact-number");
+  const emailField = document.getElementById("email");
+  const academicYearField = document.getElementById("academic-year");
+  const profileIcon = document.getElementById("profileIcon");
+  const tooltip = document.getElementById("profileTooltip");
+  const avatarModal = document.getElementById("avatarModal");
 
-  // Show loader and hide image
-  avatarLoader.style.display = "block";
-  profileIconImage.style.display = "none";
+  // Tooltip animation for profile icon
+  profileIcon.addEventListener("mouseenter", function () {
+    tooltip.classList.remove("popOut");
+    tooltip.classList.add("popIn");
+    tooltip.style.visibility = "visible";
+  });
 
-  fetch("/get_user_profile/")
-    .then((response) => response.json())
-    .then((data) => {
-      document.getElementById("student-id").value = data.student_id;
-      document.getElementById("username").value = data.username;
-      document.getElementById("full-name").value = data.full_name;
-      document.getElementById("academic-year").value = data.academic_year_level;
-      document.getElementById("contact-number").value = data.contact_number;
-      document.getElementById("email").value = data.email;
-      // Set the profile icon image source
-      profileIconImage.src = data.avatar || placeholderUrl;
-      // Hide loader once image is loaded
-      profileIconImage.onload = () => {
+  profileIcon.addEventListener("mouseleave", function () {
+    tooltip.classList.remove("popIn");
+    tooltip.classList.add("popOut");
+    tooltip.addEventListener(
+      "animationend",
+      function () {
+        tooltip.style.visibility = "hidden";
+      },
+      { once: true }
+    );
+  });
+
+  // Redirect to avatar modal on profile icon click
+  profileIcon.addEventListener("click", function () {
+    avatarModal.classList.add("slide-downSolid");
+    avatarModal.classList.remove("slide-upSolid");
+    avatarModal.style.display = "block";
+  });
+
+  // Fetch user profile when opening the profile modal
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+
+  // Avatar refresh button logic
+  const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
+  refreshAvatarBtn.addEventListener("click", function () {
+    fetchUserProfile();
+  });
+
+  // Function to display random profile tips in the footer
+  const tips = [
+    "Use a combination of letters and numbers for a strong password.",
+    "Avoid using the same password for multiple accounts.",
+    "Keep your contact information up to date to receive important notifications.",
+    "Ensure your academic year level is accurate for proper service.",
+    "Use a unique email for secure account recovery.",
+  ];
+
+  function displayRandomTip() {
+    const randomIndex = Math.floor(Math.random() * tips.length);
+    const randomTipElement = document.getElementById("randomTip");
+    randomTipElement.classList.remove("pop-in");
+
+    setTimeout(() => {
+      randomTipElement.innerText = `Tip: ${tips[randomIndex]}`;
+      randomTipElement.classList.add("pop-in");
+    }, 10);
+  }
+
+  setInterval(displayRandomTip, 5000);
+
+  // Fetch user profile data
+  function fetchUserProfile() {
+    const avatarLoader = document.getElementById("avatarLoader");
+    const profileIconImage = document.getElementById("profileIconImage");
+    const placeholderUrl = profileIconImage.src;
+
+    // Show loader and hide image
+    avatarLoader.style.display = "block";
+    profileIconImage.style.display = "none";
+
+    fetch("/get_user_profile/")
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("student-id").value = data.student_id;
+        document.getElementById("username").value = data.username;
+        document.getElementById("full-name").value = data.full_name;
+        document.getElementById("academic-year").value =
+          data.academic_year_level;
+        document.getElementById("contact-number").value = data.contact_number;
+        document.getElementById("email").value = data.email;
+
+        // Set the profile icon image source
+        profileIconImage.src = data.avatar || placeholderUrl;
+        profileIconImage.onload = () => {
+          avatarLoader.style.display = "none";
+          profileIconImage.style.display = "block";
+        };
+      })
+      .catch((error) => {
+        console.error("", error);
         avatarLoader.style.display = "none";
         profileIconImage.style.display = "block";
-      };
+      });
+  }
+
+  // Show profile success or error dialogs
+  function showProfileSuccess(message) {
+    const dialogBox = document.getElementById("profileSuccessDialog");
+    const dialogContent = document.getElementById("profileSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  function showProfileError(message) {
+    const dialogBox = document.getElementById("profileErrorDialog");
+    const dialogContent = document.getElementById("profileErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to update user profile
+  function updateUserProfile(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const contactNumber = document.getElementById("contact-number").value;
+    const email = document.getElementById("email").value;
+    const academicYear = document.getElementById("academic-year").value;
+
+    fetch("/update_user_profile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        username: username,
+        contact_number: contactNumber,
+        email: email,
+        academic_year_level: academicYear,
+      }),
     })
-    .catch((error) => {
-      console.error("", error);
-      // Hide loader in case of error
-      avatarLoader.style.display = "none";
-      profileIconImage.style.display = "block";
-    });
-}
-// Function to show success dialog
-function showProfileSuccess(message) {
-  const dialogBox = document.getElementById("profileSuccessDialog");
-  const dialogContent = document.getElementById("profileSuccessContent");
-  dialogContent.innerHTML = message;
-  dialogBox.style.display = "block";
-  dialogBox.classList.remove("pop-out");
-  dialogBox.classList.add("pop-in");
-
-  setTimeout(() => {
-    dialogBox.classList.remove("pop-in");
-    dialogBox.classList.add("pop-out");
-    setTimeout(() => {
-      dialogBox.style.display = "none";
-      dialogBox.classList.remove("pop-out");
-    }, 300);
-  }, 3000);
-}
-
-// Function to show error dialog
-function showProfileError(message) {
-  const dialogBox = document.getElementById("profileErrorDialog");
-  const dialogContent = document.getElementById("profileErrorContent");
-  dialogContent.innerHTML = message;
-  dialogBox.style.display = "block";
-  dialogBox.classList.remove("pop-out");
-  dialogBox.classList.add("pop-in");
-
-  setTimeout(() => {
-    dialogBox.classList.remove("pop-in");
-    dialogBox.classList.add("pop-out");
-    setTimeout(() => {
-      dialogBox.style.display = "none";
-      dialogBox.classList.remove("pop-out");
-    }, 300);
-  }, 3000);
-}
-document.getElementById("profileLink").addEventListener("click", function () {
-  fetchUserProfile();
-  profileModal.style.display = "block";
-});
-const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
-refreshAvatarBtn.addEventListener("click", function () {
-  fetchUserProfile();
-});
-
-// Function to update user profile data
-function updateUserProfile(event) {
-  event.preventDefault(); // Prevent the form from submitting in the traditional way
-
-  const username = document.getElementById("username").value;
-  const contactNumber = document.getElementById("contact-number").value;
-  const email = document.getElementById("email").value;
-  const academicYear = document.getElementById("academic-year").value;
-
-  fetch("/update_user_profile/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token
-    },
-    body: JSON.stringify({
-      username: username,
-      contact_number: contactNumber,
-      email: email,
-      academic_year_level: academicYear,
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        showProfileSuccess("Profile updated successfully!");
-      } else {
-        // Check for specific errors
-        if (data.errors.username) {
-          showProfileError(data.errors.username);
-        } else if (data.errors.email) {
-          showProfileError(data.errors.email);
-        } else if (data.errors.password) {
-          showProfileError(data.errors.password);
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showProfileSuccess("Profile updated successfully!");
         } else {
-          showProfileError("Error updating profile. Please try again.");
+          showProfileError(data.errors || "Error updating profile.");
         }
-      }
-    })
-    .catch((error) => {
-      console.error("", error);
-      showProfileError("Error updating profile. Please try again.");
-    });
-}
+      })
+      .catch((error) => {
+        console.error("", error);
+        showProfileError("Error updating profile. Please try again.");
+      });
+  }
 
-document
-  .getElementById("profileForm")
-  .addEventListener("submit", updateUserProfile);
+  document
+    .getElementById("profileForm")
+    .addEventListener("submit", updateUserProfile);
 
+  // Open modal and fetch profile data
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+});
 const notificationButton = document.getElementById("notificationButton");
 const notificationList = document.getElementById("notificationList");
 const notificationCount = document.getElementById("notificationCount");
