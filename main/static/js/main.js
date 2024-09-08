@@ -1779,6 +1779,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Event listener for cropping the image
   cropImageBtn.addEventListener("click", function () {
     if (cropper) {
       cropper.getCroppedCanvas().toBlob((blob) => {
@@ -1803,7 +1804,10 @@ document.addEventListener("DOMContentLoaded", function () {
           .then((data) => {
             if (data.success) {
               showNotificationSuccess("Avatar updated successfully!");
+              // Update the current avatar in the profile immediately
               document.getElementById("currentAvatar").src = data.avatar_url;
+              // Optionally, if you have a profile icon in the header or other parts
+              document.getElementById("profileIconImage").src = data.avatar_url;
             } else {
               showNotificationError("" + (data.errors || "Unknown error"));
             }
@@ -1818,6 +1822,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Event listener for saving the selected avatar
   saveAvatarBtn.addEventListener("click", function () {
     if (selectedAvatar) {
       fetch(selectedAvatar)
@@ -1844,7 +1849,11 @@ document.addEventListener("DOMContentLoaded", function () {
             .then((data) => {
               if (data.success) {
                 showNotificationSuccess("Avatar updated successfully!");
+                // Update the current avatar in the profile immediately
                 document.getElementById("currentAvatar").src = data.avatar_url;
+                // Optionally, if you have a profile icon in the header or other parts
+                document.getElementById("profileIconImage").src =
+                  data.avatar_url;
               } else {
                 showNotificationError("" + (data.errors || "Unknown error"));
               }
