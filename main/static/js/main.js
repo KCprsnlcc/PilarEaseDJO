@@ -2465,9 +2465,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const passwordField = document.querySelector('input[name="password"]');
   const loginButton = document.getElementById("loginButton");
 
+  // Real-time validation on input
   usernameField.addEventListener("input", validateField);
   passwordField.addEventListener("input", validateField);
 
+  // Form submit event
   document
     .getElementById("loginForm")
     .addEventListener("submit", function (event) {
@@ -2476,12 +2478,16 @@ document.addEventListener("DOMContentLoaded", function () {
       const formData = new FormData(this);
       loginButton.disabled = true; // Disable the button initially
 
+      // Check if fields are empty
       let errorMessage = checkEmptyFields(formData, {
         username: "Username",
         password: "Password",
       });
 
+      // If there is an error, show it and validate fields
       if (errorMessage) {
+        validateFieldOnSubmit(usernameField);
+        validateFieldOnSubmit(passwordField);
         showError(errorMessage, "login");
         loginButton.disabled = false; // Re-enable if there's an error
         return;
@@ -2532,24 +2538,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+  // Real-time validation function
   function validateField(event) {
     const field = event.target;
-    if (field.name === "username" || field.name === "password") {
-      if (field.value.trim() === "") {
-        field.classList.remove("valid");
-        field.classList.add("invalid");
-      } else {
-        field.classList.remove("invalid");
-        field.classList.add("valid");
-      }
+    validateFieldStatus(field);
+  }
+
+  // Field validation function
+  function validateFieldStatus(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
     }
   }
 
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Show loader
   function showLoginLoader() {
     const loginOverlay = document.getElementById("loginOverlay");
     loginOverlay.style.display = "block";
   }
 
+  // Hide loader
   function hideLoginLoader() {
     const loginOverlay = document.getElementById("loginOverlay");
     loginOverlay.style.display = "none";
