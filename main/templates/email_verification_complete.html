@@ -5,7 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email Verification Complete</title>
+    {% compress css %}
     <link rel="stylesheet" href="{% static 'css/credential.css' %}?v=1.0" />
+    {% endcompress %}
   </head>
   <body>
     <div id="verification-container">
@@ -42,15 +44,10 @@
         </p>
         {% endif %}
       </div>
-
       <footer id="verification-footer">
         <p id="randomTip">
           Tip: Keep your contact information up to date for smooth
           communication.
-        </p>
-        <p>
-          If you need assistance, contact us at
-          <a href="mailto:support@pilarease.com">support@pilarease.com</a>.
         </p>
       </footer>
     </div>
