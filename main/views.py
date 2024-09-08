@@ -72,6 +72,27 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
+def check_email_verification(request):
+    # Logic to check if the user's email is verified
+    user = request.user
+    is_verified = user.profile.is_email_verified
+    return JsonResponse({'is_verified': is_verified})
+
+def send_verification_email(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        # Logic to send the verification email (simplified)
+        send_mail(
+            'Verify your email',
+            'Click the link to verify your email: http://example.com/verify/',
+            'from@example.com',
+            [email],
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
 def login_view(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)

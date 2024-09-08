@@ -671,13 +671,21 @@
       placeholder="ex. KCprsnlcc"
     />
 
-    <label for="email">Email</label>
-    <input
-      type="email"
-      id="email"
-      name="email"
-      placeholder="ex. kcpersonalacc@gmail.com"
-    />
+<label for="email">Email</label>
+<div class="email-container">
+  <input
+    type="email"
+    id="email"
+    name="email"
+    placeholder="ex. kcpersonalacc@gmail.com"
+  />
+  <button type="button" id="verifyEmailBtn" class="verify-btn">
+    Verify
+  </button>
+  <span id="emailVerifiedLabel" class="verified-label" style="display: none;">
+    Verified
+  </span>
+</div>
 
     <label for="academic-year">Academic Year Level</label>
     <input

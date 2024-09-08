@@ -2988,6 +2988,62 @@ document.addEventListener("DOMContentLoaded", function () {
     fetchUserProfile();
     profileModal.style.display = "block";
   });
+  const verifyEmailBtn = document.getElementById("verifyEmailBtn");
+  const emailVerifiedLabel = document.getElementById("emailVerifiedLabel");
+
+  // Function to check if the email is verified and update the UI accordingly
+  function checkEmailVerificationStatus() {
+    // Fetch user email verification status from the backend
+    fetch("/check_email_verification/")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.is_verified) {
+          // Hide verify button, show "Verified" label
+          verifyEmailBtn.style.display = "none";
+          emailVerifiedLabel.style.display = "inline";
+        } else {
+          // Show verify button, hide "Verified" label
+          verifyEmailBtn.style.display = "inline";
+          emailVerifiedLabel.style.display = "none";
+        }
+      })
+      .catch((error) => {
+        console.error("Error checking email verification:", error);
+      });
+  }
+
+  // Function to send a verification email
+  verifyEmailBtn.addEventListener("click", function () {
+    const email = emailField.value;
+
+    fetch("/send_verification_email/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // Add CSRF token
+      },
+      body: JSON.stringify({ email: email }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Verification email sent! Please check your inbox.");
+        } else {
+          alert("Error sending verification email.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error sending verification email:", error);
+        alert("An error occurred while sending the verification email.");
+      });
+  });
+
+  // Check email verification status when modal opens
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+    checkEmailVerificationStatus();
+  });
 });
 const notificationButton = document.getElementById("notificationButton");
 const notificationList = document.getElementById("notificationList");

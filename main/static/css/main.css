@@ -1791,6 +1791,46 @@ button[type="submit"]:hover {
 .refresh-avatar-btn:hover i {
   color: #0f2326;
 }
+.email-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.email-container input[type="email"] {
+  width: 100%;
+  padding-right: 80px; /* To ensure the button doesn't overlap text */
+  box-sizing: border-box;
+}
+
+.verify-btn {
+  position: absolute;
+  right: 10px;
+  margin-top: 5px;
+  padding: 5px 10px;
+  background-color: #689e4b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.verify-btn:hover {
+  color: #fff;
+  background-color: #3b5a2b;
+}
+
+.verified-label {
+  color: green;
+  font-size: 12px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
 #profileModal {
   display: none;
   position: fixed;
