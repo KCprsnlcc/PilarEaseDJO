@@ -1779,6 +1779,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Event listener for cropping the image
   cropImageBtn.addEventListener("click", function () {
     if (cropper) {
       cropper.getCroppedCanvas().toBlob((blob) => {
@@ -1803,7 +1804,10 @@ document.addEventListener("DOMContentLoaded", function () {
           .then((data) => {
             if (data.success) {
               showNotificationSuccess("Avatar updated successfully!");
+              // Update the current avatar in the profile immediately
               document.getElementById("currentAvatar").src = data.avatar_url;
+              // Optionally, if you have a profile icon in the header or other parts
+              document.getElementById("profileIconImage").src = data.avatar_url;
             } else {
               showNotificationError("" + (data.errors || "Unknown error"));
             }
@@ -1818,6 +1822,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Event listener for saving the selected avatar
   saveAvatarBtn.addEventListener("click", function () {
     if (selectedAvatar) {
       fetch(selectedAvatar)
@@ -1844,7 +1849,11 @@ document.addEventListener("DOMContentLoaded", function () {
             .then((data) => {
               if (data.success) {
                 showNotificationSuccess("Avatar updated successfully!");
+                // Update the current avatar in the profile immediately
                 document.getElementById("currentAvatar").src = data.avatar_url;
+                // Optionally, if you have a profile icon in the header or other parts
+                document.getElementById("profileIconImage").src =
+                  data.avatar_url;
               } else {
                 showNotificationError("" + (data.errors || "Unknown error"));
               }
@@ -1937,34 +1946,6 @@ document.addEventListener("DOMContentLoaded", function () {
   closeAvatarModal.addEventListener("click", function () {
     avatarModal.classList.add("slide-upSolid");
     avatarModal.classList.remove("slide-downSolid");
-  });
-
-  const profileIcon = document.getElementById("profileIcon");
-  const tooltip = document.getElementById("profileTooltip");
-
-  profileIcon.addEventListener("mouseenter", function () {
-    tooltip.classList.remove("popOut");
-    tooltip.classList.add("popIn");
-    tooltip.style.visibility = "visible";
-  });
-
-  profileIcon.addEventListener("mouseleave", function () {
-    tooltip.classList.remove("popIn");
-    tooltip.classList.add("popOut");
-    tooltip.addEventListener(
-      "animationend",
-      function () {
-        tooltip.style.visibility = "hidden";
-      },
-      { once: true }
-    );
-  });
-
-  profileIcon.addEventListener("click", function () {
-    fetchUserProfile();
-    avatarModal.classList.add("slide-downSolid");
-    avatarModal.classList.remove("slide-upSolid");
-    avatarModal.style.display = "block";
   });
 });
 const newPasswordInput = document.getElementById("newPassword");
@@ -2408,12 +2389,73 @@ function parseErrorMessages(errors) {
   }
   return "An error occurred. Please try again.";
 }
+document.addEventListener("DOMContentLoaded", function () {
+  // Separate references for login and register forms and buttons
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const loginButton = document.getElementById("loginButton");
+  const signupButton = document.getElementById("signupButton");
 
-document
-  .getElementById("registerForm")
-  .addEventListener("submit", function (event) {
+  // Input fields for login form
+  const loginUsernameField = loginForm.querySelector('input[name="username"]');
+  const loginPasswordField = loginForm.querySelector('input[name="password"]');
+
+  // Input fields for register form
+  const registerFields = {
+    student_id: registerForm.querySelector('input[name="student_id"]'),
+    username: registerForm.querySelector('input[name="username"]'),
+    full_name: registerForm.querySelector('input[name="full_name"]'),
+    academic_year_level: registerForm.querySelector(
+      'input[name="academic_year_level"]'
+    ),
+    contact_number: registerForm.querySelector('input[name="contact_number"]'),
+    email: registerForm.querySelector('input[name="email"]'),
+    password1: registerForm.querySelector('input[name="password1"]'),
+    password2: registerForm.querySelector('input[name="password2"]'),
+  };
+
+  // Real-time validation for login form
+  loginUsernameField.addEventListener("input", function () {
+    validateField(loginUsernameField);
+  });
+  loginPasswordField.addEventListener("input", function () {
+    validateField(loginPasswordField);
+  });
+
+  // Real-time validation for register form
+  Object.values(registerFields).forEach((field) => {
+    field.addEventListener("input", function () {
+      validateField(field);
+    });
+  });
+
+  // Separate form submission handlers
+  loginForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    const formData = new FormData(this);
+    loginButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(loginForm);
+    let errorMessage = checkEmptyFields(formData, {
+      username: "Username",
+      password: "Password",
+    });
+
+    if (errorMessage) {
+      validateFieldOnSubmit(loginUsernameField);
+      validateFieldOnSubmit(loginPasswordField);
+      showError(errorMessage, "login");
+      loginButton.disabled = false; // Re-enable if there's an error
+      return;
+    }
+
+    // Show the loader and process the login form submission...
+  });
+
+  registerForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    signupButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(registerForm);
     let errorMessage = checkEmptyFields(formData, {
       student_id: "Student ID No.",
       username: "Username",
@@ -2424,50 +2466,104 @@ document
       password1: "Password",
       password2: "Confirm Password",
     });
+
     if (errorMessage) {
+      Object.values(registerFields).forEach((field) => {
+        validateFieldOnSubmit(field);
+      });
       showError(errorMessage, "register");
+      signupButton.disabled = false; // Re-enable if there's an error
       return;
     }
-    fetch(this.action, {
-      method: "POST",
-      headers: { "X-CSRFToken": csrftoken },
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showSuccess("Registration successful!", "register");
-          setTimeout(() => {
-            registerModal.classList.add("pop-out");
-            setTimeout(() => {
-              registerModal.style.display = "none";
-              registerModal.classList.remove("pop-out");
-              loginModal.style.display = "block";
-              setTimeout(() => {
-                loginModal.classList.add("pop-in");
-                overlay.classList.add("fade-in");
-              }, 10);
-            }, 300);
 
-            document.getElementById("registerForm").reset();
-          }, 1500);
-        } else {
-          let errorMessage = parseErrorMessages(data.error_message);
-          showError(errorMessage, "register");
-        }
-      })
-      .catch((error) => {
-        showError("An error occurred. Please try again.", "register");
-      });
+    // Show the loader and process the register form submission...
   });
+
+  // Validation function for real-time checks
+  function validateField(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Function to check for empty fields
+  function checkEmptyFields(formData, fields) {
+    let emptyFields = [];
+    let allFieldsEmpty = true;
+
+    for (let field in fields) {
+      if (formData.get(field) && formData.get(field).trim() !== "") {
+        allFieldsEmpty = false;
+      } else {
+        emptyFields.push(fields[field] + " is required.");
+      }
+    }
+
+    if (allFieldsEmpty) {
+      return "All fields are required.";
+    }
+
+    return emptyFields.length ? emptyFields[0] : null;
+  }
+
+  // Show error dialog
+  function showError(message, type) {
+    const dialogBox = document.getElementById(
+      type === "login"
+        ? "loginDialogBox"
+        : type === "register"
+        ? "registerDialogBox"
+        : "sessionDialogBox"
+    );
+    const dialogContent = document.getElementById(
+      type === "login"
+        ? "loginDialogContent"
+        : type === "register"
+        ? "registerDialogContent"
+        : "sessionDialogContent"
+    );
+
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.add("error");
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+});
+
 document.addEventListener("DOMContentLoaded", function () {
   const usernameField = document.querySelector('input[name="username"]');
   const passwordField = document.querySelector('input[name="password"]');
   const loginButton = document.getElementById("loginButton");
 
+  // Real-time validation on input
   usernameField.addEventListener("input", validateField);
   passwordField.addEventListener("input", validateField);
 
+  // Form submit event
   document
     .getElementById("loginForm")
     .addEventListener("submit", function (event) {
@@ -2476,12 +2572,16 @@ document.addEventListener("DOMContentLoaded", function () {
       const formData = new FormData(this);
       loginButton.disabled = true; // Disable the button initially
 
+      // Check if fields are empty
       let errorMessage = checkEmptyFields(formData, {
         username: "Username",
         password: "Password",
       });
 
+      // If there is an error, show it and validate fields
       if (errorMessage) {
+        validateFieldOnSubmit(usernameField);
+        validateFieldOnSubmit(passwordField);
         showError(errorMessage, "login");
         loginButton.disabled = false; // Re-enable if there's an error
         return;
@@ -2532,24 +2632,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+  // Real-time validation function
   function validateField(event) {
     const field = event.target;
-    if (field.name === "username" || field.name === "password") {
-      if (field.value.trim() === "") {
-        field.classList.remove("valid");
-        field.classList.add("invalid");
-      } else {
-        field.classList.remove("invalid");
-        field.classList.add("valid");
-      }
+    validateFieldStatus(field);
+  }
+
+  // Field validation function
+  function validateFieldStatus(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
     }
   }
 
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Show loader
   function showLoginLoader() {
     const loginOverlay = document.getElementById("loginOverlay");
     loginOverlay.style.display = "block";
   }
 
+  // Hide loader
   function hideLoginLoader() {
     const loginOverlay = document.getElementById("loginOverlay");
     loginOverlay.style.display = "none";
@@ -2681,135 +2797,338 @@ document.querySelectorAll(".curved-line path").forEach(function (path) {
   path.setAttribute("d", d);
 });
 
-// Function to fetch user profile data
-function fetchUserProfile() {
-  const avatarLoader = document.getElementById("avatarLoader");
-  const profileIconImage = document.getElementById("profileIconImage");
-  const placeholderUrl = profileIconImage.src;
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.getElementById("username");
+  const contactNumberField = document.getElementById("contact-number");
+  const emailField = document.getElementById("email");
+  const academicYearField = document.getElementById("academic-year");
+  const profileIcon = document.getElementById("profileIcon");
+  const tooltip = document.getElementById("profileTooltip");
+  const avatarModal = document.getElementById("avatarModal");
 
-  // Show loader and hide image
-  avatarLoader.style.display = "block";
-  profileIconImage.style.display = "none";
+  // Tooltip animation for profile icon
+  profileIcon.addEventListener("mouseenter", function () {
+    tooltip.classList.remove("popOut");
+    tooltip.classList.add("popIn");
+    tooltip.style.visibility = "visible";
+  });
 
-  fetch("/get_user_profile/")
-    .then((response) => response.json())
-    .then((data) => {
-      document.getElementById("student-id").value = data.student_id;
-      document.getElementById("username").value = data.username;
-      document.getElementById("full-name").value = data.full_name;
-      document.getElementById("academic-year").value = data.academic_year_level;
-      document.getElementById("contact-number").value = data.contact_number;
-      document.getElementById("email").value = data.email;
-      // Set the profile icon image source
-      profileIconImage.src = data.avatar || placeholderUrl;
-      // Hide loader once image is loaded
-      profileIconImage.onload = () => {
+  profileIcon.addEventListener("mouseleave", function () {
+    tooltip.classList.remove("popIn");
+    tooltip.classList.add("popOut");
+    tooltip.addEventListener(
+      "animationend",
+      function () {
+        tooltip.style.visibility = "hidden";
+      },
+      { once: true }
+    );
+  });
+
+  // Redirect to avatar modal on profile icon click
+  profileIcon.addEventListener("click", function () {
+    avatarModal.classList.add("slide-downSolid");
+    avatarModal.classList.remove("slide-upSolid");
+    avatarModal.style.display = "block";
+  });
+
+  // Fetch user profile when opening the profile modal
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+
+  // Avatar refresh button logic
+  const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
+  refreshAvatarBtn.addEventListener("click", function () {
+    fetchUserProfile();
+  });
+
+  // Function to display random profile tips in the footer
+  const tips = [
+    "Keep your contact information up to date to receive important notifications.",
+    "Ensure your academic year level is accurate for proper service.",
+    "Use a unique email for secure account recovery.",
+    "Double-check your email address to make sure you receive all communications.",
+    "Keep your profile details updated to avoid disruptions in service.",
+    "Review your academic year information each term to reflect your current status.",
+    "Update your contact number immediately if it changes to avoid missing important updates.",
+    "Ensure your username is unique and easy to remember.",
+    "Always use your most active email for school notifications.",
+    "Verify your contact details regularly to ensure smooth communication.",
+  ];
+
+  function displayRandomTip() {
+    const randomIndex = Math.floor(Math.random() * tips.length);
+    const randomTipElement = document.getElementById("randomTip");
+    randomTipElement.classList.remove("pop-in");
+
+    setTimeout(() => {
+      randomTipElement.innerText = `Tip: ${tips[randomIndex]}`;
+      randomTipElement.classList.add("pop-in");
+    }, 10);
+  }
+
+  setInterval(displayRandomTip, 5000);
+
+  // Fetch user profile data
+  function fetchUserProfile() {
+    const avatarLoader = document.getElementById("avatarLoader");
+    const profileIconImage = document.getElementById("profileIconImage");
+    const placeholderUrl = profileIconImage.src;
+
+    // Show loader and hide image
+    avatarLoader.style.display = "block";
+    profileIconImage.style.display = "none";
+
+    fetch("/get_user_profile/")
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("student-id").value = data.student_id;
+        document.getElementById("username").value = data.username;
+        document.getElementById("full-name").value = data.full_name;
+        document.getElementById("academic-year").value =
+          data.academic_year_level;
+        document.getElementById("contact-number").value = data.contact_number;
+        document.getElementById("email").value = data.email;
+
+        // Set the profile icon image source
+        profileIconImage.src = data.avatar || placeholderUrl;
+        profileIconImage.onload = () => {
+          avatarLoader.style.display = "none";
+          profileIconImage.style.display = "block";
+        };
+      })
+      .catch((error) => {
+        console.error("", error);
         avatarLoader.style.display = "none";
         profileIconImage.style.display = "block";
-      };
+      });
+  }
+
+  // Show profile success or error dialogs
+  function showProfileSuccess(message) {
+    const dialogBox = document.getElementById("profileSuccessDialog");
+    const dialogContent = document.getElementById("profileSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  function showProfileError(message) {
+    const dialogBox = document.getElementById("profileErrorDialog");
+    const dialogContent = document.getElementById("profileErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to update user profile
+  function updateUserProfile(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const contactNumber = document.getElementById("contact-number").value;
+    const email = document.getElementById("email").value;
+    const academicYear = document.getElementById("academic-year").value;
+
+    fetch("/update_user_profile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        username: username,
+        contact_number: contactNumber,
+        email: email,
+        academic_year_level: academicYear,
+      }),
     })
-    .catch((error) => {
-      console.error("", error);
-      // Hide loader in case of error
-      avatarLoader.style.display = "none";
-      profileIconImage.style.display = "block";
-    });
-}
-// Function to show success dialog
-function showProfileSuccess(message) {
-  const dialogBox = document.getElementById("profileSuccessDialog");
-  const dialogContent = document.getElementById("profileSuccessContent");
-  dialogContent.innerHTML = message;
-  dialogBox.style.display = "block";
-  dialogBox.classList.remove("pop-out");
-  dialogBox.classList.add("pop-in");
-
-  setTimeout(() => {
-    dialogBox.classList.remove("pop-in");
-    dialogBox.classList.add("pop-out");
-    setTimeout(() => {
-      dialogBox.style.display = "none";
-      dialogBox.classList.remove("pop-out");
-    }, 300);
-  }, 3000);
-}
-
-// Function to show error dialog
-function showProfileError(message) {
-  const dialogBox = document.getElementById("profileErrorDialog");
-  const dialogContent = document.getElementById("profileErrorContent");
-  dialogContent.innerHTML = message;
-  dialogBox.style.display = "block";
-  dialogBox.classList.remove("pop-out");
-  dialogBox.classList.add("pop-in");
-
-  setTimeout(() => {
-    dialogBox.classList.remove("pop-in");
-    dialogBox.classList.add("pop-out");
-    setTimeout(() => {
-      dialogBox.style.display = "none";
-      dialogBox.classList.remove("pop-out");
-    }, 300);
-  }, 3000);
-}
-document.getElementById("profileLink").addEventListener("click", function () {
-  fetchUserProfile();
-  profileModal.style.display = "block";
-});
-const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
-refreshAvatarBtn.addEventListener("click", function () {
-  fetchUserProfile();
-});
-
-// Function to update user profile data
-function updateUserProfile(event) {
-  event.preventDefault(); // Prevent the form from submitting in the traditional way
-
-  const username = document.getElementById("username").value;
-  const contactNumber = document.getElementById("contact-number").value;
-  const email = document.getElementById("email").value;
-  const academicYear = document.getElementById("academic-year").value;
-
-  fetch("/update_user_profile/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token
-    },
-    body: JSON.stringify({
-      username: username,
-      contact_number: contactNumber,
-      email: email,
-      academic_year_level: academicYear,
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        showProfileSuccess("Profile updated successfully!");
-      } else {
-        // Check for specific errors
-        if (data.errors.username) {
-          showProfileError(data.errors.username);
-        } else if (data.errors.email) {
-          showProfileError(data.errors.email);
-        } else if (data.errors.password) {
-          showProfileError(data.errors.password);
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showProfileSuccess("Profile updated successfully!");
         } else {
-          showProfileError("Error updating profile. Please try again.");
+          showProfileError(data.errors || "Error updating profile.");
         }
+      })
+      .catch((error) => {
+        console.error("", error);
+        showProfileError("Error updating profile. Please try again.");
+      });
+  }
+
+  document
+    .getElementById("profileForm")
+    .addEventListener("submit", updateUserProfile);
+
+  // Open modal and fetch profile data
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+  // Email verification logic
+  const verifyEmailBtn = document.getElementById("verifyEmailBtn");
+  const emailVerifiedLabel = document.getElementById("emailVerifiedLabel");
+  const resendCooldownLabel = document.getElementById("resendCooldownLabel");
+  const cooldownTimer = document.getElementById("cooldownTimer");
+  const verifyemailOverlay = document.getElementById("verifyemailOverlay");
+  const verifyemailSuccessBox = document.getElementById(
+    "verifyemailSuccessBox"
+  );
+  const verifyemailErrorBox = document.getElementById("verifyemailErrorBox");
+  let cooldownInterval;
+
+  // Function to start cooldown timer
+  function startCooldown(seconds) {
+    resendCooldownLabel.style.display = "inline";
+    cooldownTimer.textContent = seconds;
+
+    cooldownInterval = setInterval(() => {
+      seconds--;
+      cooldownTimer.textContent = seconds;
+
+      if (seconds <= 0) {
+        clearInterval(cooldownInterval);
+        resendCooldownLabel.style.display = "none";
+        showResendButton();
       }
-    })
-    .catch((error) => {
-      console.error("", error);
-      showProfileError("Error updating profile. Please try again.");
+    }, 1000);
+  }
+
+  // Show the Resend button after cooldown
+  function showResendButton() {
+    const resendBtn = document.createElement("button");
+    resendBtn.innerText = "Resend";
+    resendBtn.classList.add("verify-btn");
+    resendBtn.addEventListener("click", function (event) {
+      event.stopPropagation(); // Stop event propagation
+      event.preventDefault(); // Prevent form submission
+      startCooldown(60);
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+      sendVerificationEmail();
     });
-}
+    document.querySelector(".email-container").appendChild(resendBtn);
+  }
 
-document
-  .getElementById("profileForm")
-  .addEventListener("submit", updateUserProfile);
+  // Function to send a verification email
+  function sendVerificationEmail() {
+    const email = document.getElementById("email").value;
 
+    // Show the overlay and loader
+    verifyemailOverlay.style.display = "block";
+
+    fetch("/send_verification_email/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ email: email }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        verifyemailOverlay.style.display = "none"; // Hide loader
+        if (data.success) {
+          // Show success dialog with animation
+          showDialog(
+            verifyemailSuccessBox,
+            "Verification email sent! Please check your inbox."
+          );
+        } else {
+          // Show error dialog with animation
+          showDialog(verifyemailErrorBox, "Error sending verification email.");
+        }
+      })
+      .catch((error) => {
+        verifyemailOverlay.style.display = "none"; // Hide loader
+        showDialog(
+          verifyemailErrorBox,
+          "An error occurred while sending the verification email."
+        );
+      });
+  }
+
+  // Function to show the dialog box with popIn animation
+  function showDialog(dialogBox, message) {
+    dialogBox.querySelector(".flat-ui-dialog-content").textContent = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      hideDialog(dialogBox);
+    }, 3000);
+  }
+
+  // Function to hide the dialog box with popOut animation
+  function hideDialog(dialogBox) {
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+
+    // Ensure the dialog is hidden after the popOut animation completes
+    dialogBox.addEventListener(
+      "animationend",
+      function () {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      },
+      { once: true }
+    );
+  }
+
+  // Event listener for the Verify button
+  verifyEmailBtn.addEventListener("click", function (event) {
+    event.stopPropagation(); // Stop event propagation
+    event.preventDefault(); // Prevent form submission
+    verifyEmailBtn.style.display = "none"; // Hide verify button
+    startCooldown(60); // Start 60 seconds cooldown
+    sendVerificationEmail(); // Send verification email
+  });
+
+  // Check email verification status when modal opens
+  function checkEmailVerificationStatus() {
+    fetch("/check_email_verification/")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.is_verified) {
+          verifyEmailBtn.style.display = "none"; // Hide verify button
+          emailVerifiedLabel.style.display = "inline"; // Show verified label
+        } else {
+          verifyEmailBtn.style.display = "inline"; // Show verify button
+          emailVerifiedLabel.style.display = "none"; // Hide verified label
+        }
+      })
+      .catch((error) =>
+        console.error("Error checking email verification:", error)
+      );
+  }
+  
+  document.getElementById("profileLink").addEventListener("click", function () {
+    checkEmailVerificationStatus();
+  });
+});
 const notificationButton = document.getElementById("notificationButton");
 const notificationList = document.getElementById("notificationList");
 const notificationCount = document.getElementById("notificationCount");
