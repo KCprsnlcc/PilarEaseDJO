@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verification</title>
+    <style>
+      /* Basic email styling */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      #email-container {
+        background-color: #ffffff;
+        padding: 20px;
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #689e4b;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: "Arial", sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background-color: #3b5a2b;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="email-container">
+      <h2>Email Verification</h2>
+      <p>Hello {{ user.get_full_name }},</p>
+      <p>
+        You're receiving this email because you registered an account at
+        PilarEase. Please click the button below to verify your email address:
+      </p>
+      <a href="{{ verification_link }}" class="btn">Verify Your Email</a>
+      <p>Thank you for using our platform!</p>
+      <p>- The PilarEase Team</p>
+    </div>
+  </body>
+</html>

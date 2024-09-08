@@ -2990,31 +2990,17 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   const verifyEmailBtn = document.getElementById("verifyEmailBtn");
   const emailVerifiedLabel = document.getElementById("emailVerifiedLabel");
-
-  // Function to check if the email is verified and update the UI accordingly
-  function checkEmailVerificationStatus() {
-    // Fetch user email verification status from the backend
-    fetch("/check_email_verification/")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.is_verified) {
-          // Hide verify button, show "Verified" label
-          verifyEmailBtn.style.display = "none";
-          emailVerifiedLabel.style.display = "inline";
-        } else {
-          // Show verify button, hide "Verified" label
-          verifyEmailBtn.style.display = "inline";
-          emailVerifiedLabel.style.display = "none";
-        }
-      })
-      .catch((error) => {
-        console.error("Error checking email verification:", error);
-      });
-  }
+  const resendCooldownLabel = document.getElementById("resendCooldownLabel");
+  const cooldownTimer = document.getElementById("cooldownTimer");
+  let cooldownInterval;
 
   // Function to send a verification email
   verifyEmailBtn.addEventListener("click", function () {
     const email = emailField.value;
+
+    // Hide the verify button and start the cooldown
+    verifyEmailBtn.style.display = "none";
+    startCooldown(60); // 60 seconds cooldown
 
     fetch("/send_verification_email/", {
       method: "POST",
@@ -3037,6 +3023,55 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("An error occurred while sending the verification email.");
       });
   });
+
+  // Function to handle cooldown timer and display Resend button after cooldown
+  function startCooldown(seconds) {
+    resendCooldownLabel.style.display = "inline"; // Display the countdown
+    cooldownTimer.textContent = seconds;
+
+    cooldownInterval = setInterval(() => {
+      seconds--;
+      cooldownTimer.textContent = seconds;
+
+      if (seconds <= 0) {
+        clearInterval(cooldownInterval);
+        resendCooldownLabel.style.display = "none"; // Hide the countdown
+        showResendButton(); // Show the "Resend" button after the cooldown ends
+      }
+    }, 1000);
+  }
+
+  // Function to display the Resend button after the countdown ends
+  function showResendButton() {
+    const resendBtn = document.createElement("button");
+    resendBtn.innerText = "Resend";
+    resendBtn.classList.add("verify-btn"); // Use the same styles as the verify button
+    resendBtn.addEventListener("click", function () {
+      // You can reuse the same logic for sending the verification email
+      startCooldown(60);
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+    });
+
+    document.querySelector(".email-container").appendChild(resendBtn);
+  }
+
+  // Function to check email verification status
+  function checkEmailVerificationStatus() {
+    fetch("/check_email_verification/")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.is_verified) {
+          verifyEmailBtn.style.display = "none"; // Hide the verify button
+          emailVerifiedLabel.style.display = "inline"; // Show verified label
+        } else {
+          verifyEmailBtn.style.display = "inline"; // Show verify button for unverified emails
+          emailVerifiedLabel.style.display = "none";
+        }
+      })
+      .catch((error) => {
+        console.error("Error checking email verification:", error);
+      });
+  }
 
   // Check email verification status when modal opens
   document.getElementById("profileLink").addEventListener("click", function () {

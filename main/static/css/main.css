@@ -1800,7 +1800,7 @@ button[type="submit"]:hover {
 
 .email-container input[type="email"] {
   width: 100%;
-  padding-right: 80px; /* To ensure the button doesn't overlap text */
+  padding-right: 80px; /* Ensure the button doesn't overlap text */
   box-sizing: border-box;
 }
 
@@ -1818,6 +1818,11 @@ button[type="submit"]:hover {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+.verify-btn:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
 .verify-btn:hover {
   color: #fff;
   background-color: #3b5a2b;
@@ -1831,6 +1836,26 @@ button[type="submit"]:hover {
   top: 50%;
   transform: translateY(-50%);
 }
+
+.resend-cooldown-label {
+  color: #555;
+  font-size: 12px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: fadeInOut 1s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 #profileModal {
   display: none;
   position: fixed;

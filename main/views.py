@@ -73,25 +73,63 @@ def register_view(request):
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
 def check_email_verification(request):
-    # Logic to check if the user's email is verified
     user = request.user
-    is_verified = user.profile.is_email_verified
-    return JsonResponse({'is_verified': is_verified})
+    if user.is_authenticated:
+        is_verified = user.profile.is_email_verified
+        return JsonResponse({'is_verified': is_verified})
+    return JsonResponse({'error': 'User not authenticated'}, status=403)
 
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            # Mark email as verified
+            user.profile.is_email_verified = True
+            user.profile.save()
+            return JsonResponse({'success': True, 'message': 'Email verified successfully!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid or expired token.'})
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return JsonResponse({'success': False, 'error': 'User not found.'})
+    
 def send_verification_email(request):
     if request.method == 'POST':
         user = request.user
         email = user.email
-        # Logic to send the verification email (simplified)
-        send_mail(
-            'Verify your email',
-            'Click the link to verify your email: http://example.com/verify/',
-            'from@example.com',
-            [email],
-            fail_silently=False,
-        )
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False})
+        if not user.profile.is_email_verified:
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 def login_view(request):
     if request.method == 'POST':
