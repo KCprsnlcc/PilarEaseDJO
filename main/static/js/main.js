@@ -2408,12 +2408,73 @@ function parseErrorMessages(errors) {
   }
   return "An error occurred. Please try again.";
 }
+document.addEventListener("DOMContentLoaded", function () {
+  // Separate references for login and register forms and buttons
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const loginButton = document.getElementById("loginButton");
+  const signupButton = document.getElementById("signupButton");
 
-document
-  .getElementById("registerForm")
-  .addEventListener("submit", function (event) {
+  // Input fields for login form
+  const loginUsernameField = loginForm.querySelector('input[name="username"]');
+  const loginPasswordField = loginForm.querySelector('input[name="password"]');
+
+  // Input fields for register form
+  const registerFields = {
+    student_id: registerForm.querySelector('input[name="student_id"]'),
+    username: registerForm.querySelector('input[name="username"]'),
+    full_name: registerForm.querySelector('input[name="full_name"]'),
+    academic_year_level: registerForm.querySelector(
+      'input[name="academic_year_level"]'
+    ),
+    contact_number: registerForm.querySelector('input[name="contact_number"]'),
+    email: registerForm.querySelector('input[name="email"]'),
+    password1: registerForm.querySelector('input[name="password1"]'),
+    password2: registerForm.querySelector('input[name="password2"]'),
+  };
+
+  // Real-time validation for login form
+  loginUsernameField.addEventListener("input", function () {
+    validateField(loginUsernameField);
+  });
+  loginPasswordField.addEventListener("input", function () {
+    validateField(loginPasswordField);
+  });
+
+  // Real-time validation for register form
+  Object.values(registerFields).forEach((field) => {
+    field.addEventListener("input", function () {
+      validateField(field);
+    });
+  });
+
+  // Separate form submission handlers
+  loginForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    const formData = new FormData(this);
+    loginButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(loginForm);
+    let errorMessage = checkEmptyFields(formData, {
+      username: "Username",
+      password: "Password",
+    });
+
+    if (errorMessage) {
+      validateFieldOnSubmit(loginUsernameField);
+      validateFieldOnSubmit(loginPasswordField);
+      showError(errorMessage, "login");
+      loginButton.disabled = false; // Re-enable if there's an error
+      return;
+    }
+
+    // Show the loader and process the login form submission...
+  });
+
+  registerForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    signupButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(registerForm);
     let errorMessage = checkEmptyFields(formData, {
       student_id: "Student ID No.",
       username: "Username",
@@ -2424,42 +2485,94 @@ document
       password1: "Password",
       password2: "Confirm Password",
     });
+
     if (errorMessage) {
+      Object.values(registerFields).forEach((field) => {
+        validateFieldOnSubmit(field);
+      });
       showError(errorMessage, "register");
+      signupButton.disabled = false; // Re-enable if there's an error
       return;
     }
-    fetch(this.action, {
-      method: "POST",
-      headers: { "X-CSRFToken": csrftoken },
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showSuccess("Registration successful!", "register");
-          setTimeout(() => {
-            registerModal.classList.add("pop-out");
-            setTimeout(() => {
-              registerModal.style.display = "none";
-              registerModal.classList.remove("pop-out");
-              loginModal.style.display = "block";
-              setTimeout(() => {
-                loginModal.classList.add("pop-in");
-                overlay.classList.add("fade-in");
-              }, 10);
-            }, 300);
 
-            document.getElementById("registerForm").reset();
-          }, 1500);
-        } else {
-          let errorMessage = parseErrorMessages(data.error_message);
-          showError(errorMessage, "register");
-        }
-      })
-      .catch((error) => {
-        showError("An error occurred. Please try again.", "register");
-      });
+    // Show the loader and process the register form submission...
   });
+
+  // Validation function for real-time checks
+  function validateField(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Function to check for empty fields
+  function checkEmptyFields(formData, fields) {
+    let emptyFields = [];
+    let allFieldsEmpty = true;
+
+    for (let field in fields) {
+      if (formData.get(field) && formData.get(field).trim() !== "") {
+        allFieldsEmpty = false;
+      } else {
+        emptyFields.push(fields[field] + " is required.");
+      }
+    }
+
+    if (allFieldsEmpty) {
+      return "All fields are required.";
+    }
+
+    return emptyFields.length ? emptyFields[0] : null;
+  }
+
+  // Show error dialog
+  function showError(message, type) {
+    const dialogBox = document.getElementById(
+      type === "login"
+        ? "loginDialogBox"
+        : type === "register"
+        ? "registerDialogBox"
+        : "sessionDialogBox"
+    );
+    const dialogContent = document.getElementById(
+      type === "login"
+        ? "loginDialogContent"
+        : type === "register"
+        ? "registerDialogContent"
+        : "sessionDialogContent"
+    );
+
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.add("error");
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+});
+
 document.addEventListener("DOMContentLoaded", function () {
   const usernameField = document.querySelector('input[name="username"]');
   const passwordField = document.querySelector('input[name="password"]');
