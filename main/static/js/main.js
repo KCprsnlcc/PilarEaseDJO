@@ -2847,16 +2847,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to display random profile tips in the footer
   const tips = [
-    "Keep your contact information up to date to receive important notifications.",
-    "Ensure your academic year level is accurate for proper service.",
-    "Use a unique email for secure account recovery.",
-    "Double-check your email address to make sure you receive all communications.",
-    "Keep your profile details updated to avoid disruptions in service.",
-    "Review your academic year information each term to reflect your current status.",
-    "Update your contact number immediately if it changes to avoid missing important updates.",
-    "Ensure your username is unique and easy to remember.",
-    "Always use your most active email for school notifications.",
-    "Verify your contact details regularly to ensure smooth communication.",
+    "Keep your contact info updated for important notifications.",
+    "Make sure your academic year is accurate for proper service.",
+    "Use a unique email for account recovery.",
+    "Double-check your email to receive all communications.",
+    "Update your profile to avoid service disruptions.",
+    "Review your academic year each term for accuracy.",
+    "Update your contact number immediately if it changes.",
+    "Ensure your username is unique and memorable.",
+    "Use your most active email for notifications.",
+    "Verify your contact info regularly for smooth communication.",
   ];
 
   function displayRandomTip() {
@@ -2943,7 +2943,45 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300);
     }, 3000);
   }
+  const updateProfileBtn = document.getElementById("updateProfileBtn");
+  const confirmUpdateDialog = document.getElementById("confirmUpdateDialog");
+  const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
+  const cancelUpdateBtn = document.getElementById("cancelUpdateBtn");
 
+  // Show confirmation dialog when "Save changes" is clicked
+  updateProfileBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.style.display = "block";
+    confirmUpdateDialog.classList.remove("pop-out");
+    confirmUpdateDialog.classList.add("pop-in");
+  });
+
+  // Confirm profile update
+  confirmUpdateBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.classList.remove("pop-in");
+    confirmUpdateDialog.classList.add("pop-out");
+
+    // Delay hiding the dialog to allow the animation to complete
+    setTimeout(() => {
+      confirmUpdateDialog.style.display = "none";
+    }, 300);
+
+    // Call the updateUserProfile function
+    updateUserProfile(event);
+  });
+
+  // Cancel profile update
+  cancelUpdateBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.classList.remove("pop-in");
+    confirmUpdateDialog.classList.add("pop-out");
+
+    // Delay hiding the dialog to allow the animation to complete
+    setTimeout(() => {
+      confirmUpdateDialog.style.display = "none";
+    }, 300);
+  });
   // Function to update user profile
   function updateUserProfile(event) {
     event.preventDefault();
@@ -3138,6 +3176,7 @@ document.addEventListener("DOMContentLoaded", function () {
     checkEmailVerificationStatus();
   });
 });
+
 const notificationButton = document.getElementById("notificationButton");
 const notificationList = document.getElementById("notificationList");
 const notificationCount = document.getElementById("notificationCount");

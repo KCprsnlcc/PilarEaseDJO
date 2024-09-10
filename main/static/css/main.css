@@ -2104,6 +2104,66 @@ button[type="submit"]:hover {
   background-color: #3b5a2b;
 }
 
+#confirmUpdateDialog {
+  position: fixed;
+  top: 150px;
+  left: 100px;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  width: 300px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+
+#confirmUpdateDialog.pop-in {
+  animation: popIn 0.3s forwards;
+}
+
+#confirmUpdateDialog.pop-out {
+  animation: popOut 0.3s forwards;
+}
+
+.confirm-dialog-content h3 {
+  margin-bottom: 10px;
+  color: #0f2326;
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.confirm-btn {
+  background-color: #689e4b;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.confirm-btn:hover {
+  background-color: #3b5a2b;
+}
+
+.cancel-btn {
+  background-color: #e74c3c;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background-color: #c0392b;
+}
+
 .message-dialog {
   position: fixed;
   top: 50%;
@@ -2678,7 +2738,7 @@ button#generatePassword:hover {
   position: flex;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   z-index: 1000100;
   opacity: 1;
   transition: opacity 0.3s ease;
