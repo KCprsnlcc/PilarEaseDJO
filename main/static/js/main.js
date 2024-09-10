@@ -2991,6 +2991,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const email = document.getElementById("email").value;
     const academicYear = document.getElementById("academic-year").value;
 
+    // Show the profile update overlay and loader
+    const profileUpdateOverlay = document.getElementById(
+      "profileupdateOverlay"
+    );
+    profileUpdateOverlay.style.display = "block";
+
     fetch("/update_user_profile/", {
       method: "POST",
       headers: {
@@ -3006,6 +3012,9 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        // Hide the overlay and loader
+        profileUpdateOverlay.style.display = "none";
+
         if (data.success) {
           showProfileSuccess("Profile updated successfully!");
         } else {
@@ -3013,6 +3022,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
+        // Hide the overlay and loader
+        profileUpdateOverlay.style.display = "none";
         console.error("", error);
         showProfileError("Error updating profile. Please try again.");
       });
