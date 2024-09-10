@@ -51,41 +51,71 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
 
 ## Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 
    ```sh
    git clone https://github.com/KCprsnlcc/PilarEaseDJO.git
    ```
 
-2. Navigate to the project directory:
+2. **Navigate to the project directory:**
 
    ```sh
    cd PilarEaseDJO
    ```
 
-3. Install dependencies:
+3. **(Optional) Set up a Python Virtual Environment:**
+
+   It's recommended to use a Python virtual environment to manage dependencies and avoid conflicts with other Python projects. You can create and activate a virtual environment using the following commands:
+
+   **For macOS/Linux:**
+
+   ```sh
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+   **For Windows:**
+
+   ```sh
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
+
+4. **Install dependencies:**
+
+   After activating the virtual environment (if you're using one), install the necessary Python packages:
 
    ```sh
    pip install -r requirements.txt
    ```
 
-4. Run migrations:
+5. **Run migrations:**
+
+   Apply the migrations to set up the database:
 
    ```sh
    python manage.py migrate
    ```
 
-5. Start the development server:
+6. **Start the development server:**
+
+   Start the Django development server:
 
    ```sh
    python manage.py runserver
    ```
 
-6. Access the application at `http://localhost:8000`.
+7. **Access the application:**
 
-Here’s the updated **Features** section to include the referral module and the counselor chat interface:
+   Open your browser and go to `http://localhost:8000` to access the application.
 
----
+8. **Deactivate the Virtual Environment (Optional):**
+
+   If you are using a virtual environment, you can deactivate it when you're done:
+
+   ```sh
+   deactivate
+   ```
 
 ## Features
 
@@ -101,6 +131,7 @@ Here’s the updated **Features** section to include the referral module and the
 - **User Profile Interface**: Allows users to view and update their profile information.
 - **Password Management**: Enables users to manage and update their passwords securely.
 - **Upload Avatar**: Allows users to upload and update their profile pictures.
+- **Email Verification**: Provides functionality for users to verify their specific email address through an email verification link. Once verified, the user's profile will show a 'Verified' badge, improving security and trust.
 
 ### 3. Main Interface
 
@@ -141,12 +172,12 @@ Here’s the updated **Features** section to include the referral module and the
 ### 10. Administrative Tools
 
 - **View Text Message Queries**: Enables administrators to view user queries.
-
 - **Emotion Category Search Filtering**: Allows filtering of searches by emotion categories.
 - **Analysis Search Filtering**: Provides options to filter sentiment analysis results.
 - **View Text Analysis Results**: Displays detailed sentiment analysis results for review.
 - **Counselor Chat Interface**: Collects all questions and answers from chatbot interactions and allows counselors to chat in real-time with users. This interface enables counselors to manage and respond to reported statuses and provide personalized support.
 - **Manage Users**: Includes tools for managing user profiles, including deactivation, deletion, and editing.
+- **Manage Referral**: Allows administrators to manage user referrals for specific statuses. Administrators can view referred statuses, review reported issues, and take action (e.g., removing inappropriate content or contacting users for clarification).
 - **Download Analysis Data**: Allows exporting of sentiment analysis data in CSV format.
 
 ## Contributing
