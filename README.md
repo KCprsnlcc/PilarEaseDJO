@@ -36,8 +36,8 @@
         <p><b>Chat Interaction</b></p>
       </td>
       <td align="center">
-        <img src="main/static/images/screenshots/managereferral.png"  width="200px" alt="Status Composer" />
-        <p><b>Status Composer</b></p>
+        <img src="main/static/images/screenshots/managereferral.png"  width="200px" alt="Manage Referral" />
+        <p><b>Manage Referral</b></p>
       </td>
       <td align="center">
         <img src="main/static/images/screenshots/filteringstatus.png"  width="200px" alt="Profanity Filtering" />
