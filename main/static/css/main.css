@@ -2143,6 +2143,20 @@ button[type="submit"]:hover {
 #profileForm input::placeholder {
   color: #bbb;
 }
+.change-email-btn {
+  padding: 10px;
+  background-color: #689e4b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 5px;
+  transition: background-color 0.3s ease;
+}
+.change-email-btn:hover {
+  background-color: #3b5a2b;
+}
 
 .save-changes {
   padding: 10px;
@@ -2153,6 +2167,7 @@ button[type="submit"]:hover {
   cursor: pointer;
   font-size: 16px;
   margin-top: 5px;
+  transition: background-color 0.3s ease;
 }
 
 .save-changes:hover {
