@@ -683,10 +683,11 @@
 <label for="email">Email</label>
 <div class="email-container">
   <input
-    type="email"
+    type="text" 
     id="email"
     name="email"
-    placeholder="ex. kcpersonalacc@gmail.com"
+    value="*****@*****.com" 
+    disabled
   />
   <button type="button" id="verifyEmailBtn" class="verify-btn">
     Verify
@@ -698,6 +699,9 @@
     Resend in <span id="cooldownTimer">60</span>s
   </span>
 </div>
+<button type="button" id="changeEmailBtn" class="change-email-btn">
+  Change Email
+</button>
 
     <label for="contact-number">Contact Number</label>
     <input
@@ -710,7 +714,7 @@
       Save changes
     </button>
   </form>
-
+  
 <!-- Confirmation Dialog -->
 <div id="confirmUpdateDialog" class="confirm-dialog" style="display: none;">
   <div id="confirmUpdateContent" class="confirm-dialog-content">

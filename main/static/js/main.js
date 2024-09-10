@@ -2891,7 +2891,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("academic-year").value =
           data.academic_year_level;
         document.getElementById("contact-number").value = data.contact_number;
-        document.getElementById("email").value = data.email;
+
+        // Mask and display the email
+        document.getElementById("email").value = maskEmail(data.email);
 
         // Set the profile icon image source
         profileIconImage.src = data.avatar || placeholderUrl;
@@ -2901,7 +2903,7 @@ document.addEventListener("DOMContentLoaded", function () {
         };
       })
       .catch((error) => {
-        console.error("", error);
+        console.error("Error fetching profile data:", error);
         avatarLoader.style.display = "none";
         profileIconImage.style.display = "block";
       });
@@ -2988,7 +2990,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const username = document.getElementById("username").value;
     const contactNumber = document.getElementById("contact-number").value;
-    const email = document.getElementById("email").value;
     const academicYear = document.getElementById("academic-year").value;
 
     // Show the profile update overlay and loader
@@ -3006,8 +3007,7 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({
         username: username,
         contact_number: contactNumber,
-        email: email,
-        academic_year_level: academicYear,
+        academic_year_level: academicYear, // Only include fields that are allowed to be updated
       }),
     })
       .then((response) => response.json())
@@ -3024,7 +3024,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => {
         // Hide the overlay and loader
         profileUpdateOverlay.style.display = "none";
-        console.error("", error);
+        console.error("Error updating profile:", error);
         showProfileError("Error updating profile. Please try again.");
       });
   }
@@ -3050,6 +3050,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const verifyemailErrorBox = document.getElementById("verifyemailErrorBox");
   let cooldownInterval;
 
+  // Function to mask the email
+  function maskEmail(email) {
+    const [localPart, domainPart] = email.split("@");
+    const maskedLocal = localPart.slice(0, 1) + "*****";
+    const maskedDomain = "*****." + domainPart.split(".").pop();
+    return maskedLocal + "@" + maskedDomain;
+  }
   // Function to start cooldown timer
   function startCooldown(seconds) {
     resendCooldownLabel.style.display = "inline";
