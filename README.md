@@ -51,79 +51,109 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
 
 ## Installation
 
-1. **Clone the repository:**
+### 1. **Clone the Repository**
 
-   ```sh
-   git clone https://github.com/KCprsnlcc/PilarEaseDJO.git
-   ```
+First, clone the PilarEaseDJO repository from GitHub:
 
-2. **Navigate to the project directory:**
+```sh
+git clone https://github.com/KCprsnlcc/PilarEaseDJO.git
+```
 
-   ```sh
-   cd PilarEaseDJO
-   ```
+Navigate to the project directory:
 
-3. **(Optional) Set up a Python Virtual Environment:**
+```sh
+cd PilarEaseDJO
+```
 
-   It's recommended to use a Python virtual environment to manage dependencies and avoid conflicts with other Python projects. You can create and activate a virtual environment using the following commands:
+### 2. **Set up a Python Virtual Environment**
 
-   **For macOS/Linux:**
+It is highly recommended to use a Python virtual environment to manage dependencies and avoid conflicts with other Python projects.
+
+#### For macOS/Linux:
+
+1. **Create the virtual environment:**
 
    ```sh
    python3 -m venv .venv
+   ```
+
+2. **Activate the virtual environment:**
+
+   ```sh
    source .venv/bin/activate
    ```
 
-   **For Windows:**
+#### For Windows:
 
-   ```sh
-   python -m venv .venv
-   .venv\Scripts\activate
-   ```
+1. **Set the PowerShell execution policy (Optional):**
 
-4. **(Optional for Windows)**
-
-   Before installing dependencies, ensure PowerShell is set to execute necessary scripts:
+   If you're using PowerShell on Windows, you may need to change the execution policy to allow the script to run:
 
    ```sh
    Set-ExecutionPolicy RemoteSigned -Scope Process -Force
    ```
 
-5. **Install dependencies:**
-
-   After activating the virtual environment (if you're using one), install the necessary Python packages:
+2. **Create the virtual environment:**
 
    ```sh
-   pip install -r requirements.txt --progress-bar on
+   python -m venv .venv
    ```
 
-6. **Run migrations:**
-
-   Apply the migrations to set up the database:
+3. **Activate the virtual environment:**
 
    ```sh
-   python manage.py migrate
+   .venv\Scripts\activate
    ```
 
-7. **Start the development server:**
+### 3. **Install Dependencies**
 
-   Start the Django development server:
+Once the virtual environment is activated, install the required dependencies listed in the `requirements.txt` file.
 
-   ```sh
-   python manage.py runserver
-   ```
+Use the following command for both macOS/Linux and Windows:
 
-8. **Access the application:**
+```sh
+pip install -r requirements.txt --progress-bar on
+```
 
-   Open your browser and go to `http://localhost:8000` to access the application.
+### 4. **Apply Database Migrations**
 
-9. **Deactivate the Virtual Environment (Optional):**
+Next, set up the database by applying the necessary migrations:
 
-   If you are using a virtual environment, you can deactivate it when you're done:
+```sh
+python manage.py migrate
+```
 
-   ```sh
-   deactivate
-   ```
+### 5. **Start the Development Server**
+
+Once the migrations are applied, you can start the Django development server with this command:
+
+```sh
+python manage.py runserver
+```
+
+### 6. **Access the Application**
+
+Open your web browser and navigate to:
+
+```
+http://localhost:8000
+```
+
+### 7. **Deactivate the Virtual Environment (Optional)**
+
+When you're done working in the virtual environment, you can deactivate it using:
+
+#### For macOS/Linux:
+
+```sh
+deactivate
+```
+
+#### For Windows:
+
+```sh
+deactivate
+```
 
 ## Features
 
