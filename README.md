@@ -1,6 +1,6 @@
 # PilarEaseDJO
 
-![PilarEase](main/static/images/test.png)
+![PilarEase](main/static/images/homepage.png)
 PilarEaseDJO is a Django-based platform for emotion management and sentiment analysis, featuring user authentication, status posting, emotion filtering, machine learning integration, chatbot interaction, and administrative tools.
 
 ## Installation
