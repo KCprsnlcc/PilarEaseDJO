@@ -2797,6 +2797,7 @@ document.querySelectorAll(".curved-line path").forEach(function (path) {
   path.setAttribute("d", d);
 });
 
+//  Profile Modal Codes
 document.addEventListener("DOMContentLoaded", function () {
   const usernameField = document.getElementById("username");
   const contactNumberField = document.getElementById("contact-number");
