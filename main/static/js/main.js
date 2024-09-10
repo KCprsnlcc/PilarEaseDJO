@@ -3049,6 +3049,76 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const verifyemailErrorBox = document.getElementById("verifyemailErrorBox");
   let cooldownInterval;
+  // Email validation function
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
+    return re.test(String(email).toLowerCase());
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document
+    .getElementById("verifyEmailBtn")
+    .addEventListener("click", function (event) {
+      event.preventDefault(); // Prevent any default form action if it's inside a form
+
+      // Get the email field value (make sure it's unmasked if masked)
+      const emailField = document.getElementById("email");
+      const email = emailField.value;
+
+      // Perform a check if the email is valid
+      if (!validateEmail(email)) {
+        showVerifyEmailError("Invalid email format.");
+        return;
+      }
+
+      // Show loader
+      const verifyemailOverlay = document.getElementById("verifyemailOverlay");
+      verifyemailOverlay.style.display = "block";
+
+      // Send the email verification request to the server
+      fetch("/send_verification_email/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), // CSRF Token if required (Django setup)
+        },
+        body: JSON.stringify({ email: email }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          verifyemailOverlay.style.display = "none"; // Hide loader
+          if (data.success) {
+            showVerifyEmailSuccess(
+              "Verification email sent! Please check your inbox."
+            );
+          } else {
+            showVerifyEmailError(
+              data.error || "Failed to send verification email."
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          verifyemailOverlay.style.display = "none"; // Hide loader
+          showVerifyEmailError(
+            "An error occurred while sending the verification email."
+          );
+        });
+    });
 
   // Function to mask the email
   function maskEmail(email) {
