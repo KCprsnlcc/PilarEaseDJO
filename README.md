@@ -1,6 +1,52 @@
 # PilarEaseDJO
 
-![PilarEase](main/static/images/homepage.png)
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="main/static/images/screenshots/homepage.png" width="200px" alt="Homepage" />
+        <p><b>PilarEase Home</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/login.png"  width="200px" alt="Login" />
+        <p><b>Login Interface</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/register.png"  width="200px" alt="Register" />
+        <p><b>Register Interface</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="main/static/images/screenshots/profilesetting.png"  width="200px" alt="Homepage (Authenticated)" />
+        <p><b>Profile Setting</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/avatarchooser.png"  width="200px" alt="Avatar Options" />
+        <p><b>Avatar Options</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/passwordmanager.png"  width="200px" alt="Password Manager" />
+        <p><b>Password Manager</b></p>
+      </td>
+    </tr>
+     <tr>
+      <td align="center">
+        <img src="main/static/images/screenshots/chatinteraction.png"  width="200px" alt="Chat Interface" />
+        <p><b>Chat Interaction</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/managereferral.png"  width="200px" alt="Status Composer" />
+        <p><b>Status Composer</b></p>
+      </td>
+      <td align="center">
+        <img src="main/static/images/screenshots/filteringstatus.png"  width="200px" alt="Profanity Filtering" />
+        <p><b>Profanity Filtering</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
 PilarEaseDJO is a Django-based platform for emotion management and sentiment analysis, featuring user authentication, status posting, emotion filtering, machine learning integration, chatbot interaction, and administrative tools.
 
 ## Installation
