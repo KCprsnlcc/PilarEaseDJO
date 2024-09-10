@@ -1,0 +1,66 @@
+{% load static %} {% load compress %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Change Complete</title>
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'css/credential.css' %}?v=1.0" />
+    {% endcompress %}
+  </head>
+  <body>
+    <svg class="curved-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M0,0 C20,40 40,40 60,0" />
+    </svg>
+    <svg
+      class="curved-line bottom-left"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg
+      class="curved-line bottom-right"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,100 C30,70 70,70 100,100" />
+    </svg>
+    <svg
+      class="curved-line top-left"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path d="M0,0 C30,30 70,30 100,0" />
+    </svg>
+    <div id="verification-container">
+      <header id="verification-header">
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarLogo.png"
+          alt="Pilar Logo"
+        />
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarEaseLogo.png"
+          alt="PilarEase Logo"
+        />
+        <span id="title">PilarEase</span>
+      </header>
+      <div id="verification-body">
+        {% if verified %}
+        <h2 style="color: #689e4b">Email Change Successful</h2>
+        <p>Your email has been successfully changed.</p>
+        {% elif invalid %}
+        <h2 style="color: #e74c3c">Invalid or Expired Verification Link</h2>
+        <p>
+          The verification link is invalid or has expired. Please request a new
+          email change.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% compress js %}
+    <script src="{% static 'js/email.js' %}?v=1.0"></script>
+    {% endcompress %}
+  </body>
+</html>

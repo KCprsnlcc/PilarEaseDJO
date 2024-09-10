@@ -9,7 +9,7 @@ from .views import (
     custom_password_reset_view, 
     custom_password_reset_done_view,
     custom_password_reset_confirm_view,
-    custom_password_reset_complete_view, verify_email, check_email_verification, send_verification_email
+    custom_password_reset_complete_view, verify_email, check_email_verification, send_verification_email, request_email_change, verify_email_change
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -17,6 +17,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', views.home, name='home'),  # Your home view
     path('register/', register_view, name='register'),
+    path('request_email_change/', request_email_change, name='request_email_change'),
+    path('verify_email_change/<uidb64>/<token>/<new_email>/', verify_email_change, name='verify_email_change'),
     path('verify_email/<uidb64>/<token>/', verify_email, name='verify_email'),
     path('check_email_verification/', check_email_verification, name='check_email_verification'),
     path('send_verification_email/', send_verification_email, name='send_verification_email'),

@@ -72,6 +72,59 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
+def request_email_change(request):
+    data = json.loads(request.body)
+    new_email = data.get('new_email')
+    user = request.user
+
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'Email is required.'})
+
+    # Generate email change token
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    # Generate email verification link
+    verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+
+    # Send verification email
+    email_subject = 'Confirm Email Change'
+    email_html_content = render_to_string('change_email.html', {
+        'user': user,
+        'verification_link': verification_link,
+    })
+    email_text_content = strip_tags(email_html_content)
+
+    email_message = EmailMultiAlternatives(
+        email_subject,
+        email_text_content,
+        'PilarEase <no-reply@pilarease.com>',
+        [new_email],
+    )
+    email_message.attach_alternative(email_html_content, "text/html")
+    email_message.send()
+
+    return JsonResponse({'success': True, 'message': 'Verification link sent to the new email address.'})
+
+@login_required
+def verify_email_change(request, uidb64, token, new_email):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            # Update user's email and save
+            user.email = new_email
+            user.profile.is_email_verified = False  # Reset verification status
+            user.save()
+
+            return render(request, "change_email_complete.html", {"verified": True})
+        else:
+            return render(request, "change_email_complete.html", {"invalid": True})
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "change_email_complete.html", {"invalid": True})
+    
 def check_email_verification(request):
     user = request.user
     if user.is_authenticated:

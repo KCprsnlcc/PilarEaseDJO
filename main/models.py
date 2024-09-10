@@ -38,6 +38,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     is_email_verified = models.BooleanField(default=False)  # Field for email verification
+    new_email = models.EmailField(blank=True, null=True)  # Temporary email storage
     
     def __str__(self):
         return self.user.username

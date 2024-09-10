@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Change Email Request</title>
+    <style>
+      @font-face {
+        font-family: "Aguafina Script";
+        src: url("https://fonts.gstatic.com/s/aguafinascript/v10/If2RXTr6YS-zF4S-kcSWSVi_szM0W5_p9_o_.woff2")
+          format("woff2");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Inter";
+        src: url("https://fonts.gstatic.com/s/inter/v12/UcCO3FwrCzRtDZSXXZp6Lrv-CA.woff2")
+          format("woff2");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: rgb(244, 244, 244);
+        color: rgb(15, 35, 38);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      #email-container {
+        background-color: rgb(255, 255, 255);
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        margin: auto;
+      }
+
+      #email-header {
+        background-color: rgb(14, 35, 38);
+        color: rgb(255, 255, 255);
+        padding: 5px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #email-header img {
+        max-height: 50px;
+        display: inline-block;
+      }
+
+      #email-header #title {
+        font-family: "Aguafina Script";
+        font-size: 32px;
+        margin: 0;
+        color: rgba(255, 255, 255, 1);
+        font-weight: normal;
+        opacity: 1;
+        text-align: center;
+      }
+
+      #email-body {
+        margin-top: 20px;
+        color: rgb(15, 35, 38);
+      }
+
+      #email-body a {
+        color: #689e4b;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+      }
+
+      #email-body .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #689e4b;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      #email-body .btn:hover {
+        background-color: #3b5a2b;
+      }
+
+      #warning {
+        margin-top: 10px;
+        color: #ff0000;
+        font-weight: bold;
+      }
+
+      #email-footer {
+        margin-top: 30px;
+        font-size: 12px;
+        background-color: #0f2326;
+        padding: 20px;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        color: #ffffff;
+      }
+
+      #email-footer p {
+        margin: 5px 0;
+        color: #ffffff;
+      }
+
+      #email-footer a {
+        color: #689e4b;
+        text-decoration: none;
+      }
+
+      #email-footer a:hover {
+        color: #3b5a2b;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="email-container">
+      <div id="email-header">
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarLogo.png"
+          alt="Pilar Logo"
+        />
+        <img
+          src="https://raw.githubusercontent.com/KCprsnlcc/Images/main/PilarEaseLogo.png"
+          alt="PilarEase Logo"
+        />
+        <span id="title">PilarEase</span>
+      </div>
+      <div id="email-body">
+        <h2>Change Email Request</h2>
+        <p>Hello {{ user.get_full_name }},</p>
+        <p>
+          You have requested to change your email address. Please verify your
+          new email address by clicking the link below:
+        </p>
+        <a href="{{ verification_link }}" class="btn">Verify New Email</a>
+        <p id="warning">Note: This link will expire in 60 minutes.</p>
+      </div>
+      <div id="email-footer">
+        <p>Thank you for using our service. The PilarEase Team</p>
+      </div>
+    </div>
+  </body>
+</html>
