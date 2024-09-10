@@ -81,15 +81,23 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
    .venv\Scripts\activate
    ```
 
-4. **Install dependencies:**
+4. **(Optional for Windows)**
+
+   Before installing dependencies, ensure PowerShell is set to execute necessary scripts:
+
+   ```sh
+   Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+   ```
+
+5. **Install dependencies:**
 
    After activating the virtual environment (if you're using one), install the necessary Python packages:
 
    ```sh
-   pip install -r requirements.txt
+   pip install -r requirements.txt --progress-bar on
    ```
 
-5. **Run migrations:**
+6. **Run migrations:**
 
    Apply the migrations to set up the database:
 
@@ -97,7 +105,7 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
    python manage.py migrate
    ```
 
-6. **Start the development server:**
+7. **Start the development server:**
 
    Start the Django development server:
 
@@ -105,11 +113,11 @@ PilarEaseDJO is a Django-based platform for emotion management and sentiment ana
    python manage.py runserver
    ```
 
-7. **Access the application:**
+8. **Access the application:**
 
    Open your browser and go to `http://localhost:8000` to access the application.
 
-8. **Deactivate the Virtual Environment (Optional):**
+9. **Deactivate the Virtual Environment (Optional):**
 
    If you are using a virtual environment, you can deactivate it when you're done:
 
