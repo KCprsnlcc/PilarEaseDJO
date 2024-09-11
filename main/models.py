@@ -35,7 +35,7 @@ class CustomUser(AbstractUser):
         return self.full_name or self.username   
     
 class EmailHistory(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_history')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='email_history')
     email = models.EmailField()
     changed_at = models.DateTimeField(auto_now_add=True)
 

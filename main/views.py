@@ -18,7 +18,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory  
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -46,6 +46,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.templatetags.static import static
 from email.mime.image import MIMEImage
+from django.db.models import Q 
 
 from django.utils.html import strip_tags
 from django.utils.timezone import now
