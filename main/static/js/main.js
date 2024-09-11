@@ -3098,8 +3098,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Email change logic remains the same
   verifyNewEmailBtn.addEventListener("click", function () {
     const newEmail = document.getElementById("new-email").value;
+
+    // Show loader and overlay before starting the request
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
     if (!validateEmail(newEmail)) {
       showVerifyEmailError("Invalid email format.");
+      changeemailOverlay.style.display = "none"; // Hide loader if validation fails
       return;
     }
 
@@ -3113,6 +3119,9 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        // Hide loader and overlay after the request is processed
+        changeemailOverlay.style.display = "none";
+
         if (data.success) {
           showVerifyEmailSuccess(
             "Verification email sent! Please check your inbox."
@@ -3126,6 +3135,7 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => {
         console.error("Error:", error);
+        changeemailOverlay.style.display = "none"; // Hide loader on failure
         showVerifyEmailError("Error sending verification email.");
       });
   });
@@ -3136,6 +3146,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return re.test(String(email).toLowerCase());
   }
 
+  // Function to get CSRF token from cookies
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
