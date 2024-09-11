@@ -9,7 +9,7 @@ from .views import (
     custom_password_reset_view, 
     custom_password_reset_done_view,
     custom_password_reset_confirm_view,
-    custom_password_reset_complete_view, verify_email, check_email_verification, send_verification_email, request_email_change, verify_email_change
+    custom_password_reset_complete_view, verify_email, check_email_verification, send_verification_email, request_email_change, verify_email_change, request_email_verification 
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -22,6 +22,7 @@ urlpatterns = [
     path('verify_email/<uidb64>/<token>/', verify_email, name='verify_email'),
     path('check_email_verification/', check_email_verification, name='check_email_verification'),
     path('send_verification_email/', send_verification_email, name='send_verification_email'),
+    path('request_email_verification/', request_email_verification, name='request_email_verification'),
     path('login/', login_view, name='login'),
     path('password-reset/', custom_password_reset_view, name='password_reset'),  # Custom password reset view
     path('password-reset/done/', custom_password_reset_done_view, name='password_reset_done'),  # Custom password reset done view

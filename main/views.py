@@ -74,77 +74,140 @@ def register_view(request):
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
 def request_email_change(request):
-    data = json.loads(request.body)
-    new_email = data.get('new_email')
-    user = request.user
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        new_email = data.get('new_email')
+        user = request.user
 
-    if not new_email:
-        return JsonResponse({'success': False, 'error': 'Email is required.'})
+        # Check if the new email is provided
+        if not new_email:
+            return JsonResponse({'success': False, 'error': 'New email is required.'})
 
-    # Generate email change token
-    token = default_token_generator.make_token(user)
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
+        # Check if the new email is the same as the current email
+        if user.email == new_email:
+            return JsonResponse({'success': False, 'error': 'This is already your current email address.'})
 
-    # Generate email verification link
-    verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+        # Check if the new email was used previously
+        if EmailHistory.objects.filter(Q(user=user) & Q(email=new_email)).exists():
+            return JsonResponse({'success': False, 'error': 'You have already used this email previously. Please choose a different one.'})
 
-    # Send verification email
-    email_subject = 'Confirm Email Change'
-    email_html_content = render_to_string('change_email.html', {
-        'user': user,
-        'verification_link': verification_link,
-    })
-    email_text_content = strip_tags(email_html_content)
+        # Check if the new email is already in use by another user
+        if CustomUser.objects.filter(email=new_email).exists():
+            return JsonResponse({'success': False, 'error': 'This email is already in use by another user.'})
 
-    email_message = EmailMultiAlternatives(
-        email_subject,
-        email_text_content,
-        'PilarEase <no-reply@pilarease.com>',
-        [new_email],
-    )
-    email_message.attach_alternative(email_html_content, "text/html")
-    email_message.send()
+        # Generate email change token
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-    return JsonResponse({'success': True, 'message': 'Verification link sent to the new email address.'})
+        # Store the email change request time (to verify expiry later)
+        user.profile.email_change_requested_at = now()
+        user.profile.new_email = new_email  # Temporarily store the new email in the profile
+        user.profile.save()
+
+        # Generate email verification link
+        verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+
+        # Send the verification email to the new email address
+        email_subject = 'Confirm Your New Email'
+        email_html_content = render_to_string('change_email.html', {
+            'user': user,
+            'verification_link': verification_link,
+        })
+        email_text_content = strip_tags(email_html_content)
+
+        email_message = EmailMultiAlternatives(
+            email_subject,
+            email_text_content,
+            'PilarEase <no-reply@pilarease.com>',
+            [new_email],  # Send to the new email address
+        )
+        email_message.attach_alternative(email_html_content, "text/html")
+        email_message.send()
+
+        return JsonResponse({'success': True, 'message': 'A verification link has been sent to the new email address.'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def request_email_verification(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        if not user.profile.is_email_verified:
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 TOKEN_EXPIRY_MINUTES = 60  # Set token expiry time to 60 minutes
 
 def verify_email_change(request, uidb64, token, new_email):
     try:
-        # Decode the user ID
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
         # Check if the token is valid
         if default_token_generator.check_token(user, token):
-            
-            # Calculate token age, assuming 'email_change_requested_at' is the timestamp for when the change was requested
-            token_age = now() - user.profile.email_change_requested_at  # Replace this with the actual timestamp field in your model
+            token_age = now() - user.profile.email_change_requested_at
 
-            # Check if the token has expired (60 minutes)
             if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
                 return render(request, "change_email_complete.html", {
-                    "invalid": True, 
+                    "invalid": True,
                     "message": "The verification link has expired. Please request a new email change."
                 })
 
-            # Update the user's email and reset the verification status
+            # Ensure the new email is still available (not taken by another user)
+            if CustomUser.objects.filter(email=new_email).exists():
+                return render(request, "change_email_complete.html", {
+                    "invalid": True,
+                    "message": "This email is already in use by another user. Please choose a different email."
+                })
+
+            # Add current email to email history before changing
+            EmailHistory.objects.create(user=user, email=user.email)
+
+            # Update the user's email to the new email and mark it as verified
             user.email = new_email
-            user.profile.is_email_verified = False  # Reset the email verification status
+            user.profile.is_email_verified = True  # Automatically verify the new email
             user.save()
 
             return render(request, "change_email_complete.html", {"verified": True})
+
         else:
-            # Token is invalid
             return render(request, "change_email_complete.html", {
-                "invalid": True, 
+                "invalid": True,
                 "message": "The verification link is invalid. Please request a new email change."
             })
-    
+
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        # Handle exceptions like non-existent users or decoding errors
         return render(request, "change_email_complete.html", {
-            "invalid": True, 
+            "invalid": True,
             "message": "Invalid verification link or user not found. Please try again."
         })
         return render(request, "change_email_complete.html", {"invalid": True})
@@ -158,14 +221,13 @@ def check_email_verification(request):
 
 def verify_email(request, uidb64, token):
     try:
-        # Decode the user ID from the base64-encoded string
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
         # Check if the token is valid
         if default_token_generator.check_token(user, token):
-            # Check if the verification link is still valid (not expired)
-            token_age = now() - user.profile.email_verification_requested_at  # Assuming 'email_verification_requested_at' stores the timestamp of the request
+            token_age = now() - user.profile.email_verification_requested_at
+            logger.info(f"Token age: {token_age}, Token valid: {default_token_generator.check_token(user, token)}")
 
             if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
                 return render(request, "email_verification_complete.html", {
@@ -173,22 +235,18 @@ def verify_email(request, uidb64, token):
                     "message": "The verification link has expired. Please request a new verification link."
                 })
 
-            # Check if the email is already verified
-            if user.profile.is_email_verified:
-                return render(request, "email_verification_complete.html", {"verified_already": True})
+            # Mark email as verified if it is not already verified
+            if not user.profile.is_email_verified:
+                user.profile.is_email_verified = True
+                user.profile.save()
 
-            # Mark email as verified
-            user.profile.is_email_verified = True
-            user.profile.save()
             return render(request, "email_verification_complete.html", {"verified": True})
         else:
-            # If token is invalid or expired
             return render(request, "email_verification_complete.html", {
                 "invalid": True,
                 "message": "The verification link is invalid. Please request a new verification link."
             })
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        # Handle exceptions such as invalid user or token
         return render(request, "email_verification_complete.html", {
             "invalid": True,
             "message": "Invalid verification link or user not found. Please try again."
@@ -199,6 +257,10 @@ def send_verification_email(request):
         user = request.user
         email = user.email
         if not user.profile.is_email_verified:
+            # Set the email_verification_requested_at timestamp
+            user.profile.email_verification_requested_at = now()
+            user.profile.save()
+
             # Generate a verification token
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))

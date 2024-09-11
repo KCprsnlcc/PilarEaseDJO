@@ -34,6 +34,14 @@ class CustomUser(AbstractUser):
     def get_full_name(self):
         return self.full_name or self.username   
     
+class EmailHistory(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='email_history')
+    email = models.EmailField()
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.email} for {self.user.username}"
+
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)

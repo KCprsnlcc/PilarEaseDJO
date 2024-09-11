@@ -50,7 +50,10 @@
       <div id="verification-body">
         {% if verified %}
         <h2 style="color: #689e4b">Email Change Successful</h2>
-        <p>Your email has been successfully changed.</p>
+        <p>
+          Your email was successfully changed. You can now
+          <a href="/" style="color: #689e4b">return to the homepage</a>.
+        </p>
         {% elif invalid %}
         <h2 style="color: #e74c3c">Verification Failed</h2>
         <p>{{ message }}</p>
