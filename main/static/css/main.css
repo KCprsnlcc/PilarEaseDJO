@@ -1871,8 +1871,8 @@ button[type="submit"]:hover {
   position: absolute;
   animation: rotate 2s infinite;
   height: 50px;
-  top: 220px;
-  left: 225px;
+  top: 135px;
+  left: 200px;
   transform: translate(-50%, -50%);
   width: 50px;
   z-index: 10001;
@@ -2013,6 +2013,7 @@ button[type="submit"]:hover {
   top: 50%;
   transform: translateY(-50%);
   animation: fadeInOut 1s ease-in-out;
+  margin-top: 1px;
 }
 
 @keyframes fadeInOut {
@@ -2352,12 +2353,6 @@ button[type="submit"]:hover {
 .verified-label {
   color: green;
   font-size: 12px;
-}
-
-.resend-cooldown-label {
-  color: #555;
-  font-size: 12px;
-  margin-top: 10px;
 }
 
 /* Footer with Random Tip */

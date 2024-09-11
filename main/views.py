@@ -126,13 +126,12 @@ def request_email_change(request):
             email_message.attach_alternative(email_html_content, "text/html")
             email_message.send()
 
-            return JsonResponse({'success': True, 'message': 'A verification link has been sent to the new email address.'})
-        
+            return JsonResponse({'success': True, 'message': 'Verification link sent.'})
+
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'error': 'Invalid data format.'})
-    
-    # Optionally handle GET request if needed
-    return JsonResponse({'success': False, 'error': 'Invalid request method. Use POST to request an email change.'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 def request_email_verification(request):
     if request.method == 'POST':

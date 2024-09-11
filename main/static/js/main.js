@@ -3095,71 +3095,67 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1000);
   }
 
-  // Email change logic remains the same
-  verifyNewEmailBtn.addEventListener("click", function () {
-    const newEmail = document.getElementById("new-email").value;
+  document
+    .getElementById("verifyNewEmailBtn")
+    .addEventListener("click", function (event) {
+      event.preventDefault(); // Prevent the form from submitting and refreshing the page
 
-    // Show loader and overlay before starting the request
-    const changeemailOverlay = document.getElementById("changeemailOverlay");
-    changeemailOverlay.style.display = "block";
+      const newEmail = document.getElementById("new-email").value;
+      const changeemailOverlay = document.getElementById("changeemailOverlay");
 
-    if (!validateEmail(newEmail)) {
-      showVerifyEmailError("Invalid email format.");
-      changeemailOverlay.style.display = "none"; // Hide loader if validation fails
-      return;
-    }
+      // Show loader and overlay before starting the request
+      changeemailOverlay.style.display = "block";
 
-    fetch("/request_email_change/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({ new_email: newEmail }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        // Hide loader and overlay after the request is processed
-        changeemailOverlay.style.display = "none";
+      // Validate email format before sending
+      if (!validateEmail(newEmail)) {
+        showVerifyEmailError("Invalid email format.");
+        changeemailOverlay.style.display = "none"; // Hide loader if validation fails
+        return;
+      }
 
-        if (data.success) {
-          showVerifyEmailSuccess(
-            "Verification email sent! Please check your inbox."
-          );
-          startEmailCooldown(59);
-        } else {
-          showVerifyEmailError(
-            data.error || "Failed to send verification email."
-          );
-        }
+      fetch("/request_email_change/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ new_email: newEmail }),
       })
-      .catch((error) => {
-        console.error("Error:", error);
-        changeemailOverlay.style.display = "none"; // Hide loader on failure
-        showVerifyEmailError("Error sending verification email.");
-      });
-  });
+        .then((response) => response.json())
+        .then((data) => {
+          changeemailOverlay.style.display = "none"; // Hide loader after the request is processed
+
+          if (data.success === true) {
+            // If success flag is true, show the success message
+            hideVerifyEmailError(); // Hide any existing error messages
+            showVerifyEmailSuccess(
+              "Verification email sent! Please check your inbox."
+            );
+            startEmailCooldown(59); // Start cooldown for resend
+          } else {
+            // If success flag is false, show the error message with server response
+            hideVerifyEmailSuccess(); // Hide any existing success messages
+            showVerifyEmailError(
+              data.error || "Failed to send verification email."
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          changeemailOverlay.style.display = "none"; // Hide loader on failure
+
+          // Catch-all error handling for network or unexpected issues
+          hideVerifyEmailSuccess(); // Hide any existing success messages
+          showVerifyEmailError(
+            "Error sending verification email. Please try again."
+          );
+        });
+    });
 
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
     return re.test(String(email).toLowerCase());
-  }
-
-  // Function to get CSRF token from cookies
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
   }
 
   document
