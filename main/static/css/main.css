@@ -2252,8 +2252,36 @@ button[type="submit"]:hover {
   animation: fadeIn 0.3s ease;
 }
 
+.modern-dialog.pop-in {
+  animation: popIn 0.3s forwards;
+}
+
+.modern-dialog.pop-out {
+  animation: popOut 0.3s forwards;
+}
+
+/* Centering the Verify Button */
+.dialog-buttons-centered {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
 .dialog-content {
   text-align: center;
+}
+
+.later-label {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+}
+
+.later-label:hover {
+  text-decoration: underline;
 }
 
 /* Cooldown Label */

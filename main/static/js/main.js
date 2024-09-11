@@ -3059,6 +3059,24 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   let emailCooldownInterval;
 
+  function openChangeEmailDialog() {
+    const dialog = document.getElementById("changeEmailDialog");
+    dialog.style.display = "block";
+    dialog.classList.remove("pop-out");
+    dialog.classList.add("pop-in");
+  }
+
+  function closeChangeEmailDialog() {
+    const dialog = document.getElementById("changeEmailDialog");
+    dialog.classList.remove("pop-in");
+    dialog.classList.add("pop-out");
+
+    // Delay hiding the dialog to allow the pop-out animation to complete
+    setTimeout(() => {
+      dialog.style.display = "none";
+    }, 300);
+  }
+
   // Random Tips for Change Email
   const emailChangeTips = [
     "Ensure your email is active for receiving notifications.",
