@@ -1994,12 +1994,11 @@ button[type="submit"]:hover {
   background-color: #f1f1f1;
   border-radius: 10px;
 }
-
 #profile-footer {
   margin-top: 20px;
   font-size: 12px;
-  color: #0e2326;
-  background-color: #f4f4f4;
+  color: #555;
+  background-color: #f9f9f9;
   padding: 10px;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
@@ -2007,7 +2006,6 @@ button[type="submit"]:hover {
 
 #profile-footer p {
   margin: 0;
-  color: #0e2326;
 }
 
 #profile-footer a {
@@ -2106,7 +2104,7 @@ button[type="submit"]:hover {
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: calc(100% - 315px); /* Adjust height to allow space for footer */
+  max-height: calc(100% - 310px);
   padding-right: 10px;
 }
 
