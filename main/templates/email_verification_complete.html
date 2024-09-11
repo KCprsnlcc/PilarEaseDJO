@@ -62,10 +62,15 @@
           <a href="/" style="color: #689e4b">return to the homepage</a>.
         </p>
         {% elif invalid %}
-        <h2 style="color: #e74c3c">Invalid or Expired Verification Link</h2>
+        <h2 style="color: #e74c3c">Verification Failed</h2>
+        <p>{{ message }}</p>
         <p>
-          The verification link is invalid or has already been used. Please
-          request a new verification link.
+          Please
+          <a
+            href="{% url 'request_email_verification' %}"
+            style="color: #689e4b"
+            >request a new verification link</a
+          >.
         </p>
         {% endif %}
       </div>

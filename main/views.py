@@ -46,8 +46,9 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.templatetags.static import static
 from email.mime.image import MIMEImage
-from django.utils.html import strip_tags
 
+from django.utils.html import strip_tags
+from django.utils.timezone import now
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
 
@@ -106,22 +107,46 @@ def request_email_change(request):
 
     return JsonResponse({'success': True, 'message': 'Verification link sent to the new email address.'})
 
+TOKEN_EXPIRY_MINUTES = 60  # Set token expiry time to 60 minutes
+
 def verify_email_change(request, uidb64, token, new_email):
     try:
+        # Decode the user ID
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
         # Check if the token is valid
         if default_token_generator.check_token(user, token):
-            # Update user's email and save
+            
+            # Calculate token age, assuming 'email_change_requested_at' is the timestamp for when the change was requested
+            token_age = now() - user.profile.email_change_requested_at  # Replace this with the actual timestamp field in your model
+
+            # Check if the token has expired (60 minutes)
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "change_email_complete.html", {
+                    "invalid": True, 
+                    "message": "The verification link has expired. Please request a new email change."
+                })
+
+            # Update the user's email and reset the verification status
             user.email = new_email
-            user.profile.is_email_verified = False  # Reset verification status
+            user.profile.is_email_verified = False  # Reset the email verification status
             user.save()
 
             return render(request, "change_email_complete.html", {"verified": True})
         else:
-            return render(request, "change_email_complete.html", {"invalid": True})
+            # Token is invalid
+            return render(request, "change_email_complete.html", {
+                "invalid": True, 
+                "message": "The verification link is invalid. Please request a new email change."
+            })
+    
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        # Handle exceptions like non-existent users or decoding errors
+        return render(request, "change_email_complete.html", {
+            "invalid": True, 
+            "message": "Invalid verification link or user not found. Please try again."
+        })
         return render(request, "change_email_complete.html", {"invalid": True})
     
 def check_email_verification(request):
@@ -137,21 +162,37 @@ def verify_email(request, uidb64, token):
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
 
-        # Check if the token is valid and if it has expired using Django's built-in mechanism
+        # Check if the token is valid
         if default_token_generator.check_token(user, token):
-            # Check if the user profile is already verified
+            # Check if the verification link is still valid (not expired)
+            token_age = now() - user.profile.email_verification_requested_at  # Assuming 'email_verification_requested_at' stores the timestamp of the request
+
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "email_verification_complete.html", {
+                    "invalid": True,
+                    "message": "The verification link has expired. Please request a new verification link."
+                })
+
+            # Check if the email is already verified
             if user.profile.is_email_verified:
                 return render(request, "email_verification_complete.html", {"verified_already": True})
-            
+
             # Mark email as verified
             user.profile.is_email_verified = True
             user.profile.save()
             return render(request, "email_verification_complete.html", {"verified": True})
         else:
-            # If token is invalid or expired, show the error message
-            return render(request, "email_verification_complete.html", {"invalid": True})
+            # If token is invalid or expired
+            return render(request, "email_verification_complete.html", {
+                "invalid": True,
+                "message": "The verification link is invalid. Please request a new verification link."
+            })
     except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        return render(request, "email_verification_complete.html", {"invalid": True})
+        # Handle exceptions such as invalid user or token
+        return render(request, "email_verification_complete.html", {
+            "invalid": True,
+            "message": "Invalid verification link or user not found. Please try again."
+        })
     
 def send_verification_email(request):
     if request.method == 'POST':

@@ -148,7 +148,7 @@
         <span id="title">PilarEase</span>
       </div>
       <div id="email-body">
-        <h2>Change Email Request</h2>
+        <h2 style="color: rgb(104, 158, 75)">Change Email Request</h2>
         <p>Hello {{ user.get_full_name }},</p>
         <p>
           You have requested to change your email address. Please verify your
@@ -159,6 +159,16 @@
       </div>
       <div id="email-footer">
         <p>Thank you for using our service. The PilarEase Team</p>
+        <p>
+          This is an automated message. Please do not reply to this email. If
+          you need assistance, contact us at
+          <a href="mailto:support@pilarease.com">support@pilarease.com</a>.
+        </p>
+        <p>
+          If you're having trouble clicking the email verification link, copy
+          and paste the URL below into your web browser:
+        </p>
+        <p><a href="{{ verification_link }}">{{ verification_link }}</a></p>
       </div>
     </div>
   </body>
