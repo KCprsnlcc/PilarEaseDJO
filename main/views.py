@@ -76,58 +76,63 @@ def register_view(request):
 
 def request_email_change(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        new_email = data.get('new_email')
-        user = request.user
+        try:
+            data = json.loads(request.body)
+            new_email = data.get('new_email')
+            user = request.user
 
-        # Check if the new email is provided
-        if not new_email:
-            return JsonResponse({'success': False, 'error': 'New email is required.'})
+            # Check if the new email is provided
+            if not new_email:
+                return JsonResponse({'success': False, 'error': 'New email is required.'})
 
-        # Check if the new email is the same as the current email
-        if user.email == new_email:
-            return JsonResponse({'success': False, 'error': 'This is already your current email address.'})
+            # Check if the new email is the same as the current email
+            if user.email == new_email:
+                return JsonResponse({'success': False, 'error': 'This is already your current email address.'})
 
-        # Check if the new email was used previously
-        if EmailHistory.objects.filter(Q(user=user) & Q(email=new_email)).exists():
-            return JsonResponse({'success': False, 'error': 'You have already used this email previously. Please choose a different one.'})
+            # Check if the new email was used previously
+            if EmailHistory.objects.filter(Q(user=user) & Q(email=new_email)).exists():
+                return JsonResponse({'success': False, 'error': 'You have already used this email previously. Please choose a different one.'})
 
-        # Check if the new email is already in use by another user
-        if CustomUser.objects.filter(email=new_email).exists():
-            return JsonResponse({'success': False, 'error': 'This email is already in use by another user.'})
+            # Check if the new email is already in use by another user
+            if CustomUser.objects.filter(email=new_email).exists():
+                return JsonResponse({'success': False, 'error': 'This email is already in use by another user.'})
 
-        # Generate email change token
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
+            # Generate email change token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-        # Store the email change request time (to verify expiry later)
-        user.profile.email_change_requested_at = now()
-        user.profile.new_email = new_email  # Temporarily store the new email in the profile
-        user.profile.save()
+            # Store the email change request time (to verify expiry later)
+            user.profile.email_change_requested_at = now()
+            user.profile.new_email = new_email  # Temporarily store the new email in the profile
+            user.profile.save()
 
-        # Generate email verification link
-        verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+            # Generate email verification link
+            verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
 
-        # Send the verification email to the new email address
-        email_subject = 'Confirm Your New Email'
-        email_html_content = render_to_string('change_email.html', {
-            'user': user,
-            'verification_link': verification_link,
-        })
-        email_text_content = strip_tags(email_html_content)
+            # Send the verification email to the new email address
+            email_subject = 'Confirm Your New Email'
+            email_html_content = render_to_string('change_email.html', {
+                'user': user,
+                'verification_link': verification_link,
+            })
+            email_text_content = strip_tags(email_html_content)
 
-        email_message = EmailMultiAlternatives(
-            email_subject,
-            email_text_content,
-            'PilarEase <no-reply@pilarease.com>',
-            [new_email],  # Send to the new email address
-        )
-        email_message.attach_alternative(email_html_content, "text/html")
-        email_message.send()
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [new_email],  # Send to the new email address
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+            email_message.send()
 
-        return JsonResponse({'success': True, 'message': 'A verification link has been sent to the new email address.'})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+            return JsonResponse({'success': True, 'message': 'A verification link has been sent to the new email address.'})
+        
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid data format.'})
+    
+    # Optionally handle GET request if needed
+    return JsonResponse({'success': False, 'error': 'Invalid request method. Use POST to request an email change.'})
 
 def request_email_verification(request):
     if request.method == 'POST':
