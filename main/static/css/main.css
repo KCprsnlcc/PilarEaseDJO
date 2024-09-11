@@ -2270,9 +2270,9 @@ button[type="submit"]:hover {
 /* Modern Dialog Styling */
 .modern-dialog {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 90px;
+  left: 25px;
+  transform: t25slate(-50%, -50%);
   width: 90%;
   max-width: 500px;
   background-color: #fff;
