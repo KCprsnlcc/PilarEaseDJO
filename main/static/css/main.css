@@ -1221,10 +1221,12 @@ button[type="submit"]:hover {
   position: relative;
 }
 
+/* Align Verify and Cancel buttons side by side */
 .dialog-buttons {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 .dialog-buttons button {
@@ -2208,6 +2210,35 @@ button[type="submit"]:hover {
   margin-top: 20px;
 }
 
+/* New email input styling */
+#new-email {
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
+}
+
+#new-email::placeholder {
+  color: #bbb;
+}
+
+/* Reduce the size of the Important Tip text */
+.instructions p {
+  font-size: 12px;
+  color: #666;
+}
+
+.dialog-buttons .confirm-btn,
+.dialog-buttons .cancel-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
 .confirm-btn {
   background-color: #689e4b;
   color: white;
@@ -2250,6 +2281,14 @@ button[type="submit"]:hover {
   padding: 20px;
   z-index: 9999;
   animation: fadeIn 0.3s ease;
+}
+
+.modern-dialog.pop-in {
+  animation: popIn 0.3s forwards;
+}
+
+.modern-dialog.pop-out {
+  animation: popOut 0.3s forwards;
 }
 
 .dialog-content {

@@ -3059,23 +3059,23 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   let emailCooldownInterval;
 
-  // Random Tips for Change Email
-  const emailChangeTips = [
-    "Ensure your email is active for receiving notifications.",
-    "Double-check your email for typos.",
-    "Make sure to verify your new email within 60 minutes.",
-    "Use a personal email for better access to updates.",
-    "Keep your email updated for uninterrupted communication.",
-  ];
+  // Function to show the modal with pop-in animation
+  changeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-out");
+    changeEmailDialog.classList.add("pop-in");
+    changeEmailDialog.style.display = "block";
+  });
 
-  function displayRandomEmailTip() {
-    const randomIndex = Math.floor(Math.random() * emailChangeTips.length);
-    const randomTipElement = document.getElementById("randomTip");
-    randomTipElement.innerText = `Tip: ${emailChangeTips[randomIndex]}`;
-  }
+  // Function to close the modal with pop-out animation
+  cancelChangeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-in");
+    changeEmailDialog.classList.add("pop-out");
 
-  // Refresh tip every 5 seconds
-  setInterval(displayRandomEmailTip, 5000);
+    // Set timeout to hide modal after animation completes
+    setTimeout(() => {
+      changeEmailDialog.style.display = "none";
+    }, 300); // The timeout duration should match the animation duration
+  });
 
   // Email Cooldown Timer
   function startEmailCooldown(seconds) {
