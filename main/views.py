@@ -762,7 +762,6 @@ def update_user_profile(request):
         data = json.loads(request.body)
         username = data.get('username')
         contact_number = data.get('contact_number')
-        email = data.get('email')
         academic_year_level = data.get('academic_year_level')
         user = request.user
         response_data = {'success': True, 'errors': {}}
@@ -772,15 +771,10 @@ def update_user_profile(request):
             response_data['success'] = False
             response_data['errors']['username'] = 'Username already exists.'
 
-        if CustomUser.objects.filter(email=email).exclude(id=user.id).exists():
-            response_data['success'] = False
-            response_data['errors']['email'] = 'Email already registered by another user.'
-            
         # Update the user details if there are no errors
         if response_data['success']:
             user.username = username
             user.contact_number = contact_number
-            user.email = email
             user.academic_year_level = academic_year_level
             user.save()
         else:

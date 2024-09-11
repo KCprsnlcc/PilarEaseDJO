@@ -3095,20 +3095,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1000);
   }
 
-  changeEmailBtn.addEventListener("click", function () {
-    changeEmailDialog.style.display = "block";
-    changeEmailDialog.classList.add("pop-in");
-  });
-
-  // Close the email change dialog
-  cancelChangeEmailBtn.addEventListener("click", function () {
-    changeEmailDialog.classList.remove("pop-in");
-    changeEmailDialog.classList.add("pop-out");
-    setTimeout(() => {
-      changeEmailDialog.style.display = "none";
-    }, 300);
-  });
-
   // Email change logic remains the same
   verifyNewEmailBtn.addEventListener("click", function () {
     const newEmail = document.getElementById("new-email").value;
@@ -3128,7 +3114,9 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          showVerifyEmailSuccess("Verification link sent.");
+          showVerifyEmailSuccess(
+            "Verification email sent! Please check your inbox."
+          );
           startEmailCooldown(59);
         } else {
           showVerifyEmailError(
@@ -3141,6 +3129,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showVerifyEmailError("Error sending verification email.");
       });
   });
+
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
