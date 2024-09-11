@@ -3049,6 +3049,98 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const verifyemailErrorBox = document.getElementById("verifyemailErrorBox");
   let cooldownInterval;
+
+  const changeEmailBtn = document.getElementById("changeEmailBtn");
+  const changeEmailDialog = document.getElementById("changeEmailDialog");
+  const verifyNewEmailBtn = document.getElementById("verifyNewEmailBtn");
+  const cancelChangeEmailBtn = document.getElementById("cancelChangeEmailBtn");
+  const resendEmailCooldownLabel = document.getElementById(
+    "resendEmailCooldownLabel"
+  );
+  let emailCooldownInterval;
+
+  // Random Tips for Change Email
+  const emailChangeTips = [
+    "Ensure your email is active for receiving notifications.",
+    "Double-check your email for typos.",
+    "Make sure to verify your new email within 60 minutes.",
+    "Use a personal email for better access to updates.",
+    "Keep your email updated for uninterrupted communication.",
+  ];
+
+  function displayRandomEmailTip() {
+    const randomIndex = Math.floor(Math.random() * emailChangeTips.length);
+    const randomTipElement = document.getElementById("randomTip");
+    randomTipElement.innerText = `Tip: ${emailChangeTips[randomIndex]}`;
+  }
+
+  // Refresh tip every 5 seconds
+  setInterval(displayRandomEmailTip, 5000);
+
+  // Email Cooldown Timer
+  function startEmailCooldown(seconds) {
+    resendEmailCooldownLabel.style.display = "inline";
+    const cooldownTimer = document.getElementById("emailCooldownTimer");
+    cooldownTimer.textContent = seconds;
+
+    emailCooldownInterval = setInterval(() => {
+      seconds--;
+      cooldownTimer.textContent = seconds;
+
+      if (seconds <= 0) {
+        clearInterval(emailCooldownInterval);
+        resendEmailCooldownLabel.style.display = "none";
+        verifyNewEmailBtn.innerText = "Resend";
+      }
+    }, 1000);
+  }
+
+  changeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.style.display = "block";
+    changeEmailDialog.classList.add("pop-in");
+  });
+
+  // Close the email change dialog
+  cancelChangeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-in");
+    changeEmailDialog.classList.add("pop-out");
+    setTimeout(() => {
+      changeEmailDialog.style.display = "none";
+    }, 300);
+  });
+
+  // Email change logic remains the same
+  verifyNewEmailBtn.addEventListener("click", function () {
+    const newEmail = document.getElementById("new-email").value;
+    if (!validateEmail(newEmail)) {
+      showVerifyEmailError("Invalid email format.");
+      return;
+    }
+
+    fetch("/request_email_change/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ new_email: newEmail }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showVerifyEmailSuccess("Verification link sent.");
+          startEmailCooldown(59);
+        } else {
+          showVerifyEmailError(
+            data.error || "Failed to send verification email."
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showVerifyEmailError("Error sending verification email.");
+      });
+  });
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format

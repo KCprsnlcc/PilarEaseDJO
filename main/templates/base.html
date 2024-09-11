@@ -715,6 +715,41 @@
     </button>
   </form>
   
+<!-- Modern Change Email Dialog -->
+<div id="changeEmailDialog" class="modern-dialog" style="display: none;">
+  <div id="changeEmailContent" class="dialog-content">
+    <h3>Change Your Email Address</h3>
+    
+    <!-- Instructions Section -->
+    <div class="instructions">
+      <p>
+        <strong>Important:</strong> Changing your email requires verification. 
+        After entering a new email, click "Verify" to receive a verification link.
+        You can resend the link after 59 seconds if you don’t receive it.
+      </p>
+    </div>
+
+    <!-- New Email Form -->
+    <label for="new-email">Enter New Email Address</label>
+    <input type="email" id="new-email" name="new-email" placeholder="Enter new email" />
+    <div class="dialog-buttons">
+      <button id="verifyNewEmailBtn" class="confirm-btn">Verify</button>
+      <button id="cancelChangeEmailBtn" class="cancel-btn">Cancel</button>
+    </div>
+    
+    <!-- Cooldown Label -->
+    <span id="changeEmailSuccessLabel" class="verified-label" style="display: none;">Verification email sent</span>
+    <span id="resendEmailCooldownLabel" class="resend-cooldown-label" style="display: none;">
+      Resend in <span id="emailCooldownTimer">59</span>s
+    </span>
+
+    <!-- Random Tip Generator -->
+    <footer id="email-change-footer">
+      <p id="randomTip">Tip: Ensure your email is active for receiving notifications.</p>
+    </footer>
+  </div>
+</div>
+
 <!-- Confirmation Dialog -->
 <div id="confirmUpdateDialog" class="confirm-dialog" style="display: none;">
   <div id="confirmUpdateContent" class="confirm-dialog-content">

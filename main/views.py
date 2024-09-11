@@ -106,7 +106,6 @@ def request_email_change(request):
 
     return JsonResponse({'success': True, 'message': 'Verification link sent to the new email address.'})
 
-@login_required
 def verify_email_change(request, uidb64, token, new_email):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
