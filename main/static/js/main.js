@@ -3059,6 +3059,13 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   let emailCooldownInterval;
 
+  const resendNewEmailCooldownLabel = document.getElementById(
+    "resendNewEmailCooldownLabel"
+  );
+  const cooldownNewEmailTimer = document.getElementById(
+    "cooldownNewEmailTimer"
+  );
+
   // Function to show the modal with pop-in animation
   changeEmailBtn.addEventListener("click", function () {
     changeEmailDialog.classList.remove("pop-out");
@@ -3077,30 +3084,80 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 300); // The timeout duration should match the animation duration
   });
 
-  // Email Cooldown Timer
-  function startEmailCooldown(seconds) {
-    resendEmailCooldownLabel.style.display = "inline";
-    const cooldownTimer = document.getElementById("emailCooldownTimer");
-    cooldownTimer.textContent = seconds;
+  // Cooldown Timer for the new email verification
+  function startNewEmailCooldown(seconds) {
+    // Display the cooldown label and hide the "Resend" button during the countdown
+    resendNewEmailCooldownLabel.style.display = "inline";
+    cooldownNewEmailTimer.textContent = seconds;
 
     emailCooldownInterval = setInterval(() => {
       seconds--;
-      cooldownTimer.textContent = seconds;
+      cooldownNewEmailTimer.textContent = seconds;
 
       if (seconds <= 0) {
         clearInterval(emailCooldownInterval);
-        resendEmailCooldownLabel.style.display = "none";
-        verifyNewEmailBtn.innerText = "Resend";
+        resendNewEmailCooldownLabel.style.display = "none";
+        showResendNewEmailButton(); // Show the "Resend" button after cooldown
       }
     }, 1000);
   }
+
+  // Show "Resend" button after cooldown finishess
+  function showResendNewEmailButton() {
+    const resendBtn = document.createElement("button");
+    resendBtn.innerText = "Resend";
+    resendBtn.classList.add("confirm-btn");
+    resendBtn.addEventListener("click", function (event) {
+      event.stopPropagation(); // Stop event propagation
+      event.preventDefault(); // Prevent form submission
+      startNewEmailCooldown(60); // Restart the countdown
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+      sendNewEmailVerification(); // Resend verification email for the new email
+    });
+    document.querySelector(".dialog-buttons").appendChild(resendBtn); // Add the "Resend" button dynamically
+  }
+
+  // Function to send a verification email for the new email
+  function sendNewEmailVerification() {
+    const newEmail = document.getElementById("new-email").value;
+
+    // Show the overlay and loader
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
+    fetch("/send_verification_email/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ email: newEmail }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        changeemailOverlay.style.display = "none"; // Hide loader
+        if (data.success) {
+          showVerifyEmailSuccess(
+            "New Email Verification Sent! Please check your inbox."
+          );
+        } else {
+          showVerifyEmailError("Error resending verification email.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        changeemailOverlay.style.display = "none"; // Hide loader
+        showVerifyEmailError("An error occurred while resending the email.");
+      });
+  }
+
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
     return re.test(String(email).toLowerCase());
   }
 
-  // Adding the event listener to the "Verify" button
+  // Event listener for the "Verify" button for changing the email
   verifyNewEmailBtn.addEventListener("click", function (event) {
     event.preventDefault(); // Prevent the default form submission
 
@@ -3131,9 +3188,11 @@ document.addEventListener("DOMContentLoaded", function () {
         changeemailOverlay.style.display = "none"; // Hide the loader and overlay
 
         if (data.success) {
-          // Show success dialog when email change request is successful
+          // Start the cooldown timer and hide the "Verify" button
+          verifyNewEmailBtn.style.display = "none";
+          startNewEmailCooldown(60); // Start with 60 seconds countdown
           showVerifyEmailSuccess(
-            "Verification email sent to your new address!\nPlease check your inbox."
+            "New Email Verification Sent! Please check your inbox."
           );
         } else {
           // Show error dialog in case of an error

@@ -732,7 +732,10 @@
   <label for="new-email">Enter New Email Address</label>
   <input type="email" id="new-email" name="new-email" placeholder="Enter new email" required />
   <div class="dialog-buttons">
-    <button type="submit" id="verifyNewEmailBtn" class="confirm-btn">Verify</button>
+  <button type="submit" id="verifyNewEmailBtn" class="confirm-btn">Verify</button>
+  <span id="resendNewEmailCooldownLabel" class="resend-newemail-cooldown-label" style="display: none;"> 
+    Resend in <span id="cooldownNewEmailTimer">60</span>s
+  </span>
     <button type="button" id="cancelChangeEmailBtn" class="cancel-btn">Cancel</button>
   </div>
 

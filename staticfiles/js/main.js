@@ -3059,126 +3059,154 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   let emailCooldownInterval;
 
-  function openChangeEmailDialog() {
-    const dialog = document.getElementById("changeEmailDialog");
-    dialog.style.display = "block";
-    dialog.classList.remove("pop-out");
-    dialog.classList.add("pop-in");
-  }
+  const resendNewEmailCooldownLabel = document.getElementById(
+    "resendNewEmailCooldownLabel"
+  );
+  const cooldownNewEmailTimer = document.getElementById(
+    "cooldownNewEmailTimer"
+  );
 
-  function closeChangeEmailDialog() {
-    const dialog = document.getElementById("changeEmailDialog");
-    dialog.classList.remove("pop-in");
-    dialog.classList.add("pop-out");
+  // Function to show the modal with pop-in animation
+  changeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-out");
+    changeEmailDialog.classList.add("pop-in");
+    changeEmailDialog.style.display = "block";
+  });
 
-    // Delay hiding the dialog to allow the pop-out animation to complete
+  // Function to close the modal with pop-out animation
+  cancelChangeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-in");
+    changeEmailDialog.classList.add("pop-out");
+
+    // Set timeout to hide modal after animation completes
     setTimeout(() => {
-      dialog.style.display = "none";
-    }, 300);
-  }
+      changeEmailDialog.style.display = "none";
+    }, 300); // The timeout duration should match the animation duration
+  });
 
-  // Random Tips for Change Email
-  const emailChangeTips = [
-    "Ensure your email is active for receiving notifications.",
-    "Double-check your email for typos.",
-    "Make sure to verify your new email within 60 minutes.",
-    "Use a personal email for better access to updates.",
-    "Keep your email updated for uninterrupted communication.",
-  ];
-
-  function displayRandomEmailTip() {
-    const randomIndex = Math.floor(Math.random() * emailChangeTips.length);
-    const randomTipElement = document.getElementById("randomTip");
-    randomTipElement.innerText = `Tip: ${emailChangeTips[randomIndex]}`;
-  }
-
-  // Refresh tip every 5 seconds
-  setInterval(displayRandomEmailTip, 5000);
-
-  // Email Cooldown Timer
-  function startEmailCooldown(seconds) {
-    resendEmailCooldownLabel.style.display = "inline";
-    const cooldownTimer = document.getElementById("emailCooldownTimer");
-    cooldownTimer.textContent = seconds;
+  // Cooldown Timer for the new email verification
+  function startNewEmailCooldown(seconds) {
+    // Display the cooldown label and hide the "Resend" button during the countdown
+    resendNewEmailCooldownLabel.style.display = "inline";
+    cooldownNewEmailTimer.textContent = seconds;
 
     emailCooldownInterval = setInterval(() => {
       seconds--;
-      cooldownTimer.textContent = seconds;
+      cooldownNewEmailTimer.textContent = seconds;
 
       if (seconds <= 0) {
         clearInterval(emailCooldownInterval);
-        resendEmailCooldownLabel.style.display = "none";
-        verifyNewEmailBtn.innerText = "Resend";
+        resendNewEmailCooldownLabel.style.display = "none";
+        showResendNewEmailButton(); // Show the "Resend" button after cooldown
       }
     }, 1000);
   }
 
-  changeEmailBtn.addEventListener("click", function () {
-    changeEmailDialog.style.display = "block";
-    changeEmailDialog.classList.add("pop-in");
-  });
+  // Show "Resend" button after cooldown finishess
+  function showResendNewEmailButton() {
+    const resendBtn = document.createElement("button");
+    resendBtn.innerText = "Resend";
+    resendBtn.classList.add("confirm-btn");
+    resendBtn.addEventListener("click", function (event) {
+      event.stopPropagation(); // Stop event propagation
+      event.preventDefault(); // Prevent form submission
+      startNewEmailCooldown(60); // Restart the countdown
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+      sendNewEmailVerification(); // Resend verification email for the new email
+    });
+    document.querySelector(".dialog-buttons").appendChild(resendBtn); // Add the "Resend" button dynamically
+  }
 
-  // Close the email change dialog
-  cancelChangeEmailBtn.addEventListener("click", function () {
-    changeEmailDialog.classList.remove("pop-in");
-    changeEmailDialog.classList.add("pop-out");
-    setTimeout(() => {
-      changeEmailDialog.style.display = "none";
-    }, 300);
-  });
-
-  // Email change logic remains the same
-  verifyNewEmailBtn.addEventListener("click", function () {
+  // Function to send a verification email for the new email
+  function sendNewEmailVerification() {
     const newEmail = document.getElementById("new-email").value;
-    if (!validateEmail(newEmail)) {
-      showVerifyEmailError("Invalid email format.");
-      return;
-    }
 
-    fetch("/request_email_change/", {
+    // Show the overlay and loader
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
+    fetch("/send_verification_email/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
       },
-      body: JSON.stringify({ new_email: newEmail }),
+      body: JSON.stringify({ email: newEmail }),
     })
       .then((response) => response.json())
       .then((data) => {
+        changeemailOverlay.style.display = "none"; // Hide loader
         if (data.success) {
-          showVerifyEmailSuccess("Verification link sent.");
-          startEmailCooldown(59);
-        } else {
-          showVerifyEmailError(
-            data.error || "Failed to send verification email."
+          showVerifyEmailSuccess(
+            "New Email Verification Sent! Please check your inbox."
           );
+        } else {
+          showVerifyEmailError("Error resending verification email.");
         }
       })
       .catch((error) => {
         console.error("Error:", error);
-        showVerifyEmailError("Error sending verification email.");
+        changeemailOverlay.style.display = "none"; // Hide loader
+        showVerifyEmailError("An error occurred while resending the email.");
       });
-  });
+  }
+
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
     return re.test(String(email).toLowerCase());
   }
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
+  // Event listener for the "Verify" button for changing the email
+  verifyNewEmailBtn.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    // Get the new email address
+    const newEmail = document.getElementById("new-email").value;
+
+    // Validate the email format
+    if (!validateEmail(newEmail)) {
+      showVerifyEmailError("Invalid email format.");
+      return;
     }
-    return cookieValue;
-  }
+
+    // Show overlay and loader while processing the request
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
+    // Send the email change request to the server
+    fetch("/request_email_change/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token for Django
+      },
+      body: JSON.stringify({ new_email: newEmail }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+
+        if (data.success) {
+          // Start the cooldown timer and hide the "Verify" button
+          verifyNewEmailBtn.style.display = "none";
+          startNewEmailCooldown(60); // Start with 60 seconds countdown
+          showVerifyEmailSuccess(
+            "New Email Verification Sent! Please check your inbox."
+          );
+        } else {
+          // Show error dialog in case of an error
+          showVerifyEmailError(data.error || "Failed to update the email.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+        showVerifyEmailError(
+          "An error occurred while processing the email change request."
+        );
+      });
+  });
 
   document
     .getElementById("verifyEmailBtn")

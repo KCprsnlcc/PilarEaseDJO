@@ -2004,7 +2004,14 @@ button[type="submit"]:hover {
   top: 50%;
   transform: translateY(-50%);
 }
-
+.resend-newemail-cooldown-label{
+  color: #555;
+  font-size: 12px;
+  right: 10px;
+  transform: translateY(-50%);
+  animation: fadeInOut 1s ease-in-out;
+  margin-top: 18px;
+}
 .resend-cooldown-label {
   color: #555;
   font-size: 12px;
