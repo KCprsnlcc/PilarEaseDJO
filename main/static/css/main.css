@@ -1816,7 +1816,7 @@ button[type="submit"]:hover {
   position: absolute;
   animation: rotate 2s infinite;
   height: 50px;
-  top: 220px;
+  top: 210px;
   left: 225px;
   transform: translate(-50%, -50%);
   width: 50px;
@@ -1871,7 +1871,7 @@ button[type="submit"]:hover {
   position: absolute;
   animation: rotate 2s infinite;
   height: 50px;
-  top: 135px;
+  top: 115px;
   left: 200px;
   transform: translate(-50%, -50%);
   width: 50px;
@@ -3240,7 +3240,7 @@ button#generatePassword:hover {
 }
 
 #verifyemailErrorBox {
-  top: 220px;
+  top: 205px;
   left: 48px;
   width: 400px;
   display: none;
@@ -3255,7 +3255,7 @@ button#generatePassword:hover {
 }
 
 #verifyemailSuccessBox {
-  top: 220px;
+  top: 205px;
   left: 48px;
   width: 400px;
   display: none;

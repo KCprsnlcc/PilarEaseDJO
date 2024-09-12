@@ -3228,6 +3228,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const maskedDomain = "*****." + domainPart.split(".").pop();
     return maskedLocal + "@" + maskedDomain;
   }
+  // Function to start the cooldown timer only after successful email sending
   // Function to start cooldown timer
   function startCooldown(seconds) {
     resendCooldownLabel.style.display = "inline";

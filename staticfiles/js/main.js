@@ -2857,6 +2857,19 @@ document.addEventListener("DOMContentLoaded", function () {
     "Ensure your username is unique and memorable.",
     "Use your most active email for notifications.",
     "Verify your contact info regularly for smooth communication.",
+    "Check your spam folder for missed notifications.",
+    "Ensure your profile picture is appropriate and clear.",
+    "Log out of your account after using shared devices.",
+    "Keep your mailing address updated for physical notifications.",
+    "Make sure your name matches official documents.",
+    "Check your profile for any incomplete details.",
+    "Update your emergency contacts regularly for safety.",
+    "Review your email verification status for security.",
+    "Notify support if any personal details seem incorrect.",
+    "Ensure your student ID is correct for institutional access.",
+    "Refresh your avatar regularly to keep your profile current.",
+    "Complete your profile to unlock all features and services.",
+    "Review profile settings after every major update.",
   ];
 
   function displayRandomTip() {
@@ -3086,8 +3099,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Cooldown Timer for the new email verification
   function startNewEmailCooldown(seconds) {
-    // Display the cooldown label and hide the "Resend" button during the countdown
-    resendNewEmailCooldownLabel.style.display = "inline";
+    resendNewEmailCooldownLabel.style.display = "inline"; // Show the cooldown label
     cooldownNewEmailTimer.textContent = seconds;
 
     emailCooldownInterval = setInterval(() => {
@@ -3096,59 +3108,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (seconds <= 0) {
         clearInterval(emailCooldownInterval);
-        resendNewEmailCooldownLabel.style.display = "none";
-        showResendNewEmailButton(); // Show the "Resend" button after cooldown
+        resendNewEmailCooldownLabel.style.display = "none"; // Hide cooldown when complete
+        verifyNewEmailBtn.innerText = "Resend"; // Change button text to "Resend"
+        verifyNewEmailBtn.style.display = "inline-block"; // Show the button
       }
     }, 1000);
-  }
-
-  // Show "Resend" button after cooldown finishess
-  function showResendNewEmailButton() {
-    const resendBtn = document.createElement("button");
-    resendBtn.innerText = "Resend";
-    resendBtn.classList.add("confirm-btn");
-    resendBtn.addEventListener("click", function (event) {
-      event.stopPropagation(); // Stop event propagation
-      event.preventDefault(); // Prevent form submission
-      startNewEmailCooldown(60); // Restart the countdown
-      resendBtn.style.display = "none"; // Hide resend during cooldown
-      sendNewEmailVerification(); // Resend verification email for the new email
-    });
-    document.querySelector(".dialog-buttons").appendChild(resendBtn); // Add the "Resend" button dynamically
-  }
-
-  // Function to send a verification email for the new email
-  function sendNewEmailVerification() {
-    const newEmail = document.getElementById("new-email").value;
-
-    // Show the overlay and loader
-    const changeemailOverlay = document.getElementById("changeemailOverlay");
-    changeemailOverlay.style.display = "block";
-
-    fetch("/send_verification_email/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({ email: newEmail }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        changeemailOverlay.style.display = "none"; // Hide loader
-        if (data.success) {
-          showVerifyEmailSuccess(
-            "New Email Verification Sent! Please check your inbox."
-          );
-        } else {
-          showVerifyEmailError("Error resending verification email.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        changeemailOverlay.style.display = "none"; // Hide loader
-        showVerifyEmailError("An error occurred while resending the email.");
-      });
   }
 
   // Email validation function
@@ -3161,7 +3125,6 @@ document.addEventListener("DOMContentLoaded", function () {
   verifyNewEmailBtn.addEventListener("click", function (event) {
     event.preventDefault(); // Prevent the default form submission
 
-    // Get the new email address
     const newEmail = document.getElementById("new-email").value;
 
     // Validate the email format
@@ -3192,7 +3155,7 @@ document.addEventListener("DOMContentLoaded", function () {
           verifyNewEmailBtn.style.display = "none";
           startNewEmailCooldown(60); // Start with 60 seconds countdown
           showVerifyEmailSuccess(
-            "New Email Verification Sent! Please check your inbox."
+            "Verification email sent! Please check your inbox."
           );
         } else {
           // Show error dialog in case of an error
@@ -3211,47 +3174,58 @@ document.addEventListener("DOMContentLoaded", function () {
   document
     .getElementById("verifyEmailBtn")
     .addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent any default form action if it's inside a form
+      event.preventDefault(); // Prevent form submission
 
-      // Get the email field value (make sure it's unmasked if masked)
+      // Get the email value
       const emailField = document.getElementById("email");
       const email = emailField.value;
 
-      // Perform a check if the email is valid
+      // Validate the email
       if (!validateEmail(email)) {
         showVerifyEmailError("Invalid email format.");
-        return;
+        return; // Stop if email is not valid
       }
 
-      // Show loader
+      // Show the loader while sending the request
       const verifyemailOverlay = document.getElementById("verifyemailOverlay");
       verifyemailOverlay.style.display = "block";
 
-      // Send the email verification request to the server
+      // Send the email verification request
       fetch("/send_verification_email/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"), // CSRF Token if required (Django setup)
+          "X-CSRFToken": getCookie("csrftoken"),
         },
         body: JSON.stringify({ email: email }),
       })
         .then((response) => response.json())
         .then((data) => {
-          verifyemailOverlay.style.display = "none"; // Hide loader
+          // Hide the overlay after receiving a response
+          verifyemailOverlay.style.display = "none";
+
           if (data.success) {
+            // Display success message
             showVerifyEmailSuccess(
               "Verification email sent! Please check your inbox."
             );
+
+            // Only start the countdown if the email was successfully sent
+            startCooldown(60);
+
+            // Hide the verify button after success
+            verifyEmailBtn.style.display = "none";
           } else {
+            // Show error message if the request failed
             showVerifyEmailError(
               data.error || "Failed to send verification email."
             );
           }
         })
         .catch((error) => {
-          console.error("Error:", error);
-          verifyemailOverlay.style.display = "none"; // Hide loader
+          console.error("Error sending verification email:", error);
+          // Hide the loader, but keep the Verify button visible
+          verifyemailOverlay.style.display = "none";
           showVerifyEmailError(
             "An error occurred while sending the verification email."
           );
@@ -3265,21 +3239,24 @@ document.addEventListener("DOMContentLoaded", function () {
     const maskedDomain = "*****." + domainPart.split(".").pop();
     return maskedLocal + "@" + maskedDomain;
   }
-  // Function to start cooldown timer
+  // Function to start the cooldown timer only after successful email sending
   function startCooldown(seconds) {
-    resendCooldownLabel.style.display = "inline";
+    const resendCooldownLabel = document.getElementById("resendCooldownLabel");
+    const cooldownTimer = document.getElementById("cooldownTimer");
+
+    resendCooldownLabel.style.display = "inline"; // Show the cooldown label
     cooldownTimer.textContent = seconds;
 
-    cooldownInterval = setInterval(() => {
+    const interval = setInterval(() => {
       seconds--;
       cooldownTimer.textContent = seconds;
 
       if (seconds <= 0) {
-        clearInterval(cooldownInterval);
-        resendCooldownLabel.style.display = "none";
-        showResendButton();
+        clearInterval(interval); // Clear the countdown when it reaches 0
+        resendCooldownLabel.style.display = "none"; // Hide the cooldown label
+        showResendButton(); // Show the Resend button after cooldown
       }
-    }, 1000);
+    }, 1000); // Run every second
   }
 
   // Show the Resend button after cooldown
@@ -3288,11 +3265,10 @@ document.addEventListener("DOMContentLoaded", function () {
     resendBtn.innerText = "Resend";
     resendBtn.classList.add("verify-btn");
     resendBtn.addEventListener("click", function (event) {
-      event.stopPropagation(); // Stop event propagation
-      event.preventDefault(); // Prevent form submission
-      startCooldown(60);
-      resendBtn.style.display = "none"; // Hide resend during cooldown
-      sendVerificationEmail();
+      event.preventDefault();
+      resendBtn.style.display = "none"; // Hide Resend button during the next request
+      startCooldown(60); // Restart the 60-second cooldown
+      sendVerificationEmail(); // Trigger the resend logic
     });
     document.querySelector(".email-container").appendChild(resendBtn);
   }
