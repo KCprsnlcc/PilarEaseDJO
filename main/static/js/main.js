@@ -2857,6 +2857,19 @@ document.addEventListener("DOMContentLoaded", function () {
     "Ensure your username is unique and memorable.",
     "Use your most active email for notifications.",
     "Verify your contact info regularly for smooth communication.",
+    "Check your spam folder for missed notifications.",
+    "Ensure your profile picture is appropriate and clear.",
+    "Log out of your account after using shared devices.",
+    "Keep your mailing address updated for physical notifications.",
+    "Make sure your name matches official documents.",
+    "Check your profile for any incomplete details.",
+    "Update your emergency contacts regularly for safety.",
+    "Review your email verification status for security.",
+    "Notify support if any personal details seem incorrect.",
+    "Ensure your student ID is correct for institutional access.",
+    "Refresh your avatar regularly to keep your profile current.",
+    "Complete your profile to unlock all features and services.",
+    "Review profile settings after every major update.",
   ];
 
   function displayRandomTip() {
