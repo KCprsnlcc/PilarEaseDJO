@@ -2004,13 +2004,16 @@ button[type="submit"]:hover {
   top: 50%;
   transform: translateY(-50%);
 }
-.resend-newemail-cooldown-label{
+.resend-newemail-cooldown-label {
   color: #555;
   font-size: 12px;
   right: 10px;
   transform: translateY(-50%);
   animation: fadeInOut 1s ease-in-out;
   margin-top: 18px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(-50%);
+  display: inline-block;
 }
 .resend-cooldown-label {
   color: #555;
@@ -2307,11 +2310,27 @@ button[type="submit"]:hover {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, opacity 0.5s ease, transform 0.5s ease;
 }
 
 .confirm-btn:hover {
   background-color: #3b5a2b;
+}
+
+.confirm-btn.fade-out {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.confirm-btn.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hidden {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
 .cancel-btn {
