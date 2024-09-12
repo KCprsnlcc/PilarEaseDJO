@@ -3218,7 +3218,7 @@ button#generatePassword:hover {
 
 #verifyemailErrorBox {
   top: 220px;
-  left: 45px;
+  left: 48px;
   width: 400px;
   display: none;
   text-align: center;
@@ -3233,7 +3233,7 @@ button#generatePassword:hover {
 
 #verifyemailSuccessBox {
   top: 220px;
-  left: 45px;
+  left: 48px;
   width: 400px;
   display: none;
   text-align: center;

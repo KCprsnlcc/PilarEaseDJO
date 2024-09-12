@@ -3094,69 +3094,60 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }, 1000);
   }
-
-  document
-    .getElementById("verifyNewEmailBtn")
-    .addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent the form from submitting and refreshing the page
-
-      const newEmail = document.getElementById("new-email").value;
-      const changeemailOverlay = document.getElementById("changeemailOverlay");
-
-      // Show loader and overlay before starting the request
-      changeemailOverlay.style.display = "block";
-
-      // Validate email format before sending
-      if (!validateEmail(newEmail)) {
-        showVerifyEmailError("Invalid email format.");
-        changeemailOverlay.style.display = "none"; // Hide loader if validation fails
-        return;
-      }
-
-      fetch("/request_email_change/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({ new_email: newEmail }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          changeemailOverlay.style.display = "none"; // Hide loader after the request is processed
-
-          if (data.success === true) {
-            // If success flag is true, show the success message
-            hideVerifyEmailError(); // Hide any existing error messages
-            showVerifyEmailSuccess(
-              "Verification email sent! Please check your inbox."
-            );
-            startEmailCooldown(59); // Start cooldown for resend
-          } else {
-            // If success flag is false, show the error message with server response
-            hideVerifyEmailSuccess(); // Hide any existing success messages
-            showVerifyEmailError(
-              data.error || "Failed to send verification email."
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          changeemailOverlay.style.display = "none"; // Hide loader on failure
-
-          // Catch-all error handling for network or unexpected issues
-          hideVerifyEmailSuccess(); // Hide any existing success messages
-          showVerifyEmailError(
-            "Error sending verification email. Please try again."
-          );
-        });
-    });
-
   // Email validation function
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
     return re.test(String(email).toLowerCase());
   }
+
+  // Adding the event listener to the "Verify" button
+  verifyNewEmailBtn.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    // Get the new email address
+    const newEmail = document.getElementById("new-email").value;
+
+    // Validate the email format
+    if (!validateEmail(newEmail)) {
+      showVerifyEmailError("Invalid email format.");
+      return;
+    }
+
+    // Show overlay and loader while processing the request
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
+    // Send the email change request to the server
+    fetch("/request_email_change/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token for Django
+      },
+      body: JSON.stringify({ new_email: newEmail }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+
+        if (data.success) {
+          // Show success dialog when email change request is successful
+          showVerifyEmailSuccess(
+            "Verification email sent to your new address!\nPlease check your inbox."
+          );
+        } else {
+          // Show error dialog in case of an error
+          showVerifyEmailError(data.error || "Failed to update the email.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+        showVerifyEmailError(
+          "An error occurred while processing the email change request."
+        );
+      });
+  });
 
   document
     .getElementById("verifyEmailBtn")
