@@ -2002,15 +2002,18 @@ button[type="submit"]:hover {
   position: absolute;
   right: 10px;
   top: 50%;
+  transition: opacity 0.5s ease, transform 0.5s ease;
   transform: translateY(-50%);
 }
+
 .resend-newemail-cooldown-label {
   color: #555;
   font-size: 12px;
   right: 10px;
+  margin-inline: 60px;
   transform: translateY(-50%);
   animation: fadeInOut 1s ease-in-out;
-  margin-top: 18px;
+  margin-top: 19px;
   transition: opacity 0.5s ease, transform 0.5s ease;
   transform: translateY(-50%);
   display: inline-block;
@@ -2373,12 +2376,6 @@ button[type="submit"]:hover {
 
 .dialog-content {
   text-align: center;
-}
-
-/* Cooldown Label */
-.verified-label {
-  color: green;
-  font-size: 12px;
 }
 
 /* Footer with Random Tip */
