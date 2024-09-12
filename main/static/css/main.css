@@ -2015,9 +2015,9 @@ button[type="submit"]:hover {
   animation: fadeInOut 1s ease-in-out;
   margin-top: 19px;
   transition: opacity 0.5s ease, transform 0.5s ease;
-  transform: translateY(-50%);
   display: inline-block;
 }
+
 .resend-cooldown-label {
   color: #555;
   font-size: 12px;
@@ -2376,20 +2376,6 @@ button[type="submit"]:hover {
 
 .dialog-content {
   text-align: center;
-}
-
-/* Footer with Random Tip */
-#email-change-footer {
-  margin-top: 20px;
-  font-size: 12px;
-  color: #555;
-  background-color: #f9f9f9;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-#email-change-footer p {
-  margin: 0;
 }
 
 .message-dialog {
