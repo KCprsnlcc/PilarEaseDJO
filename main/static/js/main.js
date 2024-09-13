@@ -1735,16 +1735,35 @@ document.addEventListener("DOMContentLoaded", function () {
       currentAvatar.style.display = "block";
     });
 
+  // Select all avatar images and the upload-area image
+  const uploadAreaImg = document.querySelector(".upload-area img");
+
+  // Event listener for built-in avatars
   avatarImages.forEach((img) => {
     img.addEventListener("click", function () {
+      // Remove 'selected' class from all avatar options and the upload-area image
       avatarImages.forEach((i) => i.classList.remove("selected"));
+      uploadAreaImg.classList.remove("selected");
+
+      // Add 'selected' class to the clicked avatar
       this.classList.add("selected");
       selectedAvatar = this.src;
       saveAvatarBtn.style.display = "inline-block";
     });
   });
 
+  // Highlight the uploaded avatar like built-in avatars
   document.querySelector(".upload-area").addEventListener("click", function () {
+    uploadAvatarInput.click();
+  });
+
+  // Event listener for the upload area click
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    // Remove 'selected' class from all avatar options and the upload-area image
+    avatarImages.forEach((i) => i.classList.remove("selected"));
+    uploadAreaImg.classList.add("selected");
+
+    // Trigger the file input click event
     uploadAvatarInput.click();
   });
 
