@@ -1926,7 +1926,7 @@ button[type="submit"]:hover {
   position: absolute;
   animation: rotate 2s infinite;
   height: 50px;
-  top: 220px;
+  top: 210px;
   left: 225px;
   transform: translate(-50%, -50%);
   width: 50px;
@@ -3211,7 +3211,7 @@ button#generatePassword:hover {
   transition: opacity 0.3s ease;
 }
 #profileSuccessDialog {
-  top: 220px;
+  top: 205px;
   left: 65px;
   width: 360px;
   display: none;
@@ -3256,7 +3256,7 @@ button#generatePassword:hover {
 }
 
 #profileErrorDialog {
-  top: 220px;
+  top: 205px;
   left: 65px;
   width: 360px;
   display: none;
