@@ -2443,11 +2443,13 @@ button[type="submit"]:hover {
 .built-in-avatars {
   width: 100%;
   overflow-y: auto;
-  max-height: calc(100% - 150px); /* Adjust height based on your modal */
+  margin-bottom: -5px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-height: calc(100% - 200px);
   padding-right: 10px;
   text-align: center;
 }
-
 .built-in-avatars::-webkit-scrollbar {
   width: 12px;
 }
