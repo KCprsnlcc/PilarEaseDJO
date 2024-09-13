@@ -823,27 +823,26 @@
     <div id="avatarModal" class="modal-content avatar">
       <span id="closeAvatarModal"></span>
       <h2>Change Your Avatar!</h2>
+        <!-- Instructions for Avatar Modal -->
+  <div class="instructions">
+    <p>
+      <strong>Important:</strong> Select one of the built-in avatars or upload your own image. The recommended image size is 150x150 pixels.
+    </p>
+  </div>
       <div class="built-in-avatars">
         <div class="avatars-grid">
-          <div class="upload-area">
-            <img
-              id="currentAvatar"
-              src=""
-              data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
-              alt="Upload Avatar"
-            />
-            <div
-              id="avatarLoader"
-              class="loader-avatar"
-              style="display: none"
-            ></div>
-            <input
-              type="file"
-              id="uploadAvatarInput"
-              accept="image/*"
-              style="display: none"
-            />
-          </div>
+<div class="upload-area">
+  <img
+    id="currentAvatar"
+    src=""
+    data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
+    alt="Upload Avatar"
+  />
+  <div id="avatarLoader" class="loader-avatar" style="display: none"></div>
+  <i class='bx bxs-camera upload-icon'></i>
+  <input type="file" id="uploadAvatarInput" accept="image/*" style="display: none" />
+</div>
+
           <img
             src="{% static 'images/avatars/avataaars1.png' %}"
             alt="Avatar 1"
