@@ -1735,92 +1735,114 @@ document.addEventListener("DOMContentLoaded", function () {
       currentAvatar.style.display = "block";
     });
 
+  // Select all avatar images and the upload-area image
+  const uploadAreaImg = document.querySelector(".upload-area img");
+
+  // Event listener for built-in avatars
   avatarImages.forEach((img) => {
     img.addEventListener("click", function () {
+      // Remove 'selected' class from all avatar options and the upload-area image
       avatarImages.forEach((i) => i.classList.remove("selected"));
+      uploadAreaImg.classList.remove("selected");
+
+      // Add 'selected' class to the clicked avatar
       this.classList.add("selected");
       selectedAvatar = this.src;
       saveAvatarBtn.style.display = "inline-block";
     });
   });
 
+  // Highlight the uploaded avatar like built-in avatars
   document.querySelector(".upload-area").addEventListener("click", function () {
     uploadAvatarInput.click();
   });
 
-  uploadAvatarInput.addEventListener("change", function () {
-    if (uploadAvatarInput.files.length > 0) {
-      const uploadedFile = uploadAvatarInput.files[0];
+  // Event listener for the upload area click
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    // Remove 'selected' class from all avatar options and the upload-area image
+    avatarImages.forEach((i) => i.classList.remove("selected"));
+    uploadAreaImg.classList.add("selected");
 
-      // Check file size (limit to 1MB)
-      if (uploadedFile.size > 1 * 1024 * 1024) {
-        showNotificationError("File size exceeds the 1MB limit.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        imageToCrop.src = e.target.result;
-
-        // Show cropping modal
-        cropperModal.style.display = "block";
-        cropperModal.classList.add("pop-in");
-
-        // Initialize cropper
-        if (cropper) {
-          cropper.destroy();
-        }
-        cropper = new Cropper(imageToCrop, {
-          aspectRatio: 528 / 560,
-          viewMode: 1,
-        });
-      };
-      reader.readAsDataURL(uploadedFile);
-    }
+    // Trigger the file input click event
+    uploadAvatarInput.click();
   });
+
+  document
+    .querySelector("#uploadAvatarInput")
+    .addEventListener("change", function () {
+      if (this.files && this.files.length > 0) {
+        const file = this.files[0];
+
+        // Ensure the file is an image and doesn't exceed size limit
+        if (file.size > 1024 * 1024) {
+          alert("File is too large. Max size is 1MB.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const imageToCrop = document.getElementById("imageToCrop");
+          imageToCrop.src = event.target.result;
+
+          // Display the cropping modal
+          const cropperModal = document.getElementById("cropperModal");
+          cropperModal.style.display = "block";
+
+          // Initialize the CropperJS instance with a circular cropping guide
+          if (cropper) {
+            cropper.destroy();
+          }
+
+          cropper = new Cropper(imageToCrop, {
+            aspectRatio: 1, // Maintain 1:1 ratio for circular cropping
+            viewMode: 2, // Ensure no transparent areas in cropped image
+            movable: false,
+            rotatable: false,
+            scalable: false,
+            zoomable: true,
+            background: false,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
   // Event listener for cropping the image
-  cropImageBtn.addEventListener("click", function () {
-    if (cropper) {
-      cropper.getCroppedCanvas().toBlob((blob) => {
-        const formData = new FormData();
-        formData.append("avatar", blob, "avatar.png");
+  document
+    .querySelector("#cropImageBtn")
+    .addEventListener("click", function () {
+      if (cropper) {
+        // Get the cropped canvas as a Blob and send it to the server
+        cropper.getCroppedCanvas().toBlob((blob) => {
+          const formData = new FormData();
+          formData.append("avatar", blob, "avatar.png");
 
-        fetch(uploadAvatarUrl, {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          body: formData,
-        })
-          .then((response) => {
-            if (!response.ok) {
-              return response.json().then((data) => {
-                throw new Error(data.errors || "Unknown error");
-              });
-            }
-            return response.json();
+          // Send the cropped image to the server
+          fetch("/upload_avatar/", {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: formData,
           })
-          .then((data) => {
-            if (data.success) {
-              showNotificationSuccess("Avatar updated successfully!");
-              // Update the current avatar in the profile immediately
-              document.getElementById("currentAvatar").src = data.avatar_url;
-              // Optionally, if you have a profile icon in the header or other parts
-              document.getElementById("profileIconImage").src = data.avatar_url;
-            } else {
-              showNotificationError("" + (data.errors || "Unknown error"));
-            }
-            closeCropperModal.click();
-          })
-          .catch((error) => {
-            console.error("", error);
-            showNotificationError("" + error.message);
-            closeCropperModal.click();
-          });
-      });
-    }
-  });
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                alert("Avatar updated successfully!");
+                document.getElementById("currentAvatar").src = data.avatar_url;
+                document.getElementById("cropperModal").style.display = "none";
+              } else {
+                alert("Failed to update avatar: " + data.errors);
+              }
+            })
+            .catch((error) => {
+              console.error("Error uploading avatar:", error);
+            });
+        });
+      }
+    });
 
   // Event listener for saving the selected avatar
   saveAvatarBtn.addEventListener("click", function () {
@@ -3174,58 +3196,47 @@ document.addEventListener("DOMContentLoaded", function () {
   document
     .getElementById("verifyEmailBtn")
     .addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent form submission
+      event.preventDefault(); // Prevent any default form action if it's inside a form
 
-      // Get the email value
+      // Get the email field value (make sure it's unmasked if masked)
       const emailField = document.getElementById("email");
       const email = emailField.value;
 
-      // Validate the email
+      // Perform a check if the email is valid
       if (!validateEmail(email)) {
         showVerifyEmailError("Invalid email format.");
-        return; // Stop if email is not valid
+        return;
       }
 
-      // Show the loader while sending the request
+      // Show loader
       const verifyemailOverlay = document.getElementById("verifyemailOverlay");
       verifyemailOverlay.style.display = "block";
 
-      // Send the email verification request
+      // Send the email verification request to the server
       fetch("/send_verification_email/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
+          "X-CSRFToken": getCookie("csrftoken"), // CSRF Token if required (Django setup)
         },
         body: JSON.stringify({ email: email }),
       })
         .then((response) => response.json())
         .then((data) => {
-          // Hide the overlay after receiving a response
-          verifyemailOverlay.style.display = "none";
-
+          verifyemailOverlay.style.display = "none"; // Hide loader
           if (data.success) {
-            // Display success message
             showVerifyEmailSuccess(
               "Verification email sent! Please check your inbox."
             );
-
-            // Only start the countdown if the email was successfully sent
-            startCooldown(60);
-
-            // Hide the verify button after success
-            verifyEmailBtn.style.display = "none";
           } else {
-            // Show error message if the request failed
             showVerifyEmailError(
               data.error || "Failed to send verification email."
             );
           }
         })
         .catch((error) => {
-          console.error("Error sending verification email:", error);
-          // Hide the loader, but keep the Verify button visible
-          verifyemailOverlay.style.display = "none";
+          console.error("Error:", error);
+          verifyemailOverlay.style.display = "none"; // Hide loader
           showVerifyEmailError(
             "An error occurred while sending the verification email."
           );
@@ -3240,23 +3251,21 @@ document.addEventListener("DOMContentLoaded", function () {
     return maskedLocal + "@" + maskedDomain;
   }
   // Function to start the cooldown timer only after successful email sending
+  // Function to start cooldown timer
   function startCooldown(seconds) {
-    const resendCooldownLabel = document.getElementById("resendCooldownLabel");
-    const cooldownTimer = document.getElementById("cooldownTimer");
-
-    resendCooldownLabel.style.display = "inline"; // Show the cooldown label
+    resendCooldownLabel.style.display = "inline";
     cooldownTimer.textContent = seconds;
 
-    const interval = setInterval(() => {
+    cooldownInterval = setInterval(() => {
       seconds--;
       cooldownTimer.textContent = seconds;
 
       if (seconds <= 0) {
-        clearInterval(interval); // Clear the countdown when it reaches 0
-        resendCooldownLabel.style.display = "none"; // Hide the cooldown label
-        showResendButton(); // Show the Resend button after cooldown
+        clearInterval(cooldownInterval);
+        resendCooldownLabel.style.display = "none";
+        showResendButton();
       }
-    }, 1000); // Run every second
+    }, 1000);
   }
 
   // Show the Resend button after cooldown
@@ -3265,10 +3274,11 @@ document.addEventListener("DOMContentLoaded", function () {
     resendBtn.innerText = "Resend";
     resendBtn.classList.add("verify-btn");
     resendBtn.addEventListener("click", function (event) {
-      event.preventDefault();
-      resendBtn.style.display = "none"; // Hide Resend button during the next request
-      startCooldown(60); // Restart the 60-second cooldown
-      sendVerificationEmail(); // Trigger the resend logic
+      event.stopPropagation(); // Stop event propagation
+      event.preventDefault(); // Prevent form submission
+      startCooldown(60);
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+      sendVerificationEmail();
     });
     document.querySelector(".email-container").appendChild(resendBtn);
   }
