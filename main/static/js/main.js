@@ -1790,8 +1790,13 @@ document.addEventListener("DOMContentLoaded", function () {
           cropper.destroy();
         }
         cropper = new Cropper(imageToCrop, {
-          aspectRatio: 528 / 560,
-          viewMode: 1,
+          aspectRatio: NaN, // Allow free cropping
+          viewMode: 1, // Prevents the crop box from going outside the image
+          guides: false, // Disable dashed lines (guides)
+          center: false, // Remove the center cross
+          highlight: false, // Remove the highlight when cropping
+          background: false, // Disable the dark background outside the cropping area
+          autoCropArea: 0.9, // Set auto crop area size
         });
       };
       reader.readAsDataURL(uploadedFile);
@@ -1801,7 +1806,29 @@ document.addEventListener("DOMContentLoaded", function () {
   // Event listener for cropping the image
   cropImageBtn.addEventListener("click", function () {
     if (cropper) {
-      cropper.getCroppedCanvas().toBlob((blob) => {
+      const croppedCanvas = cropper.getCroppedCanvas({
+        fillColor: "#ffffff", // Fill the background color to prevent transparency issues
+      });
+
+      // Create a circular cropped image
+      const circleCanvas = document.createElement("canvas");
+      const ctx = circleCanvas.getContext("2d");
+      const radius = croppedCanvas.width / 2;
+
+      // Adjust the circle canvas size to match the cropped area
+      circleCanvas.width = croppedCanvas.width;
+      circleCanvas.height = croppedCanvas.height;
+
+      // Draw a circular clipping mask
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+      ctx.clip();
+
+      // Draw the cropped image within the circular mask
+      ctx.drawImage(croppedCanvas, 0, 0);
+
+      // Convert the circular cropped image to a blob and upload
+      circleCanvas.toBlob((blob) => {
         const formData = new FormData();
         formData.append("avatar", blob, "avatar.png");
 
@@ -3174,7 +3201,7 @@ document.addEventListener("DOMContentLoaded", function () {
           verifyNewEmailBtn.style.display = "none";
           startNewEmailCooldown(60); // Start with 60 seconds countdown
           showVerifyEmailSuccess(
-            "Verification email sent! Please check your inbox."
+            "Verification for new email sent! Please check your inbox."
           );
         } else {
           // Show error dialog in case of an error

@@ -1767,82 +1767,99 @@ document.addEventListener("DOMContentLoaded", function () {
     uploadAvatarInput.click();
   });
 
-  document
-    .querySelector("#uploadAvatarInput")
-    .addEventListener("change", function () {
-      if (this.files && this.files.length > 0) {
-        const file = this.files[0];
+  uploadAvatarInput.addEventListener("change", function () {
+    if (uploadAvatarInput.files.length > 0) {
+      const uploadedFile = uploadAvatarInput.files[0];
 
-        // Ensure the file is an image and doesn't exceed size limit
-        if (file.size > 1024 * 1024) {
-          alert("File is too large. Max size is 1MB.");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          const imageToCrop = document.getElementById("imageToCrop");
-          imageToCrop.src = event.target.result;
-
-          // Display the cropping modal
-          const cropperModal = document.getElementById("cropperModal");
-          cropperModal.style.display = "block";
-
-          // Initialize the CropperJS instance with a circular cropping guide
-          if (cropper) {
-            cropper.destroy();
-          }
-
-          cropper = new Cropper(imageToCrop, {
-            aspectRatio: 1, // Maintain 1:1 ratio for circular cropping
-            viewMode: 2, // Ensure no transparent areas in cropped image
-            movable: false,
-            rotatable: false,
-            scalable: false,
-            zoomable: true,
-            background: false,
-            cropBoxMovable: false,
-            cropBoxResizable: false,
-          });
-        };
-        reader.readAsDataURL(file);
+      // Check file size (limit to 1MB)
+      if (uploadedFile.size > 1 * 1024 * 1024) {
+        showNotificationError("File size exceeds the 1MB limit.");
+        return;
       }
-    });
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imageToCrop.src = e.target.result;
+
+        // Show cropping modal
+        cropperModal.style.display = "block";
+        cropperModal.classList.add("pop-in");
+
+        // Initialize cropper
+        if (cropper) {
+          cropper.destroy();
+        }
+        cropper = new Cropper(imageToCrop, {
+          aspectRatio: 528 / 560,
+          viewMode: 1,
+        });
+      };
+      reader.readAsDataURL(uploadedFile);
+    }
+  });
 
   // Event listener for cropping the image
-  document
-    .querySelector("#cropImageBtn")
-    .addEventListener("click", function () {
-      if (cropper) {
-        // Get the cropped canvas as a Blob and send it to the server
-        cropper.getCroppedCanvas().toBlob((blob) => {
-          const formData = new FormData();
-          formData.append("avatar", blob, "avatar.png");
+  cropImageBtn.addEventListener("click", function () {
+    if (cropper) {
+      const croppedCanvas = cropper.getCroppedCanvas({
+        fillColor: "#ffffff", // Fill the background color to prevent transparency issues
+      });
 
-          // Send the cropped image to the server
-          fetch("/upload_avatar/", {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": getCookie("csrftoken"),
-            },
-            body: formData,
+      // Create a circular cropped image
+      const circleCanvas = document.createElement("canvas");
+      const ctx = circleCanvas.getContext("2d");
+      const radius = croppedCanvas.width / 2;
+
+      // Adjust the circle canvas size to match the cropped area
+      circleCanvas.width = croppedCanvas.width;
+      circleCanvas.height = croppedCanvas.height;
+
+      // Draw a circular clipping mask
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+      ctx.clip();
+
+      // Draw the cropped image within the circular mask
+      ctx.drawImage(croppedCanvas, 0, 0);
+
+      // Convert the circular cropped image to a blob and upload
+      circleCanvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append("avatar", blob, "avatar.png");
+
+        fetch(uploadAvatarUrl, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.errors || "Unknown error");
+              });
+            }
+            return response.json();
           })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                alert("Avatar updated successfully!");
-                document.getElementById("currentAvatar").src = data.avatar_url;
-                document.getElementById("cropperModal").style.display = "none";
-              } else {
-                alert("Failed to update avatar: " + data.errors);
-              }
-            })
-            .catch((error) => {
-              console.error("Error uploading avatar:", error);
-            });
-        });
-      }
-    });
+          .then((data) => {
+            if (data.success) {
+              showNotificationSuccess("Avatar updated successfully!");
+              // Update the current avatar in the profile immediately
+              document.getElementById("currentAvatar").src = data.avatar_url;
+            } else {
+              showNotificationError("" + (data.errors || "Unknown error"));
+            }
+            closeCropperModal.click();
+          })
+          .catch((error) => {
+            console.error("", error);
+            showNotificationError("" + error.message);
+            closeCropperModal.click();
+          });
+      });
+    }
+  });
 
   // Event listener for saving the selected avatar
   saveAvatarBtn.addEventListener("click", function () {
@@ -3177,7 +3194,7 @@ document.addEventListener("DOMContentLoaded", function () {
           verifyNewEmailBtn.style.display = "none";
           startNewEmailCooldown(60); // Start with 60 seconds countdown
           showVerifyEmailSuccess(
-            "Verification email sent! Please check your inbox."
+            "Verification for new email sent! Please check your inbox."
           );
         } else {
           // Show error dialog in case of an error

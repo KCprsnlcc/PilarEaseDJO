@@ -994,16 +994,17 @@
       />
     </div>
 
-    <!-- Cropping Modal -->
-    <div id="cropperModal" class="modal-content cropper" style="display: none">
-      <span id="closeCropperModal"></span>
-      <h2>Crop Your Image</h2>
-      <div class="cropper-container">
-        <img id="imageToCrop" src="" alt="Image to Crop" />
-      </div>
-      <button class="primary" id="cropImageBtn">Crop</button>
-      <button class="secondary" id="cancelCropBtn">Cancel</button>
-    </div>
+<!-- Cropping Modal -->
+<div id="cropperModal" class="modal-content cropper" style="display: none">
+  <span id="closeCropperModal"></span>
+  <h2>Crop Your Image</h2>
+  <div class="cropper-container">
+    <div class="circle-guide"></div> <!-- This overlays the cropper with a circle guide -->
+    <img id="imageToCrop" src="" alt="Image to Crop" />
+  </div>
+  <button class="primary" id="cropImageBtn">Crop</button>
+  <button class="secondary" id="cancelCropBtn">Cancel</button>
+</div>
 
     <!-- Password Manager Modal -->
     <div id="passwordModal" class="modal-content password">

@@ -1769,7 +1769,7 @@ button[type="submit"]:hover {
   border-radius: 50%;
   width: 30px;
   position: absolute;
-  top: 270px;
+  top: 260px;
   left: 260px;
   height: 30px;
   display: flex;
@@ -2362,7 +2362,7 @@ button[type="submit"]:hover {
   border-radius: 10px;
   box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  z-index: 9999;
+  z-index: 1000110;
   animation: fadeIn 0.3s ease;
 }
 
@@ -2396,6 +2396,28 @@ button[type="submit"]:hover {
 
 .message-dialog.error {
   border: 1px solid #f44336;
+}
+
+/* Cropper container customization */
+.cropper-container .cropper-view-box {
+  border-radius: 50%; /* Make the cropper appear circular */
+  outline: 2px solid #689e4b; /* Circle outline color */
+}
+
+/* Optional: Circle guide indicator */
+.cropper-container .circle-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px dashed #689e4b; /* Circular guide to show the cropping area */
+  pointer-events: none;
+  z-index: 100110; /* Ensure it overlays the cropper */
 }
 
 #cropperModal {
@@ -2443,11 +2465,13 @@ button[type="submit"]:hover {
 .built-in-avatars {
   width: 100%;
   overflow-y: auto;
-  max-height: calc(100% - 150px); /* Adjust height based on your modal */
+  margin-bottom: -5px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-height: calc(100% - 200px);
   padding-right: 10px;
   text-align: center;
 }
-
 .built-in-avatars::-webkit-scrollbar {
   width: 12px;
 }
