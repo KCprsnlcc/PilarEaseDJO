@@ -2362,7 +2362,7 @@ button[type="submit"]:hover {
   border-radius: 10px;
   box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  z-index: 9999;
+  z-index: 1000110;
   animation: fadeIn 0.3s ease;
 }
 
