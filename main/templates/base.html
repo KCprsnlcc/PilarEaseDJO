@@ -993,8 +993,10 @@
           value="{{ csrf_token }}"
         />
       </form>
-                    <button class="primary" id="saveAvatarBtn">Change Now</button>
-        <button class="secondary" id="cancelAvatarBtn">No, Thanks</button>
+        <div id="avatar-buttons" class="dialog-buttons">
+                    <button class="confirm-btn" id="saveAvatarBtn">Change Now</button>
+        <button class="cancel-btn" id="cancelAvatarBtn">No, Thanks</button>
+        </div>
       <!-- Hidden element to store the URL -->
       <input
         type="hidden"
