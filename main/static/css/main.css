@@ -2460,7 +2460,7 @@ button[type="submit"]:hover {
 
 #cropperModal {
   display: none;
-  position: absolute;
+  position: fixed;
   top: 100px;
   left: 625px;
   transform: translate(-50%, -50%);
