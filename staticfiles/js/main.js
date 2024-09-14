@@ -1790,8 +1790,14 @@ document.addEventListener("DOMContentLoaded", function () {
           cropper.destroy();
         }
         cropper = new Cropper(imageToCrop, {
-          aspectRatio: 528 / 560,
-          viewMode: 1,
+          aspectRatio: 1, // Ensure square crop box
+          viewMode: 1, // Keep crop box within the boundaries of the image
+          guides: false, // Disable dashed lines (guides)
+          center: false, // Disable center cross
+          highlight: false, // Remove highlight when cropping
+          background: false, // Disable dark background outside crop area
+          autoCropArea: 0.9, // Set the initial crop area size
+          dragMode: "move", // Allow moving the crop box within the image
         });
       };
       reader.readAsDataURL(uploadedFile);
@@ -1847,6 +1853,8 @@ document.addEventListener("DOMContentLoaded", function () {
               showNotificationSuccess("Avatar updated successfully!");
               // Update the current avatar in the profile immediately
               document.getElementById("currentAvatar").src = data.avatar_url;
+              // Optionally, if you have a profile icon in the header or other parts
+              document.getElementById("profileIconImage").src = data.avatar_url;
             } else {
               showNotificationError("" + (data.errors || "Unknown error"));
             }
@@ -3096,6 +3104,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const resendCooldownLabel = document.getElementById("resendCooldownLabel");
   const cooldownTimer = document.getElementById("cooldownTimer");
   const verifyemailOverlay = document.getElementById("verifyemailOverlay");
+  const changeemailSuccessBox = document.getElementById(
+    "changeemailSuccessBox"
+  );
+  const changeemailErrorBox = document.getElementById("changeemailErrorBox");
   const verifyemailSuccessBox = document.getElementById(
     "verifyemailSuccessBox"
   );
@@ -3168,7 +3180,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Validate the email format
     if (!validateEmail(newEmail)) {
-      showVerifyEmailError("Invalid email format.");
+      showChangeEmailError("Invalid email format.");
       return;
     }
 
@@ -3193,19 +3205,19 @@ document.addEventListener("DOMContentLoaded", function () {
           // Start the cooldown timer and hide the "Verify" button
           verifyNewEmailBtn.style.display = "none";
           startNewEmailCooldown(60); // Start with 60 seconds countdown
-          showVerifyEmailSuccess(
-            "Verification for new email sent! Please check your inbox."
+          showChangeEmailSuccess(
+            "Verification for email sent! Please check your inbox."
           );
         } else {
           // Show error dialog in case of an error
-          showVerifyEmailError(data.error || "Failed to update the email.");
+          showChangeEmailError(data.error || "Failed to update the email.");
         }
       })
       .catch((error) => {
         console.error("Error:", error);
         changeemailOverlay.style.display = "none"; // Hide the loader and overlay
-        showVerifyEmailError(
-          "An error occurred while processing the email change request."
+        showChangeEmailError(
+          "An error occurred while sending the email change request."
         );
       });
   });
@@ -3359,6 +3371,44 @@ document.addEventListener("DOMContentLoaded", function () {
   function showVerifyEmailError(message) {
     const dialogBox = document.getElementById("verifyemailErrorBox");
     const dialogContent = document.getElementById("verifyemailErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show email verification success dialog
+  function showChangeEmailSuccess(message) {
+    const dialogBox = document.getElementById("changeemailSuccessBox");
+    const dialogContent = document.getElementById("changeemailSuccessBox");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show email verification error dialog
+  function showChangeEmailError(message) {
+    const dialogBox = document.getElementById("changeemailErrorBox");
+    const dialogContent = document.getElementById("changeemailErrorBox");
     dialogContent.innerHTML = message;
     dialogBox.style.display = "block";
     dialogBox.classList.remove("pop-out");

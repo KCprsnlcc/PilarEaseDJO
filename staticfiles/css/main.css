@@ -2349,7 +2349,35 @@ button[type="submit"]:hover {
 .cancel-btn:hover {
   background-color: #c0392b;
 }
+#changeemailErrorBox {
+    top: 110px;
+    left: 23px;
+  width: 400px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000111;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
 
+#changeemailSuccessBox {
+    top: 110px;
+    left: 23px;
+  width: 400px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000111;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
 /* Modern Dialog Styling */
 .modern-dialog {
   position: fixed;
@@ -2415,7 +2443,6 @@ button[type="submit"]:hover {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 3px dashed #689e4b; /* Circular guide to show the cropping area */
   pointer-events: none;
   z-index: 100110; /* Ensure it overlays the cropper */
 }
