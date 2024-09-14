@@ -100,17 +100,21 @@ class Status(models.Model):
 
     def __str__(self):
         return f"{self.title} by {self.user.username}"
-    
+
 class Notification(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
-    status = models.ForeignKey('Status', on_delete=models.CASCADE, null=True, blank=True)
-    reply = models.ForeignKey('Reply', on_delete=models.CASCADE, null=True, blank=True)
-    message = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.ForeignKey('Status', on_delete=models.CASCADE, related_name='notifications', blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Notification for {self.user.username}: {self.message}"
+        return f"Notification for {self.user.username} - Status: {self.status.title}"
+
+class ReplyNotification(Notification):
+    replied_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reply_notifications')
+
+    def __str__(self):
+        return f"{self.replied_by.username} replied to {self.status.title}"
 
 class Referral(models.Model):
     status = models.ForeignKey('Status', on_delete=models.CASCADE)

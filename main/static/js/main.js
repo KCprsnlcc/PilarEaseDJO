@@ -3458,32 +3458,57 @@ document.addEventListener("DOMContentLoaded", function () {
   const notificationDot = document.getElementById("notificationDot");
   const notificationList = document.getElementById("notificationList");
 
-  function fetchNotifications() {
-    // Fetch notifications from the server (mocked here for example)
-    return [
-      {
-        message: "You uploaded a status, click to view it.",
-        link: "#",
-        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
-        timestamp: "2 mins ago",
-      },
-      {
-        message: "USERNAME replied to your status, click to see it.",
-        link: "#",
-        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
-        timestamp: "10 mins ago",
-      },
-    ];
+  let notificationsFetched = false; // Track if notifications were fetched
+
+  // Fetch notifications from the Django API
+  async function fetchNotifications() {
+    try {
+      const response = await fetch("/fetch_notifications/");
+      if (response.ok) {
+        const data = await response.json();
+        return data.notifications;
+      } else {
+        console.error("Failed to fetch notifications.");
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return [];
+    }
   }
 
-  function renderNotifications() {
-    const notifications = fetchNotifications();
+  // Mark notifications as read (called when the button is clicked)
+  async function markNotificationsAsRead() {
+    try {
+      const response = await fetch("/mark_notifications_as_read/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to mark notifications as read.");
+      }
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  }
+
+  // Get the CSRF token for Django
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+  // Render the notifications in the notification list
+  async function renderNotifications() {
+    const notifications = await fetchNotifications();
     notificationList.innerHTML = `
-    <div class="notification-header">
-      <span class="earlier">Earlier</span>
-      <span class="see-all">See All</span>
-    </div>
-  `;
+        <div class="notification-header">
+            <span class="earlier">Earlier</span>
+            <span class="see-all">See All</span>
+        </div>
+    `;
 
     notifications.forEach((notification) => {
       const item = document.createElement("div");
@@ -3495,12 +3520,12 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       item.innerHTML = `
-      <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
-      <div class="notification-content">
-        <div class="message">${notification.message}</div>
-        <div class="timestamp">${notification.timestamp}</div>
-      </div>
-    `;
+            <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
+            <div class="notification-content">
+                <div class="message">${notification.message}</div>
+                <div class="timestamp">${notification.timestamp}</div>
+            </div>
+        `;
 
       notificationList.appendChild(item);
     });
@@ -3512,7 +3537,10 @@ document.addEventListener("DOMContentLoaded", function () {
     notificationList.appendChild(loadMoreButton);
 
     // Show the red blinking dot if there are unread notifications
-    if (notifications.length > 0) {
+    const hasUnread = notifications.some(
+      (notification) => !notification.is_read
+    );
+    if (hasUnread) {
       notificationDot.style.display = "block";
       notificationDot.classList.add("blink");
     } else {
@@ -3520,16 +3548,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  notificationButton.addEventListener("click", function () {
+  notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      renderNotifications();
+      await renderNotifications();
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Stop blinking and hide the dot after clicking
+      // Mark notifications as read and stop blinking
+      await markNotificationsAsRead();
       notificationDot.classList.remove("blink");
       notificationDot.style.display = "none";
+
+      notificationsFetched = true;
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
@@ -3539,6 +3570,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300); // Match the duration of the pop-up animation (0.3s)
     }
   });
+
+  // Fetch notifications periodically (to check for new ones)
+  setInterval(async () => {
+    const notifications = await fetchNotifications();
+    const hasUnread = notifications.some(
+      (notification) => !notification.is_read
+    );
+
+    if (hasUnread && !notificationsFetched) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    }
+  }, 60000); // Check every 60 seconds
 
   window.addEventListener("click", function (event) {
     if (

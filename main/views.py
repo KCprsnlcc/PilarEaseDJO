@@ -18,7 +18,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory  
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -630,6 +630,58 @@ def submit_status(request):
         return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+
+
+@login_required
+def fetch_notifications(request):
+    notifications = []
+
+    # Fetch unread notifications for the logged-in user
+    user_statuses = Status.objects.filter(user=request.user).order_by('-created_at')[:10]  # Limit to 10 for simplicity
+    for status in user_statuses:
+        # Prepare "You uploaded a status" notification
+        notifications.append({
+            'message': "You uploaded a status, click to view it.",
+            'link': f'/status/{status.id}/',
+            'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'timestamp': timesince(status.created_at) + ' ago',
+            'is_read': False,  # Mark this notification as unread
+        })
+
+        # Fetch replies to the user's status (excluding the user's own replies)
+        status_replies = Reply.objects.filter(status=status).exclude(user=request.user).order_by('-created_at')[:5]
+        unique_users = set(reply.user for reply in status_replies)
+
+        if len(unique_users) == 1:
+            # Show "USERNAME replied to your status"
+            user_names = next(iter(unique_users)).username
+            message = f"{user_names} replied to your status, click to see it."
+        elif len(unique_users) == 2:
+            # Show "USERNAME and USERNAME replied to your status"
+            user_names = ', '.join(user.username for user in unique_users)
+            message = f"{user_names} replied to your status, click to see it."
+        elif len(unique_users) > 2:
+            # Show "USERNAME, USERNAME and others replied to your status"
+            user_names = ', '.join(list(unique_users)[:2])
+            message = f"{user_names} and others replied to your status, click to see it."
+
+        for reply in status_replies:
+            notifications.append({
+                'message': message,
+                'link': f'/status/{status.id}/',
+                'avatar': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+                'timestamp': timesince(reply.created_at) + ' ago',
+                'is_read': False,  # Mark this notification as unread
+            })
+
+    return JsonResponse({'notifications': notifications})
+
+@login_required
+@require_POST
+def mark_notifications_as_read(request):
+    # Mark all notifications for the current user as read
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'success': True})
 
 @login_required
 @csrf_exempt
