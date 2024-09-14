@@ -37,15 +37,36 @@ button:hover {
   cursor: pointer;
 }
 
-#notificationCount {
-  position: absolute;
-  top: 8px;
-  right: 5px;
-  background-color: red;
-  color: white;
+.notification-dot {
+  width: 10px;
+  height: 10px;
+  z-index: 10000;
+  background-color: #e74c3c;
   border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 10px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: none;
+}
+
+/* Blinking red animation for the dot */
+@keyframes blinkDot {
+  0% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+  50% {
+    opacity: 0.5;
+    background-color: #c0392b;
+  }
+  100% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+}
+
+.notification-dot.blink {
+  animation: blinkDot 1s infinite;
 }
 
 #notificationList {
@@ -60,6 +81,41 @@ button:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: none;
+  opacity: 0;
+}
+
+/* Notification list with pop-down animation */
+#notificationList.animated {
+  animation: popDownNotification 0.3s ease-out forwards;
+}
+
+/* Notification list with pop-up animation */
+#notificationList.pop-up {
+  animation: popUpNotification 0.3s ease-out forwards;
+}
+
+/* Pop-down animation (from top to down) */
+@keyframes popDownNotification {
+  from {
+    transform: translateY(-20px) scale(0.8); /* Start from slightly above and scaled down */
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1); /* End at the final position with full scale */
+    opacity: 1;
+  }
+}
+
+/* Pop-up animation (from down to top) */
+@keyframes popUpNotification {
+  from {
+    transform: translateY(0) scale(1); /* Start at the current position with full scale */
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px) scale(0.8); /* Move slightly upwards and scale down */
+    opacity: 0;
+  }
 }
 
 .notification-item {

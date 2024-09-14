@@ -3457,17 +3457,19 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 const notificationButton = document.getElementById("notificationButton");
+const notificationDot = document.getElementById("notificationDot");
 const notificationList = document.getElementById("notificationList");
-const notificationCount = document.getElementById("notificationCount");
 
 function fetchNotifications() {
-  // Fetch notifications from the server (this is just a mock example)
+  // Fetch notifications from the server (mocked here for example)
   return [
     {
       message: "You uploaded a status, click to view it.",
+      link: "#",
     },
     {
       message: "USERNAME replied to your status, click to see it.",
+      link: "#",
     },
   ];
 }
@@ -3475,26 +3477,42 @@ function fetchNotifications() {
 function renderNotifications() {
   const notifications = fetchNotifications();
   notificationList.innerHTML = "";
+
   notifications.forEach((notification) => {
     const item = document.createElement("div");
     item.classList.add("notification-item");
     item.innerHTML = `<a href="${notification.link}">${notification.message}</a>`;
     notificationList.appendChild(item);
   });
-  notificationCount.innerText = notifications.length;
+
   if (notifications.length > 0) {
-    notificationCount.style.display = "block";
+    // Show the red blinking dot
+    notificationDot.style.display = "block";
+    notificationDot.classList.add("blink");
   } else {
-    notificationCount.style.display = "none";
+    notificationDot.style.display = "none";
   }
 }
 
 notificationButton.addEventListener("click", function () {
   if (notificationList.style.display === "none") {
     renderNotifications();
+    notificationList.classList.remove("pop-up"); // Remove pop-up animation if present
+    notificationList.classList.add("animated"); // Add pop-down animation
     notificationList.style.display = "block";
+
+    // Stop blinking and hide the dot after clicking
+    notificationDot.classList.remove("blink");
+    notificationDot.style.display = "none";
   } else {
-    notificationList.style.display = "none";
+    // Trigger pop-up animation when closing the notification list
+    notificationList.classList.remove("animated");
+    notificationList.classList.add("pop-up");
+
+    // Wait for the pop-up animation to finish before hiding
+    setTimeout(() => {
+      notificationList.style.display = "none";
+    }, 300); // Match the duration of the pop-up animation (0.3s)
   }
 });
 
@@ -3503,7 +3521,15 @@ window.addEventListener("click", function (event) {
     !notificationButton.contains(event.target) &&
     !notificationList.contains(event.target)
   ) {
-    notificationList.style.display = "none";
+    if (notificationList.style.display === "block") {
+      // Trigger pop-up animation when clicking outside
+      notificationList.classList.remove("animated");
+      notificationList.classList.add("pop-up");
+
+      setTimeout(() => {
+        notificationList.style.display = "none";
+      }, 300); // Match the duration of the pop-up animation (0.3s)
+    }
   }
 });
 
