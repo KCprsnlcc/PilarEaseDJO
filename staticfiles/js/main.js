@@ -882,7 +882,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <a href="/status/${status.id}/">
                             <img src="${
                               status.avatar_url
-                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                            }" alt="Avatar" class="circle-avatar-placeholder" id="status-avatar" />
                         </a>
                         <p class="username-placeholder">${status.username}</p>
                     </div>
@@ -1855,6 +1855,7 @@ document.addEventListener("DOMContentLoaded", function () {
               document.getElementById("currentAvatar").src = data.avatar_url;
               // Optionally, if you have a profile icon in the header or other parts
               document.getElementById("profileIconImage").src = data.avatar_url;
+              document.getElementById("status-avatar").src = data.avatar_url;
             } else {
               showNotificationError("" + (data.errors || "Unknown error"));
             }
@@ -1901,6 +1902,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Optionally, if you have a profile icon in the header or other parts
                 document.getElementById("profileIconImage").src =
                   data.avatar_url;
+                document.getElementById("status-avatar").src = data.avatar_url;
               } else {
                 showNotificationError("" + (data.errors || "Unknown error"));
               }
@@ -3456,127 +3458,105 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   const notificationButton = document.getElementById("notificationButton");
   const notificationDot = document.getElementById("notificationDot");
-  let currentPage = 1;
   const notificationList = document.getElementById("notificationList");
-  const loadMoreButton = document.getElementById("loadMoreButton");
 
-  // Fetch notifications and display them in the notification list
-  function fetchAndDisplayNotifications(page = 1) {
-    fetch(`/fetch_notifications/?page=${page}`)
-      .then((response) => response.json())
-      .then((data) => {
-        notificationList.innerHTML = ""; // Clear current notifications
-        if (data.notifications.length > 0) {
-          data.notifications.forEach((notification) => {
-            appendNotification(notification);
-          });
-
-          // If there are more notifications, show the "Load More" button
-          if (data.has_next) {
-            loadMoreButton.style.display = "block";
-          } else {
-            loadMoreButton.style.display = "none";
-          }
-
-          // Show the red blinking dot if there are unread notifications
-          if (data.unread_count > 0) {
-            notificationDot.style.display = "block";
-            notificationDot.classList.add("blink");
-          } else {
-            notificationDot.style.display = "none";
-            notificationDot.classList.remove("blink");
-          }
-        }
-      })
-      .catch((error) => console.error("Error fetching notifications:", error));
-  }
-
-  // Load more notifications when the "Load More" button is clicked
-  loadMoreButton.addEventListener("click", () => {
-    currentPage++;
-    fetchAndDisplayNotifications(currentPage);
-  });
-
-  // Mark notifications as read
-  function markNotificationsAsRead() {
-    fetch("/mark_notifications_as_read/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
+  function fetchNotifications() {
+    // Fetch notifications from the server (mocked here for example)
+    return [
+      {
+        message: "You uploaded a status, click to view it.",
+        link: "#",
+        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
+        timestamp: "2 mins ago",
       },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // Hide the red blinking dot after notifications are read
-          notificationDot.style.display = "none";
-        }
-      })
-      .catch((error) =>
-        console.error("Error marking notifications as read:", error)
-      );
+      {
+        message: "USERNAME replied to your status, click to see it.",
+        link: "#",
+        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
+        timestamp: "10 mins ago",
+      },
+    ];
   }
 
-  // Event listener for the notification button click
+  function renderNotifications() {
+    const notifications = fetchNotifications();
+    notificationList.innerHTML = `
+    <div class="notification-header">
+      <span class="earlier">Earlier</span>
+      <span class="see-all">See All</span>
+    </div>
+  `;
+
+    notifications.forEach((notification) => {
+      const item = document.createElement("div");
+      item.classList.add("notification-item");
+
+      // Make the entire notification clickable
+      item.addEventListener("click", function () {
+        window.location.href = notification.link;
+      });
+
+      item.innerHTML = `
+      <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
+      <div class="notification-content">
+        <div class="message">${notification.message}</div>
+        <div class="timestamp">${notification.timestamp}</div>
+      </div>
+    `;
+
+      notificationList.appendChild(item);
+    });
+
+    // Add the Load More button at the end of the list
+    const loadMoreButton = document.createElement("div");
+    loadMoreButton.classList.add("notification-load-more");
+    loadMoreButton.textContent = "Load More";
+    notificationList.appendChild(loadMoreButton);
+
+    // Show the red blinking dot if there are unread notifications
+    if (notifications.length > 0) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    } else {
+      notificationDot.style.display = "none";
+    }
+  }
+
   notificationButton.addEventListener("click", function () {
     if (notificationList.style.display === "none") {
-      // Fetch and display notifications when the list is hidden
-      fetchAndDisplayNotifications();
-
-      // Show the notification list with a pop-down animation
+      renderNotifications();
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Mark the notifications as read
-      markNotificationsAsRead();
+      // Stop blinking and hide the dot after clicking
+      notificationDot.classList.remove("blink");
+      notificationDot.style.display = "none";
     } else {
-      // Hide the notification list with a pop-up animation
-      notificationList.style.display = "none";
+      notificationList.classList.remove("animated");
+      notificationList.classList.add("pop-up");
+
+      setTimeout(() => {
+        notificationList.style.display = "none";
+      }, 300); // Match the duration of the pop-up animation (0.3s)
     }
   });
 
-  // Event listener for clicks outside the notification list to close it
   window.addEventListener("click", function (event) {
     if (
       !notificationButton.contains(event.target) &&
       !notificationList.contains(event.target)
     ) {
-      notificationList.style.display = "none";
+      if (notificationList.style.display === "block") {
+        notificationList.classList.remove("animated");
+        notificationList.classList.add("pop-up");
+
+        setTimeout(() => {
+          notificationList.style.display = "none";
+        }, 300);
+      }
     }
   });
 
-  // Initial call to fetch notifications when the page loads
-  fetchAndDisplayNotifications();
-
-  function appendNotification(notification) {
-    const item = document.createElement('div');
-    item.classList.add('notification-item');
-    item.innerHTML = `
-        <img src="${notification.avatar_url}" class="avatar" alt="User Avatar">
-        <div class="content">
-            <div class="message">${notification.message}</div>
-            <div class="timestamp">${notification.timestamp}</div>
-        </div>
-    `;
-    notificationList.appendChild(item);
-}
-
-  /* Utility Function to Get CSRF Token */
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        // Check if this cookie starts with the name we want
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
+  renderNotifications();
 });
