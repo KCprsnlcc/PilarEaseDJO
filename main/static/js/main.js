@@ -1790,13 +1790,14 @@ document.addEventListener("DOMContentLoaded", function () {
           cropper.destroy();
         }
         cropper = new Cropper(imageToCrop, {
-          aspectRatio: NaN, // Allow free cropping
-          viewMode: 1, // Prevents the crop box from going outside the image
+          aspectRatio: 1, // Ensure square crop box
+          viewMode: 1, // Keep crop box within the boundaries of the image
           guides: false, // Disable dashed lines (guides)
-          center: false, // Remove the center cross
-          highlight: false, // Remove the highlight when cropping
-          background: false, // Disable the dark background outside the cropping area
-          autoCropArea: 0.9, // Set auto crop area size
+          center: false, // Disable center cross
+          highlight: false, // Remove highlight when cropping
+          background: false, // Disable dark background outside crop area
+          autoCropArea: 0.9, // Set the initial crop area size
+          dragMode: "move", // Allow moving the crop box within the image
         });
       };
       reader.readAsDataURL(uploadedFile);
@@ -3216,7 +3217,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error:", error);
         changeemailOverlay.style.display = "none"; // Hide the loader and overlay
         showChangeEmailError(
-          "An error occurred while processing the email change request."
+          "An error occurred while sending the email change request."
         );
       });
   });
