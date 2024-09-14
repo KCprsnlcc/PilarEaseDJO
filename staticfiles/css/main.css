@@ -37,15 +37,36 @@ button:hover {
   cursor: pointer;
 }
 
-#notificationCount {
-  position: absolute;
-  top: 8px;
-  right: 5px;
-  background-color: red;
-  color: white;
+.notification-dot {
+  width: 10px;
+  height: 10px;
+  z-index: 10000;
+  background-color: #e74c3c;
   border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 10px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: none;
+}
+
+/* Blinking red animation for the dot */
+@keyframes blinkDot {
+  0% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+  50% {
+    opacity: 0.5;
+    background-color: #c0392b;
+  }
+  100% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+}
+
+.notification-dot.blink {
+  animation: blinkDot 1s infinite;
 }
 
 #notificationList {
@@ -53,18 +74,110 @@ button:hover {
   top: 40px;
   right: 0;
   left: 1120px;
-  background: #fff;
-  color: #000;
-  width: 300px;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: #f9f9f9; /* Lighter background */
+  color: #333;
+  width: 350px; /* Increase the width slightly */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Softer shadow */
   z-index: 1000;
   display: none;
+  opacity: 0;
+  max-height: 500px; /* Limit the height for scrollable content */
+  overflow-y: auto; /* Enable scrolling if content exceeds height */
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Notification list with pop-down animation */
+#notificationList.animated {
+  animation: popDownNotification 0.3s ease-out forwards;
+}
+
+/* Notification list with pop-up animation */
+#notificationList.pop-up {
+  animation: popUpNotification 0.3s ease-out forwards;
+}
+
+/* Pop-down animation (from top to down) */
+@keyframes popDownNotification {
+  from {
+    transform: translateY(-20px) scale(0.8); /* Start from slightly above and scaled down */
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1); /* End at the final position with full scale */
+    opacity: 1;
+  }
+}
+
+/* Pop-up animation (from down to top) */
+@keyframes popUpNotification {
+  from {
+    transform: translateY(0) scale(1); /* Start at the current position with full scale */
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px) scale(0.8); /* Move slightly upwards and scale down */
+    opacity: 0;
+  }
 }
 
 .notification-item {
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.notification-item:hover {
+  background-color: #f1f1f1; /* Slight hover effect */
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.notification-item img.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 15px;
+  border: 2px solid #ddd;
+}
+
+.notification-item .content {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.notification-item .message {
+  font-weight: 500;
+  color: #333;
+}
+
+.notification-item .timestamp {
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+}
+
+/* Styling for Load More Button */
+#loadMoreButton {
+  width: 100%;
+  background-color: #0e2326;
+  color: #fff;
+  padding: 10px 0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+#loadMoreButton:hover {
+  background-color: #0b1c1d;
 }
 
 .notification-item:last-child {
@@ -2460,7 +2573,7 @@ button[type="submit"]:hover {
 
 #cropperModal {
   display: none;
-  position: absolute;
+  position: fixed;
   top: 100px;
   left: 625px;
   transform: translate(-50%, -50%);
@@ -3928,6 +4041,18 @@ nav.open .nav-content span {
 .input-field.valid {
   border: 2px solid #689e4b;
   box-shadow: 0 0 5px #689e4b;
+  animation: scaleIn 0.3s ease-in-out;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .input-field.invalid {
@@ -4492,7 +4617,7 @@ nav.open .nav-content span {
   opacity: 1;
   position: fixed;
   top: 45px;
-  left: 355px;
+  left: 400px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   border-bottom-left-radius: 8px;

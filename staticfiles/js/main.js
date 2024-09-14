@@ -3454,57 +3454,129 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("profileLink").addEventListener("click", function () {
     checkEmailVerificationStatus();
   });
-});
+  const notificationButton = document.getElementById("notificationButton");
+  const notificationDot = document.getElementById("notificationDot");
+  let currentPage = 1;
+  const notificationList = document.getElementById("notificationList");
+  const loadMoreButton = document.getElementById("loadMoreButton");
 
-const notificationButton = document.getElementById("notificationButton");
-const notificationList = document.getElementById("notificationList");
-const notificationCount = document.getElementById("notificationCount");
+  // Fetch notifications and display them in the notification list
+  function fetchAndDisplayNotifications(page = 1) {
+    fetch(`/fetch_notifications/?page=${page}`)
+      .then((response) => response.json())
+      .then((data) => {
+        notificationList.innerHTML = ""; // Clear current notifications
+        if (data.notifications.length > 0) {
+          data.notifications.forEach((notification) => {
+            appendNotification(notification);
+          });
 
-function fetchNotifications() {
-  // Fetch notifications from the server (this is just a mock example)
-  return [
-    {
-      message: "You uploaded a status, click to view it.",
-    },
-    {
-      message: "USERNAME replied to your status, click to see it.",
-    },
-  ];
-}
+          // If there are more notifications, show the "Load More" button
+          if (data.has_next) {
+            loadMoreButton.style.display = "block";
+          } else {
+            loadMoreButton.style.display = "none";
+          }
 
-function renderNotifications() {
-  const notifications = fetchNotifications();
-  notificationList.innerHTML = "";
-  notifications.forEach((notification) => {
-    const item = document.createElement("div");
-    item.classList.add("notification-item");
-    item.innerHTML = `<a href="${notification.link}">${notification.message}</a>`;
-    notificationList.appendChild(item);
+          // Show the red blinking dot if there are unread notifications
+          if (data.unread_count > 0) {
+            notificationDot.style.display = "block";
+            notificationDot.classList.add("blink");
+          } else {
+            notificationDot.style.display = "none";
+            notificationDot.classList.remove("blink");
+          }
+        }
+      })
+      .catch((error) => console.error("Error fetching notifications:", error));
+  }
+
+  // Load more notifications when the "Load More" button is clicked
+  loadMoreButton.addEventListener("click", () => {
+    currentPage++;
+    fetchAndDisplayNotifications(currentPage);
   });
-  notificationCount.innerText = notifications.length;
-  if (notifications.length > 0) {
-    notificationCount.style.display = "block";
-  } else {
-    notificationCount.style.display = "none";
+
+  // Mark notifications as read
+  function markNotificationsAsRead() {
+    fetch("/mark_notifications_as_read/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // Hide the red blinking dot after notifications are read
+          notificationDot.style.display = "none";
+        }
+      })
+      .catch((error) =>
+        console.error("Error marking notifications as read:", error)
+      );
   }
+
+  // Event listener for the notification button click
+  notificationButton.addEventListener("click", function () {
+    if (notificationList.style.display === "none") {
+      // Fetch and display notifications when the list is hidden
+      fetchAndDisplayNotifications();
+
+      // Show the notification list with a pop-down animation
+      notificationList.classList.remove("pop-up");
+      notificationList.classList.add("animated");
+      notificationList.style.display = "block";
+
+      // Mark the notifications as read
+      markNotificationsAsRead();
+    } else {
+      // Hide the notification list with a pop-up animation
+      notificationList.style.display = "none";
+    }
+  });
+
+  // Event listener for clicks outside the notification list to close it
+  window.addEventListener("click", function (event) {
+    if (
+      !notificationButton.contains(event.target) &&
+      !notificationList.contains(event.target)
+    ) {
+      notificationList.style.display = "none";
+    }
+  });
+
+  // Initial call to fetch notifications when the page loads
+  fetchAndDisplayNotifications();
+
+  function appendNotification(notification) {
+    const item = document.createElement('div');
+    item.classList.add('notification-item');
+    item.innerHTML = `
+        <img src="${notification.avatar_url}" class="avatar" alt="User Avatar">
+        <div class="content">
+            <div class="message">${notification.message}</div>
+            <div class="timestamp">${notification.timestamp}</div>
+        </div>
+    `;
+    notificationList.appendChild(item);
 }
 
-notificationButton.addEventListener("click", function () {
-  if (notificationList.style.display === "none") {
-    renderNotifications();
-    notificationList.style.display = "block";
-  } else {
-    notificationList.style.display = "none";
+  /* Utility Function to Get CSRF Token */
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        // Check if this cookie starts with the name we want
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
   }
 });
-
-window.addEventListener("click", function (event) {
-  if (
-    !notificationButton.contains(event.target) &&
-    !notificationList.contains(event.target)
-  ) {
-    notificationList.style.display = "none";
-  }
-});
-
-renderNotifications();
