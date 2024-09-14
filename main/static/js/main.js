@@ -3489,10 +3489,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const item = document.createElement("div");
       item.classList.add("notification-item");
 
+      // Make the entire notification clickable
+      item.addEventListener("click", function () {
+        window.location.href = notification.link;
+      });
+
       item.innerHTML = `
       <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
       <div class="notification-content">
-        <div class="message"><a href="${notification.link}">${notification.message}</a></div>
+        <div class="message">${notification.message}</div>
         <div class="timestamp">${notification.timestamp}</div>
       </div>
     `;
