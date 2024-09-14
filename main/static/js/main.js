@@ -3454,75 +3454,78 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("profileLink").addEventListener("click", function () {
     checkEmailVerificationStatus();
   });
-});
+  const notificationButton = document.getElementById("notificationButton");
+  const notificationDot = document.getElementById("notificationDot");
+  const notificationList = document.getElementById("notificationList");
 
-const notificationButton = document.getElementById("notificationButton");
-const notificationDot = document.getElementById("notificationDot");
-const notificationList = document.getElementById("notificationList");
-
-function fetchNotifications() {
-  // Fetch notifications from the server (mocked here for example)
-  return [
-    {
-      message: "You uploaded a status, click to view it.",
-      link: "#",
-    },
-    {
-      message: "USERNAME replied to your status, click to see it.",
-      link: "#",
-    },
-  ];
-}
-
-function renderNotifications() {
-  const notifications = fetchNotifications();
-  notificationList.innerHTML = "";
-
-  notifications.forEach((notification) => {
-    const item = document.createElement("div");
-    item.classList.add("notification-item");
-    item.innerHTML = `<a href="${notification.link}">${notification.message}</a>`;
-    notificationList.appendChild(item);
-  });
-
-  if (notifications.length > 0) {
-    // Show the red blinking dot
-    notificationDot.style.display = "block";
-    notificationDot.classList.add("blink");
-  } else {
-    notificationDot.style.display = "none";
+  function fetchNotifications() {
+    // Fetch notifications from the server (mocked here for example)
+    return [
+      {
+        message: "You uploaded a status, click to view it.",
+        link: "#",
+        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
+        timestamp: "2 mins ago",
+      },
+      {
+        message: "USERNAME replied to your status, click to see it.",
+        link: "#",
+        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
+        timestamp: "10 mins ago",
+      },
+    ];
   }
-}
 
-notificationButton.addEventListener("click", function () {
-  if (notificationList.style.display === "none") {
-    renderNotifications();
-    notificationList.classList.remove("pop-up"); // Remove pop-up animation if present
-    notificationList.classList.add("animated"); // Add pop-down animation
-    notificationList.style.display = "block";
+  function renderNotifications() {
+    const notifications = fetchNotifications();
+    notificationList.innerHTML = `
+    <div class="notification-header">
+      <span class="earlier">Earlier</span>
+      <span class="see-all">See All</span>
+    </div>
+  `;
 
-    // Stop blinking and hide the dot after clicking
-    notificationDot.classList.remove("blink");
-    notificationDot.style.display = "none";
-  } else {
-    // Trigger pop-up animation when closing the notification list
-    notificationList.classList.remove("animated");
-    notificationList.classList.add("pop-up");
+    notifications.forEach((notification) => {
+      const item = document.createElement("div");
+      item.classList.add("notification-item");
 
-    // Wait for the pop-up animation to finish before hiding
-    setTimeout(() => {
-      notificationList.style.display = "none";
-    }, 300); // Match the duration of the pop-up animation (0.3s)
+      item.innerHTML = `
+      <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
+      <div class="notification-content">
+        <div class="message"><a href="${notification.link}">${notification.message}</a></div>
+        <div class="timestamp">${notification.timestamp}</div>
+      </div>
+    `;
+
+      notificationList.appendChild(item);
+    });
+
+    // Add the Load More button at the end of the list
+    const loadMoreButton = document.createElement("div");
+    loadMoreButton.classList.add("notification-load-more");
+    loadMoreButton.textContent = "Load More";
+    notificationList.appendChild(loadMoreButton);
+
+    // Show the red blinking dot if there are unread notifications
+    if (notifications.length > 0) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    } else {
+      notificationDot.style.display = "none";
+    }
   }
-});
 
-window.addEventListener("click", function (event) {
-  if (
-    !notificationButton.contains(event.target) &&
-    !notificationList.contains(event.target)
-  ) {
-    if (notificationList.style.display === "block") {
-      // Trigger pop-up animation when clicking outside
+  notificationButton.addEventListener("click", function () {
+    if (notificationList.style.display === "none") {
+      renderNotifications();
+      notificationList.classList.remove("pop-up");
+      notificationList.classList.add("animated");
+      notificationList.style.display = "block";
+
+      // Stop blinking and hide the dot after clicking
+      notificationDot.classList.remove("blink");
+      notificationDot.style.display = "none";
+    } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
 
@@ -3530,7 +3533,23 @@ window.addEventListener("click", function (event) {
         notificationList.style.display = "none";
       }, 300); // Match the duration of the pop-up animation (0.3s)
     }
-  }
-});
+  });
 
-renderNotifications();
+  window.addEventListener("click", function (event) {
+    if (
+      !notificationButton.contains(event.target) &&
+      !notificationList.contains(event.target)
+    ) {
+      if (notificationList.style.display === "block") {
+        notificationList.classList.remove("animated");
+        notificationList.classList.add("pop-up");
+
+        setTimeout(() => {
+          notificationList.style.display = "none";
+        }, 300);
+      }
+    }
+  });
+
+  renderNotifications();
+});

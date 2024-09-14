@@ -118,9 +118,62 @@ button:hover {
   }
 }
 
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.notification-header .earlier {
+  color: #0f2326;
+}
+
+.notification-header .see-all {
+  color: #689e4b;
+  cursor: pointer;
+}
+
 .notification-item {
+  display: flex;
   padding: 10px;
   border-bottom: 1px solid #ccc;
+  align-items: center;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 10px;
+}
+
+.notification-content {
+  flex-grow: 1;
+}
+
+.notification-content .message {
+  font-size: 14px;
+  color: #0f2326;
+}
+
+.notification-content .timestamp {
+  font-size: 12px;
+  color: #9095a0;
+  margin-top: 3px;
+}
+
+.notification-load-more {
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  color: #689e4b;
+}
+
+.notification-load-more:hover {
+  text-decoration: underline;
 }
 
 .notification-item:last-child {
