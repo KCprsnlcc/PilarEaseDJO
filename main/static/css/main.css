@@ -1226,6 +1226,12 @@ button[type="submit"]:hover {
   gap: 10px;
   margin-top: 20px;
 }
+#cropper-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
 /* Align Verify and Cancel buttons side by side */
 .dialog-buttons {
   display: flex;
@@ -2456,21 +2462,23 @@ button[type="submit"]:hover {
   display: none;
   position: absolute;
   top: 150px;
-  left: 700px;
+  left: 750px;
   transform: translate(-50%, -50%);
   background-color: white;
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000111;
+  width: 500px; /* Reduce the width for a more compact modal */
+  max-width: 90%; /* Ensure the modal is responsive */
+  height: auto; /* Adjust height based on content */
+  max-height: 600px; /* Limit max height */
   overflow: visible;
-  width: 600px;
-  height: 500px;
 }
 
 .cropper-container {
   position: relative;
   width: 100%;
-  height: 70%;
+  height: 60%; /* Adjust the height proportionally */
   overflow: hidden;
 }
 
