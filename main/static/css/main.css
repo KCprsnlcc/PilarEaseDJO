@@ -2468,10 +2468,10 @@ button[type="submit"]:hover {
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000111;
-  width: 500px; /* Reduce the width for a more compact modal */
-  max-width: 90%; /* Ensure the modal is responsive */
-  height: auto; /* Adjust height based on content */
-  max-height: 600px; /* Limit max height */
+  width: 500px;
+  max-width: 90%;
+  height: auto;
+  max-height: auto;
   overflow: visible;
 }
 
