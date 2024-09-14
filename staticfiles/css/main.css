@@ -1220,7 +1220,12 @@ button[type="submit"]:hover {
   cursor: pointer;
   position: relative;
 }
-
+#avatar-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
 /* Align Verify and Cancel buttons side by side */
 .dialog-buttons {
   display: flex;
@@ -2350,8 +2355,8 @@ button[type="submit"]:hover {
   background-color: #c0392b;
 }
 #changeemailErrorBox {
-    top: 110px;
-    left: 23px;
+  top: 110px;
+  left: 23px;
   width: 400px;
   display: none;
   text-align: center;
@@ -2365,8 +2370,8 @@ button[type="submit"]:hover {
 }
 
 #changeemailSuccessBox {
-    top: 110px;
-    left: 23px;
+  top: 110px;
+  left: 23px;
   width: 400px;
   display: none;
   text-align: center;
@@ -2663,8 +2668,8 @@ button[type="submit"]:hover {
 }
 
 .secondary {
-  background-color: #ddd;
-  color: #333;
+  background-color: #e74c3c;
+  color: white;
   width: 110px;
   margin-top: 25px;
   border: none;
@@ -2676,8 +2681,7 @@ button[type="submit"]:hover {
 }
 
 .secondary:hover {
-  background-color: #bbb;
-  color: #333;
+  background-color: #c0392b;
 }
 
 #avatarModal {
