@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'compressor',
-    'channels',
+    # 'channels',
 ]
 
 AUTH_USER_MODEL = 'main.CustomUser'
@@ -114,17 +114,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 
-ASGI_APPLICATION = 'PilarEaseDJO.asgi.application'
+# ASGI_APPLICATION = 'PilarEaseDJO.asgi.application'
 
-# Set up the Channels layer (you can use Redis for production)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],  # Make sure Redis is running on this host/port
-        },
-    },
-}
+# # Set up the Channels layer (you can use Redis for production)
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("127.0.0.1", 6379)],  # Make sure Redis is running on this host/port
+#         },
+#     },
+# }
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

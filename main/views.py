@@ -1,6 +1,5 @@
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -54,7 +53,6 @@ from django.utils.html import strip_tags
 from django.utils.timezone import now
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
-channel_layer = get_channel_layer()
 
 def current_time_view(request):
     tz = pytz.timezone('Asia/Manila')
@@ -629,15 +627,8 @@ def submit_status(request):
             'created_at': timesince(status.created_at),
             'replies': 0  # Placeholder for replies
         }
-        # Send WebSocket notification to the user
-        async_to_sync(channel_layer.group_send)(
-            f"notifications_{request.user.id}",
-            {
-            "type": "send_notification",
-            "message": "You posted a new status!"
-            }
-        )
 
+        # Return success response to the user
         return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
@@ -669,62 +660,26 @@ def fetch_notifications(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
-
-    # Fetch all unread notifications for the current user
-    unread_notifications = Notification.objects.filter(user=request.user, is_read=False)
-
     for status in page_obj:
-        # Check if notification for this status already exists, else create one
-        notification = next(
-            (n for n in unread_notifications if n.status == status), 
-            Notification.objects.get_or_create(user=request.user, status=status, defaults={'is_read': False})[0]
-        )
-
         notifications.append({
-            'id': status.id,  # Include unique ID
+            'id': status.id,
             'message': "You uploaded a status, click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
-            'timestamp': status.created_at,
-            'is_read': True,  # Example: mark all as read
+            'timestamp': format_timestamp(status.created_at),
+            'is_read': True,  # Mark as read (simplified)
         })
 
-        # Fetch replies to the user's status (excluding the user's own replies), order replies in descending order of creation
+        # Fetch replies to the user's status (excluding the user's own replies)
         status_replies = Reply.objects.filter(status=status).exclude(user=request.user).order_by('-created_at')[:5]
-        unique_users = set(reply.user for reply in status_replies)
-
-        # Create message based on the number of unique reply users
-        if len(unique_users) == 1:
-            user_names = next(iter(unique_users)).username
-            message = f"{user_names} replied to your status, click to see it."
-        elif len(unique_users) == 2:
-            user_names = ', '.join(user.username for user in unique_users)
-            message = f"{user_names} replied to your status, click to see it."
-        elif len(unique_users) > 2:
-            user_names = ', '.join(list(unique_users)[:2])
-            message = f"{user_names} and others replied to your status, click to see it."
-
-        # Add reply notifications
         for reply in status_replies:
-            notification = next(
-                (n for n in unread_notifications if n.status == status),
-                Notification.objects.get_or_create(user=request.user, status=status, defaults={'is_read': False})[0]
-            )
-
             notifications.append({
-                'message': message,
+                'message': f"{reply.user.username} replied to your status, click to see it.",
                 'link': f'/status/{status.id}/',
                 'avatar': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
-                'timestamp': reply.created_at,  # Store raw timestamp for sorting
-                'is_read': notification.is_read,
+                'timestamp': format_timestamp(reply.created_at),
+                'is_read': False,  # Example: mark as unread
             })
-
-    # Sort notifications by raw timestamp in descending order (latest first)
-    notifications.sort(key=lambda x: x['timestamp'], reverse=True)
-
-    # Format the timestamp after sorting
-    for notification in notifications:
-        notification['timestamp'] = format_timestamp(notification['timestamp'])
 
     return JsonResponse({'notifications': notifications, 'total_pages': paginator.num_pages})
 
@@ -748,22 +703,14 @@ def add_reply(request, status_id):
         status = get_object_or_404(Status, id=status_id)
         reply = Reply.objects.create(status=status, user=request.user, text=text)
 
-        # Notify the status owner if another user replies
-        if status.user != request.user:
-            async_to_sync(channel_layer.group_send)(
-            f"notifications_{status.user.id}",
-            {
-                "type": "send_notification",
-                "message": f"{request.user.username} replied to your status!"
-            }
-        )
-            
+        # Return a success response with the reply details
         return JsonResponse({'success': True, 'reply': {
             'id': reply.id,
             'username': reply.user.username,
             'text': reply.text,
             'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
         }})
+
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 
 
