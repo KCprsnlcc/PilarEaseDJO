@@ -10,7 +10,7 @@ from .views import (
     custom_password_reset_done_view,
     custom_password_reset_confirm_view,
     custom_password_reset_complete_view, 
-    mark_notifications_as_read,
+    mark_notification_as_read,
     verify_email, check_email_verification, 
     send_verification_email, request_email_change, 
     verify_email_change, request_email_verification 
@@ -34,7 +34,7 @@ urlpatterns = [
     path('reset/done/', custom_password_reset_complete_view, name='password_reset_complete'),  # Custom password reset complete view
     path('submit_status/', views.submit_status, name='submit_status'), 
     path('fetch_notifications/', views.fetch_notifications, name='fetch_notifications'),
-    path('mark_notifications_as_read/', mark_notifications_as_read, name='mark_notifications_as_read'),
+    path('mark_notification_as_read/<int:notification_id>/', mark_notification_as_read, name='mark_notification_as_read'),
     path('check_profanity/', views.check_profanity, name='check_profanity'),
     path('get_all_statuses/', views.get_all_statuses, name='get_all_statuses'), 
     path('get_status/<int:status_id>/', get_status, name='get_status'),

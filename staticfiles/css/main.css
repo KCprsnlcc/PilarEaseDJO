@@ -26,7 +26,6 @@ button {
 button:hover {
   background-color: #3b5a2b;
 }
-
 #notificationButton {
   position: relative;
   font-size: 24px;
@@ -47,6 +46,18 @@ button:hover {
   top: 12px;
   right: 12px;
   display: none;
+}
+
+.notification-dot-green {
+  width: 10px;
+  height: 10px;
+  background-color: #689e4b;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.timestamp-green {
+  color: #689e4b;
 }
 
 /* Blinking red animation for the dot */
@@ -233,30 +244,17 @@ button:hover {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 10px 0;
-  padding: 10px; /* Ensures the padding is similar to notification-item */
+  margin: 10px 10px;
 }
 
 .loader-item {
-  height: 60px;
-  display: flex; /* To mimic the flex layout of notification-item */
-  align-items: center; /* Align the loader content like notification items */
+  display: flex;
+  align-items: center;
+  padding: 10px;
   border-radius: 10px;
   background-color: #e0e0e0;
   animation: loading 1.5s infinite;
-  margin: 5px 10px; /* Add margin for spacing similar to notification-item */
-  padding: 10px; /* Same padding as notification items */
-  width: 100%; /* Ensure loader items take full width like notification items */
-}
-
-.loader-item::before {
-  content: "";
-  display: inline-block;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #d0d0d0; /* Placeholder for avatar loader */
-  margin-right: 10px;
+  height: 60px;
 }
 
 .loader-item-avatar {

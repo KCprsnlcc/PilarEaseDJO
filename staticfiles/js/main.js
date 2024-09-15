@@ -3461,16 +3461,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const loadMoreButton = document.getElementById("notificationLoadMore");
 
   let currentPage = 1; // Track the current page for pagination
-  let notificationsFetched = false; // Track if notifications were fetched
   let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
   let renderedNotifications = new Map(); // Store rendered notifications by id
 
   // Show loader while loading notifications
   function showNotificationLoader() {
     const loader = document.createElement("div");
-    loader.className = "loader-placeholder"; // Use this class for styling
+    loader.className = "loader-placeholder";
     for (let i = 0; i < 3; i++) {
-      // Show 3 loader items
       const loaderItem = document.createElement("div");
       loaderItem.className = "loader-item";
       loaderItem.innerHTML = `
@@ -3491,48 +3489,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // WebSocket connection to the notifications endpoint
-  const ws = new WebSocket(
-    "ws://" + window.location.host + "/ws/notifications/"
-  );
-
-  // WebSocket event listener for receiving new notifications in real-time
-  ws.onmessage = function (event) {
-    const data = JSON.parse(event.data);
-    if (data.message) {
-      // Show the notification dot when a new message is received in real-time
-      notificationDot.style.display = "block";
-      notificationDot.classList.add("blink");
-
-      // Append the new notification to the notification list
-      const newItem = document.createElement("div");
-      newItem.classList.add("notification-item");
-      newItem.addEventListener("click", function () {
-        window.location.href = data.link;
-      });
-
-      newItem.innerHTML = `
-      <img class="notification-avatar" src="${data.avatar}" alt="Avatar">
-      <div class="notification-content">
-        <div class="message">${data.message}</div>
-        <div class="timestamp">${formatTimestamp("Just Now")}</div>
-      </div>
-    `;
-
-      notificationItems.prepend(newItem); // Add the new notification at the top of the list
-    }
-  };
-
-  // Handle WebSocket errors
-  ws.onerror = function (error) {
-    console.error("WebSocket error:", error);
-  };
-
-  // Handle WebSocket connection close
-  ws.onclose = function () {
-    console.log("WebSocket connection closed.");
-  };
-
   // Fetch notifications from the API with pagination support
   async function fetchNotifications(page = 1) {
     try {
@@ -3540,7 +3496,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const response = await fetch(`/fetch_notifications/?page=${page}`);
       if (response.ok) {
         const data = await response.json();
-        totalPages = data.total_pages; // Update total pages based on response
+        totalPages = data.total_pages;
         return data.notifications;
       } else {
         console.error("Failed to fetch notifications.");
@@ -3554,21 +3510,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Mark notifications as read when the button is clicked
-  async function markNotificationsAsRead() {
+  // Mark a specific notification as read when clicked
+  async function markNotificationAsRead(notificationId) {
     try {
-      const response = await fetch("/mark_notifications_as_read/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCSRFToken(),
-        },
-      });
+      const response = await fetch(
+        `/mark_notification_as_read/${notificationId}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+        }
+      );
       if (!response.ok) {
-        console.error("Failed to mark notifications as read.");
+        console.error("Failed to mark notification as read.");
       }
     } catch (error) {
-      console.error("Error marking notifications as read:", error);
+      console.error("Error marking notification as read:", error);
     }
   }
 
@@ -3587,27 +3546,52 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
     notifications.forEach((notification) => {
-      // Check if this notification has already been rendered by using notification.id
       if (!renderedNotifications.has(notification.id)) {
         const item = document.createElement("div");
         item.classList.add("notification-item");
+        item.dataset.id = notification.id;
 
-        // Make the entire notification clickable
-        item.addEventListener("click", function () {
-          window.location.href = notification.link;
+        // If the notification is unread, apply the unread styling
+        if (!notification.is_read) {
+          item.classList.add("unread");
+        } else {
+          // Mark read notifications with a greyish background
+          item.classList.add("read");
+        }
+
+        // Make the entire notification clickable and mark as read on click
+        item.addEventListener("click", async function () {
+          if (!notification.is_read) {
+            await markNotificationAsRead(notification.id);
+            item.classList.remove("unread");
+            item.classList.add("read");
+            item.querySelector(".notification-dot-green").remove();
+            item
+              .querySelector(".timestamp")
+              .classList.remove("timestamp-green");
+          }
+          window.location.href = notification.link; // Redirect to notification link
         });
 
+        // Build notification item structure
         item.innerHTML = `
         <img class="notification-avatar" src="${
           notification.avatar
         }" alt="Avatar">
         <div class="notification-content">
           <div class="message">${notification.message}</div>
-          <div class="timestamp">${formatTimestamp(
-            notification.timestamp
-          )}</div>
+          <div class="timestamp ${
+            notification.is_read ? "" : "timestamp-green"
+          }">${formatTimestamp(notification.timestamp)}</div>
         </div>
+        ${
+          notification.is_read
+            ? ""
+            : '<div class="notification-dot-green"></div>'
+        }
       `;
 
         notificationItems.appendChild(item);
@@ -3621,7 +3605,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (currentPage < totalPages) {
       loadMoreButton.style.display = "block";
     } else {
-      loadMoreButton.style.display = "none"; // Hide the button when no more pages
+      loadMoreButton.style.display = "none";
     }
 
     // Show the blinking dot if there are unread notifications
@@ -3643,13 +3627,6 @@ document.addEventListener("DOMContentLoaded", function () {
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
-
-      // Mark notifications as read and stop blinking
-      await markNotificationsAsRead();
-      notificationDot.classList.remove("blink");
-      notificationDot.style.display = "none";
-
-      notificationsFetched = true;
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
@@ -3661,8 +3638,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load more notifications when clicking the "Load More" button
   loadMoreButton.addEventListener("click", async function () {
-    currentPage++; // Increment the current page
-    await renderNotifications(currentPage); // Load the next batch of notifications
+    currentPage++;
+    await renderNotifications(currentPage);
     notificationList.style.maxHeight = "700px"; // Ensure proper scroll behavior
     notificationList.style.overflowY = "auto"; // Enable scrolling
   });
@@ -3675,14 +3652,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return timestamp;
   }
 
-  // Periodically check for new unread notifications
+  // Periodically check for new unread notifications (without WebSocket)
   setInterval(async () => {
     const notifications = await fetchNotifications();
     const hasUnread = notifications.some(
       (notification) => !notification.is_read
     );
 
-    if (hasUnread && !notificationsFetched) {
+    if (hasUnread) {
       notificationDot.style.display = "block";
       notificationDot.classList.add("blink");
     }

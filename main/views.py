@@ -723,11 +723,16 @@ def fetch_notifications(request):
     })
 
 @login_required
-@require_POST
-def mark_notifications_as_read(request):
-    # Mark all notifications for the current user as read
-    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
-    return JsonResponse({'success': True})
+@csrf_exempt
+def mark_notification_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
 
 @login_required
 @csrf_exempt
