@@ -83,6 +83,14 @@ button:hover {
   z-index: 1000;
   display: none;
   opacity: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Scrollable and Dynamic Height */
+.notification-list {
+  overflow-y: auto;
+  max-height: 400px; /* Limit the height */
 }
 
 /* Notification list with pop-down animation */
@@ -134,17 +142,6 @@ button:hover {
 .notification-header .see-all {
   color: #689e4b;
   cursor: pointer;
-}
-
-.notification-read-dot {
-  width: 10px;
-  height: 10px;
-  background-color: #689e4b;
-  border-radius: 50%;
-  position: absolute;
-  top: 15px;
-  right: 10px;
-  display: none; /* Hidden by default, shown for unread notifications */
 }
 
 .notification-item {

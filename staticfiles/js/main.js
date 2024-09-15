@@ -3457,15 +3457,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const notificationButton = document.getElementById("notificationButton");
   const notificationDot = document.getElementById("notificationDot");
   const notificationList = document.getElementById("notificationList");
+  const notificationItems = document.getElementById("notificationItems");
+  const loadMoreButton = document.getElementById("notificationLoadMore");
 
+  let currentPage = 1; // Track the current page for pagination
   let notificationsFetched = false; // Track if notifications were fetched
+  let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
 
-  // Fetch notifications from the Django API
-  async function fetchNotifications() {
+  // Fetch notifications from the Django API with pagination support
+  async function fetchNotifications(page = 1) {
     try {
-      const response = await fetch("/fetch_notifications/");
+      const response = await fetch(`/fetch_notifications/?page=${page}`);
       if (response.ok) {
         const data = await response.json();
+        totalPages = data.total_pages; // Update total pages based on response
         return data.notifications;
       } else {
         console.error("Failed to fetch notifications.");
@@ -3477,24 +3482,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Mark a single notification as read
-  async function markNotificationAsRead(notificationId) {
+  // Mark notifications as read (called when the button is clicked)
+  async function markNotificationsAsRead() {
     try {
-      const response = await fetch(
-        `/mark_notification_as_read/${notificationId}/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCSRFToken(),
-          },
-        }
-      );
+      const response = await fetch("/mark_notifications_as_read/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+      });
       if (!response.ok) {
-        console.error("Failed to mark notification as read.");
+        console.error("Failed to mark notifications as read.");
       }
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("Error marking notifications as read:", error);
     }
   }
 
@@ -3504,27 +3506,21 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Render the notifications in the notification list
-  async function renderNotifications() {
-    const notifications = await fetchNotifications();
-    notificationList.innerHTML = `
-    <div class="notification-header">
-      <span class="earlier">Earlier</span>
-      <span class="see-all">See All</span>
-    </div>
-  `;
+  async function renderNotifications(page = 1) {
+    const notifications = await fetchNotifications(page);
+
+    // If no notifications were returned, hide the load more button
+    if (notifications.length === 0) {
+      loadMoreButton.style.display = "none";
+      return;
+    }
 
     notifications.forEach((notification) => {
       const item = document.createElement("div");
       item.classList.add("notification-item");
 
       // Make the entire notification clickable
-      item.addEventListener("click", async function () {
-        // Mark notification as read when clicked
-        if (!notification.is_read && notification.id !== null) {
-          await markNotificationAsRead(notification.id);
-          notification.is_read = true;
-          item.querySelector(".notification-read-dot").style.display = "none";
-        }
+      item.addEventListener("click", function () {
         window.location.href = notification.link;
       });
 
@@ -3534,21 +3530,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }" alt="Avatar">
       <div class="notification-content">
         <div class="message">${notification.message}</div>
-        <div class="timestamp">${notification.timestamp}</div>
-        <div class="notification-read-dot" style="display: ${
-          notification.is_read ? "none" : "block"
-        };"></div>
+        <div class="timestamp">${formatTimestamp(notification.timestamp)}</div>
       </div>
     `;
 
-      notificationList.appendChild(item);
+      notificationItems.appendChild(item);
     });
 
-    // Add the Load More button at the end of the list
-    const loadMoreButton = document.createElement("div");
-    loadMoreButton.classList.add("notification-load-more");
-    loadMoreButton.textContent = "Load More";
-    notificationList.appendChild(loadMoreButton);
+    // If the current page is less than total pages, show the "Load More" button
+    if (currentPage < totalPages) {
+      loadMoreButton.style.display = "block";
+    } else {
+      loadMoreButton.style.display = "none"; // Hide the button when no more pages
+    }
 
     // Show the red blinking dot if there are unread notifications
     const hasUnread = notifications.some(
@@ -3562,19 +3556,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Initial notification loading on button click
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      await renderNotifications();
+      // If notifications are not displayed, render them
+      await renderNotifications(currentPage);
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Stop blinking and hide the red dot once the notifications are opened
+      // Mark notifications as read and stop blinking
+      await markNotificationsAsRead();
       notificationDot.classList.remove("blink");
       notificationDot.style.display = "none";
 
       notificationsFetched = true;
     } else {
+      // Hide the notifications if they are already displayed
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
 
@@ -3584,7 +3582,21 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Fetch notifications periodically (to check for new ones)
+  // Load more notifications on button click
+  loadMoreButton.addEventListener("click", async function () {
+    currentPage++; // Increment the current page
+    await renderNotifications(currentPage); // Load the next batch of notifications
+  });
+
+  // Function to format timestamps, showing "Just Now" for recent notifications
+  function formatTimestamp(timestamp) {
+    if (timestamp.includes("0 minutes ago")) {
+      return "Just Now";
+    }
+    return timestamp;
+  }
+
+  // Periodic fetching of notifications to check for new unread ones
   setInterval(async () => {
     const notifications = await fetchNotifications();
     const hasUnread = notifications.some(
@@ -3597,6 +3609,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }, 60000); // Check every 60 seconds
 
+  // Close notification list when clicking outside
   window.addEventListener("click", function (event) {
     if (
       !notificationButton.contains(event.target) &&
@@ -3613,5 +3626,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Initial rendering of notifications when the page is loaded
   renderNotifications();
 });

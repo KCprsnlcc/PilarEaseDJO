@@ -105,14 +105,20 @@
       </div>
     </footer>
     <!-- Notification List -->
-    <div id="notificationList" class="notification-list" style="display: none">
+<div id="notificationList" class="notification-list" style="display: none; max-height: 400px; overflow-y: auto;">
   <!-- Notification List Header -->
   <div class="notification-header">
     <span class="earlier">Earlier</span>
     <span class="see-all">See All</span>
   </div>
-  
+
   <!-- Notifications will be dynamically added here -->
+  <div id="notificationItems"></div>
+  
+  <!-- Load More Button -->
+  <div id="notificationLoadMore" class="notification-load-more" style="display: none;">
+    Load More
+  </div>
 </div>
     <!-- Login Modal -->
     <div class="v53_168 modal" id="loginModal" style="display: none">
