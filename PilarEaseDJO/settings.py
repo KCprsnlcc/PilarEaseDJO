@@ -119,7 +119,10 @@ ASGI_APPLICATION = 'PilarEaseDJO.asgi.application'
 # Set up the Channels layer (you can use Redis for production)
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],  # Make sure Redis is running on this host/port
+        },
     },
 }
 

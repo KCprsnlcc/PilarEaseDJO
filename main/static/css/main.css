@@ -233,14 +233,40 @@ button:hover {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 10px 0;
+  margin: 10px 10px;
 }
 
 .loader-item {
-  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
   background-color: #e0e0e0;
-  border-radius: 5px;
   animation: loading 1.5s infinite;
+  height: 60px;
+}
+
+.loader-item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #d0d0d0;
+  margin-right: 10px;
+}
+
+.loader-item-content {
+  flex-grow: 1;
+  height: 20px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+}
+
+.loader-item-timestamp {
+  width: 50px;
+  height: 12px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+  margin-top: 5px;
 }
 
 @keyframes loading {

@@ -83,7 +83,7 @@ button:hover {
   z-index: 1000;
   display: none;
   opacity: 0;
-  max-height: 500px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -234,13 +234,52 @@ button:hover {
   flex-direction: column;
   gap: 10px;
   margin: 10px 0;
+  padding: 10px; /* Ensures the padding is similar to notification-item */
 }
 
 .loader-item {
   height: 60px;
+  display: flex; /* To mimic the flex layout of notification-item */
+  align-items: center; /* Align the loader content like notification items */
+  border-radius: 10px;
   background-color: #e0e0e0;
-  border-radius: 5px;
   animation: loading 1.5s infinite;
+  margin: 5px 10px; /* Add margin for spacing similar to notification-item */
+  padding: 10px; /* Same padding as notification items */
+  width: 100%; /* Ensure loader items take full width like notification items */
+}
+
+.loader-item::before {
+  content: "";
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #d0d0d0; /* Placeholder for avatar loader */
+  margin-right: 10px;
+}
+
+.loader-item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #d0d0d0;
+  margin-right: 10px;
+}
+
+.loader-item-content {
+  flex-grow: 1;
+  height: 20px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+}
+
+.loader-item-timestamp {
+  width: 50px;
+  height: 12px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+  margin-top: 5px;
 }
 
 @keyframes loading {

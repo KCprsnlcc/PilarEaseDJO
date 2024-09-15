@@ -3463,36 +3463,35 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentPage = 1; // Track the current page for pagination
   let notificationsFetched = false; // Track if notifications were fetched
   let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
-  let batchCount = 0; // Track the number of batches loaded (limit at 10)
+  let renderedNotifications = new Map(); // Store rendered notifications by id
 
   // Show loader while loading notifications
-  function ShowNotificationLoader() {
+  function showNotificationLoader() {
     const loader = document.createElement("div");
     loader.className = "loader-placeholder"; // Use this class for styling
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 3; i++) {
+      // Show 3 loader items
       const loaderItem = document.createElement("div");
-      loaderItem.className = "loader-item"; // Use this class for styling
+      loaderItem.className = "loader-item";
+      loaderItem.innerHTML = `
+      <div class="loader-item-avatar"></div>
+      <div class="loader-item-content"></div>
+      <div class="loader-item-timestamp"></div>
+    `;
       loader.appendChild(loaderItem);
     }
     notificationItems.appendChild(loader);
   }
 
   // Remove the loader after notifications are loaded
-  function RemoveNotificationLoader() {
+  function removeNotificationLoader() {
     const loader = document.querySelector(".loader-placeholder");
     if (loader) {
       loader.remove();
     }
   }
 
-  // Extend the height of the notification list
-  function extendHeight() {
-    notificationList.style.maxHeight = `${
-      notificationList.scrollHeight + 200
-    }px`;
-  }
-
-  // Create a WebSocket connection to the notifications endpoint
+  // WebSocket connection to the notifications endpoint
   const ws = new WebSocket(
     "ws://" + window.location.host + "/ws/notifications/"
   );
@@ -3505,7 +3504,7 @@ document.addEventListener("DOMContentLoaded", function () {
       notificationDot.style.display = "block";
       notificationDot.classList.add("blink");
 
-      // Optionally, append the new notification to the notification list
+      // Append the new notification to the notification list
       const newItem = document.createElement("div");
       newItem.classList.add("notification-item");
       newItem.addEventListener("click", function () {
@@ -3534,10 +3533,10 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("WebSocket connection closed.");
   };
 
-  // Fetch notifications from the Django API with pagination support
+  // Fetch notifications from the API with pagination support
   async function fetchNotifications(page = 1) {
     try {
-      ShowNotificationLoader();
+      showNotificationLoader();
       const response = await fetch(`/fetch_notifications/?page=${page}`);
       if (response.ok) {
         const data = await response.json();
@@ -3551,11 +3550,11 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error fetching notifications:", error);
       return [];
     } finally {
-      RemoveNotificationLoader();
+      removeNotificationLoader();
     }
   }
 
-  // Mark notifications as read (called when the button is clicked)
+  // Mark notifications as read when the button is clicked
   async function markNotificationsAsRead() {
     try {
       const response = await fetch("/mark_notifications_as_read/", {
@@ -3573,7 +3572,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Get the CSRF token for Django
+  // Get CSRF token for Django
   function getCSRFToken() {
     return document.querySelector("[name=csrfmiddlewaretoken]").value;
   }
@@ -3589,35 +3588,43 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     notifications.forEach((notification) => {
-      const item = document.createElement("div");
-      item.classList.add("notification-item");
+      // Check if this notification has already been rendered by using notification.id
+      if (!renderedNotifications.has(notification.id)) {
+        const item = document.createElement("div");
+        item.classList.add("notification-item");
 
-      // Make the entire notification clickable
-      item.addEventListener("click", function () {
-        window.location.href = notification.link;
-      });
+        // Make the entire notification clickable
+        item.addEventListener("click", function () {
+          window.location.href = notification.link;
+        });
 
-      item.innerHTML = `
-      <img class="notification-avatar" src="${
-        notification.avatar
-      }" alt="Avatar">
-      <div class="notification-content">
-        <div class="message">${notification.message}</div>
-        <div class="timestamp">${formatTimestamp(notification.timestamp)}</div>
-      </div>
-    `;
+        item.innerHTML = `
+        <img class="notification-avatar" src="${
+          notification.avatar
+        }" alt="Avatar">
+        <div class="notification-content">
+          <div class="message">${notification.message}</div>
+          <div class="timestamp">${formatTimestamp(
+            notification.timestamp
+          )}</div>
+        </div>
+      `;
 
-      notificationItems.appendChild(item);
+        notificationItems.appendChild(item);
+
+        // Track rendered notifications by ID
+        renderedNotifications.set(notification.id, notification);
+      }
     });
 
-    // If the current page is less than total pages, show the "Load More" button
-    if (currentPage < totalPages && batchCount < 10) {
+    // Show the "Load More" button if more pages are available
+    if (currentPage < totalPages) {
       loadMoreButton.style.display = "block";
     } else {
       loadMoreButton.style.display = "none"; // Hide the button when no more pages
     }
 
-    // Show the red blinking dot if there are unread notifications
+    // Show the blinking dot if there are unread notifications
     const hasUnread = notifications.some(
       (notification) => !notification.is_read
     );
@@ -3629,7 +3636,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initial notification loading on button click
+  // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
       await renderNotifications(currentPage);
@@ -3652,15 +3659,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Load more notifications on button click
+  // Load more notifications when clicking the "Load More" button
   loadMoreButton.addEventListener("click", async function () {
     currentPage++; // Increment the current page
-    batchCount++; // Increment the batch count
     await renderNotifications(currentPage); // Load the next batch of notifications
-    extendHeight(); // Extend the height of the notification list
+    notificationList.style.maxHeight = "700px"; // Ensure proper scroll behavior
+    notificationList.style.overflowY = "auto"; // Enable scrolling
   });
 
-  // Function to format timestamps
+  // Format the timestamp
   function formatTimestamp(timestamp) {
     if (timestamp.includes("0 minutes ago")) {
       return "Just Now";
@@ -3668,7 +3675,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return timestamp;
   }
 
-  // Periodic fetching of notifications to check for new unread ones
+  // Periodically check for new unread notifications
   setInterval(async () => {
     const notifications = await fetchNotifications();
     const hasUnread = notifications.some(
@@ -3681,7 +3688,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }, 60000); // Check every 60 seconds
 
-  // Close notification list when clicking outside
+  // Close the notification list when clicking outside
   window.addEventListener("click", function (event) {
     if (
       !notificationButton.contains(event.target) &&
@@ -3698,6 +3705,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Initial rendering of notifications when the page is loaded
+  // Initial rendering of notifications when the page loads
   renderNotifications();
 });
