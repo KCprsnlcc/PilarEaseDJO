@@ -3463,13 +3463,34 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentPage = 1; // Track the current page for pagination
   let notificationsFetched = false; // Track if notifications were fetched
   let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
+  let batchCount = 0; // Track the number of batches loaded (limit at 10)
+
+  // Show loader while loading notifications
+  function ShowNotificationLoader() {
+    const loader = document.createElement("div");
+    loader.className = "loader-placeholder"; // Use this class for styling
+    for (let i = 0; i < 6; i++) {
+      const loaderItem = document.createElement("div");
+      loaderItem.className = "loader-item"; // Use this class for styling
+      loader.appendChild(loaderItem);
+    }
+    notificationItems.appendChild(loader);
+  }
+
+  // Remove the loader after notifications are loaded
+  function RemoveNotificationLoader() {
+    const loader = document.querySelector(".loader-placeholder");
+    if (loader) {
+      loader.remove();
+    }
+  }
 
   // Create a WebSocket connection to the notifications endpoint
   const ws = new WebSocket(
     "ws://" + window.location.host + "/ws/notifications/"
   );
 
-  // WebSocket event listener for receiving new notification in real-time
+  // WebSocket event listener for receiving new notifications in real-time
   ws.onmessage = function (event) {
     const data = JSON.parse(event.data);
     if (data.message) {
@@ -3485,12 +3506,12 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       newItem.innerHTML = `
-        <img class="notification-avatar" src="${data.avatar}" alt="Avatar">
-        <div class="notification-content">
-          <div class="message">${data.message}</div>
-          <div class="timestamp">${formatTimestamp("Just Now")}</div>
-        </div>
-      `;
+      <img class="notification-avatar" src="${data.avatar}" alt="Avatar">
+      <div class="notification-content">
+        <div class="message">${data.message}</div>
+        <div class="timestamp">${formatTimestamp("Just Now")}</div>
+      </div>
+    `;
 
       notificationItems.prepend(newItem); // Add the new notification at the top of the list
     }
@@ -3509,6 +3530,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fetch notifications from the Django API with pagination support
   async function fetchNotifications(page = 1) {
     try {
+      ShowNotificationLoader();
       const response = await fetch(`/fetch_notifications/?page=${page}`);
       if (response.ok) {
         const data = await response.json();
@@ -3521,6 +3543,8 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (error) {
       console.error("Error fetching notifications:", error);
       return [];
+    } finally {
+      RemoveNotificationLoader();
     }
   }
 
@@ -3567,22 +3591,20 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       item.innerHTML = `
-        <img class="notification-avatar" src="${
-          notification.avatar
-        }" alt="Avatar">
-        <div class="notification-content">
-          <div class="message">${notification.message}</div>
-          <div class="timestamp">${formatTimestamp(
-            notification.timestamp
-          )}</div>
-        </div>
-      `;
+      <img class="notification-avatar" src="${
+        notification.avatar
+      }" alt="Avatar">
+      <div class="notification-content">
+        <div class="message">${notification.message}</div>
+        <div class="timestamp">${formatTimestamp(notification.timestamp)}</div>
+      </div>
+    `;
 
       notificationItems.appendChild(item);
     });
 
     // If the current page is less than total pages, show the "Load More" button
-    if (currentPage < totalPages) {
+    if (currentPage < totalPages && batchCount < 10) {
       loadMoreButton.style.display = "block";
     } else {
       loadMoreButton.style.display = "none"; // Hide the button when no more pages
@@ -3603,7 +3625,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial notification loading on button click
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      // If notifications are not displayed, render them
       await renderNotifications(currentPage);
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
@@ -3616,10 +3637,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       notificationsFetched = true;
     } else {
-      // Hide the notifications if they are already displayed
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
-
       setTimeout(() => {
         notificationList.style.display = "none";
       }, 300); // Match the duration of the pop-up animation (0.3s)
@@ -3629,10 +3648,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Load more notifications on button click
   loadMoreButton.addEventListener("click", async function () {
     currentPage++; // Increment the current page
+    batchCount++; // Increment the batch count
     await renderNotifications(currentPage); // Load the next batch of notifications
+    // Keep the notification list at the max height and enable scrolling
+    notificationList.style.maxHeight = "600px"; // Adjust this value as needed
+    notificationList.style.overflowY = "auto"; // Ensure scrolling is enabled
   });
 
-  // Function to format timestamps, showing "Just Now" for recent notifications
+  // Function to format timestamps
   function formatTimestamp(timestamp) {
     if (timestamp.includes("0 minutes ago")) {
       return "Just Now";

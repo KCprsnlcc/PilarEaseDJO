@@ -229,6 +229,32 @@ button:hover {
   text-decoration: underline;
 }
 
+.loader-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.loader-item {
+  height: 60px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-color: #f0f0f0;
+  }
+  50% {
+    background-color: #e0e0e0;
+  }
+  100% {
+    background-color: #f0f0f0;
+  }
+}
+
 .status-detail-container {
   width: 1090px;
   margin: 0 auto;
