@@ -1,4 +1,6 @@
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -52,6 +54,7 @@ from django.utils.html import strip_tags
 from django.utils.timezone import now
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
+channel_layer = get_channel_layer()
 
 def current_time_view(request):
     tz = pytz.timezone('Asia/Manila')
@@ -626,6 +629,14 @@ def submit_status(request):
             'created_at': timesince(status.created_at),
             'replies': 0  # Placeholder for replies
         }
+        # Send WebSocket notification to the user
+        async_to_sync(channel_layer.group_send)(
+            f"notifications_{request.user.id}",
+            {
+            "type": "send_notification",
+            "message": "You posted a new status!"
+            }
+        )
 
         return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
@@ -723,13 +734,23 @@ def add_reply(request, status_id):
     if request.method == 'POST':
         data = json.loads(request.body)
         text = data.get('text')
-
+        
         if not text:
             return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
 
         status = get_object_or_404(Status, id=status_id)
         reply = Reply.objects.create(status=status, user=request.user, text=text)
 
+        # Notify the status owner if another user replies
+        if status.user != request.user:
+            async_to_sync(channel_layer.group_send)(
+            f"notifications_{status.user.id}",
+            {
+                "type": "send_notification",
+                "message": f"{request.user.username} replied to your status!"
+            }
+        )
+            
         return JsonResponse({'success': True, 'reply': {
             'id': reply.id,
             'username': reply.user.username,

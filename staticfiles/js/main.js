@@ -3464,6 +3464,48 @@ document.addEventListener("DOMContentLoaded", function () {
   let notificationsFetched = false; // Track if notifications were fetched
   let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
 
+  // Create a WebSocket connection to the notifications endpoint
+  const ws = new WebSocket(
+    "ws://" + window.location.host + "/ws/notifications/"
+  );
+
+  // WebSocket event listener for receiving new notification in real-time
+  ws.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    if (data.message) {
+      // Show the notification dot when a new message is received in real-time
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+
+      // Optionally, append the new notification to the notification list
+      const newItem = document.createElement("div");
+      newItem.classList.add("notification-item");
+      newItem.addEventListener("click", function () {
+        window.location.href = data.link;
+      });
+
+      newItem.innerHTML = `
+        <img class="notification-avatar" src="${data.avatar}" alt="Avatar">
+        <div class="notification-content">
+          <div class="message">${data.message}</div>
+          <div class="timestamp">${formatTimestamp("Just Now")}</div>
+        </div>
+      `;
+
+      notificationItems.prepend(newItem); // Add the new notification at the top of the list
+    }
+  };
+
+  // Handle WebSocket errors
+  ws.onerror = function (error) {
+    console.error("WebSocket error:", error);
+  };
+
+  // Handle WebSocket connection close
+  ws.onclose = function () {
+    console.log("WebSocket connection closed.");
+  };
+
   // Fetch notifications from the Django API with pagination support
   async function fetchNotifications(page = 1) {
     try {
@@ -3525,14 +3567,16 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       item.innerHTML = `
-      <img class="notification-avatar" src="${
-        notification.avatar
-      }" alt="Avatar">
-      <div class="notification-content">
-        <div class="message">${notification.message}</div>
-        <div class="timestamp">${formatTimestamp(notification.timestamp)}</div>
-      </div>
-    `;
+        <img class="notification-avatar" src="${
+          notification.avatar
+        }" alt="Avatar">
+        <div class="notification-content">
+          <div class="message">${notification.message}</div>
+          <div class="timestamp">${formatTimestamp(
+            notification.timestamp
+          )}</div>
+        </div>
+      `;
 
       notificationItems.appendChild(item);
     });

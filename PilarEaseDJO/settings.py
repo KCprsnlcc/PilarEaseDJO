@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'compressor',
+    'channels',
 ]
 
 AUTH_USER_MODEL = 'main.CustomUser'
@@ -113,6 +114,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 
+ASGI_APPLICATION = 'PilarEaseDJO.asgi.application'
+
+# Set up the Channels layer (you can use Redis for production)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
