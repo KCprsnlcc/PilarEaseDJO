@@ -4596,7 +4596,7 @@ nav.open .nav-content span {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  z-index: 9999;
+  z-index: 999;
   display: flex;
   padding-left: 405px;
 }
