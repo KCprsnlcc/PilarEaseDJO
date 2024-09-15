@@ -634,25 +634,41 @@ def submit_status(request):
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
 
 def format_timestamp(timestamp):
-    now = datetime.now(timestamp.tzinfo)
+    now = timezone.now()
     diff = now - timestamp
 
-    # If less than 1 minute ago, return "Just Now"
-    if diff < timedelta(minutes=1):
-        return "Just Now"
-    # Else, use Django's timesince to get "x minutes/hours/days ago"
-    return timesince(timestamp) + " ago"
+    # Convert the time difference into seconds, minutes, hours, days, and weeks
+    seconds = diff.total_seconds()
+    minutes = seconds / 60
+    hours = minutes / 60
+    days = hours / 24
+    weeks = days / 7
+
+    if seconds < 60:
+        return f"{int(seconds)}s"  # Seconds
+    elif minutes < 60:
+        return f"{int(minutes)}m"  # Minutes
+    elif hours < 24:
+        return f"{int(hours)}hr"  # Hours
+    elif days < 7:
+        return f"{int(days)}d"  # Days
+    else:
+        return f"{int(weeks)}w"  # Weeks
 
 @login_required
 def fetch_notifications(request):
     page_number = request.GET.get('page', 1)
     notifications = []
 
-    # Fetch user statuses (the notifications relate to user's statuses) in descending order of creation (latest first)
-    user_statuses = Status.objects.filter(user=request.user).order_by('-created_at')  # Descending order by created_at
+    # Set the 7-week limit
+    seven_weeks_ago = timezone.now() - timedelta(weeks=7)
 
-    # Paginate by 6 notifications per page
+    # Fetch user statuses created within the last 7 weeks
+    user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago).order_by('-created_at')
+
+    # Paginate notifications (6 per page)
     paginator = Paginator(user_statuses, 6)
+
     try:
         page_obj = paginator.page(page_number)
     except PageNotAnInteger:
@@ -661,27 +677,50 @@ def fetch_notifications(request):
         page_obj = paginator.page(paginator.num_pages)
 
     for status in page_obj:
+        # 1. Notification for when the user posts a status
         notifications.append({
-            'id': status.id,
-            'message': "You uploaded a status, click to view it.",
+            'id': f"status_{status.id}",
+            'message': "You uploaded a status. Click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'timestamp': format_timestamp(status.created_at),
-            'is_read': True,  # Mark as read (simplified)
+            'is_read': True  # Read by default for status posts
         })
 
-        # Fetch replies to the user's status (excluding the user's own replies)
-        status_replies = Reply.objects.filter(status=status).exclude(user=request.user).order_by('-created_at')[:5]
-        for reply in status_replies:
+        # 2. Notification for replies from unique users (excluding the user's own replies)
+        status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
+        unique_users = set(reply.user for reply in status_replies)
+
+        if unique_users:
+            # Get the two most recent replies to show the latest and second latest usernames
+            latest_replies = status_replies[:2]
+            latest_usernames = [reply.user.username for reply in latest_replies]
+            latest_user_avatar = latest_replies[0].user.profile.avatar.url if latest_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
+
+            if len(unique_users) == 1:
+                # If one user replied, show that single user's name
+                message = f"{latest_usernames[0]} replied to your status, click to see it."
+            elif len(unique_users) == 2:
+                # If two users replied, show both their names
+                message = f"{latest_usernames[0]} and {latest_usernames[1]} replied to your status, click to see it."
+            elif len(unique_users) > 2:
+                # If more than two users replied, show the two most recent and mention others
+                message = f"{latest_usernames[0]}, {latest_usernames[1]} and others replied to your status, click to see it."
+
+            # Add a notification for replies with the latest user's avatar
             notifications.append({
-                'message': f"{reply.user.username} replied to your status, click to see it.",
+                'id': f"replies_{status.id}",
+                'message': message,
                 'link': f'/status/{status.id}/',
-                'avatar': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
-                'timestamp': format_timestamp(reply.created_at),
-                'is_read': False,  # Example: mark as unread
+                'avatar': latest_user_avatar,
+                'timestamp': format_timestamp(latest_replies[0].created_at),
+                'is_read': False  # Mark as unread since it's a new reply
             })
 
-    return JsonResponse({'notifications': notifications, 'total_pages': paginator.num_pages})
+    return JsonResponse({
+        'notifications': notifications,
+        'total_pages': paginator.num_pages
+    })
 
 @login_required
 @require_POST

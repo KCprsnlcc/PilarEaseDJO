@@ -3545,6 +3545,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    // Sort notifications by timestamp in descending order
+    notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
     notifications.forEach((notification) => {
       // Check if this notification has already been rendered by using notification.id
       if (!renderedNotifications.has(notification.id)) {
@@ -3572,9 +3575,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Track rendered notifications by ID
         renderedNotifications.set(notification.id, notification);
+      } else {
+        // Update the notification content if it's already rendered
+        const existingNotification = renderedNotifications.get(notification.id);
+        const existingItem = document.querySelector(
+          `.notification-item[data-id="${notification.id}"]`
+        );
+
+        if (existingItem) {
+          existingItem.querySelector(".message").textContent =
+            notification.message;
+          existingItem.querySelector(".timestamp").textContent =
+            formatTimestamp(notification.timestamp);
+        }
       }
     });
-
     // Show the "Load More" button if more pages are available
     if (currentPage < totalPages) {
       loadMoreButton.style.display = "block";
