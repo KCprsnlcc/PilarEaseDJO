@@ -882,7 +882,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <a href="/status/${status.id}/">
                             <img src="${
                               status.avatar_url
-                            }" alt="Avatar" class="circle-avatar-placeholder" id="status-avatar" />
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
                         </a>
                         <p class="username-placeholder">${status.username}</p>
                     </div>
@@ -1855,7 +1855,6 @@ document.addEventListener("DOMContentLoaded", function () {
               document.getElementById("currentAvatar").src = data.avatar_url;
               // Optionally, if you have a profile icon in the header or other parts
               document.getElementById("profileIconImage").src = data.avatar_url;
-              document.getElementById("status-avatar").src = data.avatar_url;
             } else {
               showNotificationError("" + (data.errors || "Unknown error"));
             }
@@ -1902,7 +1901,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Optionally, if you have a profile icon in the header or other parts
                 document.getElementById("profileIconImage").src =
                   data.avatar_url;
-                document.getElementById("status-avatar").src = data.avatar_url;
               } else {
                 showNotificationError("" + (data.errors || "Unknown error"));
               }
@@ -3460,26 +3458,54 @@ document.addEventListener("DOMContentLoaded", function () {
   const notificationDot = document.getElementById("notificationDot");
   const notificationList = document.getElementById("notificationList");
 
-  function fetchNotifications() {
-    // Fetch notifications from the server (mocked here for example)
-    return [
-      {
-        message: "You uploaded a status, click to view it.",
-        link: "#",
-        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
-        timestamp: "2 mins ago",
-      },
-      {
-        message: "USERNAME replied to your status, click to see it.",
-        link: "#",
-        avatar: "https://via.placeholder.com/40", // Placeholder avatar image
-        timestamp: "10 mins ago",
-      },
-    ];
+  let notificationsFetched = false; // Track if notifications were fetched
+
+  // Fetch notifications from the Django API
+  async function fetchNotifications() {
+    try {
+      const response = await fetch("/fetch_notifications/");
+      if (response.ok) {
+        const data = await response.json();
+        return data.notifications;
+      } else {
+        console.error("Failed to fetch notifications.");
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return [];
+    }
   }
 
-  function renderNotifications() {
-    const notifications = fetchNotifications();
+  // Mark a single notification as read
+  async function markNotificationAsRead(notificationId) {
+    try {
+      const response = await fetch(
+        `/mark_notification_as_read/${notificationId}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error("Failed to mark notification as read.");
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }
+
+  // Get the CSRF token for Django
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+  // Render the notifications in the notification list
+  async function renderNotifications() {
+    const notifications = await fetchNotifications();
     notificationList.innerHTML = `
     <div class="notification-header">
       <span class="earlier">Earlier</span>
@@ -3492,15 +3518,26 @@ document.addEventListener("DOMContentLoaded", function () {
       item.classList.add("notification-item");
 
       // Make the entire notification clickable
-      item.addEventListener("click", function () {
+      item.addEventListener("click", async function () {
+        // Mark notification as read when clicked
+        if (!notification.is_read && notification.id !== null) {
+          await markNotificationAsRead(notification.id);
+          notification.is_read = true;
+          item.querySelector(".notification-read-dot").style.display = "none";
+        }
         window.location.href = notification.link;
       });
 
       item.innerHTML = `
-      <img class="notification-avatar" src="${notification.avatar}" alt="Avatar">
+      <img class="notification-avatar" src="${
+        notification.avatar
+      }" alt="Avatar">
       <div class="notification-content">
         <div class="message">${notification.message}</div>
         <div class="timestamp">${notification.timestamp}</div>
+        <div class="notification-read-dot" style="display: ${
+          notification.is_read ? "none" : "block"
+        };"></div>
       </div>
     `;
 
@@ -3514,7 +3551,10 @@ document.addEventListener("DOMContentLoaded", function () {
     notificationList.appendChild(loadMoreButton);
 
     // Show the red blinking dot if there are unread notifications
-    if (notifications.length > 0) {
+    const hasUnread = notifications.some(
+      (notification) => !notification.is_read
+    );
+    if (hasUnread) {
       notificationDot.style.display = "block";
       notificationDot.classList.add("blink");
     } else {
@@ -3522,16 +3562,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  notificationButton.addEventListener("click", function () {
+  notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      renderNotifications();
+      await renderNotifications();
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Stop blinking and hide the dot after clicking
+      // Stop blinking and hide the red dot once the notifications are opened
       notificationDot.classList.remove("blink");
       notificationDot.style.display = "none";
+
+      notificationsFetched = true;
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
@@ -3541,6 +3583,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300); // Match the duration of the pop-up animation (0.3s)
     }
   });
+
+  // Fetch notifications periodically (to check for new ones)
+  setInterval(async () => {
+    const notifications = await fetchNotifications();
+    const hasUnread = notifications.some(
+      (notification) => !notification.is_read
+    );
+
+    if (hasUnread && !notificationsFetched) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    }
+  }, 60000); // Check every 60 seconds
 
   window.addEventListener("click", function (event) {
     if (

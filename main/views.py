@@ -640,12 +640,18 @@ def fetch_notifications(request):
     user_statuses = Status.objects.filter(user=request.user).order_by('-created_at')[:10]  # Limit to 10 for simplicity
     for status in user_statuses:
         # Prepare "You uploaded a status" notification
+        notification = Notification.objects.get_or_create(
+            user=request.user,
+            status=status,
+            defaults={'is_read': False}
+        )[0]
+
         notifications.append({
             'message': "You uploaded a status, click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'timestamp': timesince(status.created_at) + ' ago',
-            'is_read': False,  # Mark this notification as unread
+            'is_read': notification.is_read,  # Include read status
         })
 
         # Fetch replies to the user's status (excluding the user's own replies)
@@ -666,12 +672,18 @@ def fetch_notifications(request):
             message = f"{user_names} and others replied to your status, click to see it."
 
         for reply in status_replies:
+            notification = Notification.objects.get_or_create(
+                user=request.user,
+                status=status,
+                defaults={'is_read': False}
+            )[0]
+
             notifications.append({
                 'message': message,
                 'link': f'/status/{status.id}/',
                 'avatar': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
                 'timestamp': timesince(reply.created_at) + ' ago',
-                'is_read': False,  # Mark this notification as unread
+                'is_read': notification.is_read,  # Include read status
             })
 
     return JsonResponse({'notifications': notifications})
