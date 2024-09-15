@@ -937,7 +937,7 @@ button[type="submit"]:hover {
   position: absolute;
   animation: rotate 2s infinite;
   height: 50px;
-  top: 350px;
+  top: 450px;
   left: 285px;
   width: 50px;
   z-index: 10000000;
@@ -4073,22 +4073,10 @@ nav.open .nav-content span {
   outline: none; /* Remove default outline */
   transition: border 0.3s ease, box-shadow 0.3s ease;
 }
-
 .input-field.valid {
   border: 2px solid #689e4b;
   box-shadow: 0 0 5px #689e4b;
-  animation: scaleIn 0.3s ease-in-out;
-}
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  animation: validPulse 0.3s ease-in-out;
 }
 
 .input-field.invalid {
@@ -4110,6 +4098,18 @@ nav.open .nav-content span {
   }
   75% {
     transform: translateX(-2px);
+  }
+}
+
+@keyframes validPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
