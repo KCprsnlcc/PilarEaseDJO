@@ -662,7 +662,13 @@ def fetch_notifications(request):
 
     # Paginate by 6 notifications per page
     paginator = Paginator(user_statuses, 6)
-    page_obj = paginator.get_page(page_number)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
 
     # Fetch all unread notifications for the current user
     unread_notifications = Notification.objects.filter(user=request.user, is_read=False)
@@ -675,11 +681,12 @@ def fetch_notifications(request):
         )
 
         notifications.append({
+            'id': status.id,  # Include unique ID
             'message': "You uploaded a status, click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
-            'timestamp': status.created_at,  # Store raw timestamp for sorting
-            'is_read': notification.is_read,
+            'timestamp': status.created_at,
+            'is_read': True,  # Example: mark all as read
         })
 
         # Fetch replies to the user's status (excluding the user's own replies), order replies in descending order of creation

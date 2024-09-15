@@ -3463,7 +3463,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentPage = 1; // Track the current page for pagination
   let notificationsFetched = false; // Track if notifications were fetched
   let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
-  let batchCount = 0; // Track the number of batches loaded (limit at 10)
+  let renderedNotifications = new Map(); // Store rendered notifications by id
 
   // Show loader while loading notifications
   function ShowNotificationLoader() {
@@ -3582,29 +3582,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     notifications.forEach((notification) => {
-      const item = document.createElement("div");
-      item.classList.add("notification-item");
+      // Check if this notification has already been rendered by using notification.id
+      if (!renderedNotifications.has(notification.id)) {
+        const item = document.createElement("div");
+        item.classList.add("notification-item");
 
-      // Make the entire notification clickable
-      item.addEventListener("click", function () {
-        window.location.href = notification.link;
-      });
+        // Make the entire notification clickable
+        item.addEventListener("click", function () {
+          window.location.href = notification.link;
+        });
 
-      item.innerHTML = `
-      <img class="notification-avatar" src="${
-        notification.avatar
-      }" alt="Avatar">
-      <div class="notification-content">
-        <div class="message">${notification.message}</div>
-        <div class="timestamp">${formatTimestamp(notification.timestamp)}</div>
-      </div>
-    `;
+        item.innerHTML = `
+        <img class="notification-avatar" src="${
+          notification.avatar
+        }" alt="Avatar">
+        <div class="notification-content">
+          <div class="message">${notification.message}</div>
+          <div class="timestamp">${formatTimestamp(
+            notification.timestamp
+          )}</div>
+        </div>
+      `;
 
-      notificationItems.appendChild(item);
+        notificationItems.appendChild(item);
+
+        // Add the notification ID to the map to track which notifications have been rendered
+        renderedNotifications.set(notification.id, notification);
+      }
     });
 
     // If the current page is less than total pages, show the "Load More" button
-    if (currentPage < totalPages && batchCount < 10) {
+    if (currentPage < totalPages) {
       loadMoreButton.style.display = "block";
     } else {
       loadMoreButton.style.display = "none"; // Hide the button when no more pages
@@ -3648,10 +3656,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Load more notifications on button click
   loadMoreButton.addEventListener("click", async function () {
     currentPage++; // Increment the current page
-    batchCount++; // Increment the batch count
     await renderNotifications(currentPage); // Load the next batch of notifications
-    // Keep the notification list at the max height and enable scrolling
-    notificationList.style.maxHeight = "600px"; // Adjust this value as needed
+    notificationList.style.maxHeight = "700px"; // Ensure proper scroll behavior
     notificationList.style.overflowY = "auto"; // Ensure scrolling is enabled
   });
 
