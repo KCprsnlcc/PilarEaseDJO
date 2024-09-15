@@ -87,10 +87,30 @@ button:hover {
   overflow-y: auto;
 }
 
-/* Scrollable and Dynamic Height */
+#notificationList::-webkit-scrollbar {
+  width: 12px;
+}
+
+#notificationList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+}
+
+#notificationList::-webkit-scrollbar-thumb {
+  background-color: #0f2326;
+  border-radius: 10px;
+  border: 3px solid #f1f1f1;
+}
+
+#notificationList::-webkit-scrollbar-thumb:hover {
+  background-color: #0f2326;
+}
+
 .notification-list {
   overflow-y: auto;
-  max-height: 400px; /* Limit the height */
+  max-height: 400px;
 }
 
 /* Notification list with pop-down animation */
