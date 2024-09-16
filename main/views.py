@@ -738,10 +738,15 @@ def mark_notification_as_read(request, notification_id):
     
 @login_required
 def mark_notification_button_clicked(request):
-    user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
-    user_settings.has_clicked_notification = True  # Mark the notification button as clicked
-    user_settings.save()
-    return JsonResponse({'success': True})
+    try:
+        # Mark the notification button as clicked in user settings
+        user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+        user_settings.has_clicked_notification = True  # Mark as clicked
+        user_settings.save()
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 @login_required
 def check_notification_status(request):
