@@ -3463,7 +3463,7 @@ document.addEventListener("DOMContentLoaded", function () {
   async function fetchNotifications(page = 1) {
     try {
       showNotificationLoader();
-      const response = await fetch(`/fetch_notifications/?page=${page}`);
+      const response = await fetch(`/notifications/fetch/?page=${page}`);
       if (response.ok) {
         const data = await response.json();
         totalPages = data.total_pages;
@@ -3480,11 +3480,29 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Mark the notification button as clicked in the backend
+  async function markNotificationButtonClicked() {
+    try {
+      const response = await fetch(`/notifications/mark_button_clicked/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to mark notification button as clicked.");
+      }
+    } catch (error) {
+      console.error("Error marking notification button as clicked:", error);
+    }
+  }
+
   // Mark a specific notification as read when clicked
   async function markNotificationAsRead(notificationId) {
     try {
       const response = await fetch(
-        `/mark_notification_as_read/${notificationId}/`,
+        `/notifications/mark_as_read/${notificationId}/`,
         {
           method: "POST",
           headers: {
@@ -3536,8 +3554,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Make the entire notification clickable and mark as read on click
         item.addEventListener("click", async function () {
+          const notificationId = notification.id.replace("status_", ""); // Remove 'status_' prefix
           if (!notification.is_read) {
-            await markNotificationAsRead(notification.id);
+            await markNotificationAsRead(notificationId); // Use the correct notification ID
             item.classList.remove("unread");
             item.classList.add("read");
             const greenDot = item.querySelector(".notification-dot-green");
@@ -3560,7 +3579,9 @@ document.addEventListener("DOMContentLoaded", function () {
           <div class="message">${notification.message}</div>
           <div class="timestamp ${
             notification.is_read ? "" : "timestamp-green"
-          }">${formatTimestamp(notification.timestamp)}</div>
+          }">
+            ${formatTimestamp(notification.timestamp)}
+          </div>
         </div>
         ${
           notification.is_read
@@ -3592,6 +3613,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Check the notification status from the backend
+  async function checkNotificationStatus() {
+    try {
+      const response = await fetch(`/notifications/check_status/`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.has_unread_notifications && !data.has_clicked_notification) {
+          notificationDot.style.display = "block";
+          notificationDot.classList.add("blink");
+        } else {
+          notificationDot.style.display = "none";
+        }
+      }
+    } catch (error) {
+      console.error("Error checking notification status:", error);
+    }
+  }
+
   // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
@@ -3599,6 +3638,9 @@ document.addEventListener("DOMContentLoaded", function () {
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
+
+      // Mark the notification button as clicked in the backend
+      await markNotificationButtonClicked();
 
       // Remove the red notification dot when the list is opened
       notificationDot.style.display = "none";
@@ -3659,4 +3701,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Initial rendering of notifications when the page loads
   renderNotifications();
+
+  // Initial check for notification status when the page loads
+  checkNotificationStatus();
 });

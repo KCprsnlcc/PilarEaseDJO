@@ -19,7 +19,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification, UserNotificationSettings
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -726,6 +726,10 @@ def fetch_notifications(request):
 @csrf_exempt
 def mark_notification_as_read(request, notification_id):
     try:
+        # Strip 'status_' prefix if it exists, handle both cases
+        notification_id = notification_id.replace('status_', '')
+
+        # Now try to find the notification
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()
@@ -733,6 +737,24 @@ def mark_notification_as_read(request, notification_id):
         return JsonResponse({'success': True})
     except Notification.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+    
+@login_required
+def mark_notification_button_clicked(request):
+    user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+    user_settings.has_clicked_notification = True  # Mark the notification button as clicked
+    user_settings.save()
+    return JsonResponse({'success': True})
+
+@login_required
+def check_notification_status(request):
+    notifications = Notification.objects.filter(user=request.user, is_read=False)
+    user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+    has_unread_notifications = notifications.exists()
+    
+    return JsonResponse({
+        'has_unread_notifications': has_unread_notifications,
+        'has_clicked_notification': user_settings.has_clicked_notification
+    })
 
 @login_required
 @csrf_exempt

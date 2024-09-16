@@ -115,6 +115,10 @@ class ReplyNotification(Notification):
 
     def __str__(self):
         return f"{self.replied_by.username} replied to {self.status.title}"
+    
+class UserNotificationSettings(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    has_clicked_notification = models.BooleanField(default=False)  # Track if user clicked the notification button
 
 class Referral(models.Model):
     status = models.ForeignKey('Status', on_delete=models.CASCADE)
@@ -148,6 +152,11 @@ class ContactUs(models.Model):
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
+@receiver(post_save, sender=CustomUser)
+def create_user_notification_settings(sender, instance, created, **kwargs):
+    if created:
+        UserNotificationSettings.objects.create(user=instance)
 
 @receiver(post_save, sender=CustomUser)
 def create_user_profile(sender, instance, created, **kwargs):
