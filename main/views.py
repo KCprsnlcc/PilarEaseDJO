@@ -668,54 +668,59 @@ def fetch_notifications(request):
 
     # 1. Add notifications for statuses
     for status in user_statuses:
+        # Create or get a notification entry
+        notification, created = Notification.objects.get_or_create(
+            user=request.user, 
+            status=status,
+            defaults={'is_read': False}
+        )
+
         notifications.append({
             'id': f"status_{status.id}",
             'status_id': status.id,
             'message': "You uploaded a status. Click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
-            'timestamp': status.created_at,
-            'is_read': False
+            'timestamp': status.created_at,  # Raw timestamp (sorting will be based on this)
+            'is_read': notification.is_read
         })
 
-        # 2. Fetch replies from other users within the last 7 weeks, excluding replies from the current user
+        # Fetch replies for the status
         status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
         unique_users = set(reply.user for reply in status_replies)
 
         if unique_users:
-            # Get the two most recent replies to show the latest and second latest usernames
             latest_replies = status_replies[:2]
             latest_usernames = [reply.user.username for reply in latest_replies]
             latest_user_avatar = latest_replies[0].user.profile.avatar.url if latest_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
 
             if len(unique_users) == 1:
-                # If one user replied, show that single user's name
                 message = f"{latest_usernames[0]} replied to your status, click to see it."
             elif len(unique_users) == 2:
-                # If two users replied, show both their names
                 message = f"{latest_usernames[0]} and {latest_usernames[1]} replied to your status, click to see it."
             elif len(unique_users) > 2:
-                # If more than two users replied, show the two most recent and mention others
                 message = f"{latest_usernames[0]}, {latest_usernames[1]} and others replied to your status, click to see it."
 
-            # Add a notification for replies with the latest user's avatar
+            # Create or get a notification entry for the replies
+            notification, created = Notification.objects.get_or_create(
+                user=request.user, 
+                status=status,
+                defaults={'is_read': False}
+            )
+
             notifications.append({
                 'id': f"replies_{status.id}",
                 'message': message,
                 'link': f'/status/{status.id}/',
                 'avatar': latest_user_avatar,
-                'timestamp': latest_replies[0].created_at,
-                'is_read': False  # Mark this as unread for replies
+                'timestamp': latest_replies[0].created_at,  # Raw timestamp (sorting will be based on this)
+                'is_read': notification.is_read
             })
 
     # Sort the notifications by timestamp in descending order
     notifications.sort(key=lambda x: x['timestamp'], reverse=True)
 
-    # Convert the timestamp for display purposes (e.g., "2h ago")
-    for notification in notifications:
-        notification['timestamp'] = format_timestamp(notification['timestamp'])
-
-    # Paginate notifications (6 per page)
+    # Paginate notifications (5 per page)
     paginator = Paginator(notifications, 5)
 
     try:
@@ -725,16 +730,20 @@ def fetch_notifications(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
+    # Convert the raw timestamps to human-readable format after sorting
+    for notification in page_obj.object_list:
+        notification['timestamp'] = format_timestamp(notification['timestamp'])
+
     return JsonResponse({
         'notifications': page_obj.object_list,
         'total_pages': paginator.num_pages
     })
-
+    
 @login_required
 @csrf_exempt
 def mark_notification_as_read(request, notification_id):
     try:
-        # Make sure to fetch the notification without the 'status_' or 'replies_' prefix
+        # Fetch the notification using the correct notification ID
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()

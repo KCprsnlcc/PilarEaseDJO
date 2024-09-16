@@ -3563,8 +3563,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Make the entire notification clickable and mark as read on click
         item.addEventListener("click", async function () {
+          const notificationId = item.dataset.id; // Ensure this ID is the notification ID
+
+          // Mark the notification as read
           if (!notification.is_read) {
-            await markNotificationAsRead(notification.id);
+            await markNotificationAsRead(notificationId); // Pass the notification ID here
             item.classList.remove("unread");
             item.classList.add("read");
 
@@ -3577,7 +3580,7 @@ document.addEventListener("DOMContentLoaded", function () {
               .classList.remove("timestamp-green");
           }
 
-          // Redirect to the status page after marking the notification as read
+          // Redirect to the status page
           window.location.href = notification.link;
         });
 
@@ -3644,13 +3647,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      await renderNotifications(currentPage);
+      await renderNotifications(currentPage); // Render the list of notifications
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
       // Mark notification button as clicked and hide the red dot
-      await markNotificationButtonClicked();
+      await markNotificationButtonClicked(); // Call to mark the notification button clicked
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");

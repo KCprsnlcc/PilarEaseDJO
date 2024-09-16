@@ -3442,10 +3442,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const loaderItem = document.createElement("div");
       loaderItem.className = "loader-item";
       loaderItem.innerHTML = `
-        <div class="loader-item-avatar"></div>
-        <div class="loader-item-content"></div>
-        <div class="loader-item-timestamp"></div>
-      `;
+      <div class="loader-item-avatar"></div>
+      <div class="loader-item-content"></div>
+      <div class="loader-item-timestamp"></div>
+    `;
       loader.appendChild(loaderItem);
     }
     notificationItems.appendChild(loader);
@@ -3492,17 +3492,23 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       if (!response.ok) {
         console.error("Failed to mark notification button as clicked.");
+      } else {
+        notificationDot.style.display = "none"; // Hide the dot after clicking
       }
     } catch (error) {
       console.error("Error marking notification button as clicked:", error);
     }
   }
 
-  // Mark a specific notification as read when clicked
+  // Mark a specific notification as read when clicked (permanent)
   async function markNotificationAsRead(notificationId) {
     try {
+      let cleanNotificationId = notificationId
+        .replace("status_", "")
+        .replace("replies_", "");
+
       const response = await fetch(
-        `/notifications/mark_as_read/${notificationId}/`,
+        `/notifications/mark_as_read/${cleanNotificationId}/`,
         {
           method: "POST",
           headers: {
@@ -3511,8 +3517,12 @@ document.addEventListener("DOMContentLoaded", function () {
           },
         }
       );
+
       if (!response.ok) {
         console.error("Failed to mark notification as read.");
+      } else {
+        // Mark this notification as permanently read in the backend
+        renderedNotifications.get(notificationId).is_read = true;
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -3528,7 +3538,6 @@ document.addEventListener("DOMContentLoaded", function () {
   async function renderNotifications(page = 1) {
     const notifications = await fetchNotifications(page);
 
-    // If no notifications were returned, hide the load more button
     if (notifications.length === 0) {
       loadMoreButton.style.display = "none";
       return;
@@ -3542,7 +3551,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!renderedNotifications.has(notification.id)) {
         const item = document.createElement("div");
         item.classList.add("notification-item");
-        item.dataset.id = notification.id; // Correct notification id
+        item.dataset.id = notification.id;
 
         // If the notification is unread, apply the unread styling
         if (!notification.is_read) {
@@ -3554,8 +3563,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Make the entire notification clickable and mark as read on click
         item.addEventListener("click", async function () {
+          const notificationId = item.dataset.id; // Ensure this ID is the notification ID, not status ID
+
+          // Mark the notification as read
           if (!notification.is_read) {
-            await markNotificationAsRead(notification.id); // Ensure notification.id is passed
+            await markNotificationAsRead(notificationId); // Send the notification ID here, not the status ID
             item.classList.remove("unread");
             item.classList.add("read");
 
@@ -3568,33 +3580,32 @@ document.addEventListener("DOMContentLoaded", function () {
               .classList.remove("timestamp-green");
           }
 
-          // Redirect to the status page after marking the notification as read
-          window.location.href = notification.link;
+          // Redirect to the status page (Use the correct status link)
+          window.location.href = notification.link; // Redirect to the status page
         });
 
         // Build notification item structure
         item.innerHTML = `
-            <img class="notification-avatar" src="${
-              notification.avatar
-            }" alt="Avatar">
-            <div class="notification-content">
-              <div class="message">${notification.message}</div>
-              <div class="timestamp ${
-                notification.is_read ? "" : "timestamp-green"
-              }">
-                ${formatTimestamp(notification.timestamp)}
-              </div>
+          <img class="notification-avatar" src="${
+            notification.avatar
+          }" alt="Avatar">
+          <div class="notification-content">
+            <div class="message">${notification.message}</div>
+            <div class="timestamp ${
+              notification.is_read ? "" : "timestamp-green"
+            }">
+              ${formatTimestamp(notification.timestamp)}
             </div>
-            ${
-              notification.is_read
-                ? ""
-                : '<div class="notification-dot-green"></div>'
-            }
-          `;
+          </div>
+          ${
+            notification.is_read
+              ? ""
+              : '<div class="notification-dot-green"></div>'
+          }
+        `;
 
         notificationItems.appendChild(item);
 
-        // Track rendered notifications by ID
         renderedNotifications.set(notification.id, notification);
       }
     });
@@ -3636,21 +3647,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      // Render notifications but don't mark all as read yet
       await renderNotifications(currentPage);
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Do NOT mark the notification button as clicked just yet
-      // Only hide the red dot, indicating that notifications have been seen, but not necessarily read
-      notificationDot.style.display = "none";
+      // Mark notification button as clicked and hide the red dot
+      await markNotificationButtonClicked();
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
       setTimeout(() => {
         notificationList.style.display = "none";
-      }, 300); // Match the duration of the pop-up animation (0.3s)
+      }, 300);
     }
   });
 
@@ -3658,8 +3667,8 @@ document.addEventListener("DOMContentLoaded", function () {
   loadMoreButton.addEventListener("click", async function () {
     currentPage++;
     await renderNotifications(currentPage);
-    notificationList.style.maxHeight = "700px"; // Ensure proper scroll behavior
-    notificationList.style.overflowY = "auto"; // Enable scrolling
+    notificationList.style.maxHeight = "700px";
+    notificationList.style.overflowY = "auto";
   });
 
   // Format the timestamp

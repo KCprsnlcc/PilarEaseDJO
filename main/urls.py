@@ -12,7 +12,7 @@ from .views import (
     custom_password_reset_complete_view, 
     verify_email, check_email_verification, 
     send_verification_email, request_email_change, 
-    verify_email_change, request_email_verification 
+    verify_email_change, request_email_verification
 )
 from django.conf import settings
 from django.conf.urls.static import static
