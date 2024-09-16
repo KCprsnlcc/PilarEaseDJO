@@ -656,6 +656,7 @@ def format_timestamp(timestamp):
         return f"{int(weeks)}w"  # Weeks
 
 @login_required
+@login_required
 def fetch_notifications(request):
     page_number = request.GET.get('page', 1)
     notifications = []
@@ -804,13 +805,13 @@ def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
     replies = status.replies.all()
 
-    # # Check if there is an unread notification related to this status for the current user
-    # try:
-    #     notification = Notification.objects.get(status=status, user=request.user, is_read=False)
-    #     notification.is_read = True  # Mark as read
-    #     notification.save()
-    # except Notification.DoesNotExist:
-    #     pass  # No unread notification, do nothing
+    # Check if there is an unread notification related to this status for the current user
+    try:
+        notification = Notification.objects.get(status=status, user=request.user, is_read=False)
+        notification.is_read = True  # Mark as read
+        notification.save()
+    except Notification.DoesNotExist:
+        pass  # No unread notification, do nothing
 
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
     
