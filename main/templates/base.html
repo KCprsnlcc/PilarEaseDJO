@@ -63,6 +63,7 @@
             </ul>
           </nav>
         </label>
+
 <button id="notificationButton" class="notification-button">
   <i class="bx bxs-bell"></i>
   <span id="notificationDot" class="notification-dot"></span>
@@ -119,707 +120,769 @@
     Load More
   </div>
 </div>
-    <!-- Login Modal -->
-    <div class="v53_168 modal" id="loginModal" style="display: none">
-      <div class="v53_169"></div>
-      <div class="v53_170"></div>
-      <span class="v53_171">Don't have an Account?</span>
-      <span class="v53_172">OR</span>
-      <span class="v53_173"
-        >Join our exclusive, confidential Emotional Expression Portal.</span
-      >
-      <span class="v53_174">Sign In.</span>
-      <div class="v53_178"></div>
-      <a href="#" id="registerLink" class="v53_179">Register</a>
-      <form id="loginForm" action="{% url 'login' %}" method="post">
-        {% csrf_token %}
-        <span class="v53_180">Username</span>
-        <div class="v53_181">
-          <input
-            type="text"
-            name="username"
-            class="input-field"
-            placeholder="Username"
+      <!-- Login Modal -->
+      <div class="v53_168 modal" id="loginModal" style="display: none">
+        <div class="v53_169"></div>
+        <div class="v53_170"></div>
+        <span class="v53_171">Don't have an Account?</span>
+        <span class="v53_172">OR</span>
+        <span class="v53_173"
+          >Join our exclusive, confidential Emotional Expression Portal.</span
+        >
+        <span class="v53_174">Sign In.</span>
+        <div class="v53_178"></div>
+        <a href="#" id="registerLink" class="v53_179">Register</a>
+        <form id="loginForm" action="{% url 'login' %}" method="post">
+          {% csrf_token %}
+          <span class="v53_180">Username</span>
+          <div class="v53_181">
+            <input
+              type="text"
+              name="username"
+              class="input-field"
+              placeholder="Username"
+            />
+          </div>
+          <span class="v53_183">Password</span>
+          <div class="v53_184">
+            <input
+              type="password"
+              name="password"
+              class="input-field"
+              placeholder="********"
+            />
+          </div>
+          <button type="submit" class="v53_186" id="loginButton">
+            <span class="v53_187">Login</span>
+          </button>
+          <a href="#" id="forgotPasswordLink" class="v53_188"
+            >Forgot Password?</a
+          >
+          <div class="v53_189">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              class="v53_189_checkbox"
+            />
+            <label for="rememberMe" class="v53_189_label">Remember Me</label>
+          </div>
+        </form>
+        <div class="v53_190" id="closeLoginModal">
+          <img
+            src="{% static 'images/close2.png' %}"
+            class="close-button"
+            alt="Close"
           />
         </div>
-        <span class="v53_183">Password</span>
-        <div class="v53_184">
-          <input
-            type="password"
-            name="password"
-            class="input-field"
-            placeholder="********"
+        <!-- Loader Overlay -->
+        <div id="loginOverlay">
+          <div id="loginLoader"></div>
+        </div>
+        <!-- Login Error Notification Dialog -->
+        <div
+          id="loginDialogBox"
+          class="flat-ui-dialog error"
+          style="display: none"
+        >
+          <div id="loginDialogContent"></div>
+        </div>
+        <!-- Login Success Notification Dialog -->
+        <div
+          id="loginSuccessBox"
+          class="flat-ui-dialog success"
+          style="display: none"
+        >
+          <div id="loginSuccessContent"></div>
+        </div>
+      </div>
+
+      <!-- Forgot Password Modal -->
+      <div class="v53_200 modal" id="forgotPasswordModal" style="display: none">
+        <div class="v53_201"></div>
+        <div class="v53_202"></div>
+        <span class="v53_203">Forgot Your Password?</span>
+        <span class="v53_204">
+          Please enter your registered email address. We will send you a link to
+          reset your password.
+        </span>
+        <form
+          id="forgotPasswordForm"
+          action="{% url 'password_reset' %}"
+          method="post"
+        >
+          {% csrf_token %}
+          <span class="v53_205">Email Address</span>
+          <div class="v53_206">
+            <input
+              type="email"
+              name="email"
+              class="input-field"
+              placeholder="Email Address"
+              required
+            />
+          </div>
+          <button type="submit" class="v53_207">
+            <span class="v53_208">Send Reset Link</span>
+          </button>
+        </form>
+        <div class="v53_209" id="closeForgotPasswordModal">
+          <img
+            src="{% static 'images/close2.png' %}"
+            class="close-button"
+            alt="Close"
           />
         </div>
-        <button type="submit" class="v53_186" id="loginButton">
-          <span class="v53_187">Login</span>
+        <!-- Forgot Password Loader Overlay and Spinner -->
+        <div id="forgotpassOverlay">
+          <div id="forgotpassLoader"></div>
+        </div>
+
+        <!-- Success Notification Dialog -->
+        <div
+          id="forgotPasswordSuccessBox"
+          class="flat-ui-dialog success"
+          style="display: none"
+        >
+          <div id="forgotPasswordSuccessContent"></div>
+        </div>
+
+        <!-- Error Notification Dialog -->
+        <div
+          id="forgotPasswordErrorBox"
+          class="flat-ui-dialog error"
+          style="display: none"
+        >
+          <div id="forgotPasswordErrorContent"></div>
+        </div>
+        <!-- Cooldown Notification Dialog -->
+        <div
+          id="forgotPasswordCooldownBox"
+          class="flat-ui-dialog session"
+          style="display: none"
+        >
+          <div id="forgotPasswordCooldownContent"></div>
+        </div>
+      </div>
+
+      <!-- Register Modal -->
+      <div class="v74_801 modal" id="registerModal" style="display: none">
+        <span class="v74_802"
+          >"Embrace the art of cooking, where flavors come alive!"</span
+        >
+        <span class="v74_806">Get Started.</span>
+        <div class="v74_835"></div>
+        <a href="#" id="loginLinkFromRegister" class="v74_838">Login</a>
+        <div class="v74_812"></div>
+        <form id="registerForm" action="{% url 'register' %}" method="post">
+          {% csrf_token %}
+          <span class="v74_807">Student ID No.</span>
+          <div class="v74_808">
+            <input
+              type="text"
+              name="student_id"
+              class="input-field"
+              placeholder="ex. C****77"
+            />
+          </div>
+          <span class="v74_813">Username</span>
+          <div class="v74_814">
+            <input
+              type="text"
+              name="username"
+              class="input-field"
+              placeholder="ex. KCprsnlcc"
+            />
+          </div>
+          <span class="v74_816">Full Name</span>
+          <div class="v74_817">
+            <input
+              type="text"
+              name="full_name"
+              class="input-field"
+              placeholder="ex. Last name, First Name A."
+            />
+          </div>
+          <span class="v74_819">Academic Year Level</span>
+          <div class="v74_820">
+            <input
+              type="text"
+              name="academic_year_level"
+              class="input-field"
+              placeholder="ex. First Year, Grade 12, etc."
+            />
+          </div>
+          <span class="v74_823">Contact Number</span>
+          <div class="v74_824">
+            <input
+              type="tel"
+              name="contact_number"
+              class="input-field"
+              placeholder="Ex. +639949953785"
+            />
+          </div>
+          <span class="v74_826">Email</span>
+          <div class="v74_827">
+            <input
+              type="email"
+              name="email"
+              class="input-field"
+              placeholder="ex. name@email.com"
+            />
+          </div>
+          <span class="v74_829">Password</span>
+          <div class="v74_830">
+            <input
+              type="password"
+              name="password1"
+              class="input-field"
+              placeholder="********"
+            />
+          </div>
+          <span class="v74_832">Confirm Password</span>
+          <div class="v74_833">
+            <input
+              type="password"
+              name="password2"
+              class="input-field"
+              placeholder="********"
+            />
+          </div>
+          <button type="submit" class="v74_810" id="signupButton">
+            <span class="v74_811">Sign Up</span>
+          </button>
+        </form>
+        <span class="v74_822" id="showPolicy"
+          >Privacy Policy and Terms of Service apply</span
+        >
+        <span class="v74_836">Join us at the PilarEase's Portal!</span>
+        <span class="v74_837">An existing account?</span>
+        <div class="v53_190" id="closeRegisterModal">
+          <img
+            src="{% static 'images/close2.png' %}"
+            class="close-button"
+            alt="Close"
+          />
+        </div>
+        <!-- Register Error Notification Dialog -->
+        <div
+          id="registerDialogBox"
+          class="flat-ui-dialog error"
+          style="display: none"
+        >
+          <div id="registerDialogContent"></div>
+        </div>
+        <!-- Register Success Notification Dialog -->
+        <div
+          id="registerSuccessBox"
+          class="flat-ui-dialog success"
+          style="display: none"
+        >
+          <div id="registerSuccessContent"></div>
+        </div>
+      </div>
+
+      <!-- Privacy Policy and Terms of Service Overlay -->
+      <div
+        id="policyOverlay"
+        class="invisible-overlay"
+        style="display: none"
+      ></div>
+
+      <!-- Privacy Policy and Terms of Service Modal -->
+      <div id="policyModal" class="flat-ui-dialog policy" style="display: none">
+        <h2>Privacy Policy and Terms of Service for PilarEase</h2>
+        <div class="policy-content">
+          <h3>Terms and Conditions</h3>
+          <p>Welcome to PilarEase!</p>
+          <p>
+            By accessing or using our portal, you agree to comply with and be
+            bound by the following terms and conditions. Please review these
+            terms carefully. If you do not agree with these terms, you should
+            not use our portal.
+          </p>
+          <ol>
+            <li>
+              <strong>User Conduct</strong>
+              <ul>
+                <li>
+                  <strong>Respectful Interaction:</strong> Users must interact
+                  respectfully with each other. Offensive, abusive, or
+                  inappropriate language and behavior are strictly prohibited.
+                </li>
+                <li>
+                  <strong>Appropriate Content:</strong> Users must ensure that
+                  all content posted, including text, images, and links, is
+                  appropriate for all audiences. Pornographic, violent, or
+                  otherwise inappropriate content is not allowed.
+                </li>
+                <li>
+                  <strong>No Harassment:</strong> Harassment, bullying, or any
+                  form of personal attacks against other users will not be
+                  tolerated.
+                </li>
+                <li>
+                  <strong>No Spam:</strong> Spamming, including unsolicited
+                  promotional messages or repetitive posts, is not permitted.
+                </li>
+                <li>
+                  <strong>No Illegal Activities:</strong> Users must not engage
+                  in or promote illegal activities through the portal.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Account Responsibilities</strong>
+              <ul>
+                <li>
+                  <strong>Account Security:</strong> Users are responsible for
+                  maintaining the security of their account information. Sharing
+                  login details with others is discouraged.
+                </li>
+                <li>
+                  <strong>Accurate Information:</strong> Users must provide
+                  accurate and up-to-date information when creating an account
+                  and using the portal.
+                </li>
+                <li>
+                  <strong>One Account Per User:</strong> Each user is allowed to
+                  create only one account. Duplicate accounts for the same
+                  individual are prohibited.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Content Ownership and Usage</strong>
+              <ul>
+                <li>
+                  <strong>User Content:</strong> Users retain ownership of the
+                  content they create and post. By posting content on PilarEase,
+                  users grant us a non-exclusive, royalty-free license to use,
+                  distribute, and display the content in connection with the
+                  portal.
+                </li>
+                <li>
+                  <strong>Content Removal:</strong> We reserve the right to
+                  remove any content that violates these terms or is deemed
+                  inappropriate, without prior notice.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Privacy</strong>
+              <ul>
+                <li>
+                  <strong>Data Collection:</strong> We collect personal
+                  information from users, including but not limited to student
+                  ID, username, full name, academic year level, contact number,
+                  and email address.
+                </li>
+                <li>
+                  <strong>Data Usage:</strong> Personal information is used to
+                  manage user accounts, provide services, and improve the user
+                  experience. We do not share personal information with third
+                  parties without user consent, except as required by law.
+                </li>
+                <li>
+                  <strong>Data Security:</strong> We implement security measures
+                  to protect user data from unauthorized access, alteration, or
+                  disclosure.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Changes to Terms</strong>
+              <ul>
+                <li>
+                  We may update these terms from time to time. Users will be
+                  notified of any significant changes. Continued use of the
+                  portal after such changes constitutes acceptance of the new
+                  terms.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Contact Us</strong>
+              <ul>
+                <li>
+                  For any questions or concerns about these terms, please
+                  contact us at support@pilarease.com.
+                </li>
+              </ul>
+            </li>
+          </ol>
+          <h3>Privacy Policy</h3>
+          <p>PilarEase Privacy Policy</p>
+          <ol>
+            <li>
+              <strong>Introduction</strong>
+              <ul>
+                <li>
+                  PilarEase values your privacy. This policy outlines how we
+                  collect, use, and protect your personal information.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Information We Collect</strong>
+              <ul>
+                <li>
+                  <strong>Personal Information:</strong> When you register, we
+                  collect personal information such as student ID, username,
+                  full name, academic year level, contact number, and email
+                  address.
+                </li>
+                <li>
+                  <strong>Usage Data:</strong> We collect data on how you
+                  interact with the portal, including pages visited, features
+                  used, and time spent on the site.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>How We Use Your Information</strong>
+              <ul>
+                <li>
+                  <strong>Account Management:</strong> Personal information is
+                  used to manage user accounts and provide access to portal
+                  features.
+                </li>
+                <li>
+                  <strong>Service Improvement:</strong> Usage data helps us
+                  understand user behavior and improve our services.
+                </li>
+                <li>
+                  <strong>Communication:</strong> We use your email address to
+                  send important updates, newsletters, and other communications
+                  related to the portal.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Data Protection</strong>
+              <ul>
+                <li>
+                  <strong>Security Measures:</strong> We use technical and
+                  organizational measures to protect your personal information
+                  against unauthorized access, loss, or alteration.
+                </li>
+                <li>
+                  <strong>Data Retention:</strong> Personal information is
+                  retained as long as your account is active or as needed to
+                  provide services. We may retain information for longer periods
+                  if required by law.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Sharing Your Information</strong>
+              <ul>
+                <li>
+                  <strong>Third Parties:</strong> We do not share your personal
+                  information with third parties without your consent, except as
+                  required by law or to protect our rights.
+                </li>
+                <li>
+                  <strong>Service Providers:</strong> We may share information
+                  with third-party service providers who perform services on our
+                  behalf, such as hosting and data analysis.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Your Rights</strong>
+              <ul>
+                <li>
+                  <strong>Access and Correction:</strong> You have the right to
+                  access and correct your personal information. You can update
+                  your information through your account settings.
+                </li>
+                <li>
+                  <strong>Deletion:</strong> You can request the deletion of
+                  your account and personal information by contacting us at
+                  support@pilarease.com.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Changes to This Policy</strong>
+              <ul>
+                <li>
+                  We may update this privacy policy from time to time. Users
+                  will be notified of any significant changes.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>Contact Us</strong>
+              <ul>
+                <li>
+                  For any questions or concerns about this privacy policy,
+                  please contact us at support@pilarease.com.
+                </li>
+              </ul>
+            </li>
+          </ol>
+          <p>
+            By clicking "Privacy Policy and Terms of Service apply", you
+            acknowledge that you have read and agree to our Terms and Conditions
+            and Privacy Policy.
+          </p>
+        </div>
+      </div>
+
+      <!-- Profile Modal -->
+      <div id="profileModal" class="modal-content profile">
+        <span class="close" id="closeProfileModal">&times;</span>
+        <h2>Profile Settings</h2>
+
+        <!-- Instructions Section -->
+        <div class="instructions">
+          <p>
+            <strong>Important:</strong> Keep your profile information up to date
+            to ensure smooth communication and notifications. Make sure that
+            your contact number and email address are valid and current.
+          </p>
+        </div>
+
+        <div class="profile-icon tooltip" id="profileIcon">
+          <div
+            id="avatarLoader"
+            class="loader-avatar"
+            style="display: none"
+          ></div>
+          <!-- Avatar Loader -->
+          <div id="profileIconImageContainer">
+            <img
+              src="{% static 'images/avatars/placeholder.png' %}"
+              alt="Profile Icon"
+              id="profileIconImage"
+            />
+          </div>
+          <span class="tooltiptext" id="profileTooltip"
+            >Click to change avatar.</span
+          >
+        </div>
+        <button id="refreshAvatarBtn" class="refresh-avatar-btn">
+          <i class="bx bx-refresh"></i>
         </button>
-        <a href="#" id="forgotPasswordLink" class="v53_188">Forgot Password?</a>
-        <div class="v53_189">
-          <input
-            type="checkbox"
-            id="rememberMe"
-            name="rememberMe"
-            class="v53_189_checkbox"
-          />
-          <label for="rememberMe" class="v53_189_label">Remember Me</label>
-        </div>
-      </form>
-      <div class="v53_190" id="closeLoginModal">
-        <img
-          src="{% static 'images/close2.png' %}"
-          class="close-button"
-          alt="Close"
-        />
-      </div>
-      <!-- Loader Overlay -->
-      <div id="loginOverlay">
-        <div id="loginLoader"></div>
-      </div>
-      <!-- Login Error Notification Dialog -->
-      <div
-        id="loginDialogBox"
-        class="flat-ui-dialog error"
-        style="display: none"
-      >
-        <div id="loginDialogContent"></div>
-      </div>
-      <!-- Login Success Notification Dialog -->
-      <div
-        id="loginSuccessBox"
-        class="flat-ui-dialog success"
-        style="display: none"
-      >
-        <div id="loginSuccessContent"></div>
-      </div>
-    </div>
-
-    <!-- Forgot Password Modal -->
-    <div class="v53_200 modal" id="forgotPasswordModal" style="display: none">
-      <div class="v53_201"></div>
-      <div class="v53_202"></div>
-      <span class="v53_203">Forgot Your Password?</span>
-      <span class="v53_204">
-        Please enter your registered email address. We will send you a link to
-        reset your password.
-      </span>
-      <form
-        id="forgotPasswordForm"
-        action="{% url 'password_reset' %}"
-        method="post"
-      >
-        {% csrf_token %}
-        <span class="v53_205">Email Address</span>
-        <div class="v53_206">
-          <input
-            type="email"
-            name="email"
-            class="input-field"
-            placeholder="Email Address"
-            required
-          />
-        </div>
-        <button type="submit" class="v53_207">
-          <span class="v53_208">Send Reset Link</span>
-        </button>
-      </form>
-      <div class="v53_209" id="closeForgotPasswordModal">
-        <img
-          src="{% static 'images/close2.png' %}"
-          class="close-button"
-          alt="Close"
-        />
-      </div>
-      <!-- Forgot Password Loader Overlay and Spinner -->
-      <div id="forgotpassOverlay">
-        <div id="forgotpassLoader"></div>
-      </div>
-
-      <!-- Success Notification Dialog -->
-      <div
-        id="forgotPasswordSuccessBox"
-        class="flat-ui-dialog success"
-        style="display: none"
-      >
-        <div id="forgotPasswordSuccessContent"></div>
-      </div>
-
-      <!-- Error Notification Dialog -->
-      <div
-        id="forgotPasswordErrorBox"
-        class="flat-ui-dialog error"
-        style="display: none"
-      >
-        <div id="forgotPasswordErrorContent"></div>
-      </div>
-      <!-- Cooldown Notification Dialog -->
-      <div
-        id="forgotPasswordCooldownBox"
-        class="flat-ui-dialog session"
-        style="display: none"
-      >
-        <div id="forgotPasswordCooldownContent"></div>
-      </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div class="v74_801 modal" id="registerModal" style="display: none">
-      <span class="v74_802"
-        >"Embrace the art of cooking, where flavors come alive!"</span
-      >
-      <span class="v74_806">Get Started.</span>
-      <div class="v74_835"></div>
-      <a href="#" id="loginLinkFromRegister" class="v74_838">Login</a>
-      <div class="v74_812"></div>
-      <form id="registerForm" action="{% url 'register' %}" method="post">
-        {% csrf_token %}
-        <span class="v74_807">Student ID No.</span>
-        <div class="v74_808">
+        <form id="profileForm">
+          <label for="student-id">Student ID No.</label>
           <input
             type="text"
-            name="student_id"
-            class="input-field"
-            placeholder="ex. C****77"
+            id="student-id"
+            name="student-id"
+            placeholder="ex. C210077"
+            disabled
           />
-        </div>
-        <span class="v74_813">Username</span>
-        <div class="v74_814">
+
+          <label for="full-name">Full Name</label>
           <input
             type="text"
+            id="full-name"
+            name="full-name"
+            placeholder="ex. Khadaffe Abubakar Sulaiman"
+            disabled
+          />
+
+          <label for="academic-year">Academic Year Level</label>
+          <input
+            type="text"
+            id="academic-year"
+            name="academic-year"
+            placeholder="ex. Fourth Year"
+            disabled
+          />
+
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
             name="username"
-            class="input-field"
             placeholder="ex. KCprsnlcc"
           />
-        </div>
-        <span class="v74_816">Full Name</span>
-        <div class="v74_817">
-          <input
-            type="text"
-            name="full_name"
-            class="input-field"
-            placeholder="ex. Last name, First Name A."
-          />
-        </div>
-        <span class="v74_819">Academic Year Level</span>
-        <div class="v74_820">
-          <input
-            type="text"
-            name="academic_year_level"
-            class="input-field"
-            placeholder="ex. First Year, Grade 12, etc."
-          />
-        </div>
-        <span class="v74_823">Contact Number</span>
-        <div class="v74_824">
+
+          <label for="email">Email</label>
+          <div class="email-container">
+            <input
+              type="text"
+              id="email"
+              name="email"
+              value="*****@*****.com"
+              disabled
+            />
+            <button type="button" id="verifyEmailBtn" class="verify-btn">
+              Verify
+            </button>
+            <span
+              id="emailVerifiedLabel"
+              class="verified-label"
+              style="display: none"
+            >
+              Verified
+            </span>
+            <span
+              id="resendCooldownLabel"
+              class="resend-cooldown-label"
+              style="display: none"
+            >
+              Resend in <span id="cooldownTimer">60</span>s
+            </span>
+          </div>
+          <button type="button" id="changeEmailBtn" class="change-email-btn">
+            Change Email
+          </button>
+
+          <label for="contact-number">Contact Number</label>
           <input
             type="tel"
-            name="contact_number"
-            class="input-field"
-            placeholder="Ex. +639949953785"
+            id="contact-number"
+            name="contact-number"
+            placeholder="ex. +639949953785"
           />
-        </div>
-        <span class="v74_826">Email</span>
-        <div class="v74_827">
-          <input
-            type="email"
-            name="email"
-            class="input-field"
-            placeholder="ex. name@email.com"
-          />
-        </div>
-        <span class="v74_829">Password</span>
-        <div class="v74_830">
-          <input
-            type="password"
-            name="password1"
-            class="input-field"
-            placeholder="********"
-          />
-        </div>
-        <span class="v74_832">Confirm Password</span>
-        <div class="v74_833">
-          <input
-            type="password"
-            name="password2"
-            class="input-field"
-            placeholder="********"
-          />
-        </div>
-        <button type="submit" class="v74_810" id="signupButton">
-          <span class="v74_811">Sign Up</span>
-        </button>
-      </form>
-      <span class="v74_822" id="showPolicy"
-        >Privacy Policy and Terms of Service apply</span
-      >
-      <span class="v74_836">Join us at the PilarEase's Portal!</span>
-      <span class="v74_837">An existing account?</span>
-      <div class="v53_190" id="closeRegisterModal">
-        <img
-          src="{% static 'images/close2.png' %}"
-          class="close-button"
-          alt="Close"
-        />
-      </div>
-      <!-- Register Error Notification Dialog -->
-      <div
-        id="registerDialogBox"
-        class="flat-ui-dialog error"
-        style="display: none"
-      >
-        <div id="registerDialogContent"></div>
-      </div>
-      <!-- Register Success Notification Dialog -->
-      <div
-        id="registerSuccessBox"
-        class="flat-ui-dialog success"
-        style="display: none"
-      >
-        <div id="registerSuccessContent"></div>
-      </div>
-    </div>
+          <button type="submit" class="save-changes" id="updateProfileBtn">
+            Save changes
+          </button>
+        </form>
+        <!-- Change Email Dialog -->
+        <div id="changeEmailDialog" class="modern-dialog" style="display: none">
+          <div id="changeEmailContent" class="dialog-content">
+            <h3>Change Your Email Address</h3>
 
-    <!-- Privacy Policy and Terms of Service Overlay -->
-    <div
-      id="policyOverlay"
-      class="invisible-overlay"
-      style="display: none"
-    ></div>
+            <!-- Instructions Section -->
+            <div class="instructions">
+              <p>
+                <strong>Important:</strong> Changing your email requires
+                verification. After entering a new email, click "Verify" to
+                receive a verification link. You can resend the link after 59
+                seconds if you don’t receive it.
+              </p>
+            </div>
 
-    <!-- Privacy Policy and Terms of Service Modal -->
-    <div id="policyModal" class="flat-ui-dialog policy" style="display: none">
-      <h2>Privacy Policy and Terms of Service for PilarEase</h2>
-      <div class="policy-content">
-        <h3>Terms and Conditions</h3>
-        <p>Welcome to PilarEase!</p>
-        <p>
-          By accessing or using our portal, you agree to comply with and be
-          bound by the following terms and conditions. Please review these terms
-          carefully. If you do not agree with these terms, you should not use
-          our portal.
-        </p>
-        <ol>
-          <li>
-            <strong>User Conduct</strong>
-            <ul>
-              <li>
-                <strong>Respectful Interaction:</strong> Users must interact
-                respectfully with each other. Offensive, abusive, or
-                inappropriate language and behavior are strictly prohibited.
-              </li>
-              <li>
-                <strong>Appropriate Content:</strong> Users must ensure that all
-                content posted, including text, images, and links, is
-                appropriate for all audiences. Pornographic, violent, or
-                otherwise inappropriate content is not allowed.
-              </li>
-              <li>
-                <strong>No Harassment:</strong> Harassment, bullying, or any
-                form of personal attacks against other users will not be
-                tolerated.
-              </li>
-              <li>
-                <strong>No Spam:</strong> Spamming, including unsolicited
-                promotional messages or repetitive posts, is not permitted.
-              </li>
-              <li>
-                <strong>No Illegal Activities:</strong> Users must not engage in
-                or promote illegal activities through the portal.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Account Responsibilities</strong>
-            <ul>
-              <li>
-                <strong>Account Security:</strong> Users are responsible for
-                maintaining the security of their account information. Sharing
-                login details with others is discouraged.
-              </li>
-              <li>
-                <strong>Accurate Information:</strong> Users must provide
-                accurate and up-to-date information when creating an account and
-                using the portal.
-              </li>
-              <li>
-                <strong>One Account Per User:</strong> Each user is allowed to
-                create only one account. Duplicate accounts for the same
-                individual are prohibited.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Content Ownership and Usage</strong>
-            <ul>
-              <li>
-                <strong>User Content:</strong> Users retain ownership of the
-                content they create and post. By posting content on PilarEase,
-                users grant us a non-exclusive, royalty-free license to use,
-                distribute, and display the content in connection with the
-                portal.
-              </li>
-              <li>
-                <strong>Content Removal:</strong> We reserve the right to remove
-                any content that violates these terms or is deemed
-                inappropriate, without prior notice.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Privacy</strong>
-            <ul>
-              <li>
-                <strong>Data Collection:</strong> We collect personal
-                information from users, including but not limited to student ID,
-                username, full name, academic year level, contact number, and
-                email address.
-              </li>
-              <li>
-                <strong>Data Usage:</strong> Personal information is used to
-                manage user accounts, provide services, and improve the user
-                experience. We do not share personal information with third
-                parties without user consent, except as required by law.
-              </li>
-              <li>
-                <strong>Data Security:</strong> We implement security measures
-                to protect user data from unauthorized access, alteration, or
-                disclosure.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Changes to Terms</strong>
-            <ul>
-              <li>
-                We may update these terms from time to time. Users will be
-                notified of any significant changes. Continued use of the portal
-                after such changes constitutes acceptance of the new terms.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Contact Us</strong>
-            <ul>
-              <li>
-                For any questions or concerns about these terms, please contact
-                us at support@pilarease.com.
-              </li>
-            </ul>
-          </li>
-        </ol>
-        <h3>Privacy Policy</h3>
-        <p>PilarEase Privacy Policy</p>
-        <ol>
-          <li>
-            <strong>Introduction</strong>
-            <ul>
-              <li>
-                PilarEase values your privacy. This policy outlines how we
-                collect, use, and protect your personal information.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Information We Collect</strong>
-            <ul>
-              <li>
-                <strong>Personal Information:</strong> When you register, we
-                collect personal information such as student ID, username, full
-                name, academic year level, contact number, and email address.
-              </li>
-              <li>
-                <strong>Usage Data:</strong> We collect data on how you interact
-                with the portal, including pages visited, features used, and
-                time spent on the site.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>How We Use Your Information</strong>
-            <ul>
-              <li>
-                <strong>Account Management:</strong> Personal information is
-                used to manage user accounts and provide access to portal
-                features.
-              </li>
-              <li>
-                <strong>Service Improvement:</strong> Usage data helps us
-                understand user behavior and improve our services.
-              </li>
-              <li>
-                <strong>Communication:</strong> We use your email address to
-                send important updates, newsletters, and other communications
-                related to the portal.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Data Protection</strong>
-            <ul>
-              <li>
-                <strong>Security Measures:</strong> We use technical and
-                organizational measures to protect your personal information
-                against unauthorized access, loss, or alteration.
-              </li>
-              <li>
-                <strong>Data Retention:</strong> Personal information is
-                retained as long as your account is active or as needed to
-                provide services. We may retain information for longer periods
-                if required by law.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Sharing Your Information</strong>
-            <ul>
-              <li>
-                <strong>Third Parties:</strong> We do not share your personal
-                information with third parties without your consent, except as
-                required by law or to protect our rights.
-              </li>
-              <li>
-                <strong>Service Providers:</strong> We may share information
-                with third-party service providers who perform services on our
-                behalf, such as hosting and data analysis.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Your Rights</strong>
-            <ul>
-              <li>
-                <strong>Access and Correction:</strong> You have the right to
-                access and correct your personal information. You can update
-                your information through your account settings.
-              </li>
-              <li>
-                <strong>Deletion:</strong> You can request the deletion of your
-                account and personal information by contacting us at
-                support@pilarease.com.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Changes to This Policy</strong>
-            <ul>
-              <li>
-                We may update this privacy policy from time to time. Users will
-                be notified of any significant changes.
-              </li>
-            </ul>
-          </li>
-          <li>
-            <strong>Contact Us</strong>
-            <ul>
-              <li>
-                For any questions or concerns about this privacy policy, please
-                contact us at support@pilarease.com.
-              </li>
-            </ul>
-          </li>
-        </ol>
-        <p>
-          By clicking "Privacy Policy and Terms of Service apply", you
-          acknowledge that you have read and agree to our Terms and Conditions
-          and Privacy Policy.
-        </p>
+            <!-- New Email Form -->
+            <label for="new-email">Enter New Email Address</label>
+            <input
+              type="email"
+              id="new-email"
+              name="new-email"
+              placeholder="Enter new email"
+              required
+            />
+            <div class="dialog-buttons">
+              <button type="submit" id="verifyNewEmailBtn" class="confirm-btn">
+                Verify
+              </button>
+              <span
+                id="resendNewEmailCooldownLabel"
+                class="resend-newemail-cooldown-label"
+                style="display: none"
+              >
+                Resend in <span id="cooldownNewEmailTimer">60</span>s
+              </span>
+              <button
+                type="button"
+                id="cancelChangeEmailBtn"
+                class="cancel-btn"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          <!-- Verify Email CSS Overlay and Loader -->
+          <div id="changeemailOverlay" style="display: none">
+            <div id="changeemailLoader"></div>
+          </div>
+          <!-- Success Notification Dialog -->
+          <div
+            id="changeemailSuccessBox"
+            class="flat-ui-dialog success"
+            style="display: none"
+          >
+            <div id="changeemailSuccessContent"></div>
+          </div>
+
+          <!-- Error Notification Dialog -->
+          <div
+            id="changeemailErrorBox"
+            class="flat-ui-dialog error"
+            style="display: none"
+          >
+            <div id="changeemailErrorContent"></div>
+          </div>
+        </div>
+
+        <!-- Confirmation Dialog -->
+        <div
+          id="confirmUpdateDialog"
+          class="confirm-dialog"
+          style="display: none"
+        >
+          <div id="confirmUpdateContent" class="confirm-dialog-content">
+            <h3>Confirm Profile Update</h3>
+            <p>Are you sure you want to update your profile?</p>
+            <div class="confirm-dialog-buttons">
+              <button id="confirmUpdateBtn" class="confirm-btn">Confirm</button>
+              <button id="cancelUpdateBtn" class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verify Email CSS Overlay and Loader -->
+        <div id="verifyemailOverlay">
+          <div id="verifyemailLoader"></div>
+        </div>
+
+        <!-- Success Notification Dialog -->
+        <div
+          id="verifyemailSuccessBox"
+          class="flat-ui-dialog success"
+          style="display: none"
+        >
+          <div id="verifyemailSuccessContent"></div>
+        </div>
+
+        <!-- Error Notification Dialog -->
+        <div
+          id="verifyemailErrorBox"
+          class="flat-ui-dialog error"
+          style="display: none"
+        >
+          <div id="verifyemailErrorContent"></div>
+        </div>
+
+        <!-- Profile Update CSS Overlay and Loader -->
+        <div id="profileupdateOverlay">
+          <div id="profileupdateLoader"></div>
+        </div>
+
+        <!-- Success and Error Dialogs -->
+        <div
+          id="profileSuccessDialog"
+          class="flat-ui-dialog success"
+          style="display: none"
+        >
+          <div class="flat-ui-dialog-content">
+            <span id="profileSuccessContent"></span>
+          </div>
+        </div>
+        <div
+          id="profileErrorDialog"
+          class="flat-ui-dialog error"
+          style="display: none"
+        >
+          <div class="flat-ui-dialog-content">
+            <span id="profileErrorContent"></span>
+          </div>
+        </div>
+
+        <!-- Profile Footer with Random Tip -->
+        <footer id="profile-footer">
+          <p id="randomTip">
+            Tip: Keep your profile updated for smooth communication and service.
+          </p>
+        </footer>
       </div>
     </div>
-
-    <!-- Profile Modal -->
-<div id="profileModal" class="modal-content profile">
-  <span class="close" id="closeProfileModal">&times;</span>
-  <h2>Profile Settings</h2>
-
-  <!-- Instructions Section -->
-  <div class="instructions">
-    <p>
-      <strong>Important:</strong> Keep your profile information up to date to
-      ensure smooth communication and notifications. Make sure that your contact
-      number and email address are valid and current.
-    </p>
-  </div>
-
-  <div class="profile-icon tooltip" id="profileIcon">
-    <div id="avatarLoader" class="loader-avatar" style="display: none"></div>
-    <!-- Avatar Loader -->
-    <div id="profileIconImageContainer">
-      <img
-        src="{% static 'images/avatars/placeholder.png' %}"
-        alt="Profile Icon"
-        id="profileIconImage"
-      />
-    </div>
-    <span class="tooltiptext" id="profileTooltip">Click to change avatar.</span>
-  </div>
-  <button id="refreshAvatarBtn" class="refresh-avatar-btn">
-    <i class="bx bx-refresh"></i>
-  </button>
-  <form id="profileForm">
-    <label for="student-id">Student ID No.</label>
-    <input
-      type="text"
-      id="student-id"
-      name="student-id"
-      placeholder="ex. C210077"
-      disabled
-    />
-
-    <label for="full-name">Full Name</label>
-    <input
-      type="text"
-      id="full-name"
-      name="full-name"
-      placeholder="ex. Khadaffe Abubakar Sulaiman"
-      disabled
-    />
-
-    <label for="academic-year">Academic Year Level</label>
-    <input
-      type="text"
-      id="academic-year"
-      name="academic-year"
-      placeholder="ex. Fourth Year"
-      disabled
-    />
-
-    <label for="username">Username</label>
-    <input
-      type="text"
-      id="username"
-      name="username"
-      placeholder="ex. KCprsnlcc"
-    />
-
-<label for="email">Email</label>
-<div class="email-container">
-  <input
-    type="text" 
-    id="email"
-    name="email"
-    value="*****@*****.com" 
-    disabled
-  />
-  <button type="button" id="verifyEmailBtn" class="verify-btn">
-    Verify
-  </button>
-  <span id="emailVerifiedLabel" class="verified-label" style="display: none;">
-    Verified
-  </span>
-  <span id="resendCooldownLabel" class="resend-cooldown-label" style="display: none;">
-    Resend in <span id="cooldownTimer">60</span>s
-  </span>
-</div>
-<button type="button" id="changeEmailBtn" class="change-email-btn">
-  Change Email
-</button>
-
-    <label for="contact-number">Contact Number</label>
-    <input
-      type="tel"
-      id="contact-number"
-      name="contact-number"
-      placeholder="ex. +639949953785"
-    />
-    <button type="submit" class="save-changes" id="updateProfileBtn">
-      Save changes
-    </button>
-  </form>
-  <!-- Change Email Dialog -->
-<div id="changeEmailDialog" class="modern-dialog" style="display: none;">
-  <div id="changeEmailContent" class="dialog-content">
-    <h3>Change Your Email Address</h3>
-    
-    <!-- Instructions Section -->
-    <div class="instructions">
-      <p>
-        <strong>Important:</strong> Changing your email requires verification. 
-        After entering a new email, click "Verify" to receive a verification link.
-        You can resend the link after 59 seconds if you don’t receive it.
-      </p>
-    </div>
-
-    <!-- New Email Form -->
-  <label for="new-email">Enter New Email Address</label>
-  <input type="email" id="new-email" name="new-email" placeholder="Enter new email" required />
-  <div class="dialog-buttons">
-  <button type="submit" id="verifyNewEmailBtn" class="confirm-btn">Verify</button>
-  <span id="resendNewEmailCooldownLabel" class="resend-newemail-cooldown-label" style="display: none;"> 
-    Resend in <span id="cooldownNewEmailTimer">60</span>s
-  </span>
-    <button type="button" id="cancelChangeEmailBtn" class="cancel-btn">Cancel</button>
-  </div>
-
-  </div>
-  <!-- Verify Email CSS Overlay and Loader -->
-<div id="changeemailOverlay" style="display: none;">
-  <div id="changeemailLoader"></div>
-</div>
-<!-- Success Notification Dialog -->
-<div id="changeemailSuccessBox" class="flat-ui-dialog success" style="display: none">
-  <div id="changeemailSuccessContent"></div>
-</div>
-
-<!-- Error Notification Dialog -->
-<div id="changeemailErrorBox" class="flat-ui-dialog error" style="display: none">
-  <div id="changeemailErrorContent"></div>
-</div>
-</div>
-
-
-
-<!-- Confirmation Dialog -->
-<div id="confirmUpdateDialog" class="confirm-dialog" style="display: none;">
-  <div id="confirmUpdateContent" class="confirm-dialog-content">
-    <h3>Confirm Profile Update</h3>
-    <p>Are you sure you want to update your profile?</p>
-    <div class="confirm-dialog-buttons">
-      <button id="confirmUpdateBtn" class="confirm-btn">Confirm</button>
-      <button id="cancelUpdateBtn" class="cancel-btn">Cancel</button>
-    </div>
-  </div>
-</div>
-
-  <!-- Verify Email CSS Overlay and Loader -->
-<div id="verifyemailOverlay">
-  <div id="verifyemailLoader"></div>
-</div>
-
-<!-- Success Notification Dialog -->
-<div id="verifyemailSuccessBox" class="flat-ui-dialog success" style="display: none">
-  <div id="verifyemailSuccessContent"></div>
-</div>
-
-<!-- Error Notification Dialog -->
-<div id="verifyemailErrorBox" class="flat-ui-dialog error" style="display: none">
-  <div id="verifyemailErrorContent"></div>
-</div>
-
-<!-- Profile Update CSS Overlay and Loader -->
-<div id="profileupdateOverlay">
-  <div id="profileupdateLoader"></div>
-</div>
-
-  <!-- Success and Error Dialogs -->
-  <div id="profileSuccessDialog" class="flat-ui-dialog success" style="display: none">
-    <div class="flat-ui-dialog-content">
-      <span id="profileSuccessContent"></span>
-    </div>
-  </div>
-  <div id="profileErrorDialog" class="flat-ui-dialog error" style="display: none">
-    <div class="flat-ui-dialog-content">
-      <span id="profileErrorContent"></span>
-    </div>
-  </div>
-
-  <!-- Profile Footer with Random Tip -->
-  <footer id="profile-footer">
-    <p id="randomTip">
-      Tip: Keep your profile updated for smooth communication and service.
-    </p>
-  </footer>
-</div>
-</div>
 
     {% if user.is_authenticated %}
     <!-- Floating Chat -->
@@ -843,25 +906,35 @@
     <div id="avatarModal" class="modal-content avatar">
       <span id="closeAvatarModal"></span>
       <h2>Change Your Avatar!</h2>
-        <!-- Instructions for Avatar Modal -->
-  <div class="instructions">
-    <p>
-      <strong>Important:</strong> Select one of the built-in avatars or upload your own image. The recommended image size is 150x150 pixels.
-    </p>
-  </div>
+      <!-- Instructions for Avatar Modal -->
+      <div class="instructions">
+        <p>
+          <strong>Important:</strong> Select one of the built-in avatars or
+          upload your own image. The recommended image size is 150x150 pixels.
+        </p>
+      </div>
       <div class="built-in-avatars">
         <div class="avatars-grid">
-<div class="upload-area">
-  <img
-    id="currentAvatar"
-    src=""
-    data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
-    alt="Upload Avatar"
-  />
-  <div id="avatarLoader" class="loader-avatar" style="display: none"></div>
-  <i class='bx bxs-camera upload-icon'></i>
-  <input type="file" id="uploadAvatarInput" accept="image/*" style="display: none" />
-</div>
+          <div class="upload-area">
+            <img
+              id="currentAvatar"
+              src=""
+              data-placeholder-url="{% static 'images/avatars/placeholder.png' %}"
+              alt="Upload Avatar"
+            />
+            <div
+              id="avatarLoader"
+              class="loader-avatar"
+              style="display: none"
+            ></div>
+            <i class="bx bxs-camera upload-icon"></i>
+            <input
+              type="file"
+              id="uploadAvatarInput"
+              accept="image/*"
+              style="display: none"
+            />
+          </div>
 
           <img
             src="{% static 'images/avatars/avataaars1.png' %}"
@@ -1004,10 +1077,10 @@
           value="{{ csrf_token }}"
         />
       </form>
-        <div id="avatar-buttons" class="dialog-buttons">
-                    <button class="confirm-btn" id="saveAvatarBtn">Change Now</button>
+      <div id="avatar-buttons" class="dialog-buttons">
+        <button class="confirm-btn" id="saveAvatarBtn">Change Now</button>
         <button class="cancel-btn" id="cancelAvatarBtn">No, Thanks</button>
-        </div>
+      </div>
       <!-- Hidden element to store the URL -->
       <input
         type="hidden"
@@ -1016,29 +1089,32 @@
       />
     </div>
 
-<!-- Cropping Modal -->
-<div id="cropperModal" class="modal-content cropper" style="display: none">
-  <span id="closeCropperModal"></span>
-  <h2>Crop Your Image</h2>
+    <!-- Cropping Modal -->
+    <div id="cropperModal" class="modal-content cropper" style="display: none">
+      <span id="closeCropperModal"></span>
+      <h2>Crop Your Image</h2>
 
-  <!-- Important Instruction Message -->
-  <div class="instructions">
-    <p>
-      <strong>Important:</strong> Use the square crop area to select the portion of your image. The final result will be cropped as a perfect circle.
-    </p>
-  </div>
+      <!-- Important Instruction Message -->
+      <div class="instructions">
+        <p>
+          <strong>Important:</strong> Use the square crop area to select the
+          portion of your image. The final result will be cropped as a perfect
+          circle.
+        </p>
+      </div>
 
-  <div class="cropper-container">
-    <div class="circle-guide"></div> <!-- This overlays the cropper with a circle guide -->
-    <img id="imageToCrop" src="" alt="Image to Crop" />
-  </div>
+      <div class="cropper-container">
+        <div class="circle-guide"></div>
+        <!-- This overlays the cropper with a circle guide -->
+        <img id="imageToCrop" src="" alt="Image to Crop" />
+      </div>
 
-  <!-- Button Container moved inside the modal -->
-  <div id="cropper-buttons" class="dialog-buttons">
-    <button class="confirm-btn" id="cropImageBtn">Crop</button>
-    <button class="cancel-btn" id="cancelCropBtn">Cancel</button>
-  </div>
-</div>
+      <!-- Button Container moved inside the modal -->
+      <div id="cropper-buttons" class="dialog-buttons">
+        <button class="confirm-btn" id="cropImageBtn">Crop</button>
+        <button class="cancel-btn" id="cancelCropBtn">Cancel</button>
+      </div>
+    </div>
 
     <!-- Password Manager Modal -->
     <div id="passwordModal" class="modal-content password">
@@ -1244,7 +1320,7 @@
       <p>You need to log in to compose a status.</p>
       <button id="openLoginModal">Login</button>
     </div>
-    
+
     <!-- Overlay for session dialog -->
     <div id="sessionOverlay" class="overlay"></div>
 

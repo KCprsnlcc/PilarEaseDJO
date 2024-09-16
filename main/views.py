@@ -48,7 +48,7 @@ from django.conf import settings
 from django.templatetags.static import static
 from email.mime.image import MIMEImage
 from django.db.models import Q 
-
+from django.utils.timezone import make_aware
 from django.utils.html import strip_tags
 from django.utils.timezone import now
 logger = logging.getLogger(__name__)
@@ -637,7 +637,6 @@ def format_timestamp(timestamp):
     now = timezone.now()
     diff = now - timestamp
 
-    # Convert the time difference into seconds, minutes, hours, days, and weeks
     seconds = diff.total_seconds()
     minutes = seconds / 60
     hours = minutes / 60
@@ -645,17 +644,16 @@ def format_timestamp(timestamp):
     weeks = days / 7
 
     if seconds < 60:
-        return f"{int(seconds)}s"  # Seconds
+        return f"{int(seconds)}s ago"
     elif minutes < 60:
-        return f"{int(minutes)}m"  # Minutes
+        return f"{int(minutes)}m ago"
     elif hours < 24:
-        return f"{int(hours)}hr"  # Hours
+        return f"{int(hours)}hr ago"
     elif days < 7:
-        return f"{int(days)}d"  # Days
+        return f"{int(days)}d ago"
     else:
-        return f"{int(weeks)}w"  # Weeks
+        return f"{int(weeks)}w ago"
 
-@login_required
 @login_required
 def fetch_notifications(request):
     page_number = request.GET.get('page', 1)
@@ -739,7 +737,7 @@ def fetch_notifications(request):
         'notifications': page_obj.object_list,
         'total_pages': paginator.num_pages
     })
-    
+
 @login_required
 @csrf_exempt
 def mark_notification_as_read(request, notification_id):

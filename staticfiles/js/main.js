@@ -3424,6 +3424,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("profileLink").addEventListener("click", function () {
     checkEmailVerificationStatus();
   });
+
   const notificationButton = document.getElementById("notificationButton");
   const notificationDot = document.getElementById("notificationDot");
   const notificationList = document.getElementById("notificationList");
@@ -3563,11 +3564,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Make the entire notification clickable and mark as read on click
         item.addEventListener("click", async function () {
-          const notificationId = item.dataset.id; // Ensure this ID is the notification ID, not status ID
+          const notificationId = item.dataset.id; // Ensure this ID is the notification ID
 
           // Mark the notification as read
           if (!notification.is_read) {
-            await markNotificationAsRead(notificationId); // Send the notification ID here, not the status ID
+            await markNotificationAsRead(notificationId); // Pass the notification ID here
             item.classList.remove("unread");
             item.classList.add("read");
 
@@ -3580,8 +3581,8 @@ document.addEventListener("DOMContentLoaded", function () {
               .classList.remove("timestamp-green");
           }
 
-          // Redirect to the status page (Use the correct status link)
-          window.location.href = notification.link; // Redirect to the status page
+          // Redirect to the status page
+          window.location.href = notification.link;
         });
 
         // Build notification item structure
@@ -3647,13 +3648,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
-      await renderNotifications(currentPage);
+      await renderNotifications(currentPage); // Render the list of notifications
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
       // Mark notification button as clicked and hide the red dot
-      await markNotificationButtonClicked();
+      await markNotificationButtonClicked(); // Call to mark the notification button clicked
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");

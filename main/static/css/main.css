@@ -26,6 +26,7 @@ button {
 button:hover {
   background-color: #3b5a2b;
 }
+
 #notificationButton {
   position: relative;
   font-size: 24px;
