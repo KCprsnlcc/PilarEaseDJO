@@ -684,7 +684,7 @@ def fetch_notifications(request):
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'timestamp': format_timestamp(status.created_at),
-            'is_read': True  # Read by default for status posts
+            'is_read': False  # Set to False to remain unread until clicked
         })
 
         # 2. Notification for replies from unique users (excluding the user's own replies)
@@ -714,7 +714,7 @@ def fetch_notifications(request):
                 'link': f'/status/{status.id}/',
                 'avatar': latest_user_avatar,
                 'timestamp': format_timestamp(latest_replies[0].created_at),
-                'is_read': False  # Mark as unread since it's a new reply
+                'is_read': False  # Mark this as unread for replies
             })
 
     return JsonResponse({
