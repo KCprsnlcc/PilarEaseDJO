@@ -3424,7 +3424,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("profileLink").addEventListener("click", function () {
     checkEmailVerificationStatus();
   });
-
+  
   const notificationButton = document.getElementById("notificationButton");
   const notificationDot = document.getElementById("notificationDot");
   const notificationList = document.getElementById("notificationList");
