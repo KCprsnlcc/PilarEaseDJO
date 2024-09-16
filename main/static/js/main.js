@@ -3518,6 +3518,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
+    let hasUnreadNotifications = false;
+
     notifications.forEach((notification) => {
       if (!renderedNotifications.has(notification.id)) {
         const item = document.createElement("div");
@@ -3527,8 +3529,8 @@ document.addEventListener("DOMContentLoaded", function () {
         // If the notification is unread, apply the unread styling
         if (!notification.is_read) {
           item.classList.add("unread");
+          hasUnreadNotifications = true; // Track if there are unread notifications
         } else {
-          // Mark read notifications with a greyish background
           item.classList.add("read");
         }
 
@@ -3538,7 +3540,10 @@ document.addEventListener("DOMContentLoaded", function () {
             await markNotificationAsRead(notification.id);
             item.classList.remove("unread");
             item.classList.add("read");
-            item.querySelector(".notification-dot-green").remove();
+            const greenDot = item.querySelector(".notification-dot-green");
+            if (greenDot) {
+              greenDot.remove();
+            }
             item
               .querySelector(".timestamp")
               .classList.remove("timestamp-green");
@@ -3578,11 +3583,8 @@ document.addEventListener("DOMContentLoaded", function () {
       loadMoreButton.style.display = "none";
     }
 
-    // Show the blinking dot if there are unread notifications
-    const hasUnread = notifications.some(
-      (notification) => !notification.is_read
-    );
-    if (hasUnread) {
+    // Show or hide the red notification dot based on unread notifications
+    if (hasUnreadNotifications) {
       notificationDot.style.display = "block";
       notificationDot.classList.add("blink");
     } else {
@@ -3597,6 +3599,9 @@ document.addEventListener("DOMContentLoaded", function () {
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
+
+      // Remove the red notification dot when the list is opened
+      notificationDot.style.display = "none";
     } else {
       notificationList.classList.remove("animated");
       notificationList.classList.add("pop-up");
