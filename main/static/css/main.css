@@ -1202,14 +1202,17 @@ button[type="submit"]:hover {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 100000;
+  transition: opacity 0.3s ease; /* Smooth transition for fade-in/fade-out */
 }
 
 .overlay.show {
   opacity: 1;
+  transition: opacity 0.3s ease; /* Smooth transition for fade-in/fade-out */
 }
 
 .overlay.hide {
   opacity: 0;
+  transition: opacity 0.3s ease; /* Smooth transition for fade-in/fade-out */
 }
 /* Ensure these elements are hidden initially */
 #statusModal,
@@ -3551,6 +3554,18 @@ button#generatePassword:hover {
   z-index: 1000100;
   opacity: 1;
   transition: opacity 0.3s ease;
+}
+
+#sessionOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  transition: opacity 0.3s ease; /* Smooth transition for fade-in/fade-out */
 }
 
 #sessionDialogBox {

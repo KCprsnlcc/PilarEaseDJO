@@ -2316,7 +2316,6 @@ if (openLoginModalButton) {
     }, 300);
   };
 }
-
 function showError(message, type) {
   const dialogBox = document.getElementById(
     type === "login"
@@ -2325,6 +2324,7 @@ function showError(message, type) {
       ? "registerDialogBox"
       : "sessionDialogBox"
   );
+
   const dialogContent = document.getElementById(
     type === "login"
       ? "loginDialogContent"
@@ -2333,50 +2333,53 @@ function showError(message, type) {
       : "sessionDialogContent"
   );
 
+  // Update the content of the dialog
   dialogContent.innerHTML = message;
   dialogBox.style.display = "block";
   dialogBox.classList.add("error");
   dialogBox.classList.remove("pop-out");
   dialogBox.classList.add("pop-in");
 
-  setTimeout(() => {
-    dialogBox.classList.remove("pop-in");
-    dialogBox.classList.add("pop-out");
-    setTimeout(() => {
-      dialogBox.style.display = "none";
-      dialogBox.classList.remove("pop-out");
-    }, 300);
-  }, 3000);
-
+  // Handle session overlay specifically
   if (type === "session") {
-    overlay.style.display = "flex";
-    overlay.classList.add("fade-in");
-    overlay.addEventListener("click", function handleOverlayClick() {
-      dialogBox.classList.add("pop-out");
-      overlay.classList.add("fade-out"); // Updated to fade-out
-      setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-        overlay.style.display = "none";
-        overlay.classList.remove("fade-in", "fade-out");
-        overlay.removeEventListener("click", handleOverlayClick);
-        window.location.reload();
-      }, 300);
-    });
-  }
+    const overlay = document.getElementById("sessionOverlay");
+    overlay.style.display = "flex"; // Make the overlay visible
+    overlay.classList.add("show");
+    overlay.classList.remove("hide");
 
-  if (type !== "session") {
+    // Close session dialog and overlay on click outside
+    function handleOverlayClick(event) {
+      if (!dialogBox.contains(event.target)) {
+        dialogBox.classList.remove("pop-in");
+        dialogBox.classList.add("pop-out");
+        overlay.classList.remove("show");
+        overlay.classList.add("hide");
+
+        setTimeout(() => {
+          dialogBox.style.display = "none";
+          dialogBox.classList.remove("pop-out");
+          overlay.style.display = "none"; // Hide the overlay after fade-out
+          overlay.classList.remove("hide");
+          overlay.removeEventListener("click", handleOverlayClick);
+          window.location.reload(); // Reload the page after session expires
+        }, 300); // Match the pop-out animation duration
+      }
+    }
+
+    // Add event listener for clicking outside the modal
+    overlay.addEventListener("click", handleOverlayClick);
+  } else {
+    // For login and register dialogs, auto-close after 3 seconds
     setTimeout(() => {
       dialogBox.classList.remove("pop-in");
       dialogBox.classList.add("pop-out");
       setTimeout(() => {
         dialogBox.style.display = "none";
         dialogBox.classList.remove("pop-out");
-      }, 300);
+      }, 300); // Ensure pop-out animation completes
     }, 3000);
   }
 }
-
 function showSuccess(message, type) {
   const successBox = document.getElementById(
     type === "login"
@@ -2565,39 +2568,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return emptyFields.length ? emptyFields[0] : null;
-  }
-
-  // Show error dialog
-  function showError(message, type) {
-    const dialogBox = document.getElementById(
-      type === "login"
-        ? "loginDialogBox"
-        : type === "register"
-        ? "registerDialogBox"
-        : "sessionDialogBox"
-    );
-    const dialogContent = document.getElementById(
-      type === "login"
-        ? "loginDialogContent"
-        : type === "register"
-        ? "registerDialogContent"
-        : "sessionDialogContent"
-    );
-
-    dialogContent.innerHTML = message;
-    dialogBox.style.display = "block";
-    dialogBox.classList.add("error");
-    dialogBox.classList.remove("pop-out");
-    dialogBox.classList.add("pop-in");
-
-    setTimeout(() => {
-      dialogBox.classList.remove("pop-in");
-      dialogBox.classList.add("pop-out");
-      setTimeout(() => {
-        dialogBox.style.display = "none";
-        dialogBox.classList.remove("pop-out");
-      }, 300);
-    }, 3000);
   }
 });
 
