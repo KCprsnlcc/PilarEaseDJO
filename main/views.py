@@ -664,31 +664,21 @@ def fetch_notifications(request):
     seven_weeks_ago = timezone.now() - timedelta(weeks=7)
 
     # Fetch user statuses created within the last 7 weeks
-    user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago).order_by('-created_at')
+    user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago)
 
-    # Paginate notifications (6 per page)
-    paginator = Paginator(user_statuses, 5)
-
-    try:
-        page_obj = paginator.page(page_number)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
-
-    for status in page_obj:
-        # 1. Notification for when the user posts a status
+    # 1. Add notifications for statuses
+    for status in user_statuses:
         notifications.append({
             'id': f"status_{status.id}",
-            'status_id': status.id,  # Add the status_id to each notification
+            'status_id': status.id,
             'message': "You uploaded a status. Click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
-            'timestamp': format_timestamp(status.created_at),
-            'is_read': False  # Set to False to remain unread until clicked
+            'timestamp': status.created_at,
+            'is_read': False
         })
 
-        # 2. Notification for replies from unique users (excluding the user's own replies)
+        # 2. Fetch replies from other users within the last 7 weeks, excluding replies from the current user
         status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
         unique_users = set(reply.user for reply in status_replies)
 
@@ -714,12 +704,29 @@ def fetch_notifications(request):
                 'message': message,
                 'link': f'/status/{status.id}/',
                 'avatar': latest_user_avatar,
-                'timestamp': format_timestamp(latest_replies[0].created_at),
+                'timestamp': latest_replies[0].created_at,
                 'is_read': False  # Mark this as unread for replies
             })
 
+    # Sort the notifications by timestamp in descending order
+    notifications.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    # Convert the timestamp for display purposes (e.g., "2h ago")
+    for notification in notifications:
+        notification['timestamp'] = format_timestamp(notification['timestamp'])
+
+    # Paginate notifications (6 per page)
+    paginator = Paginator(notifications, 5)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
     return JsonResponse({
-        'notifications': notifications,
+        'notifications': page_obj.object_list,
         'total_pages': paginator.num_pages
     })
 
