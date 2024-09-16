@@ -667,7 +667,7 @@ def fetch_notifications(request):
     user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago).order_by('-created_at')
 
     # Paginate notifications (6 per page)
-    paginator = Paginator(user_statuses, 6)
+    paginator = Paginator(user_statuses, 5)
 
     try:
         page_obj = paginator.page(page_number)
