@@ -680,6 +680,7 @@ def fetch_notifications(request):
         # 1. Notification for when the user posts a status
         notifications.append({
             'id': f"status_{status.id}",
+            'status_id': status.id,  # Add the status_id to each notification
             'message': "You uploaded a status. Click to view it.",
             'link': f'/status/{status.id}/',
             'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
@@ -726,10 +727,7 @@ def fetch_notifications(request):
 @csrf_exempt
 def mark_notification_as_read(request, notification_id):
     try:
-        # Strip 'status_' prefix if it exists, handle both cases
-        notification_id = notification_id.replace('status_', '')
-
-        # Now try to find the notification
+        # Make sure to fetch the notification without the 'status_' or 'replies_' prefix
         notification = Notification.objects.get(id=notification_id, user=request.user)
         notification.is_read = True
         notification.save()
@@ -784,7 +782,17 @@ def add_reply(request, status_id):
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
     replies = status.replies.all()
+
+    # Check if there is an unread notification related to this status for the current user
+    try:
+        notification = Notification.objects.get(status=status, user=request.user, is_read=False)
+        notification.is_read = True  # Mark as read
+        notification.save()
+    except Notification.DoesNotExist:
+        pass  # No unread notification, do nothing
+
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
+    
     return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
 
 @login_required

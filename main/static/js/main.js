@@ -3442,10 +3442,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const loaderItem = document.createElement("div");
       loaderItem.className = "loader-item";
       loaderItem.innerHTML = `
-      <div class="loader-item-avatar"></div>
-      <div class="loader-item-content"></div>
-      <div class="loader-item-timestamp"></div>
-    `;
+        <div class="loader-item-avatar"></div>
+        <div class="loader-item-content"></div>
+        <div class="loader-item-timestamp"></div>
+      `;
       loader.appendChild(loaderItem);
     }
     notificationItems.appendChild(loader);
@@ -3501,8 +3501,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Mark a specific notification as read when clicked
   async function markNotificationAsRead(notificationId) {
     try {
+      // Strip the 'status_' or 'replies_' prefix from the notification ID if it's present
+      let cleanNotificationId = notificationId
+        .replace("status_", "")
+        .replace("replies_", "");
+
       const response = await fetch(
-        `/notifications/mark_as_read/${notificationId}/`,
+        `/notifications/mark_as_read/${cleanNotificationId}/`,
         {
           method: "POST",
           headers: {
@@ -3511,6 +3516,7 @@ document.addEventListener("DOMContentLoaded", function () {
           },
         }
       );
+
       if (!response.ok) {
         console.error("Failed to mark notification as read.");
       }
@@ -3542,7 +3548,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!renderedNotifications.has(notification.id)) {
         const item = document.createElement("div");
         item.classList.add("notification-item");
-        item.dataset.id = notification.id;
+        item.dataset.id = notification.id; // Correct notification id
 
         // If the notification is unread, apply the unread styling
         if (!notification.is_read) {
@@ -3554,11 +3560,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Make the entire notification clickable and mark as read on click
         item.addEventListener("click", async function () {
-          const notificationId = notification.id.replace("status_", ""); // Remove 'status_' prefix
           if (!notification.is_read) {
-            await markNotificationAsRead(notificationId); // Use the correct notification ID
+            await markNotificationAsRead(notification.id); // Ensure notification.id is passed
             item.classList.remove("unread");
             item.classList.add("read");
+
             const greenDot = item.querySelector(".notification-dot-green");
             if (greenDot) {
               greenDot.remove();
@@ -3567,28 +3573,30 @@ document.addEventListener("DOMContentLoaded", function () {
               .querySelector(".timestamp")
               .classList.remove("timestamp-green");
           }
-          window.location.href = notification.link; // Redirect to notification link
+
+          // Redirect to the status page after marking the notification as read
+          window.location.href = notification.link;
         });
 
         // Build notification item structure
         item.innerHTML = `
-        <img class="notification-avatar" src="${
-          notification.avatar
-        }" alt="Avatar">
-        <div class="notification-content">
-          <div class="message">${notification.message}</div>
-          <div class="timestamp ${
-            notification.is_read ? "" : "timestamp-green"
-          }">
-            ${formatTimestamp(notification.timestamp)}
-          </div>
-        </div>
-        ${
-          notification.is_read
-            ? ""
-            : '<div class="notification-dot-green"></div>'
-        }
-      `;
+            <img class="notification-avatar" src="${
+              notification.avatar
+            }" alt="Avatar">
+            <div class="notification-content">
+              <div class="message">${notification.message}</div>
+              <div class="timestamp ${
+                notification.is_read ? "" : "timestamp-green"
+              }">
+                ${formatTimestamp(notification.timestamp)}
+              </div>
+            </div>
+            ${
+              notification.is_read
+                ? ""
+                : '<div class="notification-dot-green"></div>'
+            }
+          `;
 
         notificationItems.appendChild(item);
 
@@ -3634,15 +3642,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial notification loading when the button is clicked
   notificationButton.addEventListener("click", async function () {
     if (notificationList.style.display === "none") {
+      // Render notifications but don't mark all as read yet
       await renderNotifications(currentPage);
       notificationList.classList.remove("pop-up");
       notificationList.classList.add("animated");
       notificationList.style.display = "block";
 
-      // Mark the notification button as clicked in the backend
-      await markNotificationButtonClicked();
-
-      // Remove the red notification dot when the list is opened
+      // Do NOT mark the notification button as clicked just yet
+      // Only hide the red dot, indicating that notifications have been seen, but not necessarily read
       notificationDot.style.display = "none";
     } else {
       notificationList.classList.remove("animated");
