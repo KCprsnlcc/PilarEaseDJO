@@ -53,7 +53,10 @@ button:hover {
   height: 10px;
   background-color: #689e4b;
   border-radius: 50%;
-  margin-right: 10px;
+  display: inline-block;
+  flex-shrink: 0; /* Prevents dot from shrinking */
+  margin-left: 10px;
+  vertical-align: middle;
 }
 
 .timestamp-green {
@@ -177,15 +180,38 @@ button:hover {
 
 .notification-item {
   display: flex;
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
   align-items: center;
+  padding: 10px;
+  width: 270px; /* Fixed width */
+  height: 80px; /* Fixed height */
+  border-radius: 10px;
   background-color: #fff;
+  border-bottom: 1px solid #ccc;
   cursor: pointer;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   margin: 5px 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* Hide overflow to maintain consistent height */
+}
+
+.notification-item.unread {
+  background-color: #fcfcfc;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.notification-item.read {
+  background-color: #eaeaea;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.notification-item.unread:hover {
+  background-color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.notification-item.read:hover {
+  background-color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .notification-item:hover {
@@ -203,17 +229,24 @@ button:hover {
 
 .notification-content {
   flex-grow: 1;
+  white-space: normal; /* Allow text to wrap */
+  overflow: hidden;
 }
 
 .notification-content .message {
-  font-size: 14px;
+  font-size: 13px; /* Slightly smaller font for better readability */
   color: #0f2326;
+  line-height: 1.2; /* Adjust line height for better spacing */
 }
 
 .notification-content .timestamp {
   font-size: 12px;
   color: #9095a0;
   margin-top: 3px;
+}
+
+.notification-content .timestamp-green {
+  color: #689e4b; /* Green for unread notifications */
 }
 
 .notification-load-more {
