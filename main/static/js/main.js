@@ -1480,10 +1480,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const confirmDeleteButton = document.getElementById("confirmSubmitDelete");
     const cancelDeleteButton = document.getElementById("cancelSubmitDelete");
 
-    // Show the confirmation dialog with pop-in animation
-    deleteDialog.style.display = "flex";
-    deleteDialog.querySelector(".dialog-content").classList.remove("pop-out");
-    deleteDialog.querySelector(".dialog-content").classList.add("pop-in");
+    // Show the delete confirmation dialog with pop-in animation
+    deleteDialog.classList.remove("pop-out");
+    deleteDialog.classList.add("pop-in");
+    deleteDialog.style.display = "block";
 
     // Handle cancel button click
     cancelDeleteButton.onclick = function () {
@@ -1508,6 +1508,7 @@ document.addEventListener("DOMContentLoaded", function () {
             closeDeleteDialog(); // Close dialog after delete
           } else {
             showStatusError(data.message);
+            closeDeleteDialog(); // Close dialog even if there's an error
           }
         })
         .catch((error) => {
@@ -1519,8 +1520,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function closeDeleteDialog() {
       // Add pop-out animation and hide the dialog after the animation
-      deleteDialog.querySelector(".dialog-content").classList.remove("pop-in");
-      deleteDialog.querySelector(".dialog-content").classList.add("pop-out");
+      deleteDialog.classList.remove("pop-in");
+      deleteDialog.classList.add("pop-out");
 
       setTimeout(() => {
         deleteDialog.style.display = "none";

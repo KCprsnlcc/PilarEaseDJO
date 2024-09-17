@@ -73,18 +73,17 @@
 </div>
 {% if user.is_authenticated %}
 <div class="container5" id="boxContainer"></div>
-{% else %}
-<p class="status-hidden">
-  Your emotions matter. Log in to see how others are feeling.
-</p>
-{% endif %}
-
 <!-- Delete Confirm Dialog -->
 <div id="deleteConfirmationDialog">
   <p>Are you sure you want to delete this status?</p>
   <button id="confirmSubmitDelete" class="btn">Confirm</button>
   <button id="cancelSubmitDelete" class="btn">Cancel</button>
 </div>
+{% else %}
+<p class="status-hidden">
+  Your emotions matter. Log in to see how others are feeling.
+</p>
+{% endif %}
 
 <!-- Modal Overlay -->
 <div id="statusModalOverlay" class="modal-overlay"></div>
