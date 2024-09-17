@@ -878,42 +878,48 @@ document.addEventListener("DOMContentLoaded", function () {
           const newBox = document.createElement("div");
           newBox.classList.add("box5", "pop");
           newBox.innerHTML = `
-                    <div class="avatar-content">
-                        <a href="/status/${status.id}/">
-                            <img src="${
-                              status.avatar_url
-                            }" alt="Avatar" class="circle-avatar-placeholder" />
-                        </a>
-                        <p class="username-placeholder">${status.username}</p>
-                    </div>
-                    <div class="content">
-                        <a href="/status/${status.id}/">
-                            <h2 class="title-placeholder">${status.title}</h2>
-                            <p class="description-placeholder">${truncateText(
-                              status.plain_description
-                            )}</p>
-                        </a>
-                        <span class="time-stamp time-stamp-placeholder">${
-                          status.created_at
-                        } ago</span>
-                        <span class="feelings feelings-placeholder">${getEmotionIcon(
-                          status.emotion
-                        )} ${mapEmotion(status.emotion)}</span>
-                        <span class="replies replies-placeholder">${
-                          status.replies
-                        } ${status.replies === 1 ? "Reply" : "Replies"}</span>
-                        ${
-                          status.can_delete
-                            ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
-                            : ""
-                        }
-                        ${
-                          !status.can_delete
-                            ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
-                            : ""
-                        }
-                    </div>
-                `;
+                  <div class="avatar-content">
+                      <a href="/status/${status.id}/">
+                          <img src="${
+                            status.avatar_url
+                          }" alt="Avatar" class="circle-avatar-placeholder" />
+                      </a>
+                      <p class="username-placeholder">${status.username}</p>
+                  </div>
+                  <div class="content">
+                      <a href="/status/${status.id}/">
+                          <h2 class="title-placeholder">${status.title}</h2>
+                          <p class="description-placeholder">${truncateText(
+                            status.plain_description
+                          )}</p>
+                      </a>
+                      <span class="time-stamp time-stamp-placeholder">${
+                        status.created_at
+                      } ago</span>
+                      <span class="feelings feelings-placeholder">${getEmotionIcon(
+                        status.emotion
+                      )} ${mapEmotion(status.emotion)}</span>
+                      <span class="replies replies-placeholder">${
+                        status.replies
+                      } ${status.replies === 1 ? "Reply" : "Replies"}</span>
+                      ${
+                        status.can_delete
+                          ? `
+                            <button id="edit-${status.id}" class="edit-button status">
+                              <i class='bx bx-edit bx-tada'></i>
+                            </button>
+                            <button id="delete-${status.id}" class="delete-button status">
+                              <i class='bx bxs-trash bx-tada bx-flip-horizontal'></i>
+                            </button>`
+                          : ""
+                      }
+                      ${
+                        !status.can_delete
+                          ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
+                          : ""
+                      }
+                  </div>
+              `;
           container.appendChild(newBox);
 
           if (status.can_delete) {
@@ -921,6 +927,13 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
+              });
+
+            // Add event listener for the edit button
+            document
+              .getElementById(`edit-${status.id}`)
+              .addEventListener("click", function () {
+                editStatus(status.id);
               });
           } else {
             document
