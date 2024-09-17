@@ -340,6 +340,88 @@ document.addEventListener("DOMContentLoaded", function () {
 
   addPopAnimation();
 
+  document.addEventListener("DOMContentLoaded", () => {
+    const replyButtons = document.querySelectorAll(".reply-to-reply-btn");
+    const replyTextArea = document.getElementById("replyText");
+    const parentReplyIdInput = document.getElementById("parentReplyId");
+
+    // Handle click for each reply button
+    replyButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const username = this.getAttribute("data-username");
+        const replyId = this.getAttribute("data-reply-id");
+
+        // Mention the username in the reply text area
+        replyTextArea.value = `@${username} `;
+
+        // Set the hidden input with the parent reply ID
+        parentReplyIdInput.value = replyId;
+
+        // Scroll to the reply form and focus
+        document.getElementById("replyForm").scrollIntoView();
+        replyTextArea.focus();
+      });
+    });
+
+    // Handle form submission for new replies
+    const replyForm = document.getElementById("replyForm");
+    replyForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(replyForm);
+      const replyText = formData.get("text").trim();
+      const parentReplyId = formData.get("parentReplyId").trim();
+      const csrfToken = formData.get("csrfmiddlewaretoken");
+
+      if (replyText) {
+        fetch(`/add_reply/${statusId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: replyText,
+            parentReplyId: parentReplyId,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const replyElement = document.createElement("div");
+              replyElement.classList.add("reply");
+
+              replyElement.innerHTML = `
+              <img src="${data.reply.avatar_url}" class="avatar">
+              <strong>${data.reply.username}</strong>
+              <p>${data.reply.text}</p>
+              <span>${data.reply.created_at}</span>
+            `;
+
+              // Insert reply into nested or main list
+              if (parentReplyId) {
+                const nestedContainer = document.getElementById(
+                  `nested-replies-${parentReplyId}`
+                );
+                nestedContainer.appendChild(replyElement);
+              } else {
+                document
+                  .getElementById("repliesList")
+                  .appendChild(replyElement);
+              }
+
+              // Clear the form
+              replyTextArea.value = "";
+              parentReplyIdInput.value = "";
+            }
+          })
+          .catch((error) => {
+            console.error("Error submitting reply:", error);
+          });
+      }
+    });
+  });
+
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>
@@ -636,17 +718,40 @@ document.addEventListener("DOMContentLoaded", function () {
   function countTokens(text) {
     return text.split(/\s+/).filter(Boolean).length;
   }
+
+  // Function to count words (splitting by spaces and filtering empty entries)
+  function countWords(text) {
+    return text.split(/\s+/).filter(Boolean).length; // Same logic as counting tokens
+  }
+
   // Update the token and character count
   function updateCounters() {
     const descriptionElement = document.getElementById("description");
-    const characterCount = descriptionElement.textContent.length;
-    const tokenCount = countTokens(descriptionElement.textContent);
 
+    // Check if the description is showing the placeholder; if so, ignore counting
+    if (descriptionElement.classList.contains("placeholder")) {
+      document.getElementById("characterCount").textContent = `0 characters`;
+      document.getElementById("wordCount").textContent = `0 words`;
+      document.getElementById("tokenCount").textContent = `0 tokens`;
+      return;
+    }
+
+    // Get the text content of the description (ignoring placeholder)
+    const plainDescription = descriptionElement.textContent.trim();
+
+    // Update the counts
+    const characterCount = plainDescription.length;
+    const wordCount = countWords(plainDescription);
+    const tokenCount = countTokens(plainDescription);
+
+    // Update the DOM elements with the counts
     document.getElementById(
       "characterCount"
     ).textContent = `${characterCount} characters`;
+    document.getElementById("wordCount").textContent = `${wordCount} words`;
     document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
 
+    // If token count exceeds the limit, show the max token count
     if (tokenCount > 512) {
       document.getElementById(
         "tokenCount"
@@ -1653,7 +1758,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusModal = document.getElementById("statusModal");
     const statusModalOverlay = document.getElementById("statusModalOverlay");
 
-    // Start pop-out and fade-out animations
+    // Add pop-out and fade-out animations
     statusModal.classList.remove("pop-in");
     statusModal.classList.add("pop-out");
     statusModalOverlay.classList.remove("fade-in");
@@ -1662,10 +1767,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // Once the animations finish, hide the modal and overlay
     setTimeout(() => {
       statusModal.style.display = "none"; // Hide modal
-      statusModal.classList.remove("pop-out"); // Remove pop-out class
+      statusModal.classList.remove("pop-out"); // Remove pop-out class after animation
 
       statusModalOverlay.style.display = "none"; // Hide overlay
-      statusModalOverlay.classList.remove("fade-out"); // Remove fade-out class
+      statusModalOverlay.classList.remove("fade-out"); // Remove fade-out class after animation
 
       // If there's a callback (e.g., a page reload or additional action), call it
       if (callback) {

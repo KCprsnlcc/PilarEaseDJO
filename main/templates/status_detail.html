@@ -59,16 +59,24 @@
     <span>Posted by {{ status.user.username }} - {{ status.created_at }}</span>
   </div>
   <div class="replies-section">
-    <h3>Replies</h3>
-    <div id="repliesList">
-      {% for reply in replies %}
-      <div class="reply">
-        <strong>{{ reply.user.username }}</strong>
+  <h3>Replies</h3>
+  <div id="repliesList">
+    {% for reply in replies %}
+    <div class="reply">
+      <img src="{{ reply.avatar_url }}" alt="Avatar" class="reply-avatar">
+      <div class="reply-content">
+        <strong>{{ reply.username }}</strong>
         <p>{{ reply.text }}</p>
-        <span>{{ reply.created_at }}</span>
+        <div class="reply-footer">
+          <span class="reply-timestamp">{{ reply.created_at }}</span>
+          <span class="reply-label">{{ reply.label }}</span>
+        </div>
       </div>
-      {% endfor %}
     </div>
+    {% endfor %}
+  </div>
+</div>
+
     <form
       id="replyForm"
       action="{% url 'submit_reply' status.id %}"

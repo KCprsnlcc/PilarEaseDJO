@@ -138,6 +138,10 @@ class Reply(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Reply by {self.user.username} on {self.status.title}"
 class ContactUs(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()

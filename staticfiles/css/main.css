@@ -383,6 +383,68 @@ button:hover {
   margin-bottom: 15px;
 }
 
+.nested-replies {
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 1px solid #e0e0e0;
+}
+
+.nested-reply-form {
+  margin-top: 10px;
+}
+
+.nested-reply-textarea {
+  width: 100%;
+  height: 60px;
+  padding: 10px;
+  margin-bottom: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.nested-reply-submit {
+  background-color: #689e4b;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.nested-reply-submit:hover {
+  background-color: #3b5a2b;
+}
+
+.reply-to-reply-btn {
+  background-color: #0f2326;
+  color: white;
+  border-radius: 5px;
+  padding: 5px 10px;
+  transition: all 0.3s ease;
+}
+
+.reply-to-reply-btn:hover {
+  background-color: #2f4550;
+}
+
+/* Animation for new input field */
+.reply-form {
+  display: none;
+  margin-top: 10px;
+}
+
+.reply-form.show {
+  display: block;
+}
+
+textarea.reply-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: Arial, sans-serif;
+}
+
 button[type="submit"] {
   display: inline-block;
   padding: 10px 20px;
@@ -1957,9 +2019,9 @@ button[type="submit"]:hover {
 
 #deleteConfirmationDialog {
   position: fixed;
-  top: 200px;
-  left: 150px;
-  width: 300px;
+  top: 370px;
+  left: 780px;
+  width: 270px;
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 20px;

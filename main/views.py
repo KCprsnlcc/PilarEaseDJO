@@ -791,33 +791,48 @@ def add_reply(request, status_id):
         status = get_object_or_404(Status, id=status_id)
         reply = Reply.objects.create(status=status, user=request.user, text=text)
 
+        # Format the timestamp for the reply
+        created_at = format_timestamp(reply.created_at)
+
         # Return a success response with the reply details
-        return JsonResponse({'success': True, 'reply': {
-            'id': reply.id,
-            'username': reply.user.username,
-            'text': reply.text,
-            'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
-        }})
+        return JsonResponse({
+            'success': True,
+            'reply': {
+                'id': reply.id,
+                'username': reply.user.username,
+                'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+                'text': reply.text,
+                'created_at': created_at,  # Formatted timestamp
+                'label': 'Reply'
+            }
+        })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
-
 
 @login_required
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
     replies = status.replies.all()
 
-    # Check if there is an unread notification related to this status for the current user
-    try:
-        notification = Notification.objects.get(status=status, user=request.user, is_read=False)
-        notification.is_read = True  # Mark as read
-        notification.save()
-    except Notification.DoesNotExist:
-        pass  # No unread notification, do nothing
+    # Format replies with avatars and human-readable timestamps
+    formatted_replies = [
+        {
+            'username': reply.user.username,
+            'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'text': reply.text,
+            'created_at': format_timestamp(reply.created_at),  # Use helper to format timestamp
+            'label': 'Reply'
+        }
+        for reply in replies
+    ]
 
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
     
-    return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
+    return render(request, 'status_detail.html', {
+        'status': status, 
+        'replies': formatted_replies,  # Pass formatted replies
+        'avatar_url': avatar_url
+    })
 
 @login_required
 @csrf_exempt
