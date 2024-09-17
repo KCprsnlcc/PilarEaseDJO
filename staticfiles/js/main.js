@@ -1653,7 +1653,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const statusModal = document.getElementById("statusModal");
     const statusModalOverlay = document.getElementById("statusModalOverlay");
 
-    // Add pop-out and fade-out animations
+    // Start pop-out and fade-out animations
     statusModal.classList.remove("pop-in");
     statusModal.classList.add("pop-out");
     statusModalOverlay.classList.remove("fade-in");
@@ -1662,10 +1662,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // Once the animations finish, hide the modal and overlay
     setTimeout(() => {
       statusModal.style.display = "none"; // Hide modal
-      statusModal.classList.remove("pop-out"); // Remove pop-out class after animation
+      statusModal.classList.remove("pop-out"); // Remove pop-out class
 
       statusModalOverlay.style.display = "none"; // Hide overlay
-      statusModalOverlay.classList.remove("fade-out"); // Remove fade-out class after animation
+      statusModalOverlay.classList.remove("fade-out"); // Remove fade-out class
 
       // If there's a callback (e.g., a page reload or additional action), call it
       if (callback) {
