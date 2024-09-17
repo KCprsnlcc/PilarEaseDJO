@@ -667,13 +667,14 @@ def fetch_notifications(request):
 
     # 1. Add notifications for statuses
     for status in user_statuses:
-        # Create or get a notification entry
+        # Create or get a notification entry for the status
         notification, created = Notification.objects.get_or_create(
             user=request.user, 
             status=status,
             defaults={'is_read': False}
         )
 
+        # Add notification for the uploaded status
         notifications.append({
             'id': f"status_{status.id}",
             'status_id': status.id,
@@ -686,13 +687,15 @@ def fetch_notifications(request):
 
         # Fetch replies for the status
         status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
-        unique_users = set(reply.user for reply in status_replies)
+        unique_users = {reply.user for reply in status_replies}  # Ensure unique users
 
         if unique_users:
-            latest_replies = status_replies[:2]
-            latest_usernames = [reply.user.username for reply in latest_replies]
-            latest_user_avatar = latest_replies[0].user.profile.avatar.url if latest_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
+            # Fetch only the latest reply from unique users
+            latest_unique_replies = list(status_replies.filter(user__in=unique_users))[:2]
+            latest_usernames = [reply.user.username for reply in latest_unique_replies]
+            latest_user_avatar = latest_unique_replies[0].user.profile.avatar.url if latest_unique_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
 
+            # Create the appropriate message based on the number of unique users
             if len(unique_users) == 1:
                 message = f"{latest_usernames[0]} replied to your status, click to see it."
             elif len(unique_users) == 2:
@@ -707,12 +710,13 @@ def fetch_notifications(request):
                 defaults={'is_read': False}
             )
 
+            # Add reply notifications
             notifications.append({
                 'id': f"replies_{status.id}",
                 'message': message,
                 'link': f'/status/{status.id}/',
                 'avatar': latest_user_avatar,
-                'timestamp': latest_replies[0].created_at,  # Raw timestamp (sorting will be based on this)
+                'timestamp': latest_unique_replies[0].created_at,  # Raw timestamp (sorting will be based on this)
                 'is_read': notification.is_read
             })
 
