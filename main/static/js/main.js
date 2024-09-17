@@ -906,10 +906,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         status.can_delete
                           ? `
                             <button id="edit-${status.id}" class="edit-button status">
-                              <i class='bx bx-edit bx-tada'></i>
+                              <i class='bx bx-edit'></i>
                             </button>
                             <button id="delete-${status.id}" class="delete-button status">
-                              <i class='bx bxs-trash bx-tada bx-flip-horizontal'></i>
+                              <i class='bx bxs-trash bx-flip-horizontal'></i>
                             </button>`
                           : ""
                       }
@@ -1476,27 +1476,56 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   function deleteStatus(statusId) {
-    fetch(`/delete_status/${statusId}/`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          document
-            .getElementById(`delete-${statusId}`)
-            .closest(".box5")
-            .remove();
-        } else {
-          showStatusError(data.message);
-        }
+    const deleteDialog = document.getElementById("deleteConfirmationDialog");
+    const confirmDeleteButton = document.getElementById("confirmSubmitDelete");
+    const cancelDeleteButton = document.getElementById("cancelSubmitDelete");
+
+    // Show the confirmation dialog with pop-in animation
+    deleteDialog.style.display = "flex";
+    deleteDialog.querySelector(".dialog-content").classList.remove("pop-out");
+    deleteDialog.querySelector(".dialog-content").classList.add("pop-in");
+
+    // Handle cancel button click
+    cancelDeleteButton.onclick = function () {
+      closeDeleteDialog();
+    };
+
+    // Handle confirm delete button click
+    confirmDeleteButton.onclick = function () {
+      fetch(`/delete_status/${statusId}/`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
       })
-      .catch((error) => {
-        console.error("Error deleting status:", error);
-        showStatusError("Error deleting status. Please try again.");
-      });
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            document
+              .getElementById(`delete-${statusId}`)
+              .closest(".box5")
+              .remove();
+            closeDeleteDialog(); // Close dialog after delete
+          } else {
+            showStatusError(data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error deleting status:", error);
+          showStatusError("Error deleting status. Please try again.");
+          closeDeleteDialog(); // Close dialog even if there's an error
+        });
+    };
+
+    function closeDeleteDialog() {
+      // Add pop-out animation and hide the dialog after the animation
+      deleteDialog.querySelector(".dialog-content").classList.remove("pop-in");
+      deleteDialog.querySelector(".dialog-content").classList.add("pop-out");
+
+      setTimeout(() => {
+        deleteDialog.style.display = "none";
+      }, 300); // Match the animation duration
+    }
   }
 
   function getEmotionIcon(emotion) {

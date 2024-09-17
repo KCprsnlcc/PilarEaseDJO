@@ -1955,21 +1955,67 @@ button[type="submit"]:hover {
   color: #689e4b; /* Hover color */
 }
 
+#deleteConfirmationDialog {
+  position: fixed;
+  top: 200px;
+  left: 150px;
+  width: 300px;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000100;
+  display: none;
+  text-align: center;
+}
+
+#deleteConfirmationDialog p {
+  margin-bottom: 20px;
+  color: #0f2326;
+}
+
+#deleteConfirmationDialog .btn {
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin: 0 10px;
+}
+
+#confirmSubmitDelete {
+  transition: background-color 0.3s ease;
+  flex: 1;
+  margin-right: 10px;
+}
+
+#cancelSubmitDelete {
+  transition: background-color 0.3s ease;
+  background-color: #e74c3c;
+  color: white;
+  flex: 1;
+}
+
+#cancelSubmitDelete:hover {
+  color: white;
+  background-color: #8e2d23;
+}
+
 .edit-button.status {
-    position: absolute;
-    top: 0px;
-    left: 460px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 24px;
-    transition: background-color 0.3s ease,color 0.3s ease;
-    color: #0f2326
+  position: absolute;
+  top: 0px;
+  left: 460px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: #0f2326;
 }
 
 .edit-button.status:hover {
-    transition: background-color 0.3s ease,color 0.3s ease;
-    color: #689e4b
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: #689e4b;
 }
 
 /* Error Message Style */
