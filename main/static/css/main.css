@@ -350,7 +350,7 @@ button:hover {
 .reply {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  padding: 10px 1px 15px;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -379,15 +379,13 @@ button:hover {
 .reply-label {
   color: #0f2326;
   font-weight: bold;
-  margin-top: 0px;
 }
 
 .reply-footer {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    margin-bottom:10px;
-    gap: 12px
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
 }
 
 .reply p {
