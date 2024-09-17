@@ -1957,9 +1957,9 @@ button[type="submit"]:hover {
 
 #deleteConfirmationDialog {
   position: fixed;
+  top: 370px;
   left: 780px;
-  width: 300px;
-  width: 300px;
+  width: 270px;
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 20px;

@@ -636,17 +636,40 @@ document.addEventListener("DOMContentLoaded", function () {
   function countTokens(text) {
     return text.split(/\s+/).filter(Boolean).length;
   }
+
+  // Function to count words (splitting by spaces and filtering empty entries)
+  function countWords(text) {
+    return text.split(/\s+/).filter(Boolean).length; // Same logic as counting tokens
+  }
+
   // Update the token and character count
   function updateCounters() {
     const descriptionElement = document.getElementById("description");
-    const characterCount = descriptionElement.textContent.length;
-    const tokenCount = countTokens(descriptionElement.textContent);
 
+    // Check if the description is showing the placeholder; if so, ignore counting
+    if (descriptionElement.classList.contains("placeholder")) {
+      document.getElementById("characterCount").textContent = `0 characters`;
+      document.getElementById("wordCount").textContent = `0 words`;
+      document.getElementById("tokenCount").textContent = `0 tokens`;
+      return;
+    }
+
+    // Get the text content of the description (ignoring placeholder)
+    const plainDescription = descriptionElement.textContent.trim();
+
+    // Update the counts
+    const characterCount = plainDescription.length;
+    const wordCount = countWords(plainDescription);
+    const tokenCount = countTokens(plainDescription);
+
+    // Update the DOM elements with the counts
     document.getElementById(
       "characterCount"
     ).textContent = `${characterCount} characters`;
+    document.getElementById("wordCount").textContent = `${wordCount} words`;
     document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
 
+    // If token count exceeds the limit, show the max token count
     if (tokenCount > 512) {
       document.getElementById(
         "tokenCount"
