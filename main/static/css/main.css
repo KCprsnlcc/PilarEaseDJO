@@ -383,10 +383,11 @@ button:hover {
 }
 
 .reply-footer {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom:10px;
+    gap: 12px
 }
 
 .reply p {
