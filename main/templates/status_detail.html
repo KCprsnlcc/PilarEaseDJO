@@ -69,7 +69,12 @@
         <p>{{ reply.text }}</p>
         <div class="reply-footer">
           <span class="reply-timestamp">{{ reply.created_at }}</span>
-          <span class="reply-label">{{ reply.label }}</span>
+          <span class="reply-label" data-reply-id="{{ reply.id }}">Reply</span>
+        </div>
+        <!-- Hidden reply form -->
+        <div class="reply-form-container" id="replyForm-{{ reply.id }}" style="display: none;">
+          <textarea placeholder="Write a reply..."></textarea>
+          <button class="submit-reply">Submit Reply</button>
         </div>
       </div>
     </div>

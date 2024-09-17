@@ -349,7 +349,7 @@ button:hover {
 
 .reply {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Changed from center to flex-start */
   padding: 10px 1px 15px;
   border-bottom: 1px solid #e0e0e0;
 }
@@ -359,11 +359,13 @@ button:hover {
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
+  flex-shrink: 0; /* Prevents the avatar from shrinking */
 }
 
 .reply-content {
   display: flex;
   flex-direction: column;
+  width: 100%; /* Ensure the reply content takes the remaining width */
 }
 
 .reply strong {
@@ -379,6 +381,40 @@ button:hover {
 .reply-label {
   color: #0f2326;
   font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.reply-label:hover {
+  color: #005f5f;
+}
+
+.reply-form-container {
+  display: none;
+  margin-top: 10px;
+  animation: fadeIn 0.5s ease;
+}
+
+.reply-form-container textarea {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  padding: 5px;
+  resize: none; /* Disable resizing */
+}
+
+reply-form-container button {
+  padding: 5px 10px;
+  background-color: #689e4b;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.reply-form-container button:hover {
+  background-color: #3b5a2b;
 }
 
 .reply-footer {
@@ -398,17 +434,19 @@ button:hover {
 }
 
 #replyForm {
+  margin-bottom: 10;
   margin-top: 20px;
 }
 
 #replyText {
   width: 100%;
-  height: 100px;
+  height: 80px;
   padding: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   font-family: Gothic A1;
   border: 1px solid #ccc;
   border-radius: 5px;
+  resize: none; /* Disable resizing */
 }
 
 .description-container {

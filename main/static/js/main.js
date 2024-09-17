@@ -340,6 +340,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   addPopAnimation();
 
+  const replyLabels = document.querySelectorAll(".reply-label");
+  replyLabels.forEach((label) => {
+    label.addEventListener("click", function () {
+      const replyId = this.getAttribute("data-reply-id");
+      const replyForm = document.getElementById(`replyForm-${replyId}`);
+
+      if (
+        replyForm.style.display === "none" ||
+        replyForm.style.display === ""
+      ) {
+        replyForm.style.display = "block";
+      } else {
+        replyForm.style.display = "none";
+      }
+    });
+  });
+
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>
