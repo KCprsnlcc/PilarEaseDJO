@@ -377,7 +377,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const replyText = textarea.value;
 
       // Use AJAX to submit the reply without reloading the page
-      fetch(`/add_reply/{{ status.id }}/${replyId}/`, {
+      const statusId = document
+        .querySelector(".status-detail-container")
+        .getAttribute("data-status-id");
+
+      // Use the statusId in your fetch call
+      fetch(`/add_reply/${statusId}/${replyId}/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
