@@ -869,10 +869,14 @@ def status_detail(request, status_id):
 
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
     
+     # Fetch similar statuses (excluding the current one)
+    similar_statuses = Status.objects.filter(emotion=status.emotion).exclude(id=status.id)[:10]
+    
     return render(request, 'status_detail.html', {
         'status': status,
-        'replies': formatted_replies,  # Pass replies up to 3 levels
-        'avatar_url': avatar_url
+        'replies': formatted_replies,
+        'avatar_url': avatar_url,
+        'similar_statuses': similar_statuses,  # Pass similar statuses to the template
     })
 
 @login_required
