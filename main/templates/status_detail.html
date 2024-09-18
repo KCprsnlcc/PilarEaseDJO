@@ -54,44 +54,71 @@
 
   <!-- Replies Section -->
   <div class="replies-section">
-    <h3>Replies</h3>
-    <div id="repliesList">
-      {% for reply in replies %}
-      <div class="reply"  id="reply-{{ reply.id }}">
-        <img src="{{ reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
-        <div class="reply-content">
-          <strong>{{ reply.username }}</strong>
-          <p>{{ reply.text }}</p>
-          <div class="reply-footer">
-            <span class="reply-timestamp">{{ reply.created_at }}</span>
-            <span class="reply-label" data-reply-id="{{ reply.id }}" data-username="{{ reply.username }}">Reply</span>
-          </div>
-          <!-- Nested Replies -->
+  <h3>Replies</h3>
+  <div id="repliesList">
+    {% for reply in replies %}
+    <div class="reply level-1" id="reply-{{ reply.id }}">
+      <img src="{{ reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
+      <div class="reply-content">
+        <strong>{{ reply.username }}</strong>
+        <p>{{ reply.text }}</p>
+        <div class="reply-footer">
+          <span class="reply-timestamp">{{ reply.created_at }}</span>
+          <span class="reply-label" data-reply-id="{{ reply.id }}" data-username="{{ reply.username }}" data-level="1">Reply</span>
+        </div>
+        <!-- Nested Replies Level 2 -->
         <div class="nested-replies" id="nestedReplies-{{ reply.id }}">
-             {% for nested_reply in reply.nested_replies %}
-            <div class="reply nested-reply">
-              <img src="{{ nested_reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
-              <div class="reply-content">
-                <strong>{{ nested_reply.username }}</strong>
-                <p>{{ nested_reply.text }}</p>
-                <div class="reply-footer">
-                  <span class="reply-timestamp">{{ nested_reply.created_at }}</span>
-                  <span class="reply-label" data-reply-id="{{ nested_reply.id }}" data-username="{{ nested_reply.username }}">Reply</span>
+          {% for nested_reply in reply.nested_replies %}
+          <div class="reply nested-reply level-2" id="reply-{{ nested_reply.id }}">
+            <img src="{{ nested_reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
+            <div class="reply-content">
+              <strong>{{ nested_reply.username }}</strong>
+              <p>{{ nested_reply.text }}</p>
+              <div class="reply-footer">
+                <span class="reply-timestamp">{{ nested_reply.created_at }}</span>
+                <span class="reply-label" data-reply-id="{{ nested_reply.id }}" data-username="{{ nested_reply.username }}" data-level="2">Reply</span>
+              </div>
+              <!-- Nested Replies Level 3 -->
+              <div class="nested-replies" id="nestedReplies-{{ nested_reply.id }}">
+                {% for nested_nested_reply in nested_reply.nested_replies %}
+                <div class="reply nested-reply level-3" id="reply-{{ nested_nested_reply.id }}">
+                  <img src="{{ nested_nested_reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
+                  <div class="reply-content">
+                    <strong>{{ nested_nested_reply.username }}</strong>
+                    <p>{{ nested_nested_reply.text }}</p>
+                    <div class="reply-footer">
+                      <span class="reply-timestamp">{{ nested_nested_reply.created_at }}</span>
+                      <span class="reply-label" data-reply-id="{{ nested_nested_reply.id }}" data-username="{{ nested_nested_reply.username }}" data-level="3">Reply</span>
+                    </div>
+                    <!-- No further nesting beyond Level 3 -->
+                    <!-- Optional: Reply Form for Level 3 replies -->
+                    <div class="reply-form-container" id="replyForm-{{ nested_nested_reply.id }}" style="display: none;">
+                      <textarea placeholder="Write a reply..."></textarea>
+                      <button class="submit-reply" data-reply-id="{{ nested_nested_reply.id }}" data-level="3">Submit Reply</button>
+                    </div>
+                  </div>
                 </div>
+                {% endfor %}
+              </div>
+              <!-- Reply Form for Level 2 replies -->
+              <div class="reply-form-container" id="replyForm-{{ nested_reply.id }}" style="display: none;">
+                <textarea placeholder="Write a reply..."></textarea>
+                <button class="submit-reply" data-reply-id="{{ nested_reply.id }}" data-level="2">Submit Reply</button>
               </div>
             </div>
-            {% endfor %}
           </div>
-          <!-- Parent Reply Form -->
-          <div class="reply-form-container" id="replyForm-{{ reply.id }}" style="display: none;">
-            <textarea placeholder="Write a reply..."></textarea>
-            <button class="submit-reply" data-reply-id="{{ reply.id }}">Submit Reply</button>
-          </div>
+          {% endfor %}
+        </div>
+        <!-- Reply Form for Level 1 replies -->
+        <div class="reply-form-container" id="replyForm-{{ reply.id }}" style="display: none;">
+          <textarea placeholder="Write a reply..."></textarea>
+          <button class="submit-reply" data-reply-id="{{ reply.id }}" data-level="1">Submit Reply</button>
         </div>
       </div>
-      {% endfor %}
     </div>
+    {% endfor %}
   </div>
+</div>
 
     <form
       id="replyForm"

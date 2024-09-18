@@ -354,6 +354,22 @@ button:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
+.reply.level-1 {
+  margin-left: 0;
+}
+
+.reply.level-2 {
+  margin-left: 20px;
+  border-left: 2px solid #ccc;
+  padding-left: 10px;
+}
+
+.reply.level-3 {
+  margin-left: 40px;
+  border-left: 2px solid #ccc;
+  padding-left: 10px;
+}
+
 .nested-reply {
   margin-left: 40px; /* Indent nested replies */
 }

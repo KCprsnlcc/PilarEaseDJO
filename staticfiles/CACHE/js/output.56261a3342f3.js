@@ -10,7 +10,65 @@ function forgotPasswordErrorBox(error){const errorBox=document.getElementById("f
 function forgotPasswordCooldownBox(message){const cooldownBox=document.getElementById("forgotPasswordCooldownBox");document.getElementById("forgotPasswordCooldownContent").innerText=message;cooldownBox.classList.remove("pop-out");cooldownBox.classList.add("pop-in");cooldownBox.style.display="block";setTimeout(()=>{cooldownBox.classList.remove("pop-in");cooldownBox.classList.add("pop-out");setTimeout(()=>{cooldownBox.style.display="none";cooldownBox.classList.remove("pop-in","pop-out");},300);},3000);}
 contactUsButton.addEventListener("click",function(event){event.preventDefault();contactUsModal.style.display="block";setTimeout(()=>{contactUsModal.classList.add("pop-in");document.querySelector(".modal-content").classList.add("pop-in");},10);});closeContactUsModal.addEventListener("click",function(){document.querySelector(".modal-content").classList.add("pop-out");contactUsModal.classList.add("pop-out");setTimeout(()=>{contactUsModal.style.display="none";document.querySelector(".modal-content").classList.remove("pop-out");contactUsModal.classList.remove("pop-out");},300);});window.addEventListener("click",function(event){if(event.target===contactUsModal){document.querySelector(".modal-content").classList.add("pop-out");contactUsModal.classList.add("pop-out");setTimeout(()=>{contactUsModal.style.display="none";document.querySelector(".modal-content").classList.remove("pop-out");contactUsModal.classList.remove("pop-out");},300);}});const contactUsForm=document.getElementById("contactUsForm");contactUsForm.addEventListener("submit",function(event){event.preventDefault();const formData=new FormData(contactUsForm);fetch("/contact_us/",{method:"POST",body:JSON.stringify({name:formData.get("name"),email:formData.get("email"),subject:formData.get("subject"),message:formData.get("message"),}),headers:{"Content-Type":"application/json","X-CSRFToken":getCookie("csrftoken"),},}).then((response)=>response.json()).then((data)=>{if(data.success){alert("Your message has been sent successfully!");contactUsModal.style.display="none";contactUsForm.reset();}else{alert("There was an error sending your message. Please try again.");}}).catch((error)=>{console.error("Error:",error);alert("There was an error sending your message. Please try again.");});});const backButton=document.getElementById("backButton");if(backButton){backButton.addEventListener("click",function(){window.location.href="/";});}
 function addPopAnimation(){const statusDetailContainer=document.querySelector(".status-detail-container");if(statusDetailContainer){statusDetailContainer.classList.add("pop-in");}}
-addPopAnimation();categoryElements.forEach((categoryElement)=>{categoryElement.addEventListener("click",function(){categoryElements.forEach((el)=>el.querySelector("span").classList.remove("active"));this.querySelector("span").classList.add("active");activeCategory=this.id;page=1;document.getElementById("boxContainer").innerHTML="";fetchStatuses(page,activeCategory);});});fetchStatuses(page,activeCategory);window.addEventListener("scroll",()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-100&&!isLoading&&hasNext){page++;fetchStatuses(page);}});function showLoader(){statusLoader.style.display="block";}
+addPopAnimation();const replyLabels=document.querySelectorAll(".reply-label");replyLabels.forEach((label)=>{label.addEventListener("click",function(){const replyId=this.getAttribute("data-reply-id");const replyForm=document.getElementById(`replyForm-${replyId}`);const username=this.getAttribute("data-username");const level=parseInt(this.getAttribute("data-level"));if(replyForm.style.display==="none"||replyForm.style.display===""){replyForm.style.display="block";}else{replyForm.style.display="none";}
+const textarea=replyForm.querySelector("textarea");textarea.value=`@${username} `;textarea.focus();});});const submitReplyButtons=document.querySelectorAll(".submit-reply");submitReplyButtons.forEach((button)=>{button.addEventListener("click",function(){const replyId=this.getAttribute("data-reply-id");const level=parseInt(this.getAttribute("data-level"));const replyForm=document.getElementById(`replyForm-${replyId}`);const textarea=replyForm.querySelector("textarea");const replyText=textarea.value;const statusId=document.querySelector(".status-detail-container").getAttribute("data-status-id");let parentReplyId=replyId;if(level>=3){parentReplyId=null;}
+let url=`/add_reply/${statusId}/`;if(parentReplyId){url+=`${parentReplyId}/`;}
+fetch(url,{method:"POST",headers:{"Content-Type":"application/json","X-CSRFToken":"{{ csrf_token }}",},body:JSON.stringify({text:replyText}),}).then((response)=>response.json()).then((data)=>{if(data.success){if(level>=3){const nestedRepliesContainer=replyForm.closest(".nested-replies");const newReply=`
+              <div class="reply nested-reply level-3" id="reply-${data.reply.id}">
+                <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
+                <div class="reply-content">
+                  <strong>${data.reply.username}</strong>
+                  <p>${data.reply.text}</p>
+                  <div class="reply-footer">
+                    <span class="reply-timestamp">${data.reply.created_at}</span>
+                    <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}" data-level="3">Reply</span>
+                  </div>
+                  <!-- Reply Form -->
+                  <div class="reply-form-container" id="replyForm-${data.reply.id}" style="display: none;">
+                    <textarea placeholder="Write a reply..."></textarea>
+                    <button class="submit-reply" data-reply-id="${data.reply.id}" data-level="3">Submit Reply</button>
+                  </div>
+                </div>
+              </div>
+              `;nestedRepliesContainer.insertAdjacentHTML("beforeend",newReply);}else{const nestedRepliesContainer=document.getElementById(`nestedReplies-${replyId}`);const newReply=`
+              <div class="reply nested-reply level-${level + 1}" id="reply-${
+                data.reply.id
+              }">
+                <img src="${
+                  data.reply.avatar_url
+                }" alt="Avatar" class="reply-avatar" />
+                <div class="reply-content">
+                  <strong>${data.reply.username}</strong>
+                  <p>${data.reply.text}</p>
+                  <div class="reply-footer">
+                    <span class="reply-timestamp">${
+                      data.reply.created_at
+                    }</span>
+                    <span class="reply-label" data-reply-id="${
+                      data.reply.id
+                    }" data-username="${data.reply.username}" data-level="${
+                level + 1
+              }">Reply</span>
+                  </div>
+                  <!-- Reply Form -->
+                  <div class="reply-form-container" id="replyForm-${
+                    data.reply.id
+                  }" style="display: none;">
+                    <textarea placeholder="Write a reply..."></textarea>
+                    <button class="submit-reply" data-reply-id="${
+                      data.reply.id
+                    }" data-level="${level + 1}">Submit Reply</button>
+                  </div>
+                </div>
+                <!-- Nested Replies Container -->
+                <div class="nested-replies" id="nestedReplies-${
+                  data.reply.id
+                }"></div>
+              </div>
+              `;nestedRepliesContainer.insertAdjacentHTML("beforeend",newReply);}
+textarea.value="";replyForm.style.display="none";attachReplyLabelListeners();attachSubmitReplyListeners();}}).catch((error)=>{console.error("Error:",error);});});});function attachReplyLabelListeners(){const replyLabels=document.querySelectorAll(".reply-label");replyLabels.forEach((label)=>{if(!label.hasAttribute("data-listener-attached")){label.addEventListener("click",function(){});label.setAttribute("data-listener-attached","true");}});}
+function attachSubmitReplyListeners(){const submitReplyButtons=document.querySelectorAll(".submit-reply");submitReplyButtons.forEach((button)=>{if(!button.hasAttribute("data-listener-attached")){button.addEventListener("click",function(){});button.setAttribute("data-listener-attached","true");}});}
+categoryElements.forEach((categoryElement)=>{categoryElement.addEventListener("click",function(){categoryElements.forEach((el)=>el.querySelector("span").classList.remove("active"));this.querySelector("span").classList.add("active");activeCategory=this.id;page=1;document.getElementById("boxContainer").innerHTML="";fetchStatuses(page,activeCategory);});});fetchStatuses(page,activeCategory);window.addEventListener("scroll",()=>{if(window.innerHeight+window.scrollY>=document.body.offsetHeight-100&&!isLoading&&hasNext){page++;fetchStatuses(page);}});function showLoader(){statusLoader.style.display="block";}
 function hideLoader(){statusLoader.style.display="none";}
 feelingIcons.forEach((icon)=>{icon.addEventListener("click",()=>{feelingIcons.forEach((i)=>i.classList.remove("active"));icon.classList.add("active");selectedEmotion=icon.querySelector("img").alt;saveFormData();});});statusTitle.addEventListener("input",saveFormData);statusDescription.addEventListener("input",saveFormData);function showProfanityError(message){const dialogBox=document.getElementById("profanityErrorModal");const dialogContent=document.getElementById("profanityErrorContent");const overlay=document.getElementById("profanityErrorOverlay");dialogContent.innerHTML=message;dialogBox.style.display="block";overlay.style.display="block";dialogBox.classList.remove("pop-out");dialogBox.classList.add("pop-in");}
 document.getElementById("closeProfanityModal").addEventListener("click",function(){const dialogBox=document.getElementById("profanityErrorModal");dialogBox.classList.remove("pop-in");dialogBox.classList.add("pop-out");setTimeout(()=>{dialogBox.style.display="none";dialogBox.classList.remove("pop-out");},300);});function closeProfanityErrorModal(){const dialogBox=document.getElementById("profanityErrorModal");const overlay=document.getElementById("profanityErrorOverlay");dialogBox.classList.remove("pop-in");dialogBox.classList.add("pop-out");setTimeout(()=>{dialogBox.style.display="none";dialogBox.classList.remove("pop-out");overlay.style.display="none";},300);}

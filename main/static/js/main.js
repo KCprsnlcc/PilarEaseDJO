@@ -348,8 +348,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const replyId = this.getAttribute("data-reply-id");
       const replyForm = document.getElementById(`replyForm-${replyId}`);
       const username = this.getAttribute("data-username");
+      const level = parseInt(this.getAttribute("data-level"));
 
-      // Show the reply form if hidden
+      // Show the reply form
       if (
         replyForm.style.display === "none" ||
         replyForm.style.display === ""
@@ -372,6 +373,7 @@ document.addEventListener("DOMContentLoaded", function () {
   submitReplyButtons.forEach((button) => {
     button.addEventListener("click", function () {
       const replyId = this.getAttribute("data-reply-id");
+      const level = parseInt(this.getAttribute("data-level"));
       const replyForm = document.getElementById(`replyForm-${replyId}`);
       const textarea = replyForm.querySelector("textarea");
       const replyText = textarea.value;
@@ -381,8 +383,20 @@ document.addEventListener("DOMContentLoaded", function () {
         .querySelector(".status-detail-container")
         .getAttribute("data-status-id");
 
-      // Use the statusId in your fetch call
-      fetch(`/add_reply/${statusId}/${replyId}/`, {
+      let parentReplyId = replyId;
+
+      // If level is 3, we should not create further nesting
+      if (level >= 3) {
+        parentReplyId = null; // Do not pass parent reply ID to prevent nesting
+      }
+
+      // Build the URL accordingly
+      let url = `/add_reply/${statusId}/`;
+      if (parentReplyId) {
+        url += `${parentReplyId}/`;
+      }
+
+      fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -394,27 +408,81 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((data) => {
           if (data.success) {
             // Append the new reply to the DOM
-            const nestedRepliesContainer = document.getElementById(
-              `nestedReplies-${replyId}`
-            );
-            const newReply = `
-            <div class="reply nested-reply">
-              <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
-              <div class="reply-content">
-                <strong>${data.reply.username}</strong>
-                <p>${data.reply.text}</p>
-                <div class="reply-footer">
-                  <span class="reply-timestamp">${data.reply.created_at}</span>
-                  <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}">Reply</span>
+            // Depending on the level, we need to insert the new reply in the appropriate place
+            if (level >= 3) {
+              // Append the reply as a Level 3 reply (without further nesting)
+              const nestedRepliesContainer =
+                replyForm.closest(".nested-replies");
+              const newReply = `
+              <div class="reply nested-reply level-3" id="reply-${data.reply.id}">
+                <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
+                <div class="reply-content">
+                  <strong>${data.reply.username}</strong>
+                  <p>${data.reply.text}</p>
+                  <div class="reply-footer">
+                    <span class="reply-timestamp">${data.reply.created_at}</span>
+                    <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}" data-level="3">Reply</span>
+                  </div>
+                  <!-- Reply Form -->
+                  <div class="reply-form-container" id="replyForm-${data.reply.id}" style="display: none;">
+                    <textarea placeholder="Write a reply..."></textarea>
+                    <button class="submit-reply" data-reply-id="${data.reply.id}" data-level="3">Submit Reply</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
-            nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
+              `;
+              nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
+            } else {
+              // For levels less than 3, append the reply as a nested reply
+              const nestedRepliesContainer = document.getElementById(
+                `nestedReplies-${replyId}`
+              );
+              const newReply = `
+              <div class="reply nested-reply level-${level + 1}" id="reply-${
+                data.reply.id
+              }">
+                <img src="${
+                  data.reply.avatar_url
+                }" alt="Avatar" class="reply-avatar" />
+                <div class="reply-content">
+                  <strong>${data.reply.username}</strong>
+                  <p>${data.reply.text}</p>
+                  <div class="reply-footer">
+                    <span class="reply-timestamp">${
+                      data.reply.created_at
+                    }</span>
+                    <span class="reply-label" data-reply-id="${
+                      data.reply.id
+                    }" data-username="${data.reply.username}" data-level="${
+                level + 1
+              }">Reply</span>
+                  </div>
+                  <!-- Reply Form -->
+                  <div class="reply-form-container" id="replyForm-${
+                    data.reply.id
+                  }" style="display: none;">
+                    <textarea placeholder="Write a reply..."></textarea>
+                    <button class="submit-reply" data-reply-id="${
+                      data.reply.id
+                    }" data-level="${level + 1}">Submit Reply</button>
+                  </div>
+                </div>
+                <!-- Nested Replies Container -->
+                <div class="nested-replies" id="nestedReplies-${
+                  data.reply.id
+                }"></div>
+              </div>
+              `;
+              nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
+            }
 
             // Clear the textarea after submission
             textarea.value = "";
             replyForm.style.display = "none";
+
+            // Re-attach event listeners to new elements
+            attachReplyLabelListeners();
+            attachSubmitReplyListeners();
           }
         })
         .catch((error) => {
@@ -422,6 +490,32 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
   });
+
+  // Functions to re-attach event listeners
+  function attachReplyLabelListeners() {
+    const replyLabels = document.querySelectorAll(".reply-label");
+    replyLabels.forEach((label) => {
+      if (!label.hasAttribute("data-listener-attached")) {
+        label.addEventListener("click", function () {
+          // Same logic as above
+        });
+        label.setAttribute("data-listener-attached", "true");
+      }
+    });
+  }
+
+  function attachSubmitReplyListeners() {
+    const submitReplyButtons = document.querySelectorAll(".submit-reply");
+    submitReplyButtons.forEach((button) => {
+      if (!button.hasAttribute("data-listener-attached")) {
+        button.addEventListener("click", function () {
+          // Same logic as above
+        });
+        button.setAttribute("data-listener-attached", "true");
+      }
+    });
+  }
+
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>

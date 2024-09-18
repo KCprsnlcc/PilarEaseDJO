@@ -348,12 +348,86 @@ button:hover {
 }
 
 .reply {
+  display: flex;
+  align-items: flex-start; /* Changed from center to flex-start */
+  padding: 10px 1px 15px;
   border-bottom: 1px solid #e0e0e0;
-  padding: 10px 0;
+}
+
+.nested-reply {
+  margin-left: 40px; /* Indent nested replies */
+}
+
+.reply-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0; /* Prevents the avatar from shrinking */
+}
+
+.reply-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Ensure the reply content takes the remaining width */
 }
 
 .reply strong {
   display: block;
+  font-size: 1.1em;
+}
+
+.reply-timestamp {
+  font-size: 0.9em;
+  color: #888;
+}
+
+.reply-label {
+  color: #0f2326;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.reply-label:hover {
+  color: #005f5f;
+}
+
+.reply-form-container {
+  display: none;
+  margin-top: 10px;
+  animation: fadeIn 0.5s ease;
+}
+
+.reply-form-container textarea {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  font-family: Gothic A1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  resize: none;
+}
+
+reply-form-container button {
+  padding: 5px 10px;
+  background-color: #689e4b;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.reply-form-container button:hover {
+  background-color: #3b5a2b;
+}
+
+.reply-footer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
 }
 
 .reply p {
@@ -366,83 +440,23 @@ button:hover {
 }
 
 #replyForm {
+  margin-bottom: 10;
   margin-top: 20px;
 }
 
 #replyText {
   width: 100%;
-  height: 100px;
+  height: 80px;
   padding: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   font-family: Gothic A1;
   border: 1px solid #ccc;
   border-radius: 5px;
+  resize: none; /* Disable resizing */
 }
 
 .description-container {
   margin-bottom: 15px;
-}
-
-.nested-replies {
-  margin-left: 20px;
-  padding-left: 10px;
-  border-left: 1px solid #e0e0e0;
-}
-
-.nested-reply-form {
-  margin-top: 10px;
-}
-
-.nested-reply-textarea {
-  width: 100%;
-  height: 60px;
-  padding: 10px;
-  margin-bottom: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.nested-reply-submit {
-  background-color: #689e4b;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.nested-reply-submit:hover {
-  background-color: #3b5a2b;
-}
-
-.reply-to-reply-btn {
-  background-color: #0f2326;
-  color: white;
-  border-radius: 5px;
-  padding: 5px 10px;
-  transition: all 0.3s ease;
-}
-
-.reply-to-reply-btn:hover {
-  background-color: #2f4550;
-}
-
-/* Animation for new input field */
-.reply-form {
-  display: none;
-  margin-top: 10px;
-}
-
-.reply-form.show {
-  display: block;
-}
-
-textarea.reply-textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-family: Arial, sans-serif;
 }
 
 button[type="submit"] {

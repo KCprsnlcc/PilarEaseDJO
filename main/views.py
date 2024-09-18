@@ -792,7 +792,18 @@ def add_reply(request, status_id, parent_reply_id=None):
         parent_reply = None
         if parent_reply_id:
             parent_reply = get_object_or_404(Reply, id=parent_reply_id)
-        
+
+            # Check nesting level
+            nesting_level = 1
+            current_reply = parent_reply
+            while current_reply.parent_reply is not None:
+                nesting_level += 1
+                current_reply = current_reply.parent_reply
+
+            if nesting_level >= 3:
+                # Do not nest further
+                parent_reply = None
+
         reply = Reply.objects.create(
             status=status,
             user=request.user,
@@ -821,32 +832,46 @@ def add_reply(request, status_id, parent_reply_id=None):
 @login_required
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
-    replies = status.replies.filter(parent_reply__isnull=True).all()  # Only fetch top-level replies
+    replies = status.replies.filter(parent_reply__isnull=True).all()  # Level 1
 
-    # Fetch all nested replies as well
+    # Fetch nested replies up to 3 levels
     formatted_replies = []
     for reply in replies:
-        nested_replies = reply.nested_replies.all()  # Get nested replies for this reply
+        level2_nested_replies = []
+        for nested_reply in reply.nested_replies.all():  # Level 2
+            level3_nested_replies = []
+            for nested_nested_reply in nested_reply.nested_replies.all():  # Level 3
+                level3_nested_replies.append({
+                    'id': nested_nested_reply.id,
+                    'username': nested_nested_reply.user.username,
+                    'avatar_url': nested_nested_reply.user.profile.avatar.url if nested_nested_reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+                    'text': nested_nested_reply.text,
+                    'created_at': format_timestamp(nested_nested_reply.created_at),
+                })
+
+            level2_nested_replies.append({
+                'id': nested_reply.id,
+                'username': nested_reply.user.username,
+                'avatar_url': nested_reply.user.profile.avatar.url if nested_reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+                'text': nested_reply.text,
+                'created_at': format_timestamp(nested_reply.created_at),
+                'nested_replies': level3_nested_replies,
+            })
+
         formatted_replies.append({
             'id': reply.id,
             'username': reply.user.username,
             'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'text': reply.text,
             'created_at': format_timestamp(reply.created_at),
-            'nested_replies': [{
-                'id': nested_reply.id,
-                'username': nested_reply.user.username,
-                'avatar_url': nested_reply.user.profile.avatar.url if nested_reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
-                'text': nested_reply.text,
-                'created_at': format_timestamp(nested_reply.created_at),
-            } for nested_reply in nested_replies]
+            'nested_replies': level2_nested_replies,
         })
 
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
     
     return render(request, 'status_detail.html', {
         'status': status,
-        'replies': formatted_replies,  # Pass both parent and nested replies
+        'replies': formatted_replies,  # Pass replies up to 3 levels
         'avatar_url': avatar_url
     })
 

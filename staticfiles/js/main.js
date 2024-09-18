@@ -340,88 +340,88 @@ document.addEventListener("DOMContentLoaded", function () {
 
   addPopAnimation();
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const replyButtons = document.querySelectorAll(".reply-to-reply-btn");
-    const replyTextArea = document.getElementById("replyText");
-    const parentReplyIdInput = document.getElementById("parentReplyId");
+  // Auto-mention the username in the reply form when clicking the reply label
+  const replyLabels = document.querySelectorAll(".reply-label");
 
-    // Handle click for each reply button
-    replyButtons.forEach((button) => {
-      button.addEventListener("click", function () {
-        const username = this.getAttribute("data-username");
-        const replyId = this.getAttribute("data-reply-id");
+  replyLabels.forEach((label) => {
+    label.addEventListener("click", function () {
+      const replyId = this.getAttribute("data-reply-id");
+      const replyForm = document.getElementById(`replyForm-${replyId}`);
+      const username = this.getAttribute("data-username");
 
-        // Mention the username in the reply text area
-        replyTextArea.value = `@${username} `;
-
-        // Set the hidden input with the parent reply ID
-        parentReplyIdInput.value = replyId;
-
-        // Scroll to the reply form and focus
-        document.getElementById("replyForm").scrollIntoView();
-        replyTextArea.focus();
-      });
-    });
-
-    // Handle form submission for new replies
-    const replyForm = document.getElementById("replyForm");
-    replyForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      const formData = new FormData(replyForm);
-      const replyText = formData.get("text").trim();
-      const parentReplyId = formData.get("parentReplyId").trim();
-      const csrfToken = formData.get("csrfmiddlewaretoken");
-
-      if (replyText) {
-        fetch(`/add_reply/${statusId}/`, {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": csrfToken,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: replyText,
-            parentReplyId: parentReplyId,
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              const replyElement = document.createElement("div");
-              replyElement.classList.add("reply");
-
-              replyElement.innerHTML = `
-              <img src="${data.reply.avatar_url}" class="avatar">
-              <strong>${data.reply.username}</strong>
-              <p>${data.reply.text}</p>
-              <span>${data.reply.created_at}</span>
-            `;
-
-              // Insert reply into nested or main list
-              if (parentReplyId) {
-                const nestedContainer = document.getElementById(
-                  `nested-replies-${parentReplyId}`
-                );
-                nestedContainer.appendChild(replyElement);
-              } else {
-                document
-                  .getElementById("repliesList")
-                  .appendChild(replyElement);
-              }
-
-              // Clear the form
-              replyTextArea.value = "";
-              parentReplyIdInput.value = "";
-            }
-          })
-          .catch((error) => {
-            console.error("Error submitting reply:", error);
-          });
+      // Show the reply form if hidden
+      if (
+        replyForm.style.display === "none" ||
+        replyForm.style.display === ""
+      ) {
+        replyForm.style.display = "block";
+      } else {
+        replyForm.style.display = "none";
       }
+
+      // Insert the mentioned username at the beginning of the textarea
+      const textarea = replyForm.querySelector("textarea");
+      textarea.value = `@${username} `; // Mention the user
+      textarea.focus(); // Auto-focus on the textarea
     });
   });
 
+  // Handle reply submission with AJAX
+  const submitReplyButtons = document.querySelectorAll(".submit-reply");
+
+  submitReplyButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const replyId = this.getAttribute("data-reply-id");
+      const replyForm = document.getElementById(`replyForm-${replyId}`);
+      const textarea = replyForm.querySelector("textarea");
+      const replyText = textarea.value;
+
+      // Use AJAX to submit the reply without reloading the page
+      const statusId = document
+        .querySelector(".status-detail-container")
+        .getAttribute("data-status-id");
+
+      // Use the statusId in your fetch call
+      fetch(`/add_reply/${statusId}/${replyId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({ text: replyText }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // Append the new reply to the DOM
+            const nestedRepliesContainer = document.getElementById(
+              `nestedReplies-${replyId}`
+            );
+            const newReply = `
+            <div class="reply nested-reply">
+              <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
+              <div class="reply-content">
+                <strong>${data.reply.username}</strong>
+                <p>${data.reply.text}</p>
+                <div class="reply-footer">
+                  <span class="reply-timestamp">${data.reply.created_at}</span>
+                  <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}">Reply</span>
+                </div>
+              </div>
+            </div>
+          `;
+            nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
+
+            // Clear the textarea after submission
+            textarea.value = "";
+            replyForm.style.display = "none";
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    });
+  });
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>
