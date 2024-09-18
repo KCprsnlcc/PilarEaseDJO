@@ -341,11 +341,14 @@ document.addEventListener("DOMContentLoaded", function () {
   addPopAnimation();
 
   const replyLabels = document.querySelectorAll(".reply-label");
+
   replyLabels.forEach((label) => {
     label.addEventListener("click", function () {
       const replyId = this.getAttribute("data-reply-id");
       const replyForm = document.getElementById(`replyForm-${replyId}`);
+      const username = this.getAttribute("data-username");
 
+      // Show the reply form if hidden
       if (
         replyForm.style.display === "none" ||
         replyForm.style.display === ""
@@ -354,6 +357,69 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         replyForm.style.display = "none";
       }
+
+      // Insert the mentioned username at the beginning of the textarea
+      const textarea = replyForm.querySelector("textarea");
+      textarea.value = `@${username} `; // Mention the user
+      textarea.focus(); // Auto-focus on the textarea
+    });
+  });
+
+  // Fetch the status ID from the DOM
+  const statusDetailContainer = document.querySelector(
+    ".status-detail-container"
+  );
+  const statusId = statusDetailContainer.getAttribute("data-status-id");
+
+  // Handle reply submission with AJAX
+  const submitReplyButtons = document.querySelectorAll(".submit-reply");
+
+  submitReplyButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const replyId = this.getAttribute("data-reply-id");
+      const replyForm = document.getElementById(`replyForm-${replyId}`);
+      const textarea = replyForm.querySelector("textarea");
+      const replyText = textarea.value;
+
+      // Use AJAX to submit the reply without reloading the page
+      fetch(`/add_reply/${statusId}/${replyId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: JSON.stringify({ text: replyText }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // Append the new reply to the DOM
+            const nestedRepliesContainer = document.getElementById(
+              `nestedReplies-${replyId}`
+            );
+            const newReply = `
+            <div class="reply nested-reply">
+              <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
+              <div class="reply-content">
+                <strong>${data.reply.username}</strong>
+                <p>${data.reply.text}</p>
+                <div class="reply-footer">
+                  <span class="reply-timestamp">${data.reply.created_at}</span>
+                  <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}">Reply</span>
+                </div>
+              </div>
+            </div>
+          `;
+            nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
+
+            // Clear the textarea after submission
+            textarea.value = "";
+            replyForm.style.display = "none";
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
     });
   });
 

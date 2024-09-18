@@ -780,7 +780,7 @@ def check_notification_status(request):
 
 @login_required
 @csrf_exempt
-def add_reply(request, status_id):
+def add_reply(request, status_id, parent_reply_id=None):
     if request.method == 'POST':
         data = json.loads(request.body)
         text = data.get('text')
@@ -789,7 +789,16 @@ def add_reply(request, status_id):
             return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
 
         status = get_object_or_404(Status, id=status_id)
-        reply = Reply.objects.create(status=status, user=request.user, text=text)
+        parent_reply = None
+        if parent_reply_id:
+            parent_reply = get_object_or_404(Reply, id=parent_reply_id)
+        
+        reply = Reply.objects.create(
+            status=status,
+            user=request.user,
+            text=text,
+            parent_reply=parent_reply  # If it's a nested reply, this will not be None
+        )
 
         # Format the timestamp for the reply
         created_at = format_timestamp(reply.created_at)
@@ -812,25 +821,32 @@ def add_reply(request, status_id):
 @login_required
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
-    replies = status.replies.all()
+    replies = status.replies.filter(parent_reply__isnull=True).all()  # Only fetch top-level replies
 
-    # Format replies with avatars and human-readable timestamps
-    formatted_replies = [
-        {
+    # Fetch all nested replies as well
+    formatted_replies = []
+    for reply in replies:
+        nested_replies = reply.nested_replies.all()  # Get nested replies for this reply
+        formatted_replies.append({
+            'id': reply.id,
             'username': reply.user.username,
             'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'text': reply.text,
-            'created_at': format_timestamp(reply.created_at),  # Use helper to format timestamp
-            'label': 'Reply'
-        }
-        for reply in replies
-    ]
+            'created_at': format_timestamp(reply.created_at),
+            'nested_replies': [{
+                'id': nested_reply.id,
+                'username': nested_reply.user.username,
+                'avatar_url': nested_reply.user.profile.avatar.url if nested_reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
+                'text': nested_reply.text,
+                'created_at': format_timestamp(nested_reply.created_at),
+            } for nested_reply in nested_replies]
+        })
 
     avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
     
     return render(request, 'status_detail.html', {
-        'status': status, 
-        'replies': formatted_replies,  # Pass formatted replies
+        'status': status,
+        'replies': formatted_replies,  # Pass both parent and nested replies
         'avatar_url': avatar_url
     })
 

@@ -38,49 +38,60 @@
 >
   <path d="M0,0 C30,30 70,30 100,0" />
 </svg>
-<div class="status-detail-container">
-  <button id="backButton" class="back-button">
-    <i class="bx bx-arrow-back"></i>
-  </button>
+<div class="status-detail-container" data-status-id="{{ status.id }}">
+  <!-- Status content -->
   <div class="status-detail">
     <div id="avatarshow" class="avatar-content">
-      <img
-        src="{{ avatar_url }}"
-        alt="Avatar"
-        class="circle-avatar-placeholder"
-      />
+      <img src="{{ avatar_url }}" alt="Avatar" class="circle-avatar-placeholder" />
       <p class="username-placeholder">{{ status.user.username }}</p>
     </div>
     <h2>{{ status.title }}</h2>
     <div class="description-container">
       <div>{{ status.description|safe }}</div>
     </div>
-    <!-- Use the safe filter to render HTML content -->
     <span>Posted by {{ status.user.username }} - {{ status.created_at }}</span>
   </div>
+
+  <!-- Replies Section -->
   <div class="replies-section">
-  <h3>Replies</h3>
-  <div id="repliesList">
-    {% for reply in replies %}
-    <div class="reply">
-      <img src="{{ reply.avatar_url }}" alt="Avatar" class="reply-avatar">
-      <div class="reply-content">
-        <strong>{{ reply.username }}</strong>
-        <p>{{ reply.text }}</p>
-        <div class="reply-footer">
-          <span class="reply-timestamp">{{ reply.created_at }}</span>
-          <span class="reply-label" data-reply-id="{{ reply.id }}">Reply</span>
-        </div>
-        <!-- Hidden reply form -->
-        <div class="reply-form-container" id="replyForm-{{ reply.id }}" style="display: none;">
-          <textarea placeholder="Write a reply..."></textarea>
-          <button class="submit-reply">Reply</button>
+    <h3>Replies</h3>
+    <div id="repliesList">
+      {% for reply in replies %}
+      <div class="reply"  id="reply-{{ reply.id }}">
+        <img src="{{ reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
+        <div class="reply-content">
+          <strong>{{ reply.username }}</strong>
+          <p>{{ reply.text }}</p>
+          <div class="reply-footer">
+            <span class="reply-timestamp">{{ reply.created_at }}</span>
+            <span class="reply-label" data-reply-id="{{ reply.id }}" data-username="{{ reply.username }}">Reply</span>
+          </div>
+          <!-- Nested Replies -->
+        <div class="nested-replies" id="nestedReplies-{{ reply.id }}">
+             {% for nested_reply in reply.nested_replies %}
+            <div class="reply nested-reply">
+              <img src="{{ nested_reply.avatar_url }}" alt="Avatar" class="reply-avatar" />
+              <div class="reply-content">
+                <strong>{{ nested_reply.username }}</strong>
+                <p>{{ nested_reply.text }}</p>
+                <div class="reply-footer">
+                  <span class="reply-timestamp">{{ nested_reply.created_at }}</span>
+                  <span class="reply-label" data-reply-id="{{ nested_reply.id }}" data-username="{{ nested_reply.username }}">Reply</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <!-- Parent Reply Form -->
+          <div class="reply-form-container" id="replyForm-{{ reply.id }}" style="display: none;">
+            <textarea placeholder="Write a reply..."></textarea>
+            <button class="submit-reply" data-reply-id="{{ reply.id }}">Submit Reply</button>
+          </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
-</div>
 
     <form
       id="replyForm"

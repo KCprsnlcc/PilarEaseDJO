@@ -354,6 +354,10 @@ button:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
+.nested-reply {
+  margin-left: 40px; /* Indent nested replies */
+}
+
 .reply-avatar {
   width: 40px;
   height: 40px;

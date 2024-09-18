@@ -135,9 +135,13 @@ class Referral(models.Model):
     
 class Reply(models.Model):
     status = models.ForeignKey(Status, related_name='replies', on_delete=models.CASCADE)
+    parent_reply = models.ForeignKey('self', related_name='nested_replies', on_delete=models.CASCADE, null=True, blank=True)  # Add this for nested replies
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Reply by {self.user.username} on {self.status.title}"
 
 class ContactUs(models.Model):
     name = models.CharField(max_length=100)
