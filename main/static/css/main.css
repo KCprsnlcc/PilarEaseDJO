@@ -343,6 +343,36 @@ button:hover {
   margin-bottom: 20px;
 }
 
+/* Autocomplete dropdown */
+.mention-autocomplete {
+  position: absolute;
+  bottom: 100%; /* Position above the textarea */
+  left: 0;
+  right: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  z-index: 1000;
+  display: none; /* Hidden by default */
+}
+
+.mention-autocomplete ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mention-autocomplete li {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.mention-autocomplete li:hover,
+.mention-autocomplete .active {
+  background-color: #f0f0f0;
+}
+
 .replies-section {
   margin-top: 20px;
 }

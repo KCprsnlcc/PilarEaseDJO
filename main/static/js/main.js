@@ -516,6 +516,198 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function initMentionAutocomplete(textarea, autocompleteContainer) {
+    let cursorPosition = 0;
+    let mentionQuery = "";
+    let mentionStartPos = -1;
+
+    textarea.addEventListener("keyup", function (event) {
+      const caretPosition = textarea.selectionStart;
+      const text = textarea.value;
+      const char = event.key;
+
+      // Check if '@' is typed
+      if (char === "@") {
+        mentionStartPos = caretPosition - 1;
+        mentionQuery = "";
+        showAutocomplete();
+      } else if (mentionStartPos >= 0) {
+        // If we are in a mention query
+        if (event.key === "Backspace") {
+          if (caretPosition <= mentionStartPos) {
+            // Cursor moved before the mention start, cancel mention
+            hideAutocomplete();
+            mentionStartPos = -1;
+            mentionQuery = "";
+            return;
+          } else {
+            mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
+          }
+        } else if (event.key.length === 1) {
+          mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
+        } else if (
+          event.key === "ArrowUp" ||
+          event.key === "ArrowDown" ||
+          event.key === "Enter"
+        ) {
+          // Handle these keys in keydown event
+          return;
+        } else {
+          mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
+        }
+
+        if (mentionQuery.length > 0) {
+          fetchUsernames(mentionQuery);
+        } else {
+          hideAutocomplete();
+        }
+      }
+    });
+
+    // Handle keydown for navigation in the autocomplete
+    textarea.addEventListener("keydown", function (event) {
+      if (autocompleteContainer.style.display === "block") {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          moveSelection(1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          moveSelection(-1);
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          selectUsername();
+        }
+      }
+    });
+
+    // Fetch usernames from server
+    function fetchUsernames(query) {
+      fetch(`/get_usernames/?q=${encodeURIComponent(query)}`)
+        .then((response) => response.json())
+        .then((data) => {
+          showAutocomplete(data.usernames);
+        })
+        .catch((error) => {
+          console.error("Error fetching usernames:", error);
+        });
+    }
+
+    // Show autocomplete suggestions
+    function showAutocomplete(usernames = []) {
+      if (usernames.length === 0) {
+        hideAutocomplete();
+        return;
+      }
+
+      autocompleteContainer.innerHTML = "<ul></ul>";
+      const ul = autocompleteContainer.querySelector("ul");
+
+      usernames.forEach((username, index) => {
+        const li = document.createElement("li");
+        li.textContent = username;
+        li.dataset.index = index;
+        li.addEventListener("mousedown", function (e) {
+          e.preventDefault(); // Prevent textarea from losing focus
+          selectUsername(username);
+        });
+        ul.appendChild(li);
+      });
+
+      autocompleteContainer.style.display = "block";
+      setActiveItem(0);
+    }
+
+    // Hide autocomplete suggestions
+    function hideAutocomplete() {
+      autocompleteContainer.style.display = "none";
+      autocompleteContainer.innerHTML = "";
+    }
+
+    let activeIndex = -1;
+
+    function moveSelection(direction) {
+      const items = autocompleteContainer.querySelectorAll("li");
+      if (items.length === 0) return;
+
+      activeIndex += direction;
+
+      if (activeIndex < 0) activeIndex = items.length - 1;
+      if (activeIndex >= items.length) activeIndex = 0;
+
+      setActiveItem(activeIndex);
+    }
+
+    function setActiveItem(index) {
+      const items = autocompleteContainer.querySelectorAll("li");
+      items.forEach((item, idx) => {
+        if (idx === index) {
+          item.classList.add("active");
+        } else {
+          item.classList.remove("active");
+        }
+      });
+    }
+
+    function selectUsername(username = null) {
+      const items = autocompleteContainer.querySelectorAll("li");
+      if (!username && activeIndex >= 0 && activeIndex < items.length) {
+        username = items[activeIndex].textContent;
+      }
+      if (username) {
+        const beforeMention = textarea.value.substring(0, mentionStartPos);
+        const afterMention = textarea.value.substring(textarea.selectionStart);
+        textarea.value = `${beforeMention}@${username} ${afterMention}`;
+        const newCaretPosition = beforeMention.length + username.length + 2;
+        textarea.setSelectionRange(newCaretPosition, newCaretPosition);
+        hideAutocomplete();
+        mentionStartPos = -1;
+        mentionQuery = "";
+      }
+    }
+
+    // Click outside to hide autocomplete
+    document.addEventListener("click", function (event) {
+      if (
+        !autocompleteContainer.contains(event.target) &&
+        event.target !== textarea
+      ) {
+        hideAutocomplete();
+      }
+    });
+  }
+
+  // Initialize autocomplete for all reply textareas
+  function initializeAllAutocomplete() {
+    const replyForms = document.querySelectorAll(".reply-form-container");
+    replyForms.forEach((form) => {
+      const textarea = form.querySelector("textarea");
+      const autocompleteContainer = form.querySelector(".mention-autocomplete");
+      initMentionAutocomplete(textarea, autocompleteContainer);
+    });
+
+    // Initialize for the main reply form
+    const mainTextarea = document.querySelector("#replyFormMain textarea");
+    const mainAutocompleteContainer = document.querySelector(
+      "#mentionAutocompleteMain"
+    );
+    if (mainTextarea && mainAutocompleteContainer) {
+      initMentionAutocomplete(mainTextarea, mainAutocompleteContainer);
+    }
+  }
+
+  initializeAllAutocomplete();
+
+  // Re-initialize autocomplete when new reply forms are added dynamically
+  function reinitializeAutocomplete() {
+    // Remove existing autocomplete initialization to prevent duplicates
+    const replyForms = document.querySelectorAll(".reply-form-container");
+    replyForms.forEach((form) => {
+      const textarea = form.querySelector("textarea");
+      textarea.replaceWith(textarea.cloneNode(true));
+    });
+    initializeAllAutocomplete();
+  }
+
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>

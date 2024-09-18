@@ -788,6 +788,15 @@ def add_reply(request, status_id, parent_reply_id=None):
         if not text:
             return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
 
+ # Extract mentioned usernames
+        mentioned_usernames = re.findall(r'@(\w+)', text)
+        mentioned_users = CustomUser.objects.filter(username__in=mentioned_usernames)
+        # Handle notifications for mentioned users
+        for user in mentioned_users:
+            if user != request.user:
+                # Create a notification or send an email
+                pass  # Implement your notification logic here
+            
         status = get_object_or_404(Status, id=status_id)
         parent_reply = None
         if parent_reply_id:
@@ -878,6 +887,14 @@ def status_detail(request, status_id):
         'avatar_url': avatar_url,
         'similar_statuses': similar_statuses,  # Pass similar statuses to the template
     })
+    
+@login_required
+def get_usernames(request):
+    search_term = request.GET.get('q', '')
+    # Exclude the current user from the list if desired
+    users = CustomUser.objects.filter(username__icontains=search_term).exclude(id=request.user.id)[:10]
+    usernames = list(users.values_list('username', flat=True))
+    return JsonResponse({'usernames': usernames})
 
 @login_required
 @csrf_exempt

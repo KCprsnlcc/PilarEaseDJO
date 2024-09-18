@@ -48,6 +48,7 @@ urlpatterns = [
     path('delete_status/<int:status_id>/', views.delete_status, name='delete_status'),
     path('get_user_profile/', views.get_user_profile, name='get_user_profile'),
     path('save_chat_session/', views.save_chat_session, name='save_chat_session'),
+    path('get_usernames/', views.get_usernames, name='get_usernames'),
     path('load_chat_session/', views.load_chat_session, name='load_chat_session'),
     path('save_questionnaire/', views.save_questionnaire, name='save_questionnaire'),
     path('contact_us/', contact_us_view, name='contact_us'),
