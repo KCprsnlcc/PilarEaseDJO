@@ -340,6 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   addPopAnimation();
 
+  // Auto-mention the username in the reply form when clicking the reply label
   const replyLabels = document.querySelectorAll(".reply-label");
 
   replyLabels.forEach((label) => {
@@ -365,12 +366,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // Fetch the status ID from the DOM
-  const statusDetailContainer = document.querySelector(
-    ".status-detail-container"
-  );
-  const statusId = statusDetailContainer.getAttribute("data-status-id");
-
   // Handle reply submission with AJAX
   const submitReplyButtons = document.querySelectorAll(".submit-reply");
 
@@ -382,7 +377,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const replyText = textarea.value;
 
       // Use AJAX to submit the reply without reloading the page
-      fetch(`/add_reply/${statusId}/${replyId}/`, {
+      fetch(`/add_reply/{{ status.id }}/${replyId}/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -422,7 +417,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
   });
-
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
       categoryElements.forEach((el) =>
