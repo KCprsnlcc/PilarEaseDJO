@@ -400,8 +400,10 @@ button:hover {
   height: 50px;
   margin-bottom: 5px;
   border-radius: 5px;
-  padding: 5px;
-  resize: none; /* Disable resizing */
+  font-family: Gothic A1;
+  border: 1px solid #ccc;
+  padding: 10px;
+  resize: none;
 }
 
 reply-form-container button {
