@@ -506,16 +506,158 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function attachSubmitReplyListeners() {
     const submitReplyButtons = document.querySelectorAll(".submit-reply");
+
     submitReplyButtons.forEach((button) => {
       if (!button.hasAttribute("data-listener-attached")) {
         button.addEventListener("click", function () {
-          // Same logic as above
+          const replyId = this.getAttribute("data-reply-id");
+          const level = parseInt(this.getAttribute("data-level"));
+          const replyForm = document.getElementById(`replyForm-${replyId}`);
+          const textarea = replyForm.querySelector("textarea");
+          const replyText = textarea.value;
+
+          // Use AJAX to submit the reply without reloading the page
+          const statusId = document
+            .querySelector(".status-detail-container")
+            .getAttribute("data-status-id");
+
+          let parentReplyId = replyId;
+
+          // If level is 3, we should not create further nesting
+          if (level >= 3) {
+            parentReplyId = null; // Do not pass parent reply ID to prevent nesting
+          }
+
+          // Build the URL accordingly
+          let url = `/add_reply/${statusId}/`;
+          if (parentReplyId) {
+            url += `${parentReplyId}/`;
+          }
+
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ text: replyText }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                // Append the new reply to the DOM
+                let newReplyHtml = "";
+                if (level >= 3) {
+                  // Append the reply as a Level 3 reply (without further nesting)
+                  const nestedRepliesContainer =
+                    replyForm.closest(".nested-replies");
+                  newReplyHtml = `
+                  <div class="reply nested-reply level-3" id="reply-${data.reply.id}">
+                    <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
+                    <div class="reply-content">
+                      <strong>${data.reply.username}</strong>
+                      <p>${data.reply.text}</p>
+                      <div class="reply-footer">
+                        <span class="reply-timestamp">${data.reply.created_at}</span>
+                        <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}" data-level="3">Reply</span>
+                      </div>
+                      <!-- Reply Form -->
+                      <div class="reply-form-container" id="replyForm-${data.reply.id}" style="display: none; position: relative;">
+                        <textarea placeholder="Write a reply..."></textarea>
+                        <div class="mention-autocomplete" id="mentionAutocomplete-${data.reply.id}"></div>
+                        <button class="submit-reply" data-reply-id="${data.reply.id}" data-level="3">Submit Reply</button>
+                      </div>
+                    </div>
+                  </div>
+                  `;
+                  nestedRepliesContainer.insertAdjacentHTML(
+                    "beforeend",
+                    newReplyHtml
+                  );
+                } else {
+                  // For levels less than 3, append the reply as a nested reply
+                  const nestedRepliesContainer = document.getElementById(
+                    `nestedReplies-${replyId}`
+                  );
+                  newReplyHtml = `
+                  <div class="reply nested-reply level-${
+                    level + 1
+                  }" id="reply-${data.reply.id}">
+                    <img src="${
+                      data.reply.avatar_url
+                    }" alt="Avatar" class="reply-avatar" />
+                    <div class="reply-content">
+                      <strong>${data.reply.username}</strong>
+                      <p>${data.reply.text}</p>
+                      <div class="reply-footer">
+                        <span class="reply-timestamp">${
+                          data.reply.created_at
+                        }</span>
+                        <span class="reply-label" data-reply-id="${
+                          data.reply.id
+                        }" data-username="${data.reply.username}" data-level="${
+                    level + 1
+                  }">Reply</span>
+                      </div>
+                      <!-- Reply Form -->
+                      <div class="reply-form-container" id="replyForm-${
+                        data.reply.id
+                      }" style="display: none; position: relative;">
+                        <textarea placeholder="Write a reply..."></textarea>
+                        <div class="mention-autocomplete" id="mentionAutocomplete-${
+                          data.reply.id
+                        }"></div>
+                        <button class="submit-reply" data-reply-id="${
+                          data.reply.id
+                        }" data-level="${level + 1}">Submit Reply</button>
+                      </div>
+                    </div>
+                    <!-- Nested Replies Container -->
+                    <div class="nested-replies" id="nestedReplies-${
+                      data.reply.id
+                    }"></div>
+                  </div>
+                  `;
+                  nestedRepliesContainer.insertAdjacentHTML(
+                    "beforeend",
+                    newReplyHtml
+                  );
+                }
+
+                // Clear the textarea after submission
+                textarea.value = "";
+                replyForm.style.display = "none";
+
+                // Re-attach event listeners to new elements
+                attachReplyLabelListeners();
+                attachSubmitReplyListeners();
+                reinitializeAutocomplete();
+
+                // **Auto-scroll to the new reply**
+                const newReplyElement = document.getElementById(
+                  `reply-${data.reply.id}`
+                );
+                if (newReplyElement) {
+                  newReplyElement.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              } else {
+                // Handle error (e.g., display error message)
+                alert(
+                  data.error || "An error occurred while submitting your reply."
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
         });
         button.setAttribute("data-listener-attached", "true");
       }
     });
   }
-
   function initMentionAutocomplete(textarea, autocompleteContainer) {
     let cursorPosition = 0;
     let mentionQuery = "";
