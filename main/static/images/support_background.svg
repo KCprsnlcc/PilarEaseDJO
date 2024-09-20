@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+    width="200px"
+    height="200px"
+    viewBox="0 0 200 200"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+>
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#689e4b" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#0e2326" stop-opacity="0.1"/>
+        </linearGradient>
+    </defs>
+    <g fill="url(#gradient)">
+        <!-- Petal 1 -->
+        <ellipse cx="50" cy="50" rx="20" ry="40" transform="rotate(-30 50 50)" />
+        <!-- Petal 2 -->
+        <ellipse cx="150" cy="50" rx="20" ry="40" transform="rotate(30 150 50)" />
+        <!-- Petal 3 -->
+        <ellipse cx="100" cy="150" rx="20" ry="40" transform="rotate(90 100 150)" />
+        <!-- Center Circle -->
+        <circle cx="100" cy="100" r="30" fill="#689e4b" opacity="0.5"/>
+    </g>
+</svg>

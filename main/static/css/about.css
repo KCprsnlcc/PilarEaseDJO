@@ -276,7 +276,6 @@
 .emotional-support-pilarease {
   padding: 80px 0; /* Increased padding for more space */
   background-color: #ffffff;
-  background-image: url("{% static 'images/support_background.svg' %}"); /* Optional: Add a subtle background image */
   background-repeat: no-repeat;
   background-position: right bottom;
   background-size: 200px;
