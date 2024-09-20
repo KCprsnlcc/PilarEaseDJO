@@ -142,10 +142,9 @@
 
 .hero-image-pilarease img {
   width: 100%;
-  max-width: 500px;
+  max-width: 200px;
   animation: fadeInRight-pilarease 1s ease forwards;
 }
-
 /* Features Section */
 .features-pilarease {
   padding: 60px 0;
