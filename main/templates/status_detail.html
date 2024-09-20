@@ -100,6 +100,9 @@
   <div class="main-content">
     <!-- Status content -->
     <div class="status-detail">
+      <button id="backButton" class="back-button">
+        <i class="bx bx-arrow-back"></i>
+      </button>
       <div id="avatarshow" class="avatar-content">
         <img
           src="{{ avatar_url }}"
@@ -108,11 +111,11 @@
         />
         <p class="username-placeholder">{{ status.user.username }}</p>
       </div>
-      <h2>{{ status.title }}</h2>
+      <h2 class="status-title">{{ status.title }}</h2>
       <div class="description-container">
-        <div>{{ status.description|safe }}</div>
+        <div class="status-description">{{ status.description|safe }}</div>
       </div>
-      <span
+      <span class="status-meta"
         >Posted by {{ status.user.username }} - {{ status.created_at }}</span
       >
     </div>
