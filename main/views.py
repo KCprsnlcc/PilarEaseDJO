@@ -62,6 +62,12 @@ def current_time_view(request):
 def home(request):
     return render(request, 'home.html')
 
+def contact_us(request):
+    return render(request, 'contact_us.html')
+
+def about(request):
+    return render(request, 'about.html')
+
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -906,7 +912,7 @@ def submit_reply(request, status_id):
             reply = Reply.objects.create(status=status, user=request.user, text=text)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    
+
 
 @csrf_exempt
 def contact_us_view(request):

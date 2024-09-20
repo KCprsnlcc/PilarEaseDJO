@@ -12,9 +12,17 @@
       href="https://unpkg.com/cropperjs/dist/cropper.css"
       rel="stylesheet"
     />
+
+     <!-- Google Fonts for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0" />
     <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0" />
+    <link rel="stylesheet" href="{% static 'css/about.css' %}?v=1.0" />
     {% endcompress %}
     <title>PilarEase | A Portal for Guidance Counseling Support System</title>
     <link rel="icon" href="{% static 'images/Icons/PilarEaseLogo.ico' %}" />
@@ -100,7 +108,7 @@
           >
         </div>
         <div class="connect">CONNECT</div>
-        <div class="learn-more">Learn More...</div>
+        <div class="learn-more"><a href="{% url 'about' %}" class="learn-more-link-pilarease">Learn More...</a></div>
         <div class="about-us">ABOUT US</div>
         <div class="links">LINKS</div>
       </div>

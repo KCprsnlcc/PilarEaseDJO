@@ -1,0 +1,735 @@
+/* main/static/css/about.css */
+
+/* Reset & Base Styles */
+.hero-pilarease,
+.container-pilarease,
+.hero-container-pilarease,
+.hero-text-pilarease,
+.hero-image-pilarease,
+.btn-pilarease,
+.features-pilarease,
+.features-grid-pilarease,
+.feature-item-pilarease,
+.feature-icon-pilarease,
+.testimonials-pilarease,
+.testimonials-grid-pilarease,
+.testimonial-item-pilarease,
+.testimonial-img-pilarease,
+.contact-pilarease,
+.contact-container-pilarease,
+.contact-form-pilarease,
+.form-group-pilarease,
+.contact-us-button-pilarease,
+.send-button-pilarease,
+.student-support-pilarease,
+.student-support-container-pilarease,
+.student-support-list-pilarease,
+.student-support-list-pilarease li {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+/* Main Container */
+.container-pilarease {
+  width: 90%;
+  max-width: 1000px; /* Reduced max-width to prevent excessive width */
+  margin: 0 auto; /* Centers the container */
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+/* Hero Section */
+.hero-pilarease {
+  background: linear-gradient(135deg, #689e4b 0%, #0e2326 100%);
+  color: #ffffff;
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-pilarease::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(45deg);
+  animation: rotateBackground-pilarease 10s linear infinite;
+  z-index: 0;
+}
+
+.hero-container-pilarease {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp-pilarease 1s forwards 0.5s;
+  width: 100%;
+  max-width: 1000px; /* Matches the container's max-width */
+  margin: 0 auto; /* Centers the hero container */
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.hero-text-pilarease {
+  flex: 1 1 500px;
+  animation: fadeInText-pilarease 1s forwards 0.7s;
+}
+
+.hero-text-pilarease h1 {
+  font-size: 3em;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: slideIn-pilarease 1s forwards 0.7s;
+}
+
+.hero-text-pilarease p {
+  font-size: 1.2em;
+  margin-bottom: 30px;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: slideIn-pilarease 1s forwards 0.9s;
+}
+
+.hero-text-pilarease .btn-pilarease {
+  /* Button Styles */
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #689e4b;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-text-pilarease .btn-pilarease::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.hero-text-pilarease .btn-pilarease:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.hero-text-pilarease .btn-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+.hero-image-pilarease img {
+  width: 100%;
+  max-width: 500px;
+  animation: fadeInRight-pilarease 1s ease forwards;
+}
+
+/* Features Section */
+.features-pilarease {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.features-pilarease h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards;
+}
+
+.features-grid-pilarease {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.feature-item-pilarease {
+  background-color: #f9f9f9;
+  padding: 30px 20px;
+  border-radius: 10px;
+  flex: 1 1 calc(25% - 20px);
+  text-align: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInFeature-pilarease 1s forwards 1.7s;
+}
+
+.feature-item-pilarease:hover {
+  transform: translateY(-10px);
+  background-color: #e0e0e0;
+}
+
+.feature-icon-pilarease {
+  color: #689e4b;
+  margin-bottom: 20px;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.feature-item-pilarease:hover .feature-icon-pilarease {
+  color: #ffffff;
+  transform: rotate(20deg);
+}
+
+.feature-item-pilarease h3 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #0e2326;
+}
+
+.feature-item-pilarease p {
+  font-size: 1em;
+  color: #555555;
+}
+
+/* Testimonials Section */
+.testimonials-pilarease {
+  padding: 60px 0;
+  background-color: #f9f9f9;
+}
+
+.testimonials-pilarease h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards 0.5s;
+}
+
+.testimonials-grid-pilarease {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.testimonial-item-pilarease {
+  background-color: #0e2326;
+  color: #ffffff;
+  padding: 30px 20px;
+  border-radius: 10px;
+  flex: 1 1 calc(33.333% - 20px);
+  text-align: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInTestimonial-pilarease 1s forwards 2.2s;
+}
+
+.testimonial-item-pilarease:hover {
+  transform: translateY(-10px);
+  background-color: #1a3a40;
+}
+
+.testimonial-img-pilarease {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  object-fit: cover;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.testimonial-item-pilarease:hover .testimonial-img-pilarease {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.testimonial-item-pilarease h3 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #ffffff;
+}
+
+.testimonial-item-pilarease p {
+  font-size: 1em;
+  color: #dddddd;
+}
+
+/* New Section: Emotional Support Platform for Students at Pilar College */
+.student-support-pilarease {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.student-support-pilarease h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards;
+}
+
+.student-support-container-pilarease {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.student-support-container-pilarease p {
+  font-size: 1.2em;
+  color: #555555;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.student-support-list-pilarease {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin-bottom: 30px;
+}
+
+.student-support-list-pilarease li {
+  font-size: 1em;
+  color: #555555;
+  margin-bottom: 10px;
+}
+
+.student-support-pilarease .btn-pilarease {
+  /* Reuse button styles */
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #689e4b;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.student-support-pilarease .btn-pilarease::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.student-support-pilarease .btn-pilarease:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.student-support-pilarease .btn-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+/* Contact Section */
+.contact-pilarease {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.contact-pilarease h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards 0.5s;
+}
+
+.contact-container-pilarease {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.contact-form-pilarease {
+  width: 100%;
+  max-width: 600px;
+  background-color: #f9f9f9;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeIn-pilarease 1s ease forwards 1s;
+}
+
+.form-group-pilarease {
+  margin-bottom: 20px;
+}
+
+.form-group-pilarease label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #0e2326;
+}
+
+.form-group-pilarease input,
+.form-group-pilarease textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1em;
+  transition: border-color 0.3s ease;
+}
+
+.form-group-pilarease input:focus,
+.form-group-pilarease textarea:focus {
+  border-color: #689e4b;
+  outline: none;
+}
+
+.contact-form-pilarease .btn-pilarease {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #689e4b;
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  width: 100%;
+  text-align: center;
+  font-size: 1em;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-form-pilarease .btn-pilarease::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.contact-form-pilarease .btn-pilarease:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.contact-form-pilarease .btn-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+/* Contact Us Button in Footer */
+.contact-us-button-pilarease {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #689e4b;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact-us-button-pilarease::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.contact-us-button-pilarease:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.contact-us-button-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+/* Send Button in Chat */
+.send-button-pilarease {
+  background-color: #689e4b;
+  border: none;
+  color: #ffffff;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.send-button-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes rotateBackground-pilarease {
+  from {
+    transform: rotate(45deg);
+  }
+  to {
+    transform: rotate(405deg); /* 45deg + 360deg */
+  }
+}
+
+@keyframes fadeUp-pilarease {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInText-pilarease {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn-pilarease {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn-pilarease {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInFeature-pilarease {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInTestimonial-pilarease {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight-pilarease {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .features-grid-pilarease,
+  .testimonials-grid-pilarease,
+  .student-support-container-pilarease,
+  .contact-container-pilarease {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .feature-item-pilarease,
+  .testimonial-item-pilarease {
+    flex: 1 1 80%;
+  }
+
+  .hero-container-pilarease {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .hero-image-pilarease {
+    margin-top: 30px;
+  }
+
+  .features-grid-pilarease,
+  .testimonials-grid-pilarease,
+  .contact-container-pilarease {
+    padding: 0 10px; /* Reduced horizontal padding */
+  }
+
+  .contact-form-pilarease {
+    padding: 20px;
+  }
+
+  .student-support-container-pilarease {
+    padding: 0 10px; /* Reduced horizontal padding */
+  }
+
+  .student-support-list-pilarease {
+    padding-left: 15px; /* Adjusted padding for list */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile Navigation Adjustments */
+  .nav-menu-pilarease {
+    position: absolute;
+    top: 70px;
+    right: 0;
+    background-color: #ffffff;
+    flex-direction: column;
+    width: 200px;
+    display: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .nav-menu-pilarease.active {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .nav-menu-pilarease li {
+    margin: 15px 0;
+    text-align: center;
+  }
+
+  .hamburger-pilarease {
+    display: flex;
+  }
+
+  /* Adjust Hero Section for Mobile */
+  .hero-container-pilarease {
+    flex-direction: column;
+    padding: 0 10px; /* Further reduced padding */
+  }
+
+  .hero-text-pilarease,
+  .hero-image-pilarease {
+    width: 100%;
+  }
+
+  .features-grid-pilarease,
+  .testimonials-grid-pilarease,
+  .student-support-container-pilarease,
+  .contact-container-pilarease {
+    padding: 0 10px; /* Further reduced padding */
+  }
+
+  .contact-form-pilarease {
+    padding: 20px;
+  }
+
+  .student-support-container-pilarease {
+    padding: 0 10px; /* Further reduced padding */
+  }
+
+  .student-support-list-pilarease {
+    padding-left: 15px; /* Adjusted padding for list */
+  }
+}
+
+/* Chat Popup Styles (Optional: Customize as needed) */
+.chat-popup-pilarease {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  max-width: 90%;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  display: none;
+  flex-direction: column;
+}
+
+.chat-popup-pilarease header-pilarease {
+  background-color: #689e4b;
+  color: #ffffff;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.chat-body-pilarease {
+  padding: 10px;
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.chat-input-pilarease {
+  display: flex;
+  border-top: 1px solid #ccc;
+}
+
+.chat-input-pilarease input {
+  flex-grow: 1;
+  padding: 10px;
+  border: none;
+  border-bottom-left-radius: 10px;
+}
+
+.chat-input-pilarease .send-button-pilarease {
+  padding: 10px;
+  background-color: #689e4b;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  border-bottom-right-radius: 10px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.chat-input-pilarease .send-button-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
