@@ -24,7 +24,13 @@
 .emotional-support-pilarease,
 .emotional-support-container-pilarease,
 .emotional-support-list-pilarease,
-.emotional-support-pilarease .btn-pilarease {
+.emotional-support-pilarease .btn-pilarease,
+.emotional-support-pilarease .emotional-support-icon-pilarease,
+.community-interactions-pilarease,
+.community-interactions-container-pilarease,
+.interactions-features-pilarease,
+.interaction-feature-pilarease,
+.interaction-icon-pilarease {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -34,7 +40,7 @@
 /* Main Container */
 .container-pilarease {
   width: 90%;
-  max-width: 1000px; /* Reduced max-width to prevent excessive width */
+  max-width: 1000px; /* Prevents excessive width */
   margin: 0 auto; /* Centers the container */
   padding: 0 20px; /* Adds horizontal padding */
 }
@@ -183,6 +189,7 @@
   color: #689e4b;
   margin-bottom: 20px;
   transition: color 0.3s ease, transform 0.3s ease;
+  font-size: 3em; /* Adjust the size as needed */
 }
 
 .feature-item-pilarease:hover .feature-icon-pilarease {
@@ -266,16 +273,20 @@
   color: #dddddd;
 }
 
-/* New Section: Emotional Support Platform for Pilar College Students */
+/* Enhanced Section: Emotional Support Platform for Pilar College Students */
 .emotional-support-pilarease {
-  padding: 60px 0;
+  padding: 80px 0; /* Increased padding for more space */
   background-color: #ffffff;
+  background-image: url("{% static 'images/support_background.svg' %}"); /* Optional: Add a subtle background image */
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: 200px;
 }
 
 .emotional-support-pilarease h2 {
   text-align: center;
-  margin-bottom: 40px;
-  font-size: 2.5em;
+  margin-bottom: 50px; /* Increased margin for better spacing */
+  font-size: 2.8em;
   color: #0e2326;
   animation: fadeIn-pilarease 1s ease forwards;
 }
@@ -284,7 +295,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 800px;
+  max-width: 900px; /* Increased max-width for better content layout */
   margin: 0 auto;
   padding: 0 20px; /* Adds horizontal padding */
 }
@@ -292,20 +303,157 @@
 .emotional-support-container-pilarease p {
   font-size: 1.2em;
   color: #555555;
-  margin-bottom: 20px;
+  margin-bottom: 30px; /* Increased margin for better spacing */
   text-align: center;
+  line-height: 1.6; /* Improved readability */
 }
 
 .emotional-support-list-pilarease {
-  list-style-type: disc;
-  padding-left: 20px;
-  margin-bottom: 30px;
+  list-style-type: none; /* Removed default bullets */
+  padding: 0;
+  margin-bottom: 40px; /* Increased margin for better spacing */
+  width: 100%; /* Full width for better alignment */
 }
 
 .emotional-support-list-pilarease li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 1.1em;
+  color: #555555;
+  transition: transform 0.3s ease;
+}
+
+.emotional-support-list-pilarease li:hover {
+  transform: translateX(10px);
+}
+
+.emotional-support-list-pilarease .emotional-support-icon-pilarease {
+  color: #689e4b;
+  margin-right: 15px;
+  font-size: 1.8em; /* Icon size */
+  transition: color 0.3s ease;
+}
+
+.emotional-support-list-pilarease li:hover .emotional-support-icon-pilarease {
+  color: #52763d;
+}
+
+.emotional-support-pilarease .btn-pilarease {
+  /* Button Styles */
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: #689e4b;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 1.1em;
+}
+
+.emotional-support-pilarease .btn-pilarease::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.emotional-support-pilarease .btn-pilarease:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.emotional-support-pilarease .btn-pilarease:hover {
+  background-color: #52763d;
+  transform: translateY(-2px);
+}
+
+/* New Section: Community Interactions */
+.community-interactions-pilarease {
+  padding: 80px 0;
+  background-color: #fcfffc; /* Updated to Light Green Shade */
+}
+
+.community-interactions-pilarease h2 {
+  text-align: center;
+  margin-bottom: 50px;
+  font-size: 2.8em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards;
+}
+
+.community-interactions-container-pilarease {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 900px; /* Increased max-width for better content layout */
+  margin: 0 auto;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.community-interactions-container-pilarease p {
+  font-size: 1.2em;
+  color: #555555;
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.interactions-features-pilarease {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+}
+
+.interaction-feature-pilarease {
+  background-color: #ffffff;
+  padding: 30px 20px;
+  border-radius: 10px;
+  flex: 1 1 calc(33.333% - 20px);
+  text-align: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInInteractionFeature-pilarease 1s forwards 2.7s;
+}
+
+.interaction-feature-pilarease:hover {
+  transform: translateY(-10px);
+  background-color: #e0e0e0;
+}
+
+.interaction-icon-pilarease {
+  color: #689e4b;
+  margin-bottom: 20px;
+  transition: color 0.3s ease, transform 0.3s ease;
+  font-size: 3em; /* Icon size */
+}
+
+.interaction-feature-pilarease:hover .interaction-icon-pilarease {
+  color: #ffffff;
+  transform: rotate(10deg);
+}
+
+.interaction-feature-pilarease h3 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #0e2326;
+}
+
+.interaction-feature-pilarease p {
   font-size: 1em;
   color: #555555;
-  margin-bottom: 10px;
 }
 
 /* Contact Section */
@@ -367,6 +515,7 @@
 }
 
 .contact-form-pilarease .btn-pilarease {
+  /* Button Styles */
   display: inline-block;
   padding: 10px 20px;
   background-color: #689e4b;
@@ -410,7 +559,7 @@
 .emotional-support-pilarease .btn-pilarease {
   /* Reuse button styles */
   display: inline-block;
-  padding: 10px 20px;
+  padding: 12px 25px;
   background-color: #689e4b;
   color: #ffffff;
   text-decoration: none;
@@ -418,6 +567,7 @@
   transition: background-color 0.3s ease, transform 0.3s ease;
   position: relative;
   overflow: hidden;
+  font-size: 1.1em;
 }
 
 .emotional-support-pilarease .btn-pilarease::after {
@@ -441,6 +591,94 @@
 .emotional-support-pilarease .btn-pilarease:hover {
   background-color: #52763d;
   transform: translateY(-2px);
+}
+
+/* Community Interactions Section */
+.community-interactions-pilarease {
+  padding: 80px 0; /* Increased padding for more space */
+  background-color: #f0f4f8; /* Light background for contrast */
+}
+
+.community-interactions-pilarease h2 {
+  text-align: center;
+  margin-bottom: 50px;
+  font-size: 2.8em;
+  color: #0e2326;
+  animation: fadeIn-pilarease 1s ease forwards;
+}
+
+.community-interactions-container-pilarease {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 900px; /* Increased max-width for better content layout */
+  margin: 0 auto;
+  padding: 0 20px; /* Adds horizontal padding */
+}
+
+.community-interactions-container-pilarease p {
+  font-size: 1.2em;
+  color: #555555;
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.interactions-features-pilarease {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+}
+
+.interaction-feature-pilarease {
+  background-color: #ffffff;
+  padding: 30px 20px;
+  border-radius: 10px;
+  flex: 1 1 calc(33.333% - 20px);
+  text-align: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInInteractionFeature-pilarease 1s forwards 2.7s;
+}
+
+.interaction-feature-pilarease:hover {
+  transform: translateY(-10px);
+  background-color: #e0e0e0;
+}
+
+.interaction-icon-pilarease {
+  color: #689e4b;
+  margin-bottom: 20px;
+  transition: color 0.3s ease, transform 0.3s ease;
+  font-size: 3em; /* Icon size */
+}
+
+.interaction-feature-pilarease:hover .interaction-icon-pilarease {
+  color: #ffffff;
+  transform: rotate(10deg);
+}
+
+.interaction-feature-pilarease h3 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  color: #0e2326;
+}
+
+.interaction-feature-pilarease p {
+  font-size: 1em;
+  color: #555555;
+}
+
+/* Emotional Support Icons */
+.emotional-support-icon-pilarease {
+  color: #689e4b;
+  margin-right: 15px;
+  font-size: 1.8em; /* Icon size */
+  transition: color 0.3s ease;
 }
 
 /* Animations */
@@ -507,6 +745,13 @@
   }
 }
 
+@keyframes fadeInInteractionFeature-pilarease {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fadeInRight-pilarease {
   from {
     opacity: 0;
@@ -523,13 +768,15 @@
   .features-grid-pilarease,
   .testimonials-grid-pilarease,
   .emotional-support-container-pilarease,
-  .contact-container-pilarease {
+  .contact-container-pilarease,
+  .interactions-features-pilarease {
     flex-direction: column;
     align-items: center;
   }
 
   .feature-item-pilarease,
-  .testimonial-item-pilarease {
+  .testimonial-item-pilarease,
+  .interaction-feature-pilarease {
     flex: 1 1 80%;
   }
 
@@ -545,7 +792,8 @@
   .features-grid-pilarease,
   .testimonials-grid-pilarease,
   .emotional-support-container-pilarease,
-  .contact-container-pilarease {
+  .contact-container-pilarease,
+  .interactions-features-pilarease {
     padding: 0 10px; /* Reduced horizontal padding */
   }
 
@@ -607,7 +855,8 @@
   .features-grid-pilarease,
   .testimonials-grid-pilarease,
   .emotional-support-container-pilarease,
-  .contact-container-pilarease {
+  .contact-container-pilarease,
+  .interactions-features-pilarease {
     padding: 0 10px; /* Further reduced padding */
   }
 
