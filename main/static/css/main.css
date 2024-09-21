@@ -1322,6 +1322,17 @@ button[type="submit"]:hover {
   margin-right: 10px;
 }
 
+#contactUsButton {
+  color: #9095a0;
+  text-decoration: none;
+  font-size: 9px;
+  transition: color 0.3s ease, text-decoration 0.3s ease;
+}
+#contactUsButton:hover {
+  color: #689e4b;
+  text-decoration: underline;
+}
+
 #ContactUsOverlay {
   display: none;
   position: fixed;
