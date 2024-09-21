@@ -1,6 +1,10 @@
 # PilarEaseDJO
 
 <div align="center">
+    <img src="main/static/images/screenshots/aboutinterface.png" alt="About Interface">
+    <p><b>Emotional Support Platform is designed to provide Pilar College students <br/> with the resources and community they need to navigate their <br/>emotional well-being effectively.</b></p>
+</div>
+<div align="center">
   <table>
     <tr>
       <td align="center">
