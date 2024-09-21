@@ -57,6 +57,17 @@ class UserProfile(models.Model):
 CustomUser = get_user_model()
 
 User = get_user_model()
+
+class Feedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    sentiment_score = models.FloatField(default=0.0)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback from {self.user.username}"
+    
 class ChatSession(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     session_data = models.JSONField(blank=True, null=True)
