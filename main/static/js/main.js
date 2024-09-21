@@ -29,6 +29,66 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100); // Check every 100ms
     }
   });
+
+  // Get overlay and modal elements
+  const feedbackOverlay = document.getElementById("Feedbackoverlay");
+  const feedbackModalContent = document.querySelector(
+    ".feedback-modal-content-pilarease"
+  );
+  const feedbackLink = document.getElementById("feedbackLink");
+  const closeFeedback = document.querySelector(".close-feedback-pilarease");
+
+  // Function to open the modal and overlay with fadeIn and popIn animations
+  function openFeedbackModal(event) {
+    event.preventDefault();
+
+    // Show the overlay with fadeIn effect
+    feedbackOverlay.style.display = "block";
+    feedbackOverlay.classList.add("show");
+    feedbackOverlay.classList.remove("hide");
+
+    // Show the modal content with popIn effect
+    feedbackModalContent.style.display = "block";
+    feedbackModalContent.classList.add("show");
+    feedbackModalContent.classList.remove("hide");
+  }
+
+  // Function to close the modal and overlay with fadeOut and popOut animations
+  function closeFeedbackModal() {
+    // Trigger hide animations
+    feedbackOverlay.classList.add("hide");
+    feedbackOverlay.classList.remove("show");
+    feedbackModalContent.classList.add("hide");
+    feedbackModalContent.classList.remove("show");
+  }
+
+  // When the user clicks the feedback link, open the modal
+  feedbackLink.addEventListener("click", openFeedbackModal);
+
+  // When the user clicks on <span> (x), close the modal
+  closeFeedback.addEventListener("click", closeFeedbackModal);
+
+  // When the user clicks outside of the modal content, close it
+  window.addEventListener("click", function (event) {
+    if (event.target === feedbackOverlay) {
+      closeFeedbackModal();
+    }
+  });
+
+  // When the modal's popOut animation ends, hide the modal content
+  feedbackModalContent.addEventListener("animationend", function (event) {
+    if (event.animationName === "popOut") {
+      feedbackModalContent.style.display = "none";
+    }
+  });
+
+  // When the overlay's fadeOut transition ends, hide the overlay
+  feedbackOverlay.addEventListener("transitionend", function () {
+    if (feedbackOverlay.classList.contains("hide")) {
+      feedbackOverlay.style.display = "none";
+    }
+  });
+
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
   const avatarModal = document.getElementById("avatarModal");
