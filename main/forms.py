@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, Status
+from .models import CustomUser, Status, Feedback
 from django import forms
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -39,3 +39,8 @@ class StatusForm(forms.ModelForm):
 
 class AvatarUploadForm(forms.Form):
     avatar = forms.ImageField()
+    
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ['message']
