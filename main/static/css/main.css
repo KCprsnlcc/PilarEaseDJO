@@ -1322,40 +1322,135 @@ button[type="submit"]:hover {
   margin-right: 10px;
 }
 
+#ContactUsOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#ContactUsOverlay.show {
+  display: block;
+  opacity: 1;
+}
+
+#ContactUsOverlay.hide {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
 #contactUsModal {
   display: none;
   position: fixed;
-  z-index: 100000;
-  left: 730px;
-  top: 45px;
-  overflow: auto;
-  transition: opacity 0.3s ease-in-out;
-}
-
-#contactcontent {
-  background-color: #fefefe;
-  margin: 10% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%;
-  transition: transform 0.3s ease-in-out;
-  transform: scale(0.7);
+  z-index: 100001;
+  left: 650px;
+  top: 20px;
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 600px;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
 .modal-content.pop-in {
   transform: scale(1);
+  opacity: 1;
 }
 
 .modal-content.pop-out {
   transform: scale(0.7);
+  opacity: 0;
 }
 
 #closeContactUsModal {
-  margin-top: -10px;
-  color: #aaa;
-  float: right;
-  font-size: 28px;
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 30px;
+  color: #0f2326;
+  cursor: pointer;
+}
+
+#closeContactUsModal:hover,
+#closeContactUsModal:focus {
+  color: #d32f2f;
+  transition: color 0.3s ease;
+}
+
+#contactUsForm {
+  display: flex;
+  flex-direction: column;
+}
+
+#contactUsForm label {
+  margin-top: 10px;
   font-weight: bold;
+  color: #333;
+}
+
+#contactUsForm input,
+#contactUsForm textarea {
+  width: 100%;
+  padding: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#contactUsForm button {
+  padding: 12px;
+  margin-top: 20px;
+  background-color: #689e4b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#contactUsForm button:hover {
+  background-color: #3b5a2b;
+  transition: background-color 0.3s ease;
+}
+
+.contact-info {
+  margin-top: 20px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.contact-info h4 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.contact-info p {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.contact-svg-animation {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.contact-svg-animation svg {
+  width: 100px;
+  height: 100px;
+  fill: #689e4b;
 }
 
 .status-hidden {

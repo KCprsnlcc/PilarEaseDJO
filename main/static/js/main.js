@@ -123,6 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const contactUsButton = document.getElementById("contactUsButton");
   const contactUsModal = document.getElementById("contactUsModal");
   const closeContactUsModal = document.getElementById("closeContactUsModal");
+  const contactUsOverlay = document.getElementById("ContactUsOverlay");
 
   let selectedEmotion = null;
   let page = 1;
@@ -310,42 +311,50 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300);
     }, 3000);
   }
-
-  // Show modal when Contact Us button is clicked
-  contactUsButton.addEventListener("click", function (event) {
+  // Function to open the modal with overlay
+  function openContactUsModal(event) {
     event.preventDefault();
+
+    // Show overlay
+    contactUsOverlay.style.display = "block";
+    contactUsOverlay.classList.add("show");
+    contactUsOverlay.classList.remove("hide");
+
+    // Show modal with pop-in animation
     contactUsModal.style.display = "block";
     setTimeout(() => {
       contactUsModal.classList.add("pop-in");
-      document.querySelector(".modal-content").classList.add("pop-in");
+      contactUsModal.classList.remove("pop-out");
     }, 10);
-  });
+  }
 
-  // Close modal when the close button is clicked
-  closeContactUsModal.addEventListener("click", function () {
-    document.querySelector(".modal-content").classList.add("pop-out");
+  // Function to close the modal with overlay fade-out
+  function closeContactUsModalHandler() {
+    // Add pop-out and hide class to modal and overlay
     contactUsModal.classList.add("pop-out");
+    contactUsModal.classList.remove("pop-in");
+    contactUsOverlay.classList.add("hide");
+    contactUsOverlay.classList.remove("show");
+
+    // Delay hiding the modal and overlay after animations complete
     setTimeout(() => {
       contactUsModal.style.display = "none";
-      document.querySelector(".modal-content").classList.remove("pop-out");
-      contactUsModal.classList.remove("pop-out");
+      contactUsOverlay.style.display = "none";
     }, 300);
-  });
+  }
 
-  // Close modal when clicking outside of the modal content
+  // Event Listeners for opening and closing the modal
+  contactUsButton.addEventListener("click", openContactUsModal);
+  closeContactUsModal.addEventListener("click", closeContactUsModalHandler);
+
+  // Close modal if user clicks outside of modal content
   window.addEventListener("click", function (event) {
-    if (event.target === contactUsModal) {
-      document.querySelector(".modal-content").classList.add("pop-out");
-      contactUsModal.classList.add("pop-out");
-      setTimeout(() => {
-        contactUsModal.style.display = "none";
-        document.querySelector(".modal-content").classList.remove("pop-out");
-        contactUsModal.classList.remove("pop-out");
-      }, 300);
+    if (event.target === contactUsOverlay) {
+      closeContactUsModalHandler();
     }
   });
 
-  // Handle form submission
+  // Handle form submission (example only, modify as needed)
   const contactUsForm = document.getElementById("contactUsForm");
   contactUsForm.addEventListener("submit", function (event) {
     event.preventDefault();
@@ -369,7 +378,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => {
         if (data.success) {
           alert("Your message has been sent successfully!");
-          contactUsModal.style.display = "none";
+          closeContactUsModalHandler();
           contactUsForm.reset();
         } else {
           alert("There was an error sending your message. Please try again.");
@@ -380,6 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
         alert("There was an error sending your message. Please try again.");
       });
   });
+
   // Added back button functionality
   const backButton = document.getElementById("backButton");
   if (backButton) {
