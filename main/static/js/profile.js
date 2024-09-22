@@ -152,39 +152,47 @@ document.addEventListener("DOMContentLoaded", function () {
           );
           statusBox.setAttribute("data-id", status.id);
 
+          // Truncate status description to 250 characters
+          let truncatedDescription = status.description.slice(0, 250);
+          if (status.description.length > 250) {
+            truncatedDescription += "...";
+          }
+
           statusBox.innerHTML = `
-    <div class="pilarease-profile-status-header">
-      <img src="${status.avatar_url}" alt="${
+          <div class="pilarease-profile-status-header">
+            <img src="${status.avatar_url}" alt="${
             status.username
           }'s Avatar" class="pilarease-profile-status-avatar" loading="lazy"/>
-      <div>
-        <p class="pilarease-profile-status-username">${status.username}</p>
-        <span class="pilarease-profile-status-time">${formatTimestamp(
-          status.created_at
-        )}</span>
-      </div>
-    </div>
-    <h3 class="pilarease-profile-status-title">${status.title}</h3>
-    <p class="pilarease-profile-status-description">${status.description}</p>
-    <div class="pilarease-profile-status-actions">
-      <button id="reply-${
-        status.id
-      }" class="pilarease-profile-action-button reply-button">
-        <i class="bx bx-comment"></i> Replies (${status.replies})
-      </button>
-      ${
-        status.can_edit
-          ? `
-      <button id="edit-${status.id}" class="pilarease-profile-action-button edit-button" onclick="editPilareaseStatus(${status.id})">
-        <i class="bx bx-pencil"></i> Edit
-      </button>
-      <button id="delete-${status.id}" class="pilarease-profile-action-button delete-button" onclick="deletePilareaseStatus(${status.id})">
-        <i class="bx bx-trash"></i> Delete
-      </button>`
-          : ""
-      }
-    </div>
-  `;
+            <div>
+              <p class="pilarease-profile-status-username">${
+                status.username
+              }</p>
+              <span class="pilarease-profile-status-time">${formatTimestamp(
+                status.created_at
+              )}</span>
+            </div>
+          </div>
+          <h3 class="pilarease-profile-status-title">${status.title}</h3>
+          <p class="pilarease-profile-status-description">${truncatedDescription}</p>
+          <div class="pilarease-profile-status-actions">
+            <button id="reply-${
+              status.id
+            }" class="pilarease-profile-action-button reply-button">
+              <i class="bx bx-comment"></i> Replies (${status.replies})
+            </button>
+            ${
+              status.can_edit
+                ? `
+            <button id="edit-${status.id}" class="pilarease-profile-action-button edit-button" onclick="editPilareaseStatus(${status.id})">
+              <i class="bx bx-pencil"></i> Edit
+            </button>
+            <button id="delete-${status.id}" class="pilarease-profile-action-button delete-button" onclick="deletePilareaseStatus(${status.id})">
+              <i class="bx bx-trash"></i> Delete
+            </button>`
+                : ""
+            }
+          </div>
+        `;
 
           pilareaseProfileStatusContainer.appendChild(statusBox);
 
