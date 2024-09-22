@@ -19,9 +19,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.home, name='home'),  # Your home view
+    path('register/', register_view, name='register'),
     path('about/', views.about_view, name='about'),
     path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
-    path('register/', register_view, name='register'),
     path('request_email_change/', request_email_change, name='request_email_change'),
     path('verify_email_change/<uidb64>/<token>/<new_email>/', verify_email_change, name='verify_email_change'),
     path('verify_email/<uidb64>/<token>/', verify_email, name='verify_email'),
@@ -54,7 +54,6 @@ urlpatterns = [
     path('load_chat_session/', views.load_chat_session, name='load_chat_session'),
     path('save_questionnaire/', views.save_questionnaire, name='save_questionnaire'),
     path('contact_us/', contact_us_view, name='contact_us'),
-    path('contact/', views.contact_us, name='contact_us'),
     path('update_user_profile/', views.update_user_profile, name='update_user_profile'),
     path('password_manager/', views.password_manager_view, name='password_manager'),
     path('upload_avatar/', views.upload_avatar, name='upload_avatar'),

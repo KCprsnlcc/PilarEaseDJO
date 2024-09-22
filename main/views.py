@@ -917,30 +917,7 @@ def submit_reply(request, status_id):
             reply = Reply.objects.create(status=status, user=request.user, text=text)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-def submit_feedback(request):
-    if request.method == 'POST':
-        # Assuming the user is authenticated
-        message = request.POST.get('message', '')
-
-        if message:
-            feedback = Feedback(user=request.user, message=message)
-            
-            # Sentiment analysis with TextBlob
-            blob = TextBlob(message)
-            feedback.sentiment_score = blob.sentiment.polarity
-
-            # Approve feedback if sentiment score is positive
-            if feedback.sentiment_score > 0.1:
-                feedback.is_approved = True
-
-            feedback.save()
-
-            return JsonResponse({'success': True})
-
-        return JsonResponse({'success': False, 'errors': 'Invalid input'})
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    
 
 @csrf_exempt
 def contact_us_view(request):
@@ -1103,6 +1080,31 @@ def upload_avatar(request):
         return JsonResponse({'success': False, 'errors': 'No avatar file uploaded.'}, status=400)
 
     return JsonResponse({'success': False, 'errors': 'Invalid request'}, status=400)
+
+def submit_feedback(request):
+    if request.method == 'POST':
+        # Assuming the user is authenticated
+        message = request.POST.get('message', '')
+
+        if message:
+            feedback = Feedback(user=request.user, message=message)
+            
+            # Sentiment analysis with TextBlob
+            blob = TextBlob(message)
+            feedback.sentiment_score = blob.sentiment.polarity
+
+            # Approve feedback if sentiment score is positive
+            if feedback.sentiment_score > 0.1:
+                feedback.is_approved = True
+
+            feedback.save()
+
+            return JsonResponse({'success': True})
+
+        return JsonResponse({'success': False, 'errors': 'Invalid input'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
 
 @login_required
 def logout_view(request):
