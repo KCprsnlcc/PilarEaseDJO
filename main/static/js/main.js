@@ -29,8 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100); // Check every 100ms
     }
   });
-
-  // Get overlay and modal elements
   // Get overlay and modal elements
   const feedbackOverlay = document.getElementById("Feedbackoverlay");
   const feedbackModalContent = document.querySelector(
@@ -44,27 +42,41 @@ document.addEventListener("DOMContentLoaded", function () {
     ".submit-feedback-pilarease"
   ); // Submit button
 
+  // Get loader and notification elements
+  const feedbackCSSOverlay = document.getElementById("feedbackCSSOverlay");
+  const feedbackCSSLoader = document.getElementById("feedbackCSSLoader");
+  const feedbackCSSSuccessBox = document.getElementById(
+    "feedbackCSSSuccessBox"
+  );
+  const feedbackCSSErrorBox = document.getElementById("feedbackCSSErrorBox");
+  const feedbackCSSSuccessContent = document.getElementById(
+    "feedbackCSSSuccessContent"
+  );
+  const feedbackCSSErrorContent = document.getElementById(
+    "feedbackCSSErrorContent"
+  );
+
   // Function to open the modal and overlay with fadeIn and popIn animations
   function openFeedbackModal(event) {
     event.preventDefault();
 
     // Show the overlay with fadeIn effect
     feedbackOverlay.style.display = "block";
-    feedbackOverlay.classList.add("show");
-    feedbackOverlay.classList.remove("hide");
+    setTimeout(() => {
+      feedbackOverlay.classList.add("show");
+    }, 10); // Slight delay to trigger transition
 
     // Show the modal content with popIn effect
     feedbackModalContent.style.display = "block";
     feedbackModalContent.classList.add("show");
-    feedbackModalContent.classList.remove("hide");
   }
 
   // Function to close the modal and overlay with fadeOut and popOut animations
   function closeFeedbackModal() {
-    feedbackOverlay.classList.add("hide");
     feedbackOverlay.classList.remove("show");
-    feedbackModalContent.classList.add("hide");
+    feedbackOverlay.classList.add("hide");
     feedbackModalContent.classList.remove("show");
+    feedbackModalContent.classList.add("hide");
   }
 
   // When the user clicks the feedback link, open the modal
@@ -84,6 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
   feedbackModalContent.addEventListener("animationend", function (event) {
     if (event.animationName === "popOut") {
       feedbackModalContent.style.display = "none";
+      feedbackModalContent.classList.remove("hide");
     }
   });
 
@@ -91,6 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
   feedbackOverlay.addEventListener("transitionend", function () {
     if (feedbackOverlay.classList.contains("hide")) {
       feedbackOverlay.style.display = "none";
+      feedbackOverlay.classList.remove("hide");
     }
   });
 
@@ -106,6 +120,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     feedbackSubmitButton.disabled = true; // Disable button to prevent multiple submissions
+
+    // Show loader
+    showFeedbackCSSLoader();
 
     // Get the form action URL from data-feedback-url
     const formUrl = feedbackForm.getAttribute("data-feedback-url");
@@ -124,22 +141,25 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
+        hideFeedbackCSSLoader(); // Hide loader
         feedbackSubmitButton.disabled = false; // Re-enable the button
 
         if (data.success) {
-          alert("Thank you for your feedback!");
+          showFeedbackCSSSuccessBox("Thank you for your feedback!");
           feedbackMessageInput.value = ""; // Clear the input
-          closeFeedbackModal(); // Close the modal after successful submission
         } else {
-          alert(
+          showFeedbackCSSErrorBox(
             "There was an error submitting your feedback. Please try again."
           );
         }
       })
       .catch((error) => {
+        hideFeedbackCSSLoader(); // Hide loader
         feedbackSubmitButton.disabled = false; // Re-enable the button
         console.error("Error:", error);
-        alert("An unexpected error occurred. Please try again.");
+        showFeedbackCSSErrorBox(
+          "An unexpected error occurred. Please try again."
+        );
       });
   });
 
@@ -150,6 +170,102 @@ document.addEventListener("DOMContentLoaded", function () {
       .find((row) => row.startsWith("csrftoken="))
       ?.split("=")[1];
     return cookieValue;
+  }
+
+  // Function to show the loader overlay
+  function showFeedbackCSSLoader() {
+    feedbackCSSOverlay.style.display = "flex";
+  }
+
+  // Function to hide the loader overlay
+  function hideFeedbackCSSLoader() {
+    feedbackCSSOverlay.style.display = "none";
+  }
+
+  // Function to show success dialog with pop-in and pop-out animation
+  function showFeedbackCSSSuccessBox(message) {
+    feedbackCSSSuccessContent.innerText = message;
+    feedbackCSSSuccessBox.classList.remove("pop-out");
+    feedbackCSSSuccessBox.classList.add("pop-in");
+    feedbackCSSSuccessBox.style.display = "block";
+
+    // Add event listener for pop-in end to schedule pop-out
+    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopIn);
+
+    function handleSuccessPopIn(event) {
+      if (event.animationName === "popIn") {
+        // Schedule pop-out after a delay (e.g., 3 seconds)
+        setTimeout(() => {
+          feedbackCSSSuccessBox.classList.remove("pop-in");
+          feedbackCSSSuccessBox.classList.add("pop-out");
+        }, 3000); // 3 seconds display time
+
+        // Remove this event listener
+        feedbackCSSSuccessBox.removeEventListener(
+          "animationend",
+          handleSuccessPopIn
+        );
+      }
+    }
+
+    // Add event listener for pop-out end to hide dialog and close modal
+    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopOut);
+
+    function handleSuccessPopOut(event) {
+      if (event.animationName === "popOut") {
+        feedbackCSSSuccessBox.style.display = "none";
+        feedbackCSSSuccessBox.classList.remove("pop-out");
+        closeFeedbackModal(); // Close the modal after animation
+        // Optionally, reload the page or update content
+        // window.location.reload(); // Uncomment if you want to refresh the page
+        feedbackCSSSuccessBox.removeEventListener(
+          "animationend",
+          handleSuccessPopOut
+        );
+      }
+    }
+  }
+
+  // Function to show error dialog with pop-in and pop-out animation
+  function showFeedbackCSSErrorBox(error) {
+    feedbackCSSErrorContent.innerText = error;
+    feedbackCSSErrorBox.classList.remove("pop-out");
+    feedbackCSSErrorBox.classList.add("pop-in");
+    feedbackCSSErrorBox.style.display = "block";
+
+    // Add event listener for pop-in end to schedule pop-out
+    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopIn);
+
+    function handleErrorPopIn(event) {
+      if (event.animationName === "popIn") {
+        // Schedule pop-out after a delay (e.g., 3 seconds)
+        setTimeout(() => {
+          feedbackCSSErrorBox.classList.remove("pop-in");
+          feedbackCSSErrorBox.classList.add("pop-out");
+        }, 3000); // 3 seconds display time
+
+        // Remove this event listener
+        feedbackCSSErrorBox.removeEventListener(
+          "animationend",
+          handleErrorPopIn
+        );
+      }
+    }
+
+    // Add event listener for pop-out end to hide dialog and close modal
+    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopOut);
+
+    function handleErrorPopOut(event) {
+      if (event.animationName === "popOut") {
+        feedbackCSSErrorBox.style.display = "none";
+        feedbackCSSErrorBox.classList.remove("pop-out");
+        closeFeedbackModal(); // Close the modal after animation
+        feedbackCSSErrorBox.removeEventListener(
+          "animationend",
+          handleErrorPopOut
+        );
+      }
+    }
   }
 
   const avatarLoader = document.getElementById("avatarLoader");
