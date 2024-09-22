@@ -43,6 +43,7 @@ django-crispy-forms==2.1
 django-debug-toolbar==4.4.2
 django-extensions==3.2.3
 django-storages==1.14.3
+docx==0.2.4
 filelock==3.14.0
 Flat==0.3.2
 flatbuffers==24.3.25
@@ -95,6 +96,7 @@ mysql-connector-python==8.4.0
 mysqlclient==2.2.4
 namex==0.0.8
 networkx==3.3
+nltk==3.9.1
 numpy==1.26.4
 opt-einsum==3.3.0
 optree==0.11.0
@@ -117,6 +119,7 @@ pyodbc==5.1.0
 pyOpenSSL==24.2.1
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
+python-docx==1.1.2
 pytz==2024.1
 PyYAML==6.0.1
 rcssmin==1.1.1
@@ -149,6 +152,7 @@ tensorboard-data-server==0.7.2
 tensorflow==2.16.1
 tensorflow-intel==2.16.1
 termcolor==2.4.0
+textblob==0.18.0.post0
 tf_keras==2.16.0
 threadpoolctl==3.5.0
 tokenizers==0.19.1
