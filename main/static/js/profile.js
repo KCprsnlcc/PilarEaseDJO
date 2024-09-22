@@ -240,12 +240,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /**
    * Renders a line chart using Chart.js with the provided data.
-   * @param {Array} statusesOverTime - Array of objects containing date and count of statuses.
+   * @param {Array} statusesOverTime - Array of objects containing date and count of statuses and replies.
    */
   function renderStatusChart(statusesOverTime) {
     const ctx = pilareaseProfileStatusChart.getContext("2d");
     const labels = statusesOverTime.map((item) => item.date);
-    const counts = statusesOverTime.map((item) => item.count);
+    const statusCounts = statusesOverTime.map((item) => item.status_count);
+    const replyCounts = statusesOverTime.map((item) => item.reply_count);
 
     new Chart(ctx, {
       type: "line",
@@ -254,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
         datasets: [
           {
             label: "Statuses Posted",
-            data: counts,
+            data: statusCounts,
             backgroundColor: "rgba(14, 35, 38, 0.2)",
             borderColor: "rgba(14, 35, 38, 1)",
             borderWidth: 2,
@@ -263,11 +264,22 @@ document.addEventListener("DOMContentLoaded", function () {
             fill: true,
             tension: 0.3,
           },
+          {
+            label: "Replies Created",
+            data: replyCounts,
+            backgroundColor: "rgba(104, 158, 75, 0.2)",
+            borderColor: "rgba(104, 158, 75, 1)",
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: "rgba(104, 158, 75, 1)",
+            fill: true,
+            tension: 0.3,
+          },
         ],
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false /* Ensure the chart does not maintain aspect ratio */,
+        maintainAspectRatio: false,
         scales: {
           y: {
             beginAtZero: true,

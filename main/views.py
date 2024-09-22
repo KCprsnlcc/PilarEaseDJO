@@ -99,23 +99,41 @@ def profile_view(request):
 
 @login_required
 def get_user_analytics(request):
-    # Fetching statuses over the last 30 days
+    # Fetching statuses and replies over the last 30 days
     thirty_days_ago = timezone.now() - timedelta(days=30)
+    
+    # Aggregating statuses over time
     statuses_over_time = (
         Status.objects.filter(user=request.user, created_at__gte=thirty_days_ago)
         .extra({'day': "date(created_at)"})
         .values('day')
-        .annotate(count=Count('id'))
+        .annotate(status_count=Count('id'))  # Count the number of statuses per day
         .order_by('day')
     )
+    
+    # Aggregating replies over time
+    replies_over_time = (
+        Reply.objects.filter(user=request.user, created_at__gte=thirty_days_ago)
+        .extra({'day': "date(created_at)"})
+        .values('day')
+        .annotate(reply_count=Count('id'))  # Count the number of replies per day
+        .order_by('day')
+    )
+    
+    # Creating dictionaries to map dates to counts
+    status_date_counts = {item['day'].strftime('%Y-%m-%d'): item['status_count'] for item in statuses_over_time}
+    reply_date_counts = {item['day'].strftime('%Y-%m-%d'): item['reply_count'] for item in replies_over_time}
 
-    # Ensure all days in the range are represented
-    date_counts = {item['day'].strftime('%Y-%m-%d'): item['count'] for item in statuses_over_time}
-    all_dates = [
-        (timezone.now() - timedelta(days=i)).date() for i in range(29, -1, -1)
-    ]
+    # Generate the last 30 days' date list
+    all_dates = [(timezone.now() - timedelta(days=i)).date() for i in range(29, -1, -1)]
+    
+    # Prepare the data to include both status and reply counts for each date
     statuses_data = [
-        {'date': date.strftime('%Y-%m-%d'), 'count': date_counts.get(date.strftime('%Y-%m-%d'), 0)}
+        {
+            'date': date.strftime('%Y-%m-%d'),
+            'status_count': status_date_counts.get(date.strftime('%Y-%m-%d'), 0),
+            'reply_count': reply_date_counts.get(date.strftime('%Y-%m-%d'), 0),
+        }
         for date in all_dates
     ]
 
