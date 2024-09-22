@@ -150,55 +150,44 @@ document.addEventListener("DOMContentLoaded", function () {
             "animate__animated",
             "animate__fadeInUp"
           );
-          statusBox.setAttribute("data-id", status.id); // For easier DOM manipulation
+          statusBox.setAttribute("data-id", status.id);
 
           statusBox.innerHTML = `
-            <div class="pilarease-profile-status-header">
-              <img src="${status.avatar_url}" alt="${
+    <div class="pilarease-profile-status-header">
+      <img src="${status.avatar_url}" alt="${
             status.username
           }'s Avatar" class="pilarease-profile-status-avatar" loading="lazy"/>
-              <div>
-                <p class="pilarease-profile-status-username">${
-                  status.username
-                }</p>
-                <span class="pilarease-profile-status-time">${formatTimestamp(
-                  status.created_at
-                )}</span>
-              </div>
-            </div>
-            <h3 class="pilarease-profile-status-title">${status.title}</h3>
-            <p class="pilarease-profile-status-description">${
-              status.description
-            }</p>
-            <div class="pilarease-profile-status-actions">
-              <button class="pilarease-profile-action-button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="pilarease-profile-button-icon" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88L12 22l1.56-0.12C18.34 21.12 22 16.99 22 12c0-5.52-4.48-10-10-10zM12 20c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm1-11h-2v6h2v-6zm0 8h-2v2h2v-2z"/>
-                </svg>
-                Replies (${status.replies})
-              </button>
-              ${
-                status.can_edit
-                  ? `<button class="pilarease-profile-action-button" onclick="editPilareaseStatus(${status.id})">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="pilarease-profile-button-icon" viewBox="0 0 24 24">
-                        <path d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                      </svg>
-                      Edit
-                    </button>
-                    <button class="pilarease-profile-action-button" onclick="deletePilareaseStatus(${status.id})">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="pilarease-profile-button-icon" viewBox="0 0 24 24">
-                        <path d="M3 6h18v2H3V6zm5 6h8v2H8v-2zm0 4h5v2H8v-2z"/>
-                      </svg>
-                      Delete
-                    </button>`
-                  : ""
-              }
-            </div>
-          `;
+      <div>
+        <p class="pilarease-profile-status-username">${status.username}</p>
+        <span class="pilarease-profile-status-time">${formatTimestamp(
+          status.created_at
+        )}</span>
+      </div>
+    </div>
+    <h3 class="pilarease-profile-status-title">${status.title}</h3>
+    <p class="pilarease-profile-status-description">${status.description}</p>
+    <div class="pilarease-profile-status-actions">
+      <button id="reply-${
+        status.id
+      }" class="pilarease-profile-action-button reply-button">
+        <i class="bx bx-comment"></i> Replies (${status.replies})
+      </button>
+      ${
+        status.can_edit
+          ? `
+      <button id="edit-${status.id}" class="pilarease-profile-action-button edit-button" onclick="editPilareaseStatus(${status.id})">
+        <i class="bx bx-pencil"></i> Edit
+      </button>
+      <button id="delete-${status.id}" class="pilarease-profile-action-button delete-button" onclick="deletePilareaseStatus(${status.id})">
+        <i class="bx bx-trash"></i> Delete
+      </button>`
+          : ""
+      }
+    </div>
+  `;
 
           pilareaseProfileStatusContainer.appendChild(statusBox);
 
-          // Remove 'animate__fadeInUp' class after animation to prevent re-animation
           statusBox.addEventListener("animationend", function () {
             statusBox.classList.remove("animate__fadeInUp");
           });
