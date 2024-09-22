@@ -747,6 +747,26 @@ reply-form-container button {
   color: #0e2326;
 }
 
+.pilarease-avatar-button {
+  position: relative;
+  display: inline-block;
+  top: 8px;
+  left: 1195px;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.pilarease-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.pilarease-avatar:hover {
+  transform: scale(1.3);
+}
+
 #replyFormMain {
   margin-top: 30px;
 }

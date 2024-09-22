@@ -73,6 +73,118 @@ def about_view(request):
     approved_feedbacks = Feedback.objects.filter(is_approved=True).order_by('-created_at')[:3]
     return render(request, 'about.html', {'feedbacks': approved_feedbacks})
 
+@login_required
+def profile_view(request):
+    # Calculate updated statistics
+    total_statuses = Status.objects.filter(user=request.user).count()
+    total_replies_received = Reply.objects.filter(status__user=request.user).count()
+
+    # Calculate statuses over time for the last 30 days
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    statuses_over_time = (
+        Status.objects.filter(user=request.user, created_at__gte=thirty_days_ago)
+        .extra({'day': "date(created_at)"})
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+
+    context = {
+        'total_statuses': total_statuses,
+        'total_replies_received': total_replies_received,
+        'statuses_over_time': list(statuses_over_time),  # Convert QuerySet to list for JSON serialization
+    }
+
+    return render(request, 'profile.html', context)
+
+@login_required
+def get_user_analytics(request):
+    # Calculate statuses over time for the last 30 days
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    statuses_over_time = (
+        Status.objects.filter(user=request.user, created_at__gte=thirty_days_ago)
+        .extra({'day': "date(created_at)"})
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+
+    # Ensure all days in the range are represented
+    from datetime import datetime, timedelta
+
+    date_counts = {item['day'].strftime('%Y-%m-%d'): item['count'] for item in statuses_over_time}
+    all_dates = [
+        (timezone.now() - timedelta(days=i)).date() for i in range(29, -1, -1)
+    ]
+    statuses_data = [
+        {'date': date.strftime('%Y-%m-%d'), 'count': date_counts.get(date.strftime('%Y-%m-%d'), 0)}
+        for date in all_dates
+    ]
+
+    return JsonResponse({'statuses_over_time': statuses_data})
+
+
+@login_required
+def get_user_statuses(request):
+    page_number = request.GET.get('page', 1)
+    user = request.user
+    statuses = Status.objects.filter(user=user).order_by('-created_at')
+    paginator = Paginator(statuses, 10)  # 10 statuses per page
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    statuses_data = []
+    for status in page_obj.object_list:
+        statuses_data.append({
+            'id': status.id,
+            'username': user.username,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'title': status.title,
+            'description': status.description,
+            'created_at': format_timestamp(status.created_at),
+            'comments': status.replies.count(),
+            'can_edit': status.user == user,
+        })
+
+    return JsonResponse({
+        'statuses': statuses_data,
+        'has_next': page_obj.has_next(),
+    })
+    
+@login_required
+def get_recent_activity(request):
+    page_number = request.GET.get('page', 1)
+    user = request.user
+    # Fetch replies to user's statuses
+    replies = Reply.objects.filter(status__user=user).order_by('-created_at')
+    paginator = Paginator(replies, 10)  # 10 activities per page
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    activities_data = []
+    for reply in page_obj.object_list:
+        activities_data.append({
+            'actor': reply.user.username,
+            'action': 'replied to',
+            'status_title': reply.status.title,
+            'timestamp': format_timestamp(reply.created_at),
+        })
+
+    return JsonResponse({
+        'activities': activities_data,
+        'has_next': page_obj.has_next(),
+    })
+
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -972,7 +1084,33 @@ def get_all_statuses(request):
         'statuses': statuses_data,
         'has_next': page_obj.has_next()
     })
+@login_required
+def statuses_over_time(request):
+    # Calculate statuses per week for the last 12 weeks
+    today = timezone.now().date()
+    weeks = [today - timedelta(weeks=i) for i in range(12)]
+    weeks.reverse()  # Oldest to newest
 
+    labels = [week.strftime('%b %d') for week in weeks]
+    values = []
+    for week in weeks:
+        start = week
+        end = week + timedelta(days=6)
+        count = Status.objects.filter(user=request.user, created_at__date__gte=start, created_at__date__lte=end).count()
+        values.append(count)
+
+    return JsonResponse({'labels': labels, 'values': values})
+
+@login_required
+def reply_distribution(request):
+    # Calculate distribution of replies by emotion
+    statuses = Status.objects.filter(user=request.user)
+    emotion_counts = statuses.values('emotion').annotate(count=Count('id'))
+
+    labels = [item['emotion'].capitalize() for item in emotion_counts]
+    values = [item['count'] for item in emotion_counts]
+
+    return JsonResponse({'labels': labels, 'values': values})
 @login_required
 @csrf_exempt
 def delete_status(request, status_id):
