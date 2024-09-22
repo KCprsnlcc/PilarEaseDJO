@@ -8,7 +8,7 @@
   --pilarease-profile-primary-color: #0e2326; /* Primary Color */
   --pilarease-profile-secondary-color: #689e4b; /* Secondary Color */
   --pilarease-profile-white: #ffffff; /* White */
-  --pilarease-profile-background-color: #f5f5f5; /* Light Gray Background */
+  --pilarease-profile-background-color: #ffffff; /* Light Gray Background */
   --pilarease-profile-text-color: #0e2326; /* Text Color */
   --pilarease-profile-light-gray: #e0e0e0; /* Light Gray */
   --pilarease-profile-error-color: #e74c3c; /* Red for errors */
@@ -23,6 +23,7 @@
 
 /* Container */
 .pilarease-profile-container {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;

@@ -1133,6 +1133,7 @@ def get_user_profile(request):
         'contact_number': request.user.contact_number,
         'email': request.user.email,
         'avatar': avatar_url,
+        'bio': user_profile.bio,  # Include bio in the response
     }
     return JsonResponse(data)
 
@@ -1144,6 +1145,7 @@ def update_user_profile(request):
         username = data.get('username')
         contact_number = data.get('contact_number')
         academic_year_level = data.get('academic_year_level')
+        bio = data.get('bio')  # Fetch the bio from the request
         user = request.user
         response_data = {'success': True, 'errors': {}}
 
@@ -1157,6 +1159,7 @@ def update_user_profile(request):
             user.username = username
             user.contact_number = contact_number
             user.academic_year_level = academic_year_level
+            user.profile.bio = bio  # Update the bio field in the user's profile
             user.save()
         else:
             return JsonResponse(response_data, status=400)
