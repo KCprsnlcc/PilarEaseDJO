@@ -1145,10 +1145,9 @@ def update_user_profile(request):
         username = data.get('username')
         contact_number = data.get('contact_number')
         academic_year_level = data.get('academic_year_level')
-        bio = data.get('bio')  # Fetch the bio from the request
         user = request.user
         response_data = {'success': True, 'errors': {}}
-
+        
         # Check if the username or email already exists for another user
         if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
             response_data['success'] = False
@@ -1159,7 +1158,6 @@ def update_user_profile(request):
             user.username = username
             user.contact_number = contact_number
             user.academic_year_level = academic_year_level
-            user.profile.bio = bio  # Update the bio field in the user's profile
             user.save()
         else:
             return JsonResponse(response_data, status=400)

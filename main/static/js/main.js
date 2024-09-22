@@ -3849,7 +3849,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("academic-year").value =
           data.academic_year_level;
         document.getElementById("contact-number").value = data.contact_number;
-        document.getElementById("bio").value = data.bio; // Populate the bio field
 
         // Mask and display the email
         document.getElementById("email").value = maskEmail(data.email);
