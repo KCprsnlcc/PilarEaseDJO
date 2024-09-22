@@ -29,6 +29,245 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100); // Check every 100ms
     }
   });
+  // Get overlay and modal elements
+  const feedbackOverlay = document.getElementById("Feedbackoverlay");
+  const feedbackModalContent = document.querySelector(
+    ".feedback-modal-content-pilarease"
+  );
+  const feedbackLink = document.getElementById("feedbackLink");
+  const closeFeedback = document.querySelector(".close-feedback-pilarease");
+  const feedbackForm = document.getElementById("feedbackForm"); // Feedback form element
+  const feedbackMessageInput = document.getElementById("feedbackMessage"); // Feedback textarea
+  const feedbackSubmitButton = document.querySelector(
+    ".submit-feedback-pilarease"
+  ); // Submit button
+
+  // Get loader and notification elements
+  const feedbackCSSOverlay = document.getElementById("feedbackCSSOverlay");
+  const feedbackCSSLoader = document.getElementById("feedbackCSSLoader");
+  const feedbackCSSSuccessBox = document.getElementById(
+    "feedbackCSSSuccessBox"
+  );
+  const feedbackCSSErrorBox = document.getElementById("feedbackCSSErrorBox");
+  const feedbackCSSSuccessContent = document.getElementById(
+    "feedbackCSSSuccessContent"
+  );
+  const feedbackCSSErrorContent = document.getElementById(
+    "feedbackCSSErrorContent"
+  );
+
+  // Function to open the modal and overlay with fadeIn and popIn animations
+  function openFeedbackModal(event) {
+    event.preventDefault();
+
+    // Show the overlay with fadeIn effect
+    feedbackOverlay.style.display = "block";
+    setTimeout(() => {
+      feedbackOverlay.classList.add("show");
+    }, 10); // Slight delay to trigger transition
+
+    // Show the modal content with popIn effect
+    feedbackModalContent.style.display = "block";
+    feedbackModalContent.classList.add("show");
+  }
+
+  // Function to close the modal and overlay with fadeOut and popOut animations
+  function closeFeedbackModal() {
+    feedbackOverlay.classList.remove("show");
+    feedbackOverlay.classList.add("hide");
+    feedbackModalContent.classList.remove("show");
+    feedbackModalContent.classList.add("hide");
+  }
+
+  // When the user clicks the feedback link, open the modal
+  feedbackLink.addEventListener("click", openFeedbackModal);
+
+  // When the user clicks on <span> (x), close the modal
+  closeFeedback.addEventListener("click", closeFeedbackModal);
+
+  // When the user clicks outside of the modal content, close it
+  window.addEventListener("click", function (event) {
+    if (event.target === feedbackOverlay) {
+      closeFeedbackModal();
+    }
+  });
+
+  // When the modal's popOut animation ends, hide the modal content
+  feedbackModalContent.addEventListener("animationend", function (event) {
+    if (event.animationName === "popOut") {
+      feedbackModalContent.style.display = "none";
+      feedbackModalContent.classList.remove("hide");
+    }
+  });
+
+  // When the overlay's fadeOut transition ends, hide the overlay
+  feedbackOverlay.addEventListener("transitionend", function () {
+    if (feedbackOverlay.classList.contains("hide")) {
+      feedbackOverlay.style.display = "none";
+      feedbackOverlay.classList.remove("hide");
+    }
+  });
+
+  // Handle form submission via AJAX
+  feedbackForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the form from submitting traditionally
+
+    const feedbackMessage = feedbackMessageInput.value.trim();
+
+    if (!feedbackMessage) {
+      alert("Please enter your feedback before submitting.");
+      return;
+    }
+
+    feedbackSubmitButton.disabled = true; // Disable button to prevent multiple submissions
+
+    // Show loader
+    showFeedbackCSSLoader();
+
+    // Get the form action URL from data-feedback-url
+    const formUrl = feedbackForm.getAttribute("data-feedback-url");
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append("message", feedbackMessage);
+
+    // Send the form data to the server via AJAX
+    fetch(formUrl, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCsrfToken(), // Helper function to get CSRF token
+      },
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        hideFeedbackCSSLoader(); // Hide loader
+        feedbackSubmitButton.disabled = false; // Re-enable the button
+
+        if (data.success) {
+          showFeedbackCSSSuccessBox("Thank you for your feedback!");
+          feedbackMessageInput.value = ""; // Clear the input
+        } else {
+          showFeedbackCSSErrorBox(
+            "There was an error submitting your feedback. Please try again."
+          );
+        }
+      })
+      .catch((error) => {
+        hideFeedbackCSSLoader(); // Hide loader
+        feedbackSubmitButton.disabled = false; // Re-enable the button
+        console.error("Error:", error);
+        showFeedbackCSSErrorBox(
+          "An unexpected error occurred. Please try again."
+        );
+      });
+  });
+
+  // Helper function to get CSRF token from cookie
+  function getCsrfToken() {
+    const cookieValue = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+    return cookieValue;
+  }
+
+  // Function to show the loader overlay
+  function showFeedbackCSSLoader() {
+    feedbackCSSOverlay.style.display = "flex";
+  }
+
+  // Function to hide the loader overlay
+  function hideFeedbackCSSLoader() {
+    feedbackCSSOverlay.style.display = "none";
+  }
+
+  // Function to show success dialog with pop-in and pop-out animation
+  function showFeedbackCSSSuccessBox(message) {
+    feedbackCSSSuccessContent.innerText = message;
+    feedbackCSSSuccessBox.classList.remove("pop-out");
+    feedbackCSSSuccessBox.classList.add("pop-in");
+    feedbackCSSSuccessBox.style.display = "block";
+
+    // Add event listener for pop-in end to schedule pop-out
+    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopIn);
+
+    function handleSuccessPopIn(event) {
+      if (event.animationName === "popIn") {
+        // Schedule pop-out after a delay (e.g., 3 seconds)
+        setTimeout(() => {
+          feedbackCSSSuccessBox.classList.remove("pop-in");
+          feedbackCSSSuccessBox.classList.add("pop-out");
+        }, 3000); // 3 seconds display time
+
+        // Remove this event listener
+        feedbackCSSSuccessBox.removeEventListener(
+          "animationend",
+          handleSuccessPopIn
+        );
+      }
+    }
+
+    // Add event listener for pop-out end to hide dialog and close modal
+    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopOut);
+
+    function handleSuccessPopOut(event) {
+      if (event.animationName === "popOut") {
+        feedbackCSSSuccessBox.style.display = "none";
+        feedbackCSSSuccessBox.classList.remove("pop-out");
+        closeFeedbackModal(); // Close the modal after animation
+        // Optionally, reload the page or update content
+        // window.location.reload(); // Uncomment if you want to refresh the page
+        feedbackCSSSuccessBox.removeEventListener(
+          "animationend",
+          handleSuccessPopOut
+        );
+      }
+    }
+  }
+
+  // Function to show error dialog with pop-in and pop-out animation
+  function showFeedbackCSSErrorBox(error) {
+    feedbackCSSErrorContent.innerText = error;
+    feedbackCSSErrorBox.classList.remove("pop-out");
+    feedbackCSSErrorBox.classList.add("pop-in");
+    feedbackCSSErrorBox.style.display = "block";
+
+    // Add event listener for pop-in end to schedule pop-out
+    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopIn);
+
+    function handleErrorPopIn(event) {
+      if (event.animationName === "popIn") {
+        // Schedule pop-out after a delay (e.g., 3 seconds)
+        setTimeout(() => {
+          feedbackCSSErrorBox.classList.remove("pop-in");
+          feedbackCSSErrorBox.classList.add("pop-out");
+        }, 3000); // 3 seconds display time
+
+        // Remove this event listener
+        feedbackCSSErrorBox.removeEventListener(
+          "animationend",
+          handleErrorPopIn
+        );
+      }
+    }
+
+    // Add event listener for pop-out end to hide dialog and close modal
+    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopOut);
+
+    function handleErrorPopOut(event) {
+      if (event.animationName === "popOut") {
+        feedbackCSSErrorBox.style.display = "none";
+        feedbackCSSErrorBox.classList.remove("pop-out");
+        closeFeedbackModal(); // Close the modal after animation
+        feedbackCSSErrorBox.removeEventListener(
+          "animationend",
+          handleErrorPopOut
+        );
+      }
+    }
+  }
+
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
   const avatarModal = document.getElementById("avatarModal");
@@ -60,9 +299,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const confirmBtn = document.getElementById("confirmBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const categoryElements = document.querySelectorAll(".v1_124 div");
-  const contactUsButton = document.getElementById("contactUsButton");
-  const contactUsModal = document.getElementById("contactUsModal");
-  const closeContactUsModal = document.getElementById("closeContactUsModal");
 
   let selectedEmotion = null;
   let page = 1;
@@ -250,76 +486,227 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300);
     }, 3000);
   }
+  // Get overlay and modal elements
+  const contactUsButton = document.getElementById("contactUsButton");
+  const contactUsModal = document.getElementById("contactUsModal");
+  const closeContactUsModalBtn = document.getElementById("closeContactUsModal");
+  const contactUsOverlay = document.getElementById("ContactUsOverlay");
 
-  // Show modal when Contact Us button is clicked
-  contactUsButton.addEventListener("click", function (event) {
+  // Get loader and notification elements
+  const contactCSSOverlay = document.getElementById("contactCSSOverlay");
+  const contactCSSLoader = document.getElementById("contactCSSLoader");
+  const contactCSSSuccessBox = document.getElementById("contactCSSSuccessBox");
+  const contactCSSErrorBox = document.getElementById("contactCSSErrorBox");
+  const contactCSSSuccessContent = document.getElementById(
+    "contactCSSSuccessContent"
+  );
+  const contactCSSErrorContent = document.getElementById(
+    "contactCSSErrorContent"
+  );
+
+  // Form element
+  const contactUsForm = document.getElementById("contactUsForm");
+
+  // Function to open the Contact Us modal
+  function openContactUsModal(event) {
     event.preventDefault();
+
+    // Show overlay with fadeIn effect
+    contactUsOverlay.style.display = "block";
+    // Trigger reflow to ensure the transition works
+    void contactUsOverlay.offsetWidth;
+    contactUsOverlay.classList.add("show");
+
+    // Show modal with pop-in animation
     contactUsModal.style.display = "block";
-    setTimeout(() => {
-      contactUsModal.classList.add("pop-in");
-      document.querySelector(".modal-content").classList.add("pop-in");
-    }, 10);
-  });
+    // Trigger reflow
+    void contactUsModal.offsetWidth;
+    contactUsModal.classList.add("pop-in");
+    contactUsModal.classList.remove("pop-out");
+  }
 
-  // Close modal when the close button is clicked
-  closeContactUsModal.addEventListener("click", function () {
-    document.querySelector(".modal-content").classList.add("pop-out");
+  // Function to close the Contact Us modal
+  function closeContactUsModalHandler() {
+    // Start pop-out animation
     contactUsModal.classList.add("pop-out");
-    setTimeout(() => {
-      contactUsModal.style.display = "none";
-      document.querySelector(".modal-content").classList.remove("pop-out");
-      contactUsModal.classList.remove("pop-out");
-    }, 300);
-  });
+    contactUsModal.classList.remove("pop-in");
 
-  // Close modal when clicking outside of the modal content
-  window.addEventListener("click", function (event) {
-    if (event.target === contactUsModal) {
-      document.querySelector(".modal-content").classList.add("pop-out");
-      contactUsModal.classList.add("pop-out");
-      setTimeout(() => {
-        contactUsModal.style.display = "none";
-        document.querySelector(".modal-content").classList.remove("pop-out");
-        contactUsModal.classList.remove("pop-out");
-      }, 300);
+    // Start fade-out animation for overlay
+    contactUsOverlay.classList.remove("show");
+    contactUsOverlay.classList.add("hide");
+  }
+
+  // Event listener for transition end on the overlay to handle display:none
+  contactUsOverlay.addEventListener("transitionend", function (event) {
+    if (event.propertyName === "opacity") {
+      if (contactUsOverlay.classList.contains("hide")) {
+        contactUsOverlay.style.display = "none";
+        contactUsOverlay.classList.remove("hide");
+      }
     }
   });
 
-  // Handle form submission
-  const contactUsForm = document.getElementById("contactUsForm");
+  // Event listener for animation end on the modal to hide it after pop-out
+  contactUsModal.addEventListener("transitionend", function (event) {
+    if (
+      event.propertyName === "transform" &&
+      contactUsModal.classList.contains("pop-out")
+    ) {
+      contactUsModal.style.display = "none";
+      contactUsModal.classList.remove("pop-out");
+    }
+  });
+
+  // Event Listener for opening the modal
+  contactUsButton.addEventListener("click", openContactUsModal);
+
+  // Event Listener for closing the modal via close button
+  closeContactUsModalBtn.addEventListener("click", closeContactUsModalHandler);
+
+  // Event Listener for closing the modal by clicking outside the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === contactUsOverlay) {
+      closeContactUsModalHandler();
+    }
+  });
+
+  // Function to show the loader overlay
+  function showContactCSSLoader() {
+    contactCSSOverlay.style.display = "flex";
+  }
+
+  // Function to hide the loader overlay
+  function hideContactCSSLoader() {
+    contactCSSOverlay.style.display = "none";
+  }
+
+  // Function to show success dialog with pop-in and pop-out animations
+  function showContactCSSSuccessBox(message) {
+    contactCSSSuccessContent.innerText = message;
+    contactCSSSuccessBox.style.display = "block";
+    // Trigger reflow
+    void contactCSSSuccessBox.offsetWidth;
+    contactCSSSuccessBox.classList.add("pop-in");
+    contactCSSSuccessBox.classList.remove("pop-out");
+
+    // Automatically hide after 3 seconds
+    setTimeout(() => {
+      contactCSSSuccessBox.classList.remove("pop-in");
+      contactCSSSuccessBox.classList.add("pop-out");
+    }, 3000); // 3 seconds
+
+    // Event listener to hide after pop-out animation
+    contactCSSSuccessBox.addEventListener(
+      "transitionend",
+      handleSuccessPopOut,
+      { once: true }
+    );
+  }
+
+  // Handler for pop-out animation end of success dialog
+  function handleSuccessPopOut(event) {
+    if (
+      event.propertyName === "opacity" &&
+      contactCSSSuccessBox.classList.contains("pop-out")
+    ) {
+      contactCSSSuccessBox.style.display = "none";
+      contactCSSSuccessBox.classList.remove("pop-out");
+      closeContactUsModalHandler(); // Close the modal after success dialog
+    }
+  }
+
+  // Function to show error dialog with pop-in and pop-out animations
+  function showContactCSSErrorBox(error) {
+    contactCSSErrorContent.innerText = error;
+    contactCSSErrorBox.style.display = "block";
+    // Trigger reflow
+    void contactCSSErrorBox.offsetWidth;
+    contactCSSErrorBox.classList.add("pop-in");
+    contactCSSErrorBox.classList.remove("pop-out");
+
+    // Automatically hide after 3 seconds
+    setTimeout(() => {
+      contactCSSErrorBox.classList.remove("pop-in");
+      contactCSSErrorBox.classList.add("pop-out");
+    }, 3000); // 3 seconds
+
+    // Event listener to hide after pop-out animation
+    contactCSSErrorBox.addEventListener("transitionend", handleErrorPopOut, {
+      once: true,
+    });
+  }
+
+  // Handler for pop-out animation end of error dialog
+  function handleErrorPopOut(event) {
+    if (
+      event.propertyName === "opacity" &&
+      contactCSSErrorBox.classList.contains("pop-out")
+    ) {
+      contactCSSErrorBox.style.display = "none";
+      contactCSSErrorBox.classList.remove("pop-out");
+      closeContactUsModalHandler(); // Close the modal after error dialog
+    }
+  }
+
+  // Handle form submission via AJAX
   contactUsForm.addEventListener("submit", function (event) {
-    event.preventDefault();
+    event.preventDefault(); // Prevent default form submission
 
     const formData = new FormData(contactUsForm);
+    const data = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+    };
 
+    // Disable the submit button to prevent multiple submissions
+    const submitButton = contactUsForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+
+    // Show loader overlay
+    showContactCSSLoader();
+
+    // Send the form data to the server via AJAX
     fetch("/contact_us/", {
       method: "POST",
-      body: JSON.stringify({
-        name: formData.get("name"),
-        email: formData.get("email"),
-        subject: formData.get("subject"),
-        message: formData.get("message"),
-      }),
+      body: JSON.stringify(data),
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
+        "X-CSRFToken": getCsrfToken(),
       },
     })
       .then((response) => response.json())
       .then((data) => {
+        // Hide loader overlay
+        hideContactCSSLoader();
+
+        // Re-enable the submit button
+        submitButton.disabled = false;
+
         if (data.success) {
-          alert("Your message has been sent successfully!");
-          contactUsModal.style.display = "none";
-          contactUsForm.reset();
+          showContactCSSSuccessBox("Your message has been sent successfully!");
+          contactUsForm.reset(); // Reset the form
         } else {
-          alert("There was an error sending your message. Please try again.");
+          showContactCSSErrorBox(
+            "There was an error sending your message. Please try again."
+          );
         }
       })
       .catch((error) => {
         console.error("Error:", error);
-        alert("There was an error sending your message. Please try again.");
+        // Hide loader overlay
+        hideContactCSSLoader();
+
+        // Re-enable the submit button
+        submitButton.disabled = false;
+
+        showContactCSSErrorBox(
+          "There was an error sending your message. Please try again."
+        );
       });
   });
+
   // Added back button functionality
   const backButton = document.getElementById("backButton");
   if (backButton) {

@@ -440,7 +440,7 @@ button:hover {
   padding: 40px 30px;
   border-radius: 15px;
   top: 40px;
-  left: 720px;
+  left: 700px;
   width: 90%;
   max-width: 500px;
   position: fixed;
@@ -1396,6 +1396,82 @@ button[type="submit"]:hover {
 /* Smooth bouncy pop-in animation for user message */
 .user-message {
   margin-right: 10px;
+}
+
+#contactCSSOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.9
+  ); /* White background with 90% opacity */
+  z-index: 10000;
+}
+
+#contactCSSLoader {
+  position: absolute;
+  animation: rotate 2s infinite;
+  height: 50px;
+  top: 375px;
+  left: 280px;
+  width: 50px;
+  z-index: 10000000;
+}
+#contactCSSLoader:before,
+#contactCSSLoader:after {
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 20px;
+  width: 20px;
+}
+#contactCSSLoader:before {
+  animation: ball1 2s infinite;
+  background-color: #689e4b;
+  box-shadow: 30px 0 0 #0f2326;
+  margin-bottom: 10px;
+}
+#contactCSSLoader:after {
+  animation: ball2 2s infinite;
+  background-color: #0f2326;
+  box-shadow: 30px 0 0 #689e4b;
+}
+.contactCSS-loader {
+  z-index: 99999990;
+}
+#contactCSSSuccessBox {
+  top: 375px;
+  left: 75px;
+  width: 450px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+#contactCSSErrorBox {
+  top: 375px;
+  left: 75px;
+  width: 450px;
+  display: none;
+  text-align: center;
+  position: absolute;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000100;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 #contactUsButton {

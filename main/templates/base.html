@@ -1346,7 +1346,22 @@
 <div id="ContactUsOverlay" class="overlay"></div>
 
 <!-- Contact Us Modal -->
-<div id="contactUsModal" class="modal-content pop-in">
+<div id="contactUsModal" class="modal-content">
+  <!-- Contact CSS Loader Overlay and Spinner -->
+  <div id="contactCSSOverlay" class="contact-css-overlay" style="display: none;">
+    <div id="contactCSSLoader" class="contact-css-loader"></div>
+  </div>
+
+  <!-- Success Notification Dialog -->
+  <div id="contactCSSSuccessBox" class="flat-ui-dialog success" style="display: none;">
+    <div id="contactCSSSuccessContent"></div>
+  </div>
+
+  <!-- Error Notification Dialog -->
+  <div id="contactCSSErrorBox" class="flat-ui-dialog error" style="display: none;">
+    <div id="contactCSSErrorContent"></div>
+  </div>
+
   <span id="closeContactUsModal">&times;</span>
 
   <!-- SVG Decorative Phone Icon -->
@@ -1357,9 +1372,11 @@
   </div>
 
   <h2>Contact Us</h2>
-  
+
   <!-- Instructions for the user -->
-  <p style="text-align: center; margin-bottom: 20px;">We are here to help. Fill out the form below to get in touch with us, and we will respond as soon as possible.</p>
+  <p style="text-align: center; margin-bottom: 20px;">
+    We are here to help. Fill out the form below to get in touch with us, and we will respond as soon as possible.
+  </p>
 
   <form id="contactUsForm">
     <label for="name">Your Name</label>
