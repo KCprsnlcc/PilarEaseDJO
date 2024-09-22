@@ -2018,7 +2018,7 @@ button[type="submit"]:hover {
   z-index: 1;
   max-height: 0;
   width: 205px;
-  height: 210px;
+  height: 168px;
   transition: max-height 0.5s ease-in-out;
 }
 
@@ -2037,6 +2037,7 @@ button[type="submit"]:hover {
 }
 
 #dropmenu ul {
+  border-radius: 8px;
   list-style-type: none;
   margin: 0;
   padding: 0;
@@ -2047,10 +2048,12 @@ button[type="submit"]:hover {
 }
 
 #dropmenu ul li:last-child {
+  border-radius: 8px;
   border-bottom: none;
 }
 
 #dropmenu ul li a {
+  border-radius: 8px;
   display: block;
   padding: 12px 16px;
   color: #000;
@@ -2059,10 +2062,12 @@ button[type="submit"]:hover {
 }
 
 #dropmenu ul li a i {
+  border-radius: 8px;
   margin-right: 8px;
 }
 
 #dropmenu ul li a:hover {
+  border-radius: 8px;
   background: #f0f0f0;
 }
 
