@@ -4644,3 +4644,300 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initial check for notification status when the page loads
   checkNotificationStatus();
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Tab Navigation
+  const tabs = document.querySelectorAll(".pilarease-tab");
+  const tabPanes = document.querySelectorAll(".pilarease-tab-pane");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", function () {
+      // Remove active class from all tabs
+      tabs.forEach((t) => t.classList.remove("active"));
+      // Add active class to clicked tab
+      this.classList.add("active");
+
+      // Hide all tab panes
+      tabPanes.forEach((pane) => pane.classList.remove("active"));
+      // Show the associated tab pane
+      const target = this.getAttribute("data-tab");
+      document.getElementById(target).classList.add("active");
+    });
+  });
+
+  // Statuses Section
+  let statusPage = 1;
+  let statusIsLoading = false;
+  let statusHasNext = true;
+  const pilareaseStatusContainer = document.getElementById(
+    "pilareaseStatusContainer"
+  );
+  const pilareaseStatusLoader = document.getElementById(
+    "pilareaseStatusLoader"
+  );
+  const pilareaseStatusOverlay = document.getElementById(
+    "pilareaseStatusOverlay"
+  );
+
+  // Fetch initial statuses
+  fetchPilareaseStatuses(statusPage);
+
+  // Add scroll event listener for infinite scrolling in Statuses tab
+  const statusesTab = document.getElementById("statuses");
+  statusesTab.addEventListener("click", () => {
+    window.addEventListener("scroll", handleStatusScroll);
+  });
+
+  function handleStatusScroll() {
+    if (
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+      !statusIsLoading &&
+      statusHasNext &&
+      document.getElementById("statuses").classList.contains("active")
+    ) {
+      statusPage++;
+      fetchPilareaseStatuses(statusPage);
+    }
+  }
+
+  function fetchPilareaseStatuses(page) {
+    statusIsLoading = true;
+    pilareaseStatusLoader.style.display = "block";
+    pilareaseStatusOverlay.style.display = "block";
+
+    fetch(`/get_user_statuses/?page=${page}`)
+      .then((response) => response.json())
+      .then((data) => {
+        statusIsLoading = false;
+        pilareaseStatusLoader.style.display = "none";
+        pilareaseStatusOverlay.style.display = "none";
+
+        data.statuses.forEach((status) => {
+          const statusBox = document.createElement("div");
+          statusBox.classList.add("pilarease-status-box", "pop");
+          statusBox.setAttribute("data-id", status.id); // For easier DOM manipulation
+
+          statusBox.innerHTML = `
+              <div class="pilarease-status-header">
+                <img src="${status.avatar_url}" alt="${
+            status.username
+          }'s Avatar" class="pilarease-status-avatar" />
+                <div>
+                  <p class="pilarease-status-username">${status.username}</p>
+                  <span class="pilarease-status-time">${
+                    status.created_at
+                  } ago</span>
+                </div>
+              </div>
+              <h3 class="pilarease-status-title">${status.title}</h3>
+              <p class="pilarease-status-description">${status.description}</p>
+              <div class="pilarease-status-actions">
+                <button class="pilarease-action-button">
+                  <i class='bx bxs-comment'></i> Comment (${status.comments})
+                </button>
+                ${
+                  status.can_edit
+                    ? `<button class="pilarease-action-button" onclick="editPilareaseStatus(${status.id})">
+                        <i class='bx bx-edit'></i> Edit
+                      </button>
+                      <button class="pilarease-action-button" onclick="deletePilareaseStatus(${status.id})">
+                        <i class='bx bxs-trash'></i> Delete
+                      </button>`
+                    : ""
+                }
+              </div>
+            `;
+
+          pilareaseStatusContainer.appendChild(statusBox);
+
+          // Remove 'pop' class after animation
+          statusBox.addEventListener("animationend", function () {
+            statusBox.classList.remove("pop");
+          });
+        });
+
+        statusHasNext = data.has_next;
+      })
+      .catch((error) => {
+        statusIsLoading = false;
+        pilareaseStatusLoader.style.display = "none";
+        pilareaseStatusOverlay.style.display = "none";
+        console.error("Error fetching user statuses:", error);
+      });
+  }
+
+  // Recent Activity Section
+  let activityPage = 1;
+  let activityIsLoading = false;
+  let activityHasNext = true;
+  const pilareaseActivityContainer = document.getElementById(
+    "pilareaseActivityContainer"
+  );
+  const pilareaseActivityLoader = document.getElementById(
+    "pilareaseActivityLoader"
+  );
+  const pilareaseActivityOverlay = document.getElementById(
+    "pilareaseActivityOverlay"
+  );
+
+  // Fetch initial activities
+  fetchPilareaseActivities(activityPage);
+
+  // Add scroll event listener for infinite scrolling in Activity tab
+  const activityTab = document.getElementById("activity");
+  activityTab.addEventListener("click", () => {
+    window.addEventListener("scroll", handleActivityScroll);
+  });
+
+  function handleActivityScroll() {
+    if (
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+      !activityIsLoading &&
+      activityHasNext &&
+      document.getElementById("activity").classList.contains("active")
+    ) {
+      activityPage++;
+      fetchPilareaseActivities(activityPage);
+    }
+  }
+
+  function fetchPilareaseActivities(page) {
+    activityIsLoading = true;
+    pilareaseActivityLoader.style.display = "block";
+    pilareaseActivityOverlay.style.display = "block";
+
+    fetch(`/get_recent_activity/?page=${page}`)
+      .then((response) => response.json())
+      .then((data) => {
+        activityIsLoading = false;
+        pilareaseActivityLoader.style.display = "none";
+        pilareaseActivityOverlay.style.display = "none";
+
+        data.activities.forEach((activity) => {
+          const activityItem = document.createElement("div");
+          activityItem.classList.add("pilarease-activity-item");
+
+          activityItem.innerHTML = `
+              <p><strong>${activity.actor}</strong> ${activity.action} your status titled "<em>${activity.status_title}</em>".</p>
+              <span class="pilarease-activity-time">${activity.timestamp} ago</span>
+            `;
+
+          pilareaseActivityContainer.appendChild(activityItem);
+        });
+
+        activityHasNext = data.has_next;
+      })
+      .catch((error) => {
+        activityIsLoading = false;
+        pilareaseActivityLoader.style.display = "none";
+        pilareaseActivityOverlay.style.display = "none";
+        console.error("Error fetching recent activities:", error);
+      });
+  }
+
+  // Edit Profile Modal
+  const pilareaseEditProfileBtn = document.getElementById(
+    "pilareaseEditProfileBtn"
+  );
+  const pilareaseEditProfileModal = document.getElementById(
+    "pilareaseEditProfileModal"
+  );
+  const pilareaseCloseEditProfile = document.getElementById(
+    "pilareaseCloseEditProfile"
+  );
+  const pilareaseEditProfileForm = document.getElementById(
+    "pilareaseEditProfileForm"
+  );
+
+  // Open Modal
+  pilareaseEditProfileBtn.addEventListener("click", () => {
+    pilareaseEditProfileModal.style.display = "block";
+  });
+
+  // Close Modal
+  pilareaseCloseEditProfile.addEventListener("click", () => {
+    pilareaseEditProfileModal.style.display = "none";
+  });
+
+  // Close Modal when clicking outside the modal content
+  window.addEventListener("click", (event) => {
+    if (event.target == pilareaseEditProfileModal) {
+      pilareaseEditProfileModal.style.display = "none";
+    }
+  });
+
+  // Handle Edit Profile Form Submission
+  pilareaseEditProfileForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch(`/edit_profile/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken, // Ensure csrftoken is defined
+      },
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Profile updated successfully!");
+          // Optionally, refresh the page or update the UI dynamically
+          location.reload();
+        } else {
+          // Handle errors
+          const errors = data.errors;
+          let errorMessages = "";
+          for (const field in errors) {
+            errorMessages += `${field}: ${errors[field]} \n`;
+          }
+          alert(`Failed to update profile:\n${errorMessages}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error updating profile:", error);
+        alert("An error occurred while updating the profile.");
+      });
+  });
+
+  // Recent Activity Infinite Scroll
+  // (No changes needed as likes and gallery are removed)
+
+  // Status Actions (Edit and Delete)
+  window.editPilareaseStatus = function (statusId) {
+    // Implement edit functionality, e.g., redirect to edit page
+    window.location.href = `/status/${statusId}/edit/`;
+  };
+
+  window.deletePilareaseStatus = function (statusId) {
+    if (confirm("Are you sure you want to delete this status?")) {
+      fetch(`/delete_status/${statusId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken, // Ensure csrftoken is defined
+        },
+        body: JSON.stringify({}),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // Remove the status box from the DOM
+            const statusBox = document.querySelector(
+              `.pilarease-status-box[data-id="${statusId}"]`
+            );
+            if (statusBox) {
+              statusBox.remove();
+            }
+          } else {
+            alert("Failed to delete status.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error deleting status:", error);
+          alert("An error occurred while deleting the status.");
+        });
+    }
+  };
+});
