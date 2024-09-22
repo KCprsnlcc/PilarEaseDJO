@@ -102,12 +102,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const pilareaseProfileStatusContainer = document.getElementById(
     "pilareaseProfileStatusContainer"
   );
-  const pilareaseProfileStatusLoader = document.getElementById(
-    "pilareaseProfileStatusLoader"
-  );
-  const pilareaseProfileStatusOverlay = document.getElementById(
-    "pilareaseProfileStatusOverlay"
-  );
+  const pilareaseProfileStatusLoader =
+    document.getElementById("ProfileCSSLoader");
+  const pilareaseProfileStatusOverlay =
+    document.getElementById("ProfileCSSOverlay");
 
   // Initial fetch of statuses
   fetchPilareaseStatuses(statusPage);
@@ -322,12 +320,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const pilareaseProfileActivityContainer = document.getElementById(
     "pilareaseProfileActivityContainer"
   );
-  const pilareaseProfileActivityLoader = document.getElementById(
-    "pilareaseProfileActivityLoader"
-  );
-  const pilareaseProfileActivityOverlay = document.getElementById(
-    "pilareaseProfileActivityOverlay"
-  );
+  const pilareaseProfileActivityLoader =
+    document.getElementById("ProfileCSSLoader");
+  const pilareaseProfileActivityOverlay =
+    document.getElementById("ProfileCSSOverlay");
 
   // Initial fetch of recent activities
   fetchPilareaseActivities(activityPage);
