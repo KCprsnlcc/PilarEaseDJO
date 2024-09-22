@@ -99,7 +99,7 @@ def profile_view(request):
 
 @login_required
 def get_user_analytics(request):
-    # Calculate statuses over time for the last 30 days
+    # Fetching statuses over the last 30 days
     thirty_days_ago = timezone.now() - timedelta(days=30)
     statuses_over_time = (
         Status.objects.filter(user=request.user, created_at__gte=thirty_days_ago)
@@ -110,8 +110,6 @@ def get_user_analytics(request):
     )
 
     # Ensure all days in the range are represented
-    from datetime import datetime, timedelta
-
     date_counts = {item['day'].strftime('%Y-%m-%d'): item['count'] for item in statuses_over_time}
     all_dates = [
         (timezone.now() - timedelta(days=i)).date() for i in range(29, -1, -1)
@@ -127,8 +125,7 @@ def get_user_analytics(request):
 @login_required
 def get_user_statuses(request):
     page_number = request.GET.get('page', 1)
-    user = request.user
-    statuses = Status.objects.filter(user=user).order_by('-created_at')
+    statuses = Status.objects.filter(user=request.user).order_by('-created_at')
     paginator = Paginator(statuses, 10)  # 10 statuses per page
 
     try:
@@ -142,13 +139,13 @@ def get_user_statuses(request):
     for status in page_obj.object_list:
         statuses_data.append({
             'id': status.id,
-            'username': user.username,
-            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'username': request.user.username,
+            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
             'title': status.title,
             'description': status.description,
-            'created_at': format_timestamp(status.created_at),
-            'comments': status.replies.count(),
-            'can_edit': status.user == user,
+            'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'replies': status.replies.count(),
+            'can_edit': status.user == request.user,
         })
 
     return JsonResponse({
@@ -177,7 +174,7 @@ def get_recent_activity(request):
             'actor': reply.user.username,
             'action': 'replied to',
             'status_title': reply.status.title,
-            'timestamp': format_timestamp(reply.created_at),
+            'timestamp': reply.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         })
 
     return JsonResponse({

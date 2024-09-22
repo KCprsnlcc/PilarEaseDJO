@@ -1443,7 +1443,13 @@
       <div id="logoutSuccessContent">Logout successful!</div>
     </div>
     <script src="https://unpkg.com/cropperjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include Chart.js from CDN -->
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"
+  integrity="sha512-dw6ZrV5NVmrnPIHIrbBNHJyA3Sck+H2/TIlMU9g3HnxLkBw1X7JqjnFQeDGAMT2iXq6fnXPKsGHwTNY2uLQtBg=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
     {% compress js %}
     <script src="{% static 'js/main.js' %}?v=1.0"></script>
     <script src="{% static 'js/custom.js' %}?v=1.0"></script>

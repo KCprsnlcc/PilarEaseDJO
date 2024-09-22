@@ -293,8 +293,10 @@
   flex-wrap: wrap;
   gap: 40px;
   justify-content: space-between;
+  min-height: 300px;
+  max-height: 480px;
+  overflow: auto;
 }
-
 .pilarease-profile-analytics-card {
   background-color: var(--pilarease-profile-white);
   padding: 25px 20px;
@@ -342,6 +344,8 @@
 .pilarease-profile-analytics-chart {
   flex-basis: 100%;
   margin-top: 30px;
+  max-height: 300px; /* Fix the chart container height */
+  overflow: hidden; /* Ensure that chart overflow does not expand the container */
 }
 
 .pilarease-profile-analytics-chart h3 {
@@ -351,11 +355,11 @@
   margin-bottom: 15px;
   text-align: center;
 }
-
 /* Chart Canvas */
 #pilareaseProfileStatusChart {
   max-width: 100%;
-  height: 300px;
+  height: 250px; /* Set a fixed height to avoid infinite growth */
+  max-height: 300px; /* Add max height to prevent overflow */
 }
 
 /* Recent Activity Section */

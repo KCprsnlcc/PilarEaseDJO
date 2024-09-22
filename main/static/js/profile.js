@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <svg xmlns="http://www.w3.org/2000/svg" class="pilarease-profile-button-icon" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88L12 22l1.56-0.12C18.34 21.12 22 16.99 22 12c0-5.52-4.48-10-10-10zM12 20c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm1-11h-2v6h2v-6zm0 8h-2v2h2v-2z"/>
                 </svg>
-                Comment (${status.comments})
+                Replies (${status.replies})
               </button>
               ${
                 status.can_edit
@@ -259,12 +259,11 @@ document.addEventListener("DOMContentLoaded", function () {
           {
             label: "Statuses Posted",
             data: counts,
-            backgroundColor:
-              "rgba(14, 35, 38, 0.2)" /* Primary Color with transparency */,
-            borderColor: "rgba(14, 35, 38, 1)" /* Primary Color */,
+            backgroundColor: "rgba(14, 35, 38, 0.2)",
+            borderColor: "rgba(14, 35, 38, 1)",
             borderWidth: 2,
             pointRadius: 4,
-            pointBackgroundColor: "rgba(14, 35, 38, 1)" /* Primary Color */,
+            pointBackgroundColor: "rgba(14, 35, 38, 1)",
             fill: true,
             tension: 0.3,
           },
@@ -272,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function () {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: false /* Ensure the chart does not maintain aspect ratio */,
         scales: {
           y: {
             beginAtZero: true,
@@ -342,7 +341,7 @@ document.addEventListener("DOMContentLoaded", function () {
       !activityIsLoading &&
       activityHasNext &&
       document
-        .getElementById("pilarease-profile-activity")
+        .getElementById("activity")
         .classList.contains("pilarease-profile-tab-pane-active")
     ) {
       activityPage++;
@@ -375,8 +374,12 @@ document.addEventListener("DOMContentLoaded", function () {
           );
 
           activityItem.innerHTML = `
-            <p><strong>${activity.actor}</strong> ${activity.action} your status titled "<em>${activity.status_title}</em>".</p>
-            <span class="pilarease-profile-activity-time">${activity.timestamp}</span>
+            <p><strong>${activity.actor}</strong> ${
+            activity.action
+          } your status titled "<em>${activity.status_title}</em>".</p>
+            <span class="pilarease-profile-activity-time">${formatTimestamp(
+              activity.timestamp
+            )}</span>
           `;
 
           pilareaseProfileActivityContainer.appendChild(activityItem);
@@ -396,7 +399,6 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Error fetching recent activities:", error);
       });
   }
-
   /* ======================================================
      Status Actions
   ====================================================== */
