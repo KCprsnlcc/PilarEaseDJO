@@ -44,102 +44,97 @@
           <!-- Statuses will be dynamically loaded here -->
         </div>
         <div
-          id="pilareaseProfileStatusLoader"
-          class="pilarease-profile-loader"
-          style="display: none"
-        >
-          <div class="loader-spinner"></div>
-        </div>
-        <div
-          id="pilareaseProfileStatusOverlay"
-          class="pilarease-profile-overlay"
-          style="display: none"
-        ></div>
-      </div>
-
-      <!-- Analytics Section -->
-      <div class="pilarease-profile-tab-pane" id="analytics">
-        <h2 class="pilarease-profile-feed-title">Your Analytics</h2>
-        <div
-          class="pilarease-profile-analytics-container pilarease-profile-animate"
-        >
-          <div class="pilarease-profile-analytics-card">
-            <!-- SVG Icon for Status Count -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pilarease-profile-analytics-icon"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 8h14v-2H7v2zm0-4h14v-2H7v2zm0-6v2h14V7H7z"
-              />
-            </svg>
-            <div class="pilarease-profile-analytics-info">
-              <h3>{{ total_statuses }}</h3>
-              <p>Statuses Posted</p>
-            </div>
-          </div>
-          <div class="pilarease-profile-analytics-card">
-            <!-- SVG Icon for Replies Count -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="pilarease-profile-analytics-icon"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M20 2H4c-1.1 0-2 .9-2 2v16l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
-              />
-            </svg>
-            <div class="pilarease-profile-analytics-info">
-              <h3>{{ total_replies_received }}</h3>
-              <p>Replies Received</p>
-            </div>
-          </div>
-          <div class="pilarease-profile-analytics-chart">
-            <h3>Status Activity Over Time</h3>
-            <canvas
-              id="pilareaseProfileStatusChart"
-              width="400"
-              height="200"
-            ></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Activity Section -->
-      <div class="pilarease-profile-tab-pane" id="activity">
-        <h2 class="pilarease-profile-feed-title">Recent Activity</h2>
-        <div
-          class="pilarease-profile-activity-container"
-          id="pilareaseProfileActivityContainer"
-        >
-          <!-- Recent activities will be dynamically loaded here -->
-        </div>
-        <!-- Contact CSS Loader Overlay and Spinner -->
-        <div
           id="ProfileCSSOverlay"
           class="ProfileCSS-css-overlay"
           style="display: none"
         >
           <div id="ProfileCSSLoader" class="ProfileCSS-css-loader"></div>
         </div>
+
+        <!-- Analytics Section -->
+        <div class="pilarease-profile-tab-pane" id="analytics">
+          <h2 class="pilarease-profile-feed-title">Your Analytics</h2>
+          <div
+            class="pilarease-profile-analytics-container pilarease-profile-animate"
+          >
+            <div class="pilarease-profile-analytics-card">
+              <!-- SVG Icon for Status Count -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="pilarease-profile-analytics-icon"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 8h14v-2H7v2zm0-4h14v-2H7v2zm0-6v2h14V7H7z"
+                />
+              </svg>
+              <div class="pilarease-profile-analytics-info">
+                <h3>{{ total_statuses }}</h3>
+                <p>Statuses Posted</p>
+              </div>
+            </div>
+            <div class="pilarease-profile-analytics-card">
+              <!-- SVG Icon for Replies Count -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="pilarease-profile-analytics-icon"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 2H4c-1.1 0-2 .9-2 2v16l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+                />
+              </svg>
+              <div class="pilarease-profile-analytics-info">
+                <h3>{{ total_replies_received }}</h3>
+                <p>Replies Received</p>
+              </div>
+            </div>
+            <div class="pilarease-profile-analytics-chart">
+              <h3>Status Activity Over Time</h3>
+              <canvas
+                id="pilareaseProfileStatusChart"
+                width="400"
+                height="200"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Section -->
+        <div class="pilarease-profile-tab-pane" id="activity">
+          <h2 class="pilarease-profile-feed-title">Recent Activity</h2>
+          <div
+            class="pilarease-profile-activity-container"
+            id="pilareaseProfileActivityContainer"
+          >
+            <!-- Recent activities will be dynamically loaded here -->
+          </div>
+          <!-- Contact CSS Loader Overlay and Spinner -->
+          <div
+            id="ProfileCSSOverlay"
+            class="ProfileCSS-css-overlay"
+            style="display: none"
+          >
+            <div id="ProfileCSSLoader" class="ProfileCSS-css-loader"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Contact CSS Loader Overlay and Spinner -->
+  <div
+    id="ProfileCSSOverlay"
+    class="ProfileCSS-css-overlay"
+    style="display: none"
+  >
+    <div id="ProfileCSSLoader" class="ProfileCSS-css-loader"></div>
+  </div>
+
+  <!-- Include Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Include the updated profile.js -->
+  <script src="{% static 'js/profile.js' %}"></script>
+
+  {% endblock %}
 </div>
-
-<!-- Contact CSS Loader Overlay and Spinner -->
-<div
-  id="ProfileCSSOverlay"
-  class="ProfileCSS-css-overlay"
-  style="display: none"
->
-  <div id="ProfileCSSLoader" class="ProfileCSS-css-loader"></div>
-</div>
-
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Include the updated profile.js -->
-<script src="{% static 'js/profile.js' %}"></script>
-
-{% endblock %}
