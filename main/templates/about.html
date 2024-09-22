@@ -117,49 +117,22 @@
     </div>
   </div>
 </section>
-
 <!-- Testimonials Section -->
 <section class="testimonials-pilarease" id="testimonials-pilarease">
   <div class="container-pilarease">
     <h2>What Our Users Say</h2>
     <div class="testimonials-grid-pilarease">
+      {% for feedback in feedbacks %}
       <div class="testimonial-item-pilarease">
         <img
-          src="{% static 'images/user1.png' %}"
-          alt="Jose"
+          src="{% if feedback.user.profile.avatar %}{{ feedback.user.profile.avatar.url }}{% else %}{% static 'images/avatars/placeholder.png' %}{% endif %}"
+          alt="{{ feedback.user.username }}"
           class="testimonial-img-pilarease"
         />
-        <h3>Jose</h3>
-        <p>
-          "Thank you very much for creating this website. I can share all my
-          feelings without being ashamed as no one knows who I am."
-        </p>
+        <h3>{{ feedback.user.username }}</h3>
+        <p>{{ feedback.message }}</p>
       </div>
-      <div class="testimonial-item-pilarease">
-        <img
-          src="{% static 'images/user2.png' %}"
-          alt="Derwin"
-          class="testimonial-img-pilarease"
-        />
-        <h3>Derwin</h3>
-        <p>
-          "Life is full of problems and this is the best source to express
-          those. Whenever I am depressed or frustrated I always come here for
-          assistance."
-        </p>
-      </div>
-      <div class="testimonial-item-pilarease">
-        <img
-          src="{% static 'images/user3.png' %}"
-          alt="Mae"
-          class="testimonial-img-pilarease"
-        />
-        <h3>Mae</h3>
-        <p>
-          "I used this after getting a recommendation from a friend and I am
-          glad I did. I connected with several people and made new friends."
-        </p>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </section>

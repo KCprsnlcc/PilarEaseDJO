@@ -19,7 +19,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.home, name='home'),  # Your home view
-    path('about/', views.about, name='about'),
+    path('about/', views.about_view, name='about'),
+    path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
     path('register/', register_view, name='register'),
     path('request_email_change/', request_email_change, name='request_email_change'),
     path('verify_email_change/<uidb64>/<token>/<new_email>/', verify_email_change, name='verify_email_change'),

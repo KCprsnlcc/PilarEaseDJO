@@ -224,12 +224,14 @@
 
   <h2>We'd Love Your Feedback!</h2>
   <p>Please share your thoughts about our system. Your feedback helps us improve and serve you better.</p>
-  <form class="feedback-form-pilarease">
+   <!-- Pass the URL via data-attribute -->
+  <form id="feedbackForm" data-feedback-url="{% url 'submit_feedback' %}">
+    {% csrf_token %}
     <div class="form-group-pilarease">
-      <label for="feedbackComment">Your Comment</label>
-      <textarea id="feedbackComment" name="comment" rows="5" placeholder="Enter your feedback here..." required></textarea>
+      <label for="feedbackMessage">Your Feedback</label>
+      <textarea id="feedbackMessage" name="message" rows="5" required></textarea>
     </div>
-    <button type="submit" class="btn-pilarease submit-feedback-pilarease">Submit Feedback</button>
+    <button type="submit" class="submit-feedback-pilarease">Submit Feedback</button>
   </form>
 </div>
 

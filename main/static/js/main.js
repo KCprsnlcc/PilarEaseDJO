@@ -31,12 +31,18 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Get overlay and modal elements
+  // Get overlay and modal elements
   const feedbackOverlay = document.getElementById("Feedbackoverlay");
   const feedbackModalContent = document.querySelector(
     ".feedback-modal-content-pilarease"
   );
   const feedbackLink = document.getElementById("feedbackLink");
   const closeFeedback = document.querySelector(".close-feedback-pilarease");
+  const feedbackForm = document.getElementById("feedbackForm"); // Feedback form element
+  const feedbackMessageInput = document.getElementById("feedbackMessage"); // Feedback textarea
+  const feedbackSubmitButton = document.querySelector(
+    ".submit-feedback-pilarease"
+  ); // Submit button
 
   // Function to open the modal and overlay with fadeIn and popIn animations
   function openFeedbackModal(event) {
@@ -55,7 +61,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to close the modal and overlay with fadeOut and popOut animations
   function closeFeedbackModal() {
-    // Trigger hide animations
     feedbackOverlay.classList.add("hide");
     feedbackOverlay.classList.remove("show");
     feedbackModalContent.classList.add("hide");
@@ -88,6 +93,64 @@ document.addEventListener("DOMContentLoaded", function () {
       feedbackOverlay.style.display = "none";
     }
   });
+
+  // Handle form submission via AJAX
+  feedbackForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the form from submitting traditionally
+
+    const feedbackMessage = feedbackMessageInput.value.trim();
+
+    if (!feedbackMessage) {
+      alert("Please enter your feedback before submitting.");
+      return;
+    }
+
+    feedbackSubmitButton.disabled = true; // Disable button to prevent multiple submissions
+
+    // Get the form action URL from data-feedback-url
+    const formUrl = feedbackForm.getAttribute("data-feedback-url");
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append("message", feedbackMessage);
+
+    // Send the form data to the server via AJAX
+    fetch(formUrl, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCsrfToken(), // Helper function to get CSRF token
+      },
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        feedbackSubmitButton.disabled = false; // Re-enable the button
+
+        if (data.success) {
+          alert("Thank you for your feedback!");
+          feedbackMessageInput.value = ""; // Clear the input
+          closeFeedbackModal(); // Close the modal after successful submission
+        } else {
+          alert(
+            "There was an error submitting your feedback. Please try again."
+          );
+        }
+      })
+      .catch((error) => {
+        feedbackSubmitButton.disabled = false; // Re-enable the button
+        console.error("Error:", error);
+        alert("An unexpected error occurred. Please try again.");
+      });
+  });
+
+  // Helper function to get CSRF token from cookie
+  function getCsrfToken() {
+    const cookieValue = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
+    return cookieValue;
+  }
 
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
