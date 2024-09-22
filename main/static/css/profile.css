@@ -137,7 +137,7 @@
 .pilarease-profile-academic {
   font-family: "Inter", sans-serif;
   font-size: 16px;
-  color: var(--pilarease-profile-secondary-color);
+  color: var(--pilarease-profile-text-color);
   margin: 5px 0;
 }
 
