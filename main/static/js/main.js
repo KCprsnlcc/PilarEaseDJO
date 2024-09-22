@@ -3866,6 +3866,7 @@ document.addEventListener("DOMContentLoaded", function () {
         profileIconImage.style.display = "block";
       });
   }
+
   // Show profile success or error dialogs
   function showProfileSuccess(message) {
     const dialogBox = document.getElementById("profileSuccessDialog");
@@ -3948,8 +3949,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const username = document.getElementById("username").value;
     const contactNumber = document.getElementById("contact-number").value;
     const academicYear = document.getElementById("academic-year").value;
-    const bio = document.getElementById("bio").value; // Get the bio field value
 
+    // Show the profile update overlay and loader
     const profileUpdateOverlay = document.getElementById(
       "profileupdateOverlay"
     );
@@ -3964,12 +3965,12 @@ document.addEventListener("DOMContentLoaded", function () {
       body: JSON.stringify({
         username: username,
         contact_number: contactNumber,
-        academic_year_level: academicYear,
-        bio: bio, // Include the bio in the request body
+        academic_year_level: academicYear, // Only include fields that are allowed to be updated
       }),
     })
       .then((response) => response.json())
       .then((data) => {
+        // Hide the overlay and loader
         profileUpdateOverlay.style.display = "none";
 
         if (data.success) {
@@ -3979,6 +3980,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       })
       .catch((error) => {
+        // Hide the overlay and loader
         profileUpdateOverlay.style.display = "none";
         console.error("Error updating profile:", error);
         showProfileError("Error updating profile. Please try again.");
