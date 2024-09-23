@@ -563,18 +563,46 @@ def analyze_emotions(text):
 # Load the profanity word list
 profanity.load_censor_words()
 
+def load_custom_profanities():
+    """Load custom profanities from a text file in the main app's static directory."""
+    # Define the path to the custom profanity file inside 'main/static/profanity/'
+    profanity_file_path = os.path.join(settings.BASE_DIR, 'main', 'static', 'profanity', 'custom_profanities.txt')
+
+    # Check if the file exists and load the custom profanities from the file
+    if os.path.exists(profanity_file_path):
+        with open(profanity_file_path, 'r', encoding='utf-8') as f:
+            custom_profanities = [line.strip() for line in f.readlines()]
+        return custom_profanities
+    return []
+
+def contains_custom_profanity(text):
+    """Check if the text contains any custom profanities."""
+    custom_profanities = load_custom_profanities()
+    for profanity_word in custom_profanities:
+        if re.search(rf'\b{profanity_word}\b', text, re.IGNORECASE):
+            return True
+    return False
+
+@csrf_exempt
 def check_profanity(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        title = data.get('title')
-        description = data.get('description')
+        title = data.get('title', '')
+        description = data.get('description', '')
 
-        if profanity.contains_profanity(title) or profanity.contains_profanity(description):
+        # Check using built-in profanity filter
+        built_in_profanity_check = profanity.contains_profanity(title) or profanity.contains_profanity(description)
+
+        # Check using custom profanity list
+        custom_profanity_check = contains_custom_profanity(title) or contains_custom_profanity(description)
+
+        # If either check finds profanity, return True
+        if built_in_profanity_check or custom_profanity_check:
             return JsonResponse({'contains_profanity': True})
         else:
             return JsonResponse({'contains_profanity': False})
+    
     return JsonResponse({'contains_profanity': False}, status=400)
-
 def get_status(request, status_id):
     status = get_object_or_404(Status, id=status_id)
     data = {
