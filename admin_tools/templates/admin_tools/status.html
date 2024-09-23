@@ -2,85 +2,157 @@
 {% load static %}
 {% load compress %}
 
-{% block content %}
-<h1>Status</h1>
-<div class="status-container">
-  <form method="get" class="search-form">
-    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}">
-    <select name="category">
-      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
-      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
-      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
-      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
-      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
-      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
-      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
-      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
-    </select>
-    <button type="submit">Search</button>
-  </form>
-  
-  <table class="status-table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Student ID</th>
-        <th>Title</th>
-        <th>Body</th>
-        <th>Category</th>
-        <th>Date Posted</th>
-        <th>ANGRY</th>
-        <th>DISGUST</th>
-        <th>FEAR</th>
-        <th>HAPPY</th>
-        <th>NEUTRAL</th>
-        <th>SAD</th>
-        <th>SURPRISE</th>
-        <th>ACTION</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for status in statuses %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ status.user.student_id }}</td>
-        <td>{{ status.title }}</td>
-        <td>{{ status.plain_description|truncatewords:10 }}</td>
-        <td>{{ status.emotion }}</td>
-        <td>{{ status.created_at|date:"Y-m-d" }}</td>
-        <td>{{ status.anger|floatformat:2 }}%</td>
-        <td>{{ status.disgust|floatformat:2 }}%</td>
-        <td>{{ status.fear|floatformat:2 }}%</td>
-        <td>{{ status.happiness|floatformat:2 }}%</td>
-        <td>{{ status.neutral|floatformat:2 }}%</td>
-        <td>{{ status.sadness|floatformat:2 }}%</td>
-        <td>{{ status.surprise|floatformat:2 }}%</td>
-        <td>
-          <a href="{% url 'delete_status' status.id %}" class="delete-icon"><i class="bx bx-trash"></i></a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if not statuses %}
-  <p>No status data found.</p>
-  {% endif %}
-  <div class="pagination">
-    <span class="step-links">
-      {% if page_obj.has_previous %}
-        <a href="?page=1&search={{ search_query }}&category={{ category }}">first</a>
-        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}">previous</a>
-      {% endif %}
-      
-      <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-      </span>
-      
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}">next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}">last</a>
-      {% endif %}
-    </span>
-  </div>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PilareEase Admin - Status</title>
+    <!-- Animate.css CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <!-- Your Admin CSS -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <!-- Optional: Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    {% block content %}
+    <div class="pilarease-admin-main-content animate__animated animate__fadeIn">
+        <h1 class="pilarease-admin-title">Status Management</h1>
+        <div class="pilarease-admin-status-container">
+            <!-- Search and Filter Form -->
+            <form method="get" class="pilarease-admin-search-form">
+                <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input">
+                <select name="category" class="pilarease-admin-select">
+                    <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+                    <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
+                    <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
+                    <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
+                    <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
+                    <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
+                    <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
+                    <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
+                </select>
+                <button type="submit" class="pilarease-admin-button">Search</button>
+                <a href="{% url 'status' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
+            </form>
+
+            <!-- Status Table -->
+            <table class="pilarease-admin-statuses-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Student ID</th>
+                        <th>Title</th>
+                        <th>Body</th>
+                        <th>Category</th>
+                        <th>Date Posted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for status in statuses %}
+                    <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ status.user.student_id }}</td>
+                        <td>{{ status.title }}</td>
+                        <td class="pilarease-admin-status-body">{{ status.plain_description|truncatewords:10 }}</td>
+                        <td>{{ status.emotion|title }}</td>
+                        <td>{{ status.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button pilarease-admin-delete-button" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <!-- Expanded View Row -->
+                    <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}">
+                        <td colspan="7">
+                            <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
+                                <h3>{{ status.title }}</h3>
+                                <p>{{ status.plain_description }}</p>
+                                <p><strong>Category:</strong> {{ status.emotion|title }}</p>
+                                <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
+                                <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button pilarease-admin-delete-button">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not statuses %}
+            <p class="pilarease-admin-no-data">No status data found.</p>
+            {% endif %}
+
+            <!-- Pagination -->
+            <div class="pilarease-admin-pagination">
+                <span class="pilarease-admin-step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
+                        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
+                    {% endif %}
+
+                    <span class="pilarease-admin-current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inline Preview (Optional Tooltip) -->
+    <!-- You can enhance this section with JavaScript for better interactivity -->
+
+    <!-- JavaScript for Expanded View Toggle -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rows = document.querySelectorAll('.pilarease-admin-status-row');
+            rows.forEach(row => {
+                row.addEventListener('click', function() {
+                    const statusId = this.getAttribute('data-status-id');
+                    const expandedView = document.getElementById('expanded-view-' + statusId);
+                    if (expandedView.style.display === 'table-row') {
+                        expandedView.style.display = 'none';
+                    } else {
+                        expandedView.style.display = 'table-row';
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bodies = document.querySelectorAll('.pilarease-admin-status-body');
+        bodies.forEach(body => {
+            body.addEventListener('mouseenter', function() {
+                const tooltip = document.createElement('div');
+                tooltip.classList.add('pilarease-admin-tooltip');
+                tooltip.innerText = this.getAttribute('title');
+                document.body.appendChild(tooltip);
+
+                const rect = this.getBoundingClientRect();
+                tooltip.style.top = rect.top + window.scrollY - tooltip.offsetHeight - 5 + 'px';
+                tooltip.style.left = rect.left + window.scrollX + 'px';
+                tooltip.classList.add('animate__animated', 'animate__fadeIn');
+            });
+
+            body.addEventListener('mouseleave', function() {
+                const tooltip = document.querySelector('.pilarease-admin-tooltip');
+                if (tooltip) {
+                    tooltip.classList.remove('animate__fadeIn');
+                    tooltip.classList.add('animate__fadeOut');
+                    tooltip.addEventListener('animationend', () => tooltip.remove());
+                }
+            });
+        });
+    });
+</script>
+
+    {% endblock %}
+</body>
+</html>
