@@ -1,4 +1,4 @@
-{% load static %} {% load compress %}
+{% load static compress %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -76,12 +76,6 @@
           </a>
         </li>
         <li>
-          <a href="{% url 'reports' %}">
-            <i class="bx bx-file"></i>
-            <span class="pilarease-admin-menu-text menu-text">Reports</span>
-          </a>
-        </li>
-        <li>
           <a href="{% url 'status' %}">
             <i class="bx bx-edit"></i>
             <span class="pilarease-admin-menu-text menu-text">Status</span>
@@ -100,13 +94,21 @@
           </a>
         </li>
         <li>
-          <a>
+          <a href="{% url 'referral' %}">
             <i class="bx bx-receipt"></i>
             <span class="pilarease-admin-menu-text menu-text">Referral</span>
           </a>
         </li>
         <li>
-          <a>
+          <a href="{% url 'manage_profanities' %}">
+            <i class="bx bx-badge-check"></i>
+            <span class="pilarease-admin-menu-text menu-text"
+              >Profanity List</span
+            >
+          </a>
+        </li>
+        <li>
+          <a href="#">
             <i class="bx bx-chat"></i>
             <span class="pilarease-admin-menu-text menu-text">Chat</span>
           </a>
@@ -144,6 +146,25 @@
       sidebar.addEventListener("mouseleave", () => {
         sidebar.classList.remove("pilarease-admin-sidebar-expanded");
       });
+
+      // Modal Handling
+      const modals = document.querySelectorAll(".pilarease-admin-modal");
+      const closeButtons = document.querySelectorAll(".pilarease-admin-close");
+
+      closeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const modal = btn.closest(".pilarease-admin-modal");
+          modal.style.display = "none";
+        });
+      });
+
+      window.onclick = function (event) {
+        modals.forEach((modal) => {
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        });
+      };
     </script>
   </body>
 </html>

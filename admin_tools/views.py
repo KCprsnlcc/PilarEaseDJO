@@ -30,10 +30,13 @@ from django.views.decorators.http import require_GET
 from main.models import Referral
 from collections import Counter
 import nltk
+import re
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from datetime import timedelta
 from datetime import datetime
+import os
+from django.conf import settings
 
 # Ensure NLTK data is downloaded
 nltk.download('punkt')
@@ -192,7 +195,106 @@ def approve_feedback(request, feedback_id):
     feedback.save()
     return redirect('dashboard')
 
+@login_required
+def referral(request):
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+    referrals = Referral.objects.all().order_by('-created_at')
+    profanities = Referral.objects.values_list('referral_reason', flat=True).distinct()
+    return render(request, 'admin_tools/referral.html', {'referrals': referrals, 'profanities': profanities})
 
+# ===========================
+# Referral Management Views
+# ===========================
+
+@login_required
+def get_referral_details(request, referral_id):
+    """
+    Fetch referral details for a given referral ID.
+    """
+    referral = get_object_or_404(Referral, id=referral_id)
+    data = {
+        'id': referral.id,
+        'status': referral.status.title if referral.status else 'N/A',
+        'title': referral.status.title if referral.status else '',
+        'description': referral.status.description if referral.status else '',
+        'referral_reason': referral.referral_reason,
+        'other_reason': referral.other_reason,
+    }
+    return JsonResponse(data)
+
+@login_required
+@csrf_exempt
+def add_profanity(request):
+    """
+    Add new words to the profanity list.
+    Expects JSON data with a 'words' key containing a list of words.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            words = data.get('words', [])
+            if not isinstance(words, list):
+                return JsonResponse({'success': False, 'error': 'Invalid data format. "words" should be a list.'}, status=400)
+            
+            added_words = []
+            for word in words:
+                word = word.strip().lower()
+                if word and not Referral.objects.filter(referral_reason__iexact=word).exists():
+                    # Create a Referral entry with no associated status
+                    Referral.objects.create(
+                        status=None,
+                        referred_by=request.user,
+                        referral_reason=word,
+                        created_at=timezone.now()
+                    )
+                    added_words.append(word)
+            
+            # Reload profanity filter
+            profanity.load_censor_words()
+    
+            return JsonResponse({'success': True, 'added_words': added_words})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
+
+@login_required
+@csrf_exempt
+def delete_profanity(request):
+    """
+    Delete a word from the profanity list.
+    Expects JSON data with a 'word' key.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            word = data.get('word', '').strip().lower()
+            if not word:
+                return JsonResponse({'success': False, 'error': 'No word provided.'}, status=400)
+            
+            # Delete all Referral entries where referral_reason matches the word
+            deleted_count, _ = Referral.objects.filter(referral_reason__iexact=word).delete()
+            if deleted_count > 0:
+                # Reload profanity filter
+                profanity.load_censor_words()
+                return JsonResponse({'success': True, 'deleted_word': word})
+            else:
+                return JsonResponse({'success': False, 'error': 'Word not found in profanity list.'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
+
+def load_custom_profanities():
+    """Load custom profanities from a text file in the main app's static directory."""
+    # Define the path to the custom profanity file inside 'main/static/profanity/'
+    profanity_file_path = os.path.join(settings.BASE_DIR, 'main', 'static', 'profanity', 'custom_profanities.txt')
+
+    # Check if the file exists and load the custom profanities from the file
+    if os.path.exists(profanity_file_path):
+        with open(profanity_file_path, 'r', encoding='utf-8') as f:
+            custom_profanities = [line.strip() for line in f.readlines()]
+        return custom_profanities
+    return []
 @login_required
 def delete_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
@@ -268,12 +370,45 @@ def home(request):
     return render(request, 'home.html')
 
 
+@login_required
+def manage_profanities(request):
+    """
+    View to manage the profanity list.
+    Displays all profane words and provides options to add or delete.
+    """
+    profanities = Referral.objects.exclude(referral_reason='').values_list('referral_reason', flat=True).distinct()
+    context = {
+        'profanities': profanities,
+    }
+    return render(request, 'admin_tools/profanity_list.html', context)
+
 def manage_referral(request):
-    referrals = Referral.objects.all()
+    """
+    View to manage referrals and the profanity list.
+    """
+    referrals = Referral.objects.all().order_by('-created_at')
+    # Extract unique profane words from referral_reason
+    profanities = Referral.objects.exclude(referral_reason='').values_list('referral_reason', flat=True).distinct()
     context = {
         'referrals': referrals,
+        'profanities': profanities,
     }
-    return render(request, 'admin_tools/manage_referral.html', context)
+    return render(request, 'admin_tools/referral.html', context)
+
+@login_required
+def referrals_api(request):
+    """
+    API endpoint to list all referrals. Useful for frontend JavaScript.
+    """
+    referrals = Referral.objects.all().values(
+        'id',
+        'status__title',
+        'referred_by__username',
+        'referral_reason',
+        'other_reason',
+        'created_at'
+    )
+    return JsonResponse(list(referrals), safe=False)
 
 
 def chat(request):
@@ -547,6 +682,35 @@ def sentiment_analytics_view(request):
     }
     return render(request, 'admin_tools/sentiment_analytics.html', context)
 
+# Mock Profanity Filter (Replace with actual implementation)
+class ProfanityFilter:
+    def __init__(self):
+        self.profanities = set()
+    
+    def load_censor_words(self):
+        # Load custom profanities from Referral's referral_reason
+        self.profanities = set(
+            Referral.objects.exclude(referral_reason='').values_list('referral_reason', flat=True)
+        )
+    
+    def contains_profanity(self, text):
+        tokens = word_tokenize(text.lower())
+        return any(word in self.profanities for word in tokens)
+
+profanity = ProfanityFilter()
+profanity.load_censor_words()
+
+def load_custom_profanities():
+    """Load custom profanities from the Referral model."""
+    return Referral.objects.exclude(referral_reason='').values_list('referral_reason', flat=True)
+
+def contains_custom_profanity(text):
+    """Check if the text contains any custom profanities."""
+    custom_profanities = load_custom_profanities()
+    for profanity_word in custom_profanities:
+        if re.search(rf'\b{re.escape(profanity_word)}\b', text, re.IGNORECASE):
+            return True
+    return False
 
 @login_required
 def analysis_view(request):

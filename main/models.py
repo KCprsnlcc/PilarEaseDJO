@@ -141,7 +141,7 @@ class UserNotificationSettings(models.Model):
     has_clicked_notification = models.BooleanField(default=False)  # Track if user clicked the notification button
 
 class Referral(models.Model):
-    status = models.ForeignKey('Status', on_delete=models.CASCADE)
+    status = models.ForeignKey('Status', on_delete=models.CASCADE, null=True, blank=True)
     referred_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     highlighted_title = models.TextField(blank=True)
     highlighted_description = models.TextField(blank=True)
@@ -150,7 +150,9 @@ class Referral(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Referral by {self.referred_by.username} for {self.status.title}"
+        if self.status:
+            return f"Referral by {self.referred_by.username} for {self.status.title}"
+        return f"Profane Word: {self.referral_reason} by {self.referred_by.username}"
 
     
 class Reply(models.Model):

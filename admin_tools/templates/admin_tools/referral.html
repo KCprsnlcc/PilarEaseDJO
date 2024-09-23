@@ -1,0 +1,215 @@
+{% extends 'admin_tools/base_admin.html' %} {% block content %}
+<div
+  class="pilarease-admin-referral-container animate__animated animate__fadeIn"
+>
+  <h2 class="pilarease-admin-referral-title">Referral Management</h2>
+
+  <!-- Referral List -->
+  <ul class="pilarease-admin-referral-list">
+    {% for referral in referrals %}
+    <li class="pilarease-admin-referral-item">
+      <div class="pilarease-admin-referral-details">
+        <strong>{{ referral.status.title }}</strong> by {{
+        referral.referred_by.username }}
+        <p>{{ referral.referral_reason }}</p>
+      </div>
+      <div class="pilarease-admin-referral-actions">
+        <button
+          class="pilarease-admin-button view-button"
+          onclick="openReferralModal({{ referral.id }})"
+        >
+          View
+        </button>
+      </div>
+    </li>
+    {% empty %}
+    <li class="pilarease-admin-referral-item">
+      <p>No referrals found.</p>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Referral Detail Modal -->
+<div
+  id="referralModal"
+  class="pilarease-admin-modal animate__animated animate__zoomIn"
+>
+  <div class="pilarease-admin-modal-content">
+    <span class="pilarease-admin-close">&times;</span>
+    <h2>Referral Details</h2>
+    <div id="referralDetails">
+      <!-- Dynamic Content via JavaScript -->
+    </div>
+    <button
+      class="pilarease-admin-button highlight-button"
+      onclick="addToProfanity()"
+    >
+      Add to Profanity List
+    </button>
+  </div>
+</div>
+
+<!-- Profanity List Management -->
+<div
+  class="pilarease-admin-profanity-container animate__animated animate__fadeInUp"
+>
+  <h3 class="pilarease-admin-profanity-title">Custom Profanity List</h3>
+  <ul class="pilarease-admin-profanity-list">
+    {% for word in profanities %}
+    <li class="pilarease-admin-profanity-item">
+      <span class="pilarease-admin-profanity-word">{{ word }}</span>
+      <div class="pilarease-admin-profanity-actions">
+        <button
+          class="pilarease-admin-button delete-button"
+          onclick="deleteProfanity('{{ word }}')"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+    {% empty %}
+    <li class="pilarease-admin-profanity-item">
+      <p>No profane words added yet.</p>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <form
+    class="pilarease-admin-add-profanity-form"
+    onsubmit="addProfanity(event)"
+  >
+    <input
+      type="text"
+      id="newProfanity"
+      placeholder="Add new profane word"
+      required
+    />
+    <button type="submit">Add</button>
+  </form>
+</div>
+
+<script>
+  // Open Referral Modal
+  function openReferralModal(referralId) {
+    fetch(`/admin_tools/get_referral/${referralId}/`)
+      .then(response => response.json())
+      .then(data => {
+        const detailsDiv = document.getElementById('referralDetails');
+        detailsDiv.innerHTML = `
+          <h4>Title</h4>
+          <p>${highlightText(data.title)}</p>
+          <h4>Description</h4>
+          <p>${highlightText(data.description)}</p>
+          <h4>Referral Reason</h4>
+          <p>${data.referral_reason}</p>
+          ${data.other_reason ? `<h4>Other Reason</h4><p>${data.other_reason}</p>` : ''}
+        `;
+        document.getElementById('referralModal').style.display = 'block';
+        window.currentReferral = data; // Store current referral data
+      });
+  }
+
+  // Highlight Text Function
+  function highlightText(text) {
+    // Example: Highlighting profane words from the profanity list
+    const profanities = {{ profanities|safe }};
+    let highlightedText = text;
+    profanities.forEach(word => {
+      const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+      highlightedText = highlightedText.replace(regex, '<span style="background-color: yellow;">$1</span>');
+    });
+    return highlightedText;
+  }
+
+  // Add to Profanity List
+  function addToProfanity() {
+    const titleProfanities = extractHighlightedWords(document.getElementById('referralDetails').innerHTML);
+    const descriptionProfanities = extractHighlightedWords(document.getElementById('referralDetails').innerHTML);
+    const wordsToAdd = [...titleProfanities, ...descriptionProfanities].filter((word, index, self) => self.indexOf(word) === index);
+
+    if (wordsToAdd.length === 0) {
+      alert('No profane words found to add.');
+      return;
+    }
+
+    fetch(`/admin_tools/add_profanity/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ words: wordsToAdd })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Profane words added successfully.');
+        location.reload();
+      } else {
+        alert('Error adding profane words.');
+      }
+    });
+  }
+
+  // Extract Highlighted Words
+  function extractHighlightedWords(htmlText) {
+    const div = document.createElement('div');
+    div.innerHTML = htmlText;
+    const highlightedSpans = div.querySelectorAll('span[style="background-color: yellow;"]');
+    let words = [];
+    highlightedSpans.forEach(span => {
+      words.push(span.textContent);
+    });
+    return words;
+  }
+
+  // Add Profanity via Form
+  function addProfanity(event) {
+    event.preventDefault();
+    const newWord = document.getElementById('newProfanity').value.trim();
+    if (newWord === '') return;
+
+    fetch(`/admin_tools/add_profanity/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ words: [newWord] })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Profane word added successfully.');
+        location.reload();
+      } else {
+        alert('Error adding profane word.');
+      }
+    });
+  }
+
+  // Delete Profanity
+  function deleteProfanity(word) {
+    if (!confirm(`Are you sure you want to delete the word "${word}" from the profanity list?`)) return;
+
+    fetch(`/admin_tools/delete_profanity/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({ word: word })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Profane word deleted successfully.');
+        location.reload();
+      } else {
+        alert('Error deleting profane word.');
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -25,7 +25,17 @@ urlpatterns = [
     path('delete-contact-us/<int:contact_id>/', views.delete_contact_us, name='delete_contact_us'),
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('settings/', views.settings, name='settings'),
-    path('reports/', views.reports, name='reports'),
+     path('referral/', views.manage_referral, name='referral'),
+    path('referral/<int:referral_id>/', views.get_referral_details, name='get_referral_details'),
+    path('manage_profanities/', views.manage_referral, name='manage_profanities'),  # Reuse manage_referral view
+    path('referral/<int:referral_id>/', views.get_referral_details, name='get_referral_details'),
+    path('add_profanity/', views.add_profanity, name='add_profanity'),
+    path('delete_profanity/', views.delete_profanity, name='delete_profanity'),
+    # Referral API (optional)
+    path('api/referrals/', views.referrals_api, name='referrals_api'),
+    path('api/referral/<int:referral_id>/', views.get_referral_details, name='get_referral_details'),
+    path('api/profanity/add/', views.add_profanity, name='add_profanity'),
+    path('api/profanity/delete/', views.delete_profanity, name='delete_profanity'),
     path('login/', views.admin_login_view, name='admin_login'),
     path('admin-logout/', views.admin_logout, name='admin_logout'),
 ]
