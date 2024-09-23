@@ -489,7 +489,7 @@ body {
   margin-bottom: 20px;
 }
 
-.pilarease-admin-statistics-header .pilarease-admin-title {
+.pilarease-admin-title {
   font-size: 24px;
   font-weight: bold;
   color: var(--accent-color);
@@ -500,13 +500,14 @@ body {
   justify-content: space-between;
   margin-bottom: 20px;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .pilarease-admin-statistics-card {
   background-color: #ffffff;
   border-radius: 10px;
   padding: 20px;
-  flex: 1;
+  flex: 1 1 200px;
   box-shadow: var(--box-shadow);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -527,11 +528,6 @@ body {
   color: var(--accent-color);
 }
 
-.pilarease-admin-statistics-card-info {
-  display: flex;
-  flex-direction: column;
-}
-
 .pilarease-admin-statistics-card-info span {
   font-size: 24px;
   font-weight: bold;
@@ -545,8 +541,8 @@ body {
 }
 
 .pilarease-admin-statistics-charts {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -571,7 +567,26 @@ body {
 }
 
 .pilarease-admin-chart-content {
-  height: 200px; /* Placeholder height, replace with actual chart */
+  position: relative;
+  height: 300px;
+}
+
+.pilarease-admin-wordcloud-image {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-statistics-cards {
+    flex-direction: column;
+  }
+
+  .pilarease-admin-statistics-chart {
+    padding: 15px;
+  }
 }
 
 /* =========================================================

@@ -1,92 +1,84 @@
+<!-- templates/admin_tools/statistics.html -->
+
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
 %} {% block content %}
-<div class="statistics-container">
-  <div class="statistics-header">
-    <div class="title">Statistics</div>
+<div class="pilarease-admin-statistics-container">
+  <div class="pilarease-admin-statistics-header">
+    <div class="pilarease-admin-title">Statistics</div>
   </div>
-  <div class="statistics-cards">
-    <div class="statistics-card">
-      <div class="statistics-card-content">
-        <div class="statistics-card-icon">
+
+  <div class="pilarease-admin-statistics-cards">
+    <div class="pilarease-admin-statistics-card">
+      <div class="pilarease-admin-statistics-card-content">
+        <div class="pilarease-admin-statistics-card-icon">
           <i class="bx bx-smile"></i>
         </div>
-        <div class="statistics-card-info">
+        <div class="pilarease-admin-statistics-card-info">
           <span>{{ positive_percent }}%</span>
           <p>Positive</p>
         </div>
       </div>
     </div>
-    <div class="statistics-card">
-      <div class="statistics-card-content">
-        <div class="statistics-card-icon">
+    <div class="pilarease-admin-statistics-card">
+      <div class="pilarease-admin-statistics-card-content">
+        <div class="pilarease-admin-statistics-card-icon">
           <i class="bx bx-meh"></i>
         </div>
-        <div class="statistics-card-info">
+        <div class="pilarease-admin-statistics-card-info">
           <span>{{ neutral_percent }}%</span>
           <p>Neutral</p>
         </div>
       </div>
     </div>
-    <div class="statistics-card">
-      <div class="statistics-card-content">
-        <div class="statistics-card-icon">
+    <div class="pilarease-admin-statistics-card">
+      <div class="pilarease-admin-statistics-card-content">
+        <div class="pilarease-admin-statistics-card-icon">
           <i class="bx bx-sad"></i>
         </div>
-        <div class="statistics-card-info">
+        <div class="pilarease-admin-statistics-card-info">
           <span>{{ negative_percent }}%</span>
           <p>Negative</p>
         </div>
       </div>
     </div>
-    <div class="statistics-card">
-      <div class="statistics-card-content">
-        <div class="statistics-card-info">
+    <div class="pilarease-admin-statistics-card">
+      <div class="pilarease-admin-statistics-card-content">
+        <div class="pilarease-admin-statistics-card-info">
           <span>{{ total_students }}</span>
-          <p>Total no. of students who visited</p>
+          <p>Total Students</p>
         </div>
       </div>
     </div>
   </div>
-  <div class="statistics-charts">
-    <div class="statistics-chart">
-      <div class="chart-header">
-        <span>Emotion Analysis</span>
-      </div>
-      <div class="chart-content">
-        {% if emotion_chart_image_base64 %}
-        <img
-          src="data:image/png;base64,{{ emotion_chart_image_base64 }}"
-          alt="Emotion Chart"
-        />
-        {% else %}
-        <p>No data available</p>
-        {% endif %}
+
+  <div class="pilarease-admin-statistics-charts">
+    <!-- Emotion Percentages Pie Chart -->
+    <div class="pilarease-admin-statistics-chart">
+      <div class="pilarease-admin-chart-header">Emotion Analysis</div>
+      <div class="pilarease-admin-chart-content">
+        <canvas id="emotionPieChart"></canvas>
       </div>
     </div>
-    <div class="statistics-chart">
-      <div class="chart-header">
-        <span>Word Cloud</span>
+
+    <!-- Emotion Distribution Bar Chart -->
+    <div class="pilarease-admin-statistics-chart">
+      <div class="pilarease-admin-chart-header">
+        Emotion Distribution by Title
       </div>
-      <div class="chart-content">
-        {% if wordcloud_image_base64 %}
+      <div class="pilarease-admin-chart-content">
+        <canvas id="emotionBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Word Cloud -->
+    <div class="pilarease-admin-statistics-chart">
+      <div class="pilarease-admin-chart-header">Word Cloud</div>
+      <div class="pilarease-admin-chart-content">
+        {% if wordcloud_text %}
         <img
-          src="data:image/png;base64,{{ wordcloud_image_base64 }}"
+          src="{% url 'generate_wordcloud' %}?text={{ wordcloud_text|urlencode }}"
           alt="Word Cloud"
-        />
-        {% else %}
-        <p>No data available</p>
-        {% endif %}
-      </div>
-    </div>
-    <div class="statistics-chart">
-      <div class="chart-header">
-        <span>Emotion Bar Chart</span>
-      </div>
-      <div class="chart-content">
-        {% if bar_chart_image_base64 %}
-        <img
-          src="data:image/png;base64,{{ bar_chart_image_base64 }}"
-          alt="Bar Chart"
+          class="pilarease-admin-wordcloud-image"
         />
         {% else %}
         <p>No data available</p>
@@ -95,4 +87,69 @@
     </div>
   </div>
 </div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Pie Chart
+  const pieCtx = document.getElementById('emotionPieChart').getContext('2d');
+  const pieChart = new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+          labels: {{ pie_labels|safe }},
+          datasets: [{
+              data: {{ pie_data|safe }},
+              backgroundColor: [
+                  '#f44336',
+                  '#9c27b0',
+                  '#3f51b5',
+                  '#ffeb3b',
+                  '#2196f3',
+                  '#ff9800',
+                  '#9e9e9e'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Percentages'
+              }
+          }
+      },
+  });
+
+  // Bar Chart
+  const barCtx = document.getElementById('emotionBarChart').getContext('2d');
+  const barChart = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+          labels: {{ bar_labels|safe }},
+          datasets: {{ bar_datasets|safe }}
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'top',
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Distribution by Title'
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true
+              }
+          }
+      },
+  });
+</script>
 {% endblock %}

@@ -25,6 +25,22 @@ import json
 from django.utils.timesince import timesince
 from datetime import datetime
 from django.utils import timezone
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
+from main.models import Referral
+
+@require_GET
+def generate_wordcloud(request):
+    text = request.GET.get('text', '')
+    if not text:
+        return HttpResponse('No text provided.', status=400)
+
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    buffer = BytesIO()
+    wordcloud.to_image().save(buffer, format='PNG')
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='image/png')
+
 
 def generate_base64_image(fig):
     img_bytes = pio.to_image(fig, format="png", engine="kaleido")
@@ -271,43 +287,102 @@ def statistics_view(request):
 
     # Calculate emotion percentages
     emotion_columns = ['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral']
-    emotion_percentages = df_statuses[emotion_columns].mean() * 100
+    emotion_percentages = df_statuses[emotion_columns].mean().round(2).tolist()
 
-    # Generate pie chart for emotions using Plotly
-    fig_pie = px.pie(values=emotion_percentages, names=emotion_columns, title='Emotion Percentages')
-    emotion_chart_image_base64 = generate_base64_image(fig_pie)
+    # Data for Pie Chart (Emotion Percentages)
+    pie_labels = emotion_columns
+    pie_data = emotion_percentages
 
-    # Generate word cloud for plain descriptions
-    text = " ".join(df_statuses['plain_description'].fillna(''))
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
-    buffer = BytesIO()
-    wordcloud.to_image().save(buffer, format='png')
-    buffer.seek(0)
-    wordcloud_image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    buffer.close()
-
-    # Generate bar chart for title-based emotions using Plotly
+    # Data for Bar Chart (Emotion Distribution by Title)
     df_melted = df_statuses.melt(id_vars=['title'], value_vars=emotion_columns)
-    fig_bar = px.bar(df_melted, x='title', y='value', color='variable', title='Emotion Distribution by Title')
-    bar_chart_image_base64 = generate_base64_image(fig_bar)
+    bar_chart_data = df_melted.groupby(['title', 'variable'])['value'].mean().unstack().fillna(0).round(2)
+
+    bar_labels = bar_chart_data.index.tolist()
+    bar_datasets = []
+    colors = {
+        'anger': '#f44336',
+        'disgust': '#9c27b0',
+        'fear': '#3f51b5',
+        'happiness': '#ffeb3b',
+        'sadness': '#2196f3',
+        'surprise': '#ff9800',
+        'neutral': '#9e9e9e',
+    }
+
+    for emotion in emotion_columns:
+        bar_datasets.append({
+            'label': emotion.capitalize(),
+            'backgroundColor': colors.get(emotion, '#000000'),
+            'data': bar_chart_data[emotion].tolist(),
+        })
+
+    # Word Cloud Data (handled in template via image)
+    text = " ".join(df_statuses['plain_description'].astype(str).tolist())
 
     # Calculate total students
     total_students = df_users['id'].nunique()
 
     # Calculate positive, neutral, negative percentages
-    positive_percent = df_statuses['happiness'].fillna(0).mean() * 100
-    neutral_percent = df_statuses[['surprise', 'disgust']].fillna(0).mean().mean() * 100
-    negative_percent = df_statuses[['anger', 'fear', 'sadness']].fillna(0).mean().mean() * 100
+    positive_percent = df_statuses['happiness'].mean() * 100
+    neutral_percent = df_statuses['neutral'].mean() * 100
+    negative_percent = (df_statuses['anger'] + df_statuses['fear'] + df_statuses['sadness']).mean() * 100
 
-    return render(request, 'admin_tools/statistics.html', {
-        'emotion_chart_image_base64': emotion_chart_image_base64,
-        'wordcloud_image_base64': wordcloud_image_base64,
-        'bar_chart_image_base64': bar_chart_image_base64,
-        'positive_percent': positive_percent,
-        'neutral_percent': neutral_percent,
-        'negative_percent': negative_percent,
-        'total_students': total_students
-    })
+    context = {
+        'pie_labels': json.dumps(pie_labels),
+        'pie_data': json.dumps(pie_data),
+        'bar_labels': json.dumps(bar_labels),
+        'bar_datasets': json.dumps(bar_datasets),
+        'wordcloud_text': text,
+        'total_students': total_students,
+        'positive_percent': round(positive_percent, 2),
+        'neutral_percent': round(neutral_percent, 2),
+        'negative_percent': round(negative_percent, 2),
+    }
+    return render(request, 'admin_tools/statistics.html', context)
+
+# admin_tools/views.py
+
+@login_required
+def sentiment_analytics_view(request):
+    # Fetch all statuses
+    statuses = Status.objects.all().values()
+    df_statuses = pd.DataFrame(statuses)
+    df_statuses.fillna(0, inplace=True)
+
+    # Convert created_at to datetime
+    df_statuses['created_at'] = pd.to_datetime(df_statuses['created_at'])
+
+    # Extract month and year
+    df_statuses['month_year'] = df_statuses['created_at'].dt.to_period('M').astype(str)
+
+    # Calculate average sentiment scores per month
+    sentiment_columns = ['happiness', 'neutral', 'anger', 'fear', 'sadness']
+    sentiment_trends = df_statuses.groupby('month_year')[sentiment_columns].mean().reset_index()
+
+    # Prepare data for Line Chart
+    line_labels = sentiment_trends['month_year'].tolist()
+    line_datasets = []
+    colors = {
+        'happiness': '#4caf50',
+        'neutral': '#ff9800',
+        'anger': '#f44336',
+        'fear': '#9c27b0',
+        'sadness': '#2196f3',
+    }
+
+    for sentiment in sentiment_columns:
+        line_datasets.append({
+            'label': sentiment.capitalize(),
+            'borderColor': colors.get(sentiment, '#000000'),
+            'fill': False,
+            'data': sentiment_trends[sentiment].round(2).tolist(),
+        })
+
+    context = {
+        'line_labels': json.dumps(line_labels),
+        'line_datasets': json.dumps(line_datasets),
+    }
+    return render(request, 'admin_tools/sentiment_analytics.html', context)
 
 
 @login_required
