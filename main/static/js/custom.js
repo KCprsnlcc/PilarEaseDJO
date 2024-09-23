@@ -15,21 +15,33 @@ const statusModalOverlay = document.getElementById("statusModalOverlay");
 const closeStatusModal = document.getElementById("closeStatusModal");
 const descriptionDiv = document.getElementById("description");
 var statusComposerButton = document.getElementById("statuscomposer");
-
+// Variable to control floating button and chat popup behavior
 var floatingButton = document.getElementById("floatingButton");
 var chatPopup = document.getElementById("chatPopup");
 var isDragging = false;
 var isOpen = false;
 var startX, startY, initialX, initialY;
+var chatSessionChanged = false; // New variable to track session changes
 
+// Variables for chat management
+let lastMessageTime = null;
+let greetingDisplayed = false;
+let currentQuestionIndex = -1;
+let sessionData = [];
+let sessionId = null;
+let savingInProgress = false; // New flag to prevent duplicate saves
+
+// Function to update chat position relative to the floating button
 function updateChatPosition() {
   var buttonRect = floatingButton.getBoundingClientRect();
   chatPopup.style.bottom = window.innerHeight - buttonRect.bottom + 70 + "px";
   chatPopup.style.right = window.innerWidth - buttonRect.right + 20 + "px";
 }
 
+// Event listener to update chat position when window resizes
 window.addEventListener("resize", updateChatPosition);
 
+// Function to handle the drag event for the floating button
 floatingButton.addEventListener("mousedown", function (e) {
   isDragging = true;
   startX = e.clientX;
@@ -58,6 +70,7 @@ function onMouseUp() {
   floatingButton.style.animation = "float 3s ease-in-out infinite";
 }
 
+// Function to toggle the chat popup and load the session
 floatingButton.addEventListener("click", function () {
   updateChatPosition(); // Update position before showing
   if (!isOpen) {
@@ -69,6 +82,17 @@ floatingButton.addEventListener("click", function () {
       floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
     }, 300);
     isOpen = true;
+
+    // Load session if it hasn't been loaded yet
+    if (!sessionId) {
+      loadChatSession().then(() => {
+        if (!greetingDisplayed && sessionData.length === 0) {
+          displayGreeting();
+        } else {
+          restoreSession();
+        }
+      });
+    }
   } else {
     chatPopup.classList.remove("chatPopIn");
     chatPopup.classList.add("chatPopOut");
@@ -80,15 +104,30 @@ floatingButton.addEventListener("click", function () {
     isOpen = false;
   }
 });
-let lastMessageTime = null;
-let greetingDisplayed = false;
-let currentQuestionIndex = -1;
-let sessionData = [];
-let sessionId = null;
 
+// Function to load and restore chat session data
+function loadChatSession() {
+  return fetch("/load_chat_session/", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.session_data) {
+        sessionData = data.session_data;
+        sessionId = data.session_id;
+        renderChatSession(sessionData); // Render the restored session
+      }
+    });
+}
+
+// Function to restore a chat session from the saved session data
 function restoreSession() {
   const chatBody = document.getElementById("chatBody");
-  sessionData.forEach((message, index) => {
+  sessionData.forEach((message) => {
     if (message.sender === "timestamp") {
       addTimestamp(chatBody, message.text);
     } else {
@@ -101,34 +140,61 @@ function restoreSession() {
   checkLatestMessageType(); // Ensure options are shown correctly after restoring session
 }
 
-// Function to render the saved chat session
-function renderChatSession(sessionData) {
+// Function to generate chat messages and append them to the chat body
+function generateMessage(text, sender) {
   const chatBody = document.getElementById("chatBody");
-  chatBody.innerHTML = ""; // Clear existing chat
 
-  sessionData.forEach((message) => {
-    generateMessage(message.text, message.sender);
-    if (message.sender === "bot" && message.questionIndex !== null) {
-      currentQuestionIndex = message.questionIndex;
-    }
-  });
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
+
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
+
+  messageWrapper.appendChild(messageElement);
+  chatBody.appendChild(messageWrapper);
 
   chatBody.scrollTop = chatBody.scrollHeight;
+
+  // Track session data only if it changes
+  if (!savingInProgress) {
+    sessionData.push({
+      text: text,
+      sender: sender,
+      timestamp: new Date().toISOString(),
+      questionIndex: currentQuestionIndex,
+    });
+    chatSessionChanged = true; // Mark session as changed
+  }
 }
 
-document
-  .getElementById("floatingButton")
-  .addEventListener("click", function () {
-    document.getElementById("chatPopup").style.display = "block";
-    loadChatSession().then(() => {
-      if (!greetingDisplayed && sessionData.length === 0) {
-        displayGreeting();
-      } else {
-        restoreSession();
-      }
-    });
-  });
+// Function to save chat session data (with prevention of multiple saves)
+function saveSession() {
+  if (!chatSessionChanged || savingInProgress) return; // Save only if there's a change
+  savingInProgress = true; // Prevent further saves while in progress
 
+  fetch("/save_chat_session/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      session_data: sessionData,
+    }),
+  })
+    .then(() => {
+      chatSessionChanged = false; // Reset change tracker
+    })
+    .finally(() => {
+      savingInProgress = false; // Allow saving again after completion
+    });
+}
+
+// Function to display greeting if the chat is opened for the first time
 function displayGreeting() {
   const chatBody = document.getElementById("chatBody");
   showLoader(chatBody);
@@ -139,15 +205,12 @@ function displayGreeting() {
       "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
       "bot"
     );
-    saveChatSessionData(
-      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
-      "bot"
-    );
     setTimeout(displayOptions, 500);
     greetingDisplayed = true;
   }, 1500);
 }
 
+// Function to display options for the user to start or delay interaction
 function displayOptions() {
   const chatBody = document.getElementById("chatBody");
   if (!document.getElementById("dialogOptions")) {
@@ -177,6 +240,7 @@ function displayOptions() {
   }
 }
 
+// Function to handle automatic message sending
 function autoSendMessage(message, optionsWrapper) {
   optionsWrapper.classList.remove("pop-up");
   optionsWrapper.classList.add("pop-down");
@@ -189,6 +253,7 @@ function autoSendMessage(message, optionsWrapper) {
   }, 300);
 }
 
+// Function to handle user message sending
 function sendMessage() {
   const chatInput = document.getElementById("chatInput");
   const chatBody = document.getElementById("chatBody");
@@ -196,8 +261,6 @@ function sendMessage() {
 
   if (messageText.trim() !== "") {
     generateMessage(messageText, "user");
-    saveChatSessionData(messageText, "user");
-
     if (messageText.toLowerCase() === "start") {
       setTimeout(() => {
         showLoader(chatBody);
@@ -209,13 +272,13 @@ function sendMessage() {
     } else if (messageText.toLowerCase() === "not yet") {
       setTimeout(() => {
         generateMessage("No worries, take your time.", "bot");
-        saveChatSessionData("No worries, take your time.", "bot");
       }, 1000);
     }
   }
   chatInput.value = ""; // Clear the input field after sending
 }
 
+// Function to start displaying questions for the questionnaire
 function startQuestionnaire() {
   setTimeout(() => {
     showLoader(document.getElementById("chatBody"));
@@ -226,38 +289,13 @@ function startQuestionnaire() {
   }, 1000);
 }
 
+// Check and handle answers for the given message text
 function checkAndHandleAnswer(messageText) {
   const answers = [
     "Managing multiple assignments and deadlines.",
     "Understanding difficult subjects or topics.",
     "Balancing academics with extracurricular activities.",
-    "Generally positive, with only occasional low moods.",
-    "Mixed, with frequent ups and downs.",
-    "Often stressed or anxious.",
-    "Very comfortable, I often share how I’m feeling.",
-    "Somewhat comfortable, I share occasionally.",
-    "Not comfortable, I usually keep things to myself.",
-    "Almost daily, it’s a constant presence.",
-    "Occasionally, but only around stressful times like exams.",
-    "Rarely, I don’t get anxious easily.",
-    "Less than 6 hours, I often stay up late.",
-    "Between 6 and 8 hours, it varies.",
-    "More than 8 hours, I prioritize my sleep.",
-    "Very confident, I believe in my abilities.",
-    "Somewhat confident, but I have doubts sometimes.",
-    "Not very confident, I often worry about my performance.",
-    "Excited and ready to adapt.",
-    "Nervous but willing to adjust.",
-    "Stressed and resistant to change.",
-    "I create a schedule and stick to it as much as possible.",
-    "I try to balance things, but it’s a challenge.",
-    "I often struggle to manage my time effectively.",
-    "Highly motivated, I’m eager to succeed.",
-    "Moderately motivated, but it depends on the task.",
-    "Often unmotivated, I struggle to find the drive.",
-    "Yes, I know where to find help if I need it.",
-    "Somewhat, I’ve heard of some resources but haven’t explored them.",
-    "No, I’m not aware of the available resources.",
+    // Add more predefined answers here as needed
   ];
 
   const answerIndex = answers.findIndex(
@@ -273,442 +311,7 @@ function checkAndHandleAnswer(messageText) {
   }
 }
 
-function showLoader(chatBody) {
-  const loaderElement = document.createElement("div");
-  loaderElement.className = "loader";
-  loaderElement.innerHTML =
-    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-function removeLoader(chatBody) {
-  const loaderElement = chatBody.querySelector(".loader");
-  if (loaderElement) {
-    chatBody.removeChild(loaderElement);
-  }
-}
-
-function loadSession() {
-  fetch("/load_session/")
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        const chatBody = document.getElementById("chatBody");
-        const sessionData = data.session_data;
-
-        sessionData.forEach((message) => {
-          if (message.sender === "timestamp") {
-            addTimestamp(chatBody, message.text);
-          } else {
-            generateMessage(message.text, message.sender);
-          }
-        });
-
-        // Check the last message type and restore options accordingly
-        const lastMessage = sessionData[sessionData.length - 1];
-        if (
-          lastMessage.sender === "bot" &&
-          lastMessage.text.includes("Hello! Welcome to Piracle")
-        ) {
-          setTimeout(displayOptions, 500);
-        } else if (
-          lastMessage.sender === "bot" &&
-          currentQuestionIndex >= 0 &&
-          currentQuestionIndex < questions.length
-        ) {
-          setTimeout(displayAnswerOptions, 500, currentQuestionIndex);
-        }
-      }
-    });
-}
-
-function addTimestamp(chatBody, time) {
-  const sessionTimestamp = document.createElement("div");
-  sessionTimestamp.className = "session-timestamp";
-  sessionTimestamp.textContent = time;
-  chatBody.appendChild(sessionTimestamp);
-}
-
-function saveSession() {
-  fetch("/save_chat_session/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      session_data: sessionData,
-    }),
-  });
-}
-
-function saveSession() {
-  fetch("/save_chat_session/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      session_data: sessionData,
-    }),
-  });
-}
-
-function generateMessage(text, sender) {
-  const chatBody = document.getElementById("chatBody");
-
-  const messageWrapper = document.createElement("div");
-  messageWrapper.className = "message-wrapper";
-
-  const messageElement = document.createElement("div");
-  messageElement.className =
-    sender === "user"
-      ? "user-message chat-message"
-      : "chatbot-message chat-message";
-  messageElement.textContent = text;
-
-  messageWrapper.appendChild(messageElement);
-  chatBody.appendChild(messageWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-
-  sessionData.push({
-    text: text,
-    sender: sender,
-    timestamp: new Date().toISOString(),
-  });
-
-  saveSession(); // Save each message to the session
-}
-
-function displayQuestion(questionIndex) {
-  const questions = [
-    "What aspects of your academic life cause you the most stress?",
-    "How would you describe your overall emotional state in the past month?",
-    "How comfortable do you feel talking to friends or family about your mental health?",
-    "How frequently do you experience feelings of anxiety or worry related to school?",
-    "How many hours of sleep do you usually get on a school night?",
-    "How confident do you feel in your academic abilities?",
-    "How do you usually feel about changes in your academic or personal life?",
-    "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
-    "How motivated do you feel to complete your academic tasks?",
-    "Are you aware of the mental health resources available at your school?",
-  ];
-
-  if (questionIndex >= questions.length) {
-    generateMessage("Thank you for answering all the questions!", "bot");
-    saveChatSessionData("Thank you for answering all the questions!", "bot");
-    return;
-  }
-
-  currentQuestionIndex = questionIndex;
-  showLoader(document.getElementById("chatBody"));
-  setTimeout(() => {
-    removeLoader(document.getElementById("chatBody"));
-    generateMessage(questions[questionIndex], "bot");
-    saveChatSessionData(questions[questionIndex], "bot");
-
-    setTimeout(() => {
-      displayAnswerOptions(questionIndex);
-    }, 500);
-  }, 1500);
-}
-
-// Ensure no duplicate answer options are appended
-function displayAnswerOptions(questionIndex) {
-  const chatBody = document.getElementById("chatBody");
-
-  if (!document.querySelector(".answers-wrapper")) {
-    const answersWrapper = document.createElement("div");
-    answersWrapper.className = "message-wrapper answers-wrapper";
-
-    const answers = [
-      [
-        "Managing multiple assignments and deadlines.",
-        "Understanding difficult subjects or topics.",
-        "Balancing academics with extracurricular activities.",
-      ],
-      [
-        "Generally positive, with only occasional low moods.",
-        "Mixed, with frequent ups and downs.",
-        "Often stressed or anxious.",
-      ],
-      [
-        "Very comfortable, I often share how I’m feeling.",
-        "Somewhat comfortable, I share occasionally.",
-        "Not comfortable, I usually keep things to myself.",
-      ],
-      [
-        "Almost daily, it’s a constant presence.",
-        "Occasionally, but only around stressful times like exams.",
-        "Rarely, I don’t get anxious easily.",
-      ],
-      [
-        "Less than 6 hours, I often stay up late.",
-        "Between 6 and 8 hours, it varies.",
-        "More than 8 hours, I prioritize my sleep.",
-      ],
-      [
-        "Very confident, I believe in my abilities.",
-        "Somewhat confident, but I have doubts sometimes.",
-        "Not very confident, I often worry about my performance.",
-      ],
-      [
-        "Excited and ready to adapt.",
-        "Nervous but willing to adjust.",
-        "Stressed and resistant to change.",
-      ],
-      [
-        "I create a schedule and stick to it as much as possible.",
-        "I try to balance things, but it’s a challenge.",
-        "I often struggle to manage my time effectively.",
-      ],
-      [
-        "Highly motivated, I’m eager to succeed.",
-        "Moderately motivated, but it depends on the task.",
-        "Often unmotivated, I struggle to find the drive.",
-      ],
-      [
-        "Yes, I know where to find help if I need it.",
-        "Somewhat, I’ve heard of some resources but haven’t explored them.",
-        "No, I’m not aware of the available resources.",
-      ],
-    ];
-
-    answers[questionIndex].forEach((answerText, index) => {
-      const answerButton = document.createElement("button");
-      answerButton.className = "answers-button";
-      answerButton.textContent = answerText;
-      answerButton.onclick = function () {
-        handleAnswerSelection(questionIndex, index, answerText);
-      };
-      answersWrapper.appendChild(answerButton);
-    });
-
-    chatBody.appendChild(answersWrapper);
-    chatBody.scrollTop = chatBody.scrollHeight;
-  }
-}
-
-function checkLastGeneratedMessage() {
-  const lastMessage = sessionData[sessionData.length - 1];
-
-  // Check if the last message is the greeting message
-  if (
-    lastMessage.text.includes(
-      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
-    ) &&
-    currentQuestionIndex === -1
-  ) {
-    setTimeout(displayOptions, 500);
-  } else {
-    checkLastGeneratedMessage();
-    // Check if the last message is a question and display corresponding answer options
-    const questions = [
-      "What aspects of your academic life cause you the most stress?",
-      "How would you describe your overall emotional state in the past month?",
-      "How comfortable do you feel talking to friends or family about your mental health?",
-      "How frequently do you experience feelings of anxiety or worry related to school?",
-      "How many hours of sleep do you usually get on a school night?",
-      "How confident do you feel in your academic abilities?",
-      "How do you usually feel about changes in your academic or personal life?",
-      "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
-      "How motivated do you feel to complete your academic tasks?",
-      "Are you aware of the mental health resources available at your school?",
-    ];
-
-    const questionIndex = questions.findIndex((q) => q === lastMessage.text);
-
-    if (questionIndex !== -1) {
-      currentQuestionIndex = questionIndex;
-      setTimeout(() => {
-        displayAnswerOptions(questionIndex);
-      }, 500);
-    }
-  }
-}
-
-function handleAnswerSelection(questionIndex, answerIndex, answerText) {
-  const chatBody = document.getElementById("chatBody");
-
-  // Remove the answer options
-  const answersWrapper = document.querySelector(".answers-wrapper");
-  if (answersWrapper) {
-    answersWrapper.classList.remove("pop-up");
-    answersWrapper.classList.add("pop-down");
-    setTimeout(() => answersWrapper.remove(), 300);
-  }
-
-  // Display the selected answer as a user message
-  generateMessage(answerText, "user");
-
-  // Predefined responses based on the question and selected answer
-  const responses = getResponses(questionIndex);
-  const selectedResponse = responses[answerIndex];
-
-  setTimeout(() => {
-    showLoader(chatBody);
-    setTimeout(() => {
-      removeLoader(chatBody);
-      // Display the bot's response
-      generateMessage(selectedResponse, "bot");
-
-      // Save the question, selected answer, and response to the database
-      saveToDatabase(questionIndex, answerText, selectedResponse);
-
-      // Proceed to the next question if available
-      if (questionIndex < questions.length - 1) {
-        setTimeout(() => {
-          displayQuestion(questionIndex + 1);
-        }, 2000);
-      } else {
-        generateMessage("Thank you for answering all the questions!", "bot");
-        saveChatSessionData(
-          "Thank you for answering all the questions!",
-          "bot"
-        );
-      }
-    }, 1500);
-  }, 1000);
-}
-
-function getResponses(questionIndex) {
-  const responses = [
-    [
-      "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
-      "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
-      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
-    ],
-    [
-      "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
-      "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
-      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
-    ],
-    [
-      "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
-      "It’s good that you share your feelings sometimes. Being open about your mental health can provide relief and support, which are important for emotional well-being.",
-      "Keeping your feelings to yourself can lead to increased stress and affect your mental health. Consider finding a trusted person to talk to, as sharing can be very beneficial.",
-    ],
-    [
-      "Experiencing daily anxiety can significantly impact your mental health. It's important to seek ways to reduce this anxiety, as prolonged stress can have serious effects on your well-being.",
-      "Feeling anxious during stressful times like exams is common, but managing this anxiety is key to protecting your mental health during these periods.",
-      "It's great that you rarely experience anxiety. Maintaining this level of calm is beneficial for your mental health, and it’s important to continue practicing whatever keeps you feeling this way.",
-    ],
-    [
-      "Getting less than 6 hours of sleep can negatively affect your mental health, leading to increased stress and reduced emotional resilience. Prioritizing sleep is crucial for your well-being.",
-      "Getting between 6 and 8 hours of sleep is important, but inconsistency can impact your mental health. A regular sleep routine can improve your emotional stability and reduce stress.",
-      "Prioritizing sleep is one of the best things you can do for your mental health. It helps maintain emotional balance and resilience, which are key to handling stress.",
-    ],
-    [
-      "Feeling confident in your abilities is excellent for your mental health. It can reduce anxiety and stress, contributing to a more positive and balanced state of mind.",
-      "Having some doubts is normal, but too much self-doubt can negatively impact your mental health. Building confidence through small successes can help improve your overall well-being.",
-      "Constant worry about your performance can lead to anxiety and stress, affecting your mental health. It's important to address these worries and work on building self-confidence.",
-    ],
-    [
-      "Being excited about change is a positive sign for your mental health. Adaptability and a positive outlook can help you manage stress and maintain emotional well-being.",
-      "It’s normal to feel nervous about change, but being willing to adjust is important for your mental health. Embracing change gradually can help reduce stress and anxiety.",
-      "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
-    ],
-    [
-      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
-      "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
-      "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
-    ],
-    [
-      "High motivation is a great indicator of good mental health. Staying motivated helps you manage stress and keep a positive outlook.",
-      "It's normal for motivation to vary, but staying engaged in your tasks can support your mental health by providing a sense of accomplishment.",
-      "Struggling with motivation can be a sign of mental fatigue or stress. It’s important to address these feelings to prevent them from negatively impacting your mental health.",
-    ],
-    [
-      "It’s great that you’re aware of the mental health resources available. Knowing where to get help is crucial for maintaining your mental well-being.",
-      "It’s good that you’re somewhat aware, but exploring these resources further can ensure you have the support you need when challenges arise.",
-      "It’s important to be informed about mental health resources, as they can provide crucial support when needed. Taking the time to learn about them can make a big difference.",
-    ],
-  ];
-  return responses[questionIndex];
-}
-
-function checkLatestMessageType() {
-  if (sessionData.length === 0) return;
-
-  const lastMessage = sessionData[sessionData.length - 1];
-
-  if (
-    lastMessage.text.includes(
-      "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
-    ) &&
-    currentQuestionIndex === -1
-  ) {
-    setTimeout(displayOptions, 500);
-  } else if (
-    lastMessage.sender === "bot" &&
-    lastMessage.questionIndex !== null
-  ) {
-    if (currentQuestionIndex < questions.length - 1) {
-      setTimeout(() => {
-        displayAnswerOptions(currentQuestionIndex);
-      }, 500);
-    } else {
-      generateMessage("Thank you for answering all the questions!", "bot");
-      saveChatSessionData("Thank you for answering all the questions!", "bot");
-    }
-  }
-}
-
-function saveChatSessionData(text, sender) {
-  sessionData.push({
-    text,
-    sender,
-    timestamp: new Date().toISOString(),
-    questionIndex: currentQuestionIndex,
-  });
-  saveSession();
-}
-
-function loadChatSession() {
-  return fetch("/load_chat_session/", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.session_data) {
-        sessionData = data.session_data;
-        sessionId = data.session_id;
-      }
-    });
-}
-
-function addTimestampIfNeeded(chatBody) {
-  const currentTime = new Date();
-  if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
-    addTimestamp(chatBody, getCurrentTime());
-    sessionData.push({
-      text: getCurrentTime(),
-      sender: "timestamp",
-    });
-    saveSession();
-  }
-  lastMessageTime = currentTime;
-}
-
-function getCurrentTime() {
-  const now = new Date();
-  let hours = now.getHours();
-  const minutes = now.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-
-  hours = hours % 12;
-  hours = hours ? 12 : 0; // the hour '0' should be '12'
-  const strMinutes = minutes < 10 ? "0" + minutes : minutes;
-  return hours + ":" + strMinutes + " " + ampm;
-}
-
+// Helper function to get CSRF token
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
@@ -724,7 +327,8 @@ function getCookie(name) {
   return cookieValue;
 }
 
-document.addEventListener("DOMContentLoaded", updateChatPosition);
+// Call this function to save the session when chat data changes
+window.addEventListener("beforeunload", saveSession);
 
 if (statusComposerButton) {
   // Show the modal with pop-in animation
