@@ -51,8 +51,9 @@
     </form>
   </div>
 
+  <!-- Statistics Cards -->
   <div class="pilarease-admin-statistics-cards">
-    <!-- Existing Statistics Cards -->
+    <!-- Positive Statistics Card -->
     <div class="pilarease-admin-statistics-card">
       <div class="pilarease-admin-statistics-card-content">
         <div class="pilarease-admin-statistics-card-icon">
@@ -64,6 +65,8 @@
         </div>
       </div>
     </div>
+    
+    <!-- Neutral Statistics Card -->
     <div class="pilarease-admin-statistics-card">
       <div class="pilarease-admin-statistics-card-content">
         <div class="pilarease-admin-statistics-card-icon">
@@ -75,6 +78,8 @@
         </div>
       </div>
     </div>
+    
+    <!-- Negative Statistics Card -->
     <div class="pilarease-admin-statistics-card">
       <div class="pilarease-admin-statistics-card-content">
         <div class="pilarease-admin-statistics-card-icon">
@@ -86,6 +91,8 @@
         </div>
       </div>
     </div>
+    
+    <!-- Total Students Card -->
     <div class="pilarease-admin-statistics-card">
       <div class="pilarease-admin-statistics-card-content">
         <div class="pilarease-admin-statistics-card-info">
@@ -96,8 +103,9 @@
     </div>
   </div>
 
+  <!-- Statistics Charts -->
   <div class="pilarease-admin-statistics-charts">
-    <!-- Existing Charts -->
+    <!-- Emotion Analysis Pie Chart -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">Emotion Analysis</div>
       <div class="pilarease-admin-chart-content">
@@ -105,6 +113,7 @@
       </div>
     </div>
 
+    <!-- Emotion Distribution by Title Bar Chart -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">Emotion Distribution by Title</div>
       <div class="pilarease-admin-chart-content">
@@ -112,6 +121,7 @@
       </div>
     </div>
 
+    <!-- Word Cloud -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">Word Cloud</div>
       <div class="pilarease-admin-chart-content">
@@ -171,22 +181,32 @@
 <!-- Chart.js Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Existing Pie Chart
+  // Utility function to parse JSON safely
+  function parseJSON(data) {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      console.error('Invalid JSON data:', data);
+      return [];
+    }
+  }
+
+  // Emotion Pie Chart
   const pieCtx = document.getElementById('emotionPieChart').getContext('2d');
   const pieChart = new Chart(pieCtx, {
       type: 'pie',
       data: {
-          labels: {{ pie_labels|safe }},
+          labels: parseJSON('{{ pie_labels|escapejs }}'),
           datasets: [{
-              data: {{ pie_data|safe }},
+              data: parseJSON('{{ pie_data|escapejs }}'),
               backgroundColor: [
-                  '#f44336',
-                  '#9c27b0',
-                  '#3f51b5',
-                  '#ffeb3b',
-                  '#2196f3',
-                  '#ff9800',
-                  '#9e9e9e'
+                  '#f44336', // Anger
+                  '#9c27b0', // Disgust
+                  '#3f51b5', // Fear
+                  '#ffeb3b', // Neutral
+                  '#2196f3', // Happiness
+                  '#ff9800', // Sadness
+                  '#9e9e9e'  // Surprise
               ],
               borderWidth: 1
           }]
@@ -205,13 +225,13 @@
       },
   });
 
-  // Existing Bar Chart
+  // Emotion Distribution by Title Bar Chart
   const barCtx = document.getElementById('emotionBarChart').getContext('2d');
   const barChart = new Chart(barCtx, {
       type: 'bar',
       data: {
-          labels: {{ bar_labels|safe }},
-          datasets: {{ bar_datasets|safe }}
+          labels: parseJSON('{{ bar_labels|escapejs }}'),
+          datasets: parseJSON('{{ bar_datasets|escapejs }}')
       },
       options: {
           responsive: true,
@@ -226,19 +246,29 @@
           },
           scales: {
               y: {
-                  beginAtZero: true
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Average Emotion Percentage'
+                  }
+              },
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Titles'
+                  }
               }
           }
       },
   });
 
-  // New Emotion Trend Over Time (Line Chart)
+  // Emotion Trend Over Time (Line Chart)
   const trendCtx = document.getElementById('emotionTrendLineChart').getContext('2d');
   const trendLineChart = new Chart(trendCtx, {
       type: 'line',
       data: {
-          labels: {{ line_labels|safe }},
-          datasets: {{ line_datasets|safe }}
+          labels: parseJSON('{{ line_labels|escapejs }}'),
+          datasets: parseJSON('{{ line_datasets|escapejs }}')
       },
       options: {
           responsive: true,
@@ -261,7 +291,7 @@
               y: {
                   title: {
                       display: true,
-                      text: 'Average Emotion Score'
+                      text: 'Average Emotion Percentage'
                   },
                   beginAtZero: true
               }
@@ -269,23 +299,23 @@
       },
   });
 
-  // New Emotion Frequency (Bar Chart)
+  // Emotion Frequency (Bar Chart)
   const frequencyCtx = document.getElementById('emotionFrequencyBarChart').getContext('2d');
   const frequencyBarChart = new Chart(frequencyCtx, {
       type: 'bar',
       data: {
-          labels: {{ frequency_labels|safe }},
+          labels: parseJSON('{{ frequency_labels|escapejs }}'),
           datasets: [{
               label: 'Frequency',
-              data: {{ frequency_data|safe }},
+              data: parseJSON('{{ frequency_data|escapejs }}'),
               backgroundColor: [
-                  '#f44336',
-                  '#9c27b0',
-                  '#3f51b5',
-                  '#ffeb3b',
-                  '#2196f3',
-                  '#ff9800',
-                  '#9e9e9e'
+                  '#f44336', // Anger
+                  '#9c27b0', // Disgust
+                  '#3f51b5', // Fear
+                  '#ffeb3b', // Neutral
+                  '#2196f3', // Happiness
+                  '#ff9800', // Sadness
+                  '#9e9e9e'  // Surprise
               ],
               borderWidth: 1
           }]
@@ -319,20 +349,20 @@
       },
   });
 
-  // New Emotion Intensity Gauge (Donut Chart)
+  // Emotion Intensity Gauge (Donut Chart)
   const intensityCtx = document.getElementById('emotionIntensityDonutChart').getContext('2d');
   const intensityDonutChart = new Chart(intensityCtx, {
       type: 'doughnut',
       data: {
-          labels: {{ intensity_labels|safe }},
+          labels: parseJSON('{{ intensity_labels|escapejs }}'),
           datasets: [{
-              data: {{ intensity_data|safe }},
+              data: parseJSON('{{ intensity_data|escapejs }}'),
               backgroundColor: [
-                  '#4caf50',
-                  '#ff9800',
-                  '#f44336',
-                  '#9c27b0',
-                  '#2196f3'
+                  '#4caf50', // Happiness
+                  '#ff9800', // Neutral
+                  '#f44336', // Anger
+                  '#9c27b0', // Fear
+                  '#2196f3'  // Sadness
               ],
               borderWidth: 1
           }]
@@ -351,13 +381,13 @@
       },
   });
 
-  // New Emotion Pulse (Area Chart)
+  // Emotion Pulse (Area Chart)
   const pulseCtx = document.getElementById('emotionPulseAreaChart').getContext('2d');
   const pulseAreaChart = new Chart(pulseCtx, {
       type: 'line',
       data: {
-          labels: {{ pulse_labels|safe }},
-          datasets: {{ pulse_datasets|safe }}
+          labels: parseJSON('{{ pulse_labels|escapejs }}'),
+          datasets: parseJSON('{{ pulse_datasets|escapejs }}')
       },
       options: {
           responsive: true,
@@ -380,7 +410,7 @@
               y: {
                   title: {
                       display: true,
-                      text: 'Emotion Intensity'
+                      text: 'Emotion Intensity (%)'
                   },
                   beginAtZero: true
               }

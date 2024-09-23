@@ -319,21 +319,32 @@ def statistics_view(request):
     # Fill NaN values with 0
     df_statuses.fillna(0, inplace=True)
 
+    # Define emotion percentage columns
+    emotion_percentage_columns = [
+        'anger_percentage',
+        'disgust_percentage',
+        'fear_percentage',
+        'neutral_percentage',
+        'happiness_percentage',
+        'sadness_percentage',
+        'surprise_percentage'
+    ]
+
     # Calculate emotion percentages
-    emotion_columns = ['anger', 'disgust', 'fear', 'happiness', 'sadness', 'surprise', 'neutral']
     if df_statuses.empty:
-        emotion_percentages = [0 for _ in emotion_columns]
+        emotion_percentages = [0 for _ in emotion_percentage_columns]
     else:
-        emotion_percentages = df_statuses[emotion_columns].mean().round(2).tolist()
+        emotion_percentages = df_statuses[emotion_percentage_columns].mean().round(2).tolist()
 
     # Data for Pie Chart (Emotion Percentages)
-    pie_labels = [label.capitalize() for label in emotion_columns]
+    pie_labels = [label.replace('_percentage', '').capitalize() for label in emotion_percentage_columns]
     pie_data = emotion_percentages
 
     # Data for Bar Chart (Emotion Distribution by Title)
     if 'title' in df_statuses.columns:
-        df_melted = df_statuses.melt(id_vars=['title'], value_vars=emotion_columns, var_name='emotion', value_name='score')
-        bar_chart_data = df_melted.groupby(['title', 'emotion'])['score'].mean().unstack().fillna(0).round(2)
+        df_melted = df_statuses.melt(id_vars=['title'], value_vars=emotion_percentage_columns, var_name='emotion', value_name='percentage')
+        df_melted['emotion'] = df_melted['emotion'].str.replace('_percentage', '').str.capitalize()
+        bar_chart_data = df_melted.groupby(['title', 'emotion'])['percentage'].mean().unstack().fillna(0).round(2)
         bar_labels = bar_chart_data.index.tolist()
         bar_datasets = []
         colors = {
@@ -346,13 +357,12 @@ def statistics_view(request):
             'Neutral': '#9e9e9e',
         }
 
-        for emotion in emotion_columns:
-            capital_emotion = emotion.capitalize()
-            if capital_emotion in bar_chart_data.columns:
+        for emotion in pie_labels:
+            if emotion in bar_chart_data.columns:
                 bar_datasets.append({
-                    'label': capital_emotion,
-                    'backgroundColor': colors.get(capital_emotion, '#000000'),
-                    'data': bar_chart_data[capital_emotion].tolist(),
+                    'label': emotion,
+                    'backgroundColor': colors.get(emotion, '#000000'),
+                    'data': bar_chart_data[emotion].tolist(),
                 })
     else:
         bar_labels = []
@@ -373,31 +383,41 @@ def statistics_view(request):
         neutral_percent = 0
         negative_percent = 0
     else:
-        positive_percent = df_statuses['happiness'].mean() * 100
-        neutral_percent = df_statuses['neutral'].mean() * 100
-        negative_percent = (df_statuses['anger'] + df_statuses['fear'] + df_statuses['sadness']).mean() * 100
+        positive_percent = df_statuses['happiness_percentage'].mean()
+        neutral_percent = df_statuses['neutral_percentage'].mean()
+        negative_percent = (
+            df_statuses['anger_percentage'].mean() +
+            df_statuses['fear_percentage'].mean() +
+            df_statuses['sadness_percentage'].mean()
+        )
 
     # New: Emotion Trend Over Time (Line Chart)
-    # Assuming 'created_at' is the timestamp for each status
     if 'created_at' in df_statuses.columns and not df_statuses['created_at'].isnull().all():
         df_statuses['created_at'] = pd.to_datetime(df_statuses['created_at'])
         df_statuses['month_year'] = df_statuses['created_at'].dt.to_period('M').astype(str)
-        sentiment_columns_line = ['happiness', 'neutral', 'anger', 'fear', 'sadness']
+        sentiment_columns_line = [
+            'happiness_percentage',
+            'neutral_percentage',
+            'anger_percentage',
+            'fear_percentage',
+            'sadness_percentage'
+        ]
         sentiment_trends = df_statuses.groupby('month_year')[sentiment_columns_line].mean().reset_index()
 
         line_labels = sentiment_trends['month_year'].tolist()
         line_datasets = []
         line_colors = {
-            'happiness': '#4caf50',
-            'neutral': '#ff9800',
-            'anger': '#f44336',
-            'fear': '#9c27b0',
-            'sadness': '#2196f3',
+            'happiness_percentage': '#4caf50',
+            'neutral_percentage': '#ff9800',
+            'anger_percentage': '#f44336',
+            'fear_percentage': '#9c27b0',
+            'sadness_percentage': '#2196f3',
         }
 
         for sentiment in sentiment_columns_line:
+            capital_emotion = sentiment.replace('_percentage', '').capitalize()
             line_datasets.append({
-                'label': sentiment.capitalize(),
+                'label': capital_emotion,
                 'borderColor': line_colors.get(sentiment, '#000000'),
                 'fill': False,
                 'data': sentiment_trends[sentiment].round(2).tolist(),
@@ -407,29 +427,26 @@ def statistics_view(request):
         line_datasets = []
 
     # New: Emotion Frequency (Bar Chart)
-    frequency_labels = [label.capitalize() for label in emotion_columns]
+    frequency_labels = [label.replace('_percentage', '').capitalize() for label in emotion_percentage_columns]
     if not df_statuses.empty:
-        frequency_data = df_statuses[emotion_columns].count().tolist()
+        frequency_data = df_statuses[emotion_percentage_columns].count().tolist()
     else:
-        frequency_data = [0 for _ in emotion_columns]
+        frequency_data = [0 for _ in emotion_percentage_columns]
 
     # New: Emotion Intensity Gauge (Donut Chart)
-    # Assuming intensity is the average sentiment score scaled to 10
-    # Here, we calculate the average intensity for each emotion
     intensity_labels = ['Happiness', 'Neutral', 'Anger', 'Fear', 'Sadness']
     if not df_statuses.empty:
         intensity_data = [
-            round(df_statuses['happiness'].mean(), 2),
-            round(df_statuses['neutral'].mean(), 2),
-            round(df_statuses['anger'].mean(), 2),
-            round(df_statuses['fear'].mean(), 2),
-            round(df_statuses['sadness'].mean(), 2),
+            int(df_statuses['happiness_percentage'].mean()),
+            int(df_statuses['neutral_percentage'].mean()),
+            int(df_statuses['anger_percentage'].mean()),
+            int(df_statuses['fear_percentage'].mean()),
+            int(df_statuses['sadness_percentage'].mean()),
         ]
     else:
         intensity_data = [0, 0, 0, 0, 0]
 
     # New: Emotion Pulse (Area Chart)
-    # For pulse, we'll use the same sentiment_trends data but fill the area
     if not df_statuses.empty and not sentiment_trends.empty:
         pulse_labels = sentiment_trends['month_year'].tolist()
         pulse_datasets = []
@@ -441,16 +458,14 @@ def statistics_view(request):
             'Sadness': 'rgba(33, 150, 243, 0.5)',
         }
 
-        for sentiment in sentiment_columns_line:
-            capital_emotion = sentiment.capitalize()
-            if capital_emotion in sentiment_trends.columns:
-                pulse_datasets.append({
-                    'label': capital_emotion,
-                    'backgroundColor': pulse_colors.get(capital_emotion, 'rgba(0,0,0,0.5)'),
-                    'borderColor': line_colors.get(sentiment, '#000000'),
-                    'fill': True,
-                    'data': sentiment_trends[sentiment].round(2).tolist(),
-                })
+        for sentiment in ['Happiness', 'Neutral', 'Anger', 'Fear', 'Sadness']:
+            pulse_datasets.append({
+                'label': sentiment,
+                'backgroundColor': pulse_colors.get(sentiment, 'rgba(0,0,0,0.5)'),
+                'borderColor': line_colors.get(sentiment.lower() + '_percentage', '#000000'),
+                'fill': True,
+                'data': sentiment_trends[f'{sentiment.lower()}_percentage'].round(2).tolist(),
+            })
     else:
         pulse_labels = []
         pulse_datasets = []
@@ -463,9 +478,9 @@ def statistics_view(request):
         'bar_datasets': json.dumps(bar_datasets),
         'wordcloud_text': text,
         'total_students': total_students,
-        'positive_percent': round(positive_percent, 2),
-        'neutral_percent': round(neutral_percent, 2),
-        'negative_percent': round(negative_percent, 2),
+        'positive_percent': int(round(positive_percent, 0)),
+        'neutral_percent': int(round(neutral_percent, 0)),
+        'negative_percent': int(round(negative_percent, 0)),
         # New Chart Data
         'line_labels': json.dumps(line_labels),
         'line_datasets': json.dumps(line_datasets),
