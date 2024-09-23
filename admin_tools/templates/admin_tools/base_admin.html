@@ -7,9 +7,11 @@
     <title>Admin | PilarEase</title>
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/admin.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/main.css' %}?v=1.0" />
-    <link rel="stylesheet" href="{% static 'css/main-footer.css' %}?v=1.0" />
     {% endcompress %}
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
     <link
       href="https://fonts.googleapis.com/css?family=Aguafina+Script&display=swap"
       rel="stylesheet"
@@ -34,99 +36,113 @@
       href="https://unpkg.com/cropperjs/dist/cropper.css"
       rel="stylesheet"
     />
-    <link
-      href="https://cdn.jsdelivr.net/npm/boxicons@2.1.1/css/boxicons.min.css"
-      rel="stylesheet"
-    />
   </head>
   <body>
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
+    <div
+      class="pilarease-admin-sidebar sidebar animate__animated animate__fadeInLeft"
+    >
+      <div class="pilarease-admin-sidebar-header sidebar-header">
         <img
           src="{% static 'images/PilarLogo.png' %}"
           alt="Logo"
-          class="sidebar-logo"
+          class="pilarease-admin-sidebar-logo sidebar-logo"
         />
         <img
           src="{% static 'images/PilarEaseLogo.png' %}"
           alt="Additional Logo"
-          class="sidebar-additional-logo"
+          class="pilarease-admin-sidebar-additional-logo sidebar-additional-logo"
         />
-        <span class="sidebar-title">PilarEase</span>
+        <span class="pilarease-admin-sidebar-title sidebar-title"
+          >PilarEase</span
+        >
       </div>
-      <ul class="sidebar-menu">
+      <ul class="pilarease-admin-sidebar-menu sidebar-menu">
         <li>
-          <a href="{% url 'admin_dashboard' %}">
+          <a href="{% url 'dashboard' %}">
             <i class="bx bx-home"></i>
-            <span class="menu-text">Dashboard</span>
+            <span class="pilarease-admin-menu-text menu-text">Dashboard</span>
           </a>
         </li>
         <li>
           <a href="{% url 'statistics' %}">
             <i class="bx bx-bar-chart"></i>
-            <span class="menu-text">Statistics</span>
+            <span class="pilarease-admin-menu-text menu-text">Statistics</span>
           </a>
         </li>
         <li>
           <a href="{% url 'analysis' %}">
             <i class="bx bx-line-chart"></i>
-            <span class="menu-text">Analysis</span>
+            <span class="pilarease-admin-menu-text menu-text">Analysis</span>
           </a>
         </li>
         <li>
           <a href="{% url 'reports' %}">
             <i class="bx bx-file"></i>
-            <span class="menu-text">Reports</span>
+            <span class="pilarease-admin-menu-text menu-text">Reports</span>
           </a>
         </li>
         <li>
           <a href="{% url 'status' %}">
             <i class="bx bx-edit"></i>
-            <span class="menu-text">Status</span>
+            <span class="pilarease-admin-menu-text menu-text">Status</span>
           </a>
         </li>
         <li>
           <a href="{% url 'replies' %}">
             <i class="bx bx-message"></i>
-            <span class="menu-text">Replies</span>
+            <span class="pilarease-admin-menu-text menu-text">Replies</span>
           </a>
         </li>
         <li>
           <a href="{% url 'manage_users' %}">
             <i class="bx bx-user"></i>
-            <span class="menu-text">Account</span>
+            <span class="pilarease-admin-menu-text menu-text">Account</span>
+          </a>
+        </li>
+        <li>
+          <a>
+            <i class="bx bx-receipt"></i>
+            <span class="pilarease-admin-menu-text menu-text">Referral</span>
+          </a>
+        </li>
+        <li>
+          <a>
+            <i class="bx bx-chat"></i>
+            <span class="pilarease-admin-menu-text menu-text">Chat</span>
           </a>
         </li>
         <li>
           <a href="{% url 'settings' %}">
             <i class="bx bx-cog"></i>
-            <span class="menu-text">Settings</span>
+            <span class="pilarease-admin-menu-text menu-text">Settings</span>
           </a>
         </li>
         <li>
           <a href="{% url 'admin_logout' %}">
             <i class="bx bx-log-out"></i>
-            <span class="menu-text">Logout</span>
+            <span class="pilarease-admin-menu-text menu-text">Logout</span>
           </a>
         </li>
       </ul>
     </div>
-    <div class="main-content">
-      <div class="header">
-        <div class="header-right">
+    <div class="pilarease-admin-main-content main-content">
+      <div class="pilarease-admin-header header">
+        <div class="pilarease-admin-header-right header-right">
           <i class="bx bx-bell"></i>
-          <div class="profile-icon">M</div>
+          <div class="pilarease-admin-profile-icon profile-icon">M</div>
         </div>
       </div>
-      <div class="content">{% block content %} {% endblock %}</div>
+      <div class="pilarease-admin-content content">
+        {% block content %} {% endblock %}
+      </div>
     </div>
     <script>
-      const sidebar = document.getElementById("sidebar");
+      const sidebar = document.querySelector(".pilarease-admin-sidebar");
       sidebar.addEventListener("mouseenter", () => {
-        sidebar.classList.add("sidebar-expanded");
+        sidebar.classList.add("pilarease-admin-sidebar-expanded");
       });
       sidebar.addEventListener("mouseleave", () => {
-        sidebar.classList.remove("sidebar-expanded");
+        sidebar.classList.remove("pilarease-admin-sidebar-expanded");
       });
     </script>
   </body>

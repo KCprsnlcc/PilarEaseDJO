@@ -1,124 +1,43 @@
-/* Base styles */
+/* =========================================================
+   PilareEase Admin Panel CSS
+   ========================================================= */
+
+/* Accent Color Variables */
+:root {
+  --accent-color: #1c4c53; /* Primary Accent Color */
+  --accent-light: #2a6f73; /* Light Shade of Accent Color */
+  --background-color: #f4f7f9; /* Body Background Color */
+  --header-background: var(--accent-color);
+  --header-text-color: #ffffff;
+  --sidebar-background: #0e2326;
+  --sidebar-expanded-width: 220px;
+  --sidebar-collapsed-width: 60px;
+  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-color: #ddd;
+  --approved-color: #4caf50;
+  --pending-color: #ff9800;
+  --delete-color: #f44336;
+}
+
+/* =========================================================
+   Base Styles
+   ========================================================= */
+
+/* Reset and Base Styles */
 body {
   font-family: "Inter", sans-serif;
-  background-color: #f4f7f9;
+  background-color: var(--background-color);
   margin: 0;
   padding: 0;
 }
 
-/* Container styles */
-.users-container,
-.status-container,
-.analysis-table,
-.contact-us-queries {
-  margin: 20px;
-}
+/* =========================================================
+   Sidebar Styles
+   ========================================================= */
 
-/* Search form styles */
-.search-form {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.search-form input[type="text"],
-.search-form select {
-  padding: 5px;
-  font-size: 14px;
-}
-
-.search-form button {
-  padding: 5px 10px;
-  font-size: 14px;
-  background-color: #0e2326;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-/* Table styles */
-.users-table,
-.status-table,
-.analysis-table table,
-.contact-us-queries table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-}
-
-.users-table th,
-.users-table td,
-.status-table th,
-.status-table td,
-.analysis-table th,
-.analysis-table td,
-.contact-us-queries th,
-contact-us-queries td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-.users-table th,
-.status-table th,
-.analysis-table th,
-.contact-us-queries th {
-  background-color: #0e2326;
-  color: white;
-}
-
-/* Progress bar styles */
-.progress-bar-container {
-  position: relative;
-  width: 100%;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  border-radius: 5px;
-  transition: width 0.3s ease;
-}
-
-.progress-percentage {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: #000;
-}
-
-/* Pagination styles */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pagination .step-links {
-  display: flex;
-  gap: 10px;
-}
-
-.pagination .step-links a {
-  margin: 0 5px;
-  text-decoration: none;
-  color: #007bff;
-}
-
-.pagination .step-links .current {
-  margin: 0 5px;
-}
-
-/* Sidebar styles */
-.sidebar {
-  background-color: #0e2326;
-  width: 60px;
+.pilarease-admin-sidebar {
+  background-color: var(--sidebar-background);
+  width: var(--sidebar-collapsed-width);
   transition: width 0.3s ease, all 0.3s ease;
   overflow: hidden;
   position: fixed;
@@ -131,11 +50,11 @@ contact-us-queries td {
   z-index: 10000;
 }
 
-.sidebar-expanded {
-  width: 190px;
+.pilarease-admin-sidebar-expanded {
+  width: var(--sidebar-expanded-width);
 }
 
-.sidebar-header {
+.pilarease-admin-sidebar-header {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -144,24 +63,25 @@ contact-us-queries td {
   margin-top: -5px;
   margin-left: -10px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
-.sidebar-logo {
+.pilarease-admin-sidebar-logo {
   width: 30px;
   height: 30px;
   margin-right: 10px;
   transition: transform 0.3s ease;
 }
 
-.sidebar-additional-logo {
+.pilarease-admin-sidebar-additional-logo {
   width: 30px;
   height: 30px;
   margin-right: 10px;
   transition: opacity 0.3s ease;
 }
 
-.sidebar-title {
-  color: white;
+.pilarease-admin-sidebar-title {
+  color: #ffffff;
   font-size: 20px;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -169,13 +89,13 @@ contact-us-queries td {
   transform: scale(0);
 }
 
-.sidebar-expanded .sidebar-title,
-.sidebar-expanded .sidebar-additional-logo {
+.pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-title,
+.pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-additional-logo {
   opacity: 1;
   transform: scale(1);
 }
 
-.sidebar-menu {
+.pilarease-admin-sidebar-menu {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -183,80 +103,96 @@ contact-us-queries td {
   width: 100%;
 }
 
-.sidebar-menu li {
+.pilarease-admin-sidebar-menu li {
   width: 100%;
 }
 
-.sidebar-menu li a {
+.pilarease-admin-sidebar-menu li a {
   display: flex;
   align-items: center;
   padding: 15px;
-  color: white;
+  color: #ffffff;
   text-decoration: none;
   transition: background 0.3s ease, opacity 0.3s ease;
+  position: relative;
 }
 
-.sidebar-menu li a:hover {
-  background-color: #142d32;
+.pilarease-admin-sidebar-menu li a:hover {
+  background-color: var(--accent-light);
 }
 
-.sidebar-menu li a i {
+.pilarease-admin-sidebar-menu li a i {
   font-size: 24px;
   margin-right: 10px;
 }
 
-.menu-text {
+.pilarease-admin-menu-text {
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   transform: scale(0);
 }
 
-.sidebar-expanded .menu-text {
+.pilarease-admin-sidebar-expanded .pilarease-admin-menu-text {
   opacity: 1;
   transform: scale(1);
 }
 
-.main-content {
-  margin-left: 60px;
+/* Active Link Styles */
+.pilarease-admin-sidebar-menu li a.active {
+  background-color: var(--accent-light);
+}
+
+/* =========================================================
+   Main Content Styles
+   ========================================================= */
+
+.pilarease-admin-main-content {
+  margin-left: var(--sidebar-collapsed-width);
   transition: margin-left 0.3s ease;
 }
 
-.sidebar-expanded ~ .main-content {
-  margin-left: 200px;
+.pilarease-admin-sidebar-expanded ~ .pilarease-admin-main-content {
+  margin-left: var(--sidebar-expanded-width);
 }
 
-/* Header styles */
-.header {
-  background-color: #0e2326;
-  color: white;
+.pilarease-admin-header {
+  background-color: var(--header-background);
+  color: var(--header-text-color);
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding: 10px 20px;
   position: fixed;
   top: 0;
-  left: 60px;
+  left: var(--sidebar-collapsed-width);
   right: 0;
   height: 60px;
-  transition: left 0.3s ease;
+  transition: left 0.3s ease, background-color 0.3s ease;
+  z-index: 9999;
 }
 
-.sidebar-expanded ~ .header {
-  left: 200px;
+.pilarease-admin-sidebar-expanded ~ .pilarease-admin-header {
+  left: var(--sidebar-expanded-width);
 }
 
-.header-right {
+.pilarease-admin-header-right {
   display: flex;
   align-items: center;
 }
 
-.header-right i {
+.pilarease-admin-header-right i {
   font-size: 24px;
   margin-right: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
-.profile-icon {
-  background-color: #1c4c53;
+.pilarease-admin-header-right i:hover {
+  color: var(--accent-light);
+}
+
+.pilarease-admin-profile-icon {
+  background-color: var(--accent-light);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -265,30 +201,242 @@ contact-us-queries td {
   justify-content: center;
   font-size: 18px;
   font-weight: bold;
-  color: white;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-/* Content styles */
-.content {
+.pilarease-admin-profile-icon:hover {
+  background-color: var(--accent-color);
+}
+
+.pilarease-admin-content {
   margin-top: 60px;
+  padding: 20px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* =========================================================
+   Dashboard Styles
+   ========================================================= */
+
+/* Dashboard Container */
+.pilarease-admin-dashboard-container {
   padding: 20px;
 }
 
-/* Sidebar active link styles */
-.sidebar-link.active {
-  background-color: #142d32;
+/* Section Titles */
+.pilarease-admin-dashboard-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: var(--accent-color);
 }
 
-.active-indicator {
-  position: absolute;
-  left: 0;
-  width: 5px;
-  background-color: #1c4c53;
-  transition: top 0.3s ease, height 0.3s ease;
+.pilarease-admin-section-title {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: var(--accent-color);
 }
 
-/* Modal styles */
-.modal {
+/* Feedback and Testimonial Containers */
+.pilarease-admin-feedback-container,
+.pilarease-admin-testimonials-container,
+.pilarease-admin-contactus-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+}
+
+/* Search Forms */
+.pilarease-admin-feedback-search-form,
+.pilarease-admin-testimonial-search-form,
+.pilarease-admin-contactus-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pilarease-admin-feedback-search-input,
+.pilarease-admin-testimonial-search-input,
+.pilarease-admin-contactus-search-input {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 250px;
+}
+
+.pilarease-admin-feedback-search-button,
+.pilarease-admin-testimonial-search-button,
+.pilarease-admin-contactus-search-button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-feedback-search-button:hover,
+.pilarease-admin-testimonial-search-button:hover,
+.pilarease-admin-contactus-search-button:hover {
+  background-color: var(--accent-light);
+}
+
+/* Tables */
+.pilarease-admin-feedback-table,
+.pilarease-admin-testimonial-table,
+.pilarease-admin-contactus-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.pilarease-admin-feedback-table th,
+.pilarease-admin-feedback-table td,
+.pilarease-admin-testimonial-table th,
+.pilarease-admin-testimonial-table td,
+.pilarease-admin-contactus-table th,
+.pilarease-admin-contactus-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.pilarease-admin-feedback-table th,
+.pilarease-admin-testimonial-table th,
+.pilarease-admin-contactus-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+/* Sentiment Score */
+.pilarease-admin-sentiment-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pilarease-admin-sentiment-bar {
+  width: 100px;
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.pilarease-admin-sentiment-fill {
+  height: 100%;
+  background-color: var(--accent-light);
+  transition: width 0.3s ease;
+}
+
+/* Approval Labels */
+.pilarease-admin-approved-label {
+  padding: 5px 10px;
+  background-color: var(--approved-color);
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.pilarease-admin-pending-label {
+  padding: 5px 10px;
+  background-color: var(--pending-color);
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Action Buttons */
+.pilarease-admin-action-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-action-button.approve-button {
+  background-color: var(--approved-color);
+}
+
+.pilarease-admin-action-button.approve-button:hover {
+  background-color: #45a049;
+}
+
+.pilarease-admin-action-button.delete-button {
+  background-color: var(--delete-color);
+  margin-left: 5px;
+}
+
+.pilarease-admin-action-button.delete-button:hover {
+  background-color: #da190b;
+}
+
+/* No Feedback/Testimonial/Contact Message */
+.pilarease-admin-no-feedback,
+.pilarease-admin-no-testimonial,
+.pilarease-admin-no-contact {
+  text-align: center;
+  color: #666666;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+/* Pagination */
+.pilarease-admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pilarease-admin-step-links {
+  display: flex;
+  gap: 10px;
+}
+
+.pilarease-admin-step-links a {
+  padding: 6px 12px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-step-links a:hover {
+  background-color: var(--accent-light);
+}
+
+.pilarease-admin-current {
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  color: #333333;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Testimonial Image within Admin Table */
+.pilarease-admin-testimonial-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* =========================================================
+   Modal Styles
+   ========================================================= */
+
+.pilarease-admin-modal {
   display: none;
   position: fixed;
   z-index: 1000;
@@ -300,111 +448,383 @@ contact-us-queries td {
   background-color: rgba(0, 0, 0, 0.4);
 }
 
-.modal-content {
-  background-color: #fff;
+.pilarease-admin-modal-content {
+  background-color: #ffffff;
   margin: 15% auto;
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
   max-width: 500px;
   border-radius: 5px;
+  animation: slideDown 0.5s ease;
 }
 
-.close {
+.pilarease-admin-close {
   color: #aaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: #000;
-  text-decoration: none;
   cursor: pointer;
+  transition: color 0.3s ease;
 }
 
-/* Statistics Page Specific Styles */
-.statistics-container {
+.pilarease-admin-close:hover,
+.pilarease-admin-close:focus {
+  color: #000000;
+  text-decoration: none;
+}
+
+/* =========================================================
+   Statistics Page Specific Styles
+   ========================================================= */
+
+.pilarease-admin-statistics-container {
   padding: 20px;
 }
 
-.statistics-header {
+.pilarease-admin-statistics-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.statistics-header .title {
+.pilarease-admin-statistics-header .pilarease-admin-title {
   font-size: 24px;
   font-weight: bold;
+  color: var(--accent-color);
 }
 
-.statistics-cards {
+.pilarease-admin-statistics-cards {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+  gap: 20px;
 }
 
-.statistics-card {
-  background-color: white;
+.pilarease-admin-statistics-card {
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 20px;
   flex: 1;
-  margin-right: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.statistics-card:last-child {
-  margin-right: 0;
+.pilarease-admin-statistics-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
-.statistics-card-content {
+.pilarease-admin-statistics-card-content {
   display: flex;
   align-items: center;
 }
 
-.statistics-card-icon {
+.pilarease-admin-statistics-card-icon {
   font-size: 30px;
   margin-right: 10px;
+  color: var(--accent-color);
 }
 
-.statistics-card-info {
+.pilarease-admin-statistics-card-info {
   display: flex;
   flex-direction: column;
 }
 
-.statistics-card-info span {
+.pilarease-admin-statistics-card-info span {
   font-size: 24px;
   font-weight: bold;
+  color: var(--accent-color);
 }
 
-.statistics-card-info p {
+.pilarease-admin-statistics-card-info p {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #666666;
 }
 
-.statistics-charts {
+.pilarease-admin-statistics-charts {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.statistics-chart {
-  background-color: white;
+.pilarease-admin-statistics-chart {
+  background-color: #ffffff;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.chart-header {
+.pilarease-admin-statistics-chart:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.pilarease-admin-chart-header {
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
+  color: var(--accent-color);
 }
 
-.chart-content {
+.pilarease-admin-chart-content {
   height: 200px; /* Placeholder height, replace with actual chart */
+}
+
+/* =========================================================
+   Testimonials Management Specific Styles
+   ========================================================= */
+
+/* Testimonial Image within Admin Table */
+.pilarease-admin-testimonial-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* =========================================================
+   Animations
+   ========================================================= */
+
+/* Custom Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Slide Down Animation for Modals */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   Responsive Design
+   ========================================================= */
+
+/* Mobile View Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-sidebar {
+    width: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-sidebar-expanded {
+    width: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-main-content,
+  .pilarease-admin-header {
+    margin-left: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-header {
+    left: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-feedback-search-input,
+  .pilarease-admin-testimonial-search-input,
+  .pilarease-admin-contactus-search-input {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Additional Components (Chat Section, Manage Referral)
+   ========================================================= */
+
+/* Chat Section Styles */
+.pilarease-admin-chat-section {
+  margin: 20px;
+}
+
+.pilarease-admin-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-chat-header .pilarease-admin-chat-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.pilarease-admin-chat-header .pilarease-admin-chat-icon {
+  font-size: 20px;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+
+.pilarease-admin-chat-messages {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.pilarease-admin-chat-message {
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-chat-message .pilarease-admin-message-sender {
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.pilarease-admin-chat-message .pilarease-admin-message-text {
+  margin: 5px 0 0 0;
+  color: #333333;
+}
+
+.pilarease-admin-chat-input {
+  display: flex;
+  margin-top: 10px;
+}
+
+.pilarease-admin-chat-input input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.pilarease-admin-chat-input button {
+  padding: 8px 12px;
+  margin-left: 10px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-chat-input button:hover {
+  background-color: var(--accent-light);
+}
+
+/* Manage Referral Styles */
+.pilarease-admin-manage-referral {
+  margin: 20px;
+}
+
+.pilarease-admin-manage-referral-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-manage-referral-header .pilarease-admin-referral-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.pilarease-admin-manage-referral-header .pilarease-admin-referral-icon {
+  font-size: 20px;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+
+.pilarease-admin-referral-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pilarease-admin-referral-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pilarease-admin-referral-list li:last-child {
+  border-bottom: none;
+}
+
+.pilarease-admin-referral-list .pilarease-admin-referral-name {
+  font-size: 16px;
+  color: #333333;
+}
+
+.pilarease-admin-referral-list .pilarease-admin-referral-actions i {
+  font-size: 18px;
+  color: var(--accent-color);
+  cursor: pointer;
+  margin-left: 10px;
+  transition: color 0.3s ease;
+}
+
+.pilarease-admin-referral-list .pilarease-admin-referral-actions i:hover {
+  color: var(--accent-light);
+}
+
+/* =========================================================
+   User Profile Styles
+   ========================================================= */
+
+.pilarease-admin-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pilarease-admin-user-profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.pilarease-admin-user-profile .pilarease-admin-user-name {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+/* =========================================================
+   Keyframes for Custom Animations
+   ========================================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -3,23 +3,34 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q
-from main.models import ContactUs, Status, CustomUser, Reply
+from main.models import (
+    ContactUs,
+    Status,
+    CustomUser,
+    Reply,
+    Feedback,
+)
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 from wordcloud import WordCloud
 from io import BytesIO
 import base64
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.utils.timesince import timesince
 from datetime import datetime
 from django.utils import timezone
+
+def generate_base64_image(fig):
+    img_bytes = pio.to_image(fig, format="png", engine="kaleido")
+    return base64.b64encode(img_bytes).decode('utf-8')
+
+
 @login_required
 def replies_view(request):
     search_query = request.GET.get('search', '')
@@ -66,6 +77,7 @@ def delete_reply(request, reply_id):
             return JsonResponse({'success': False, 'message': 'Reply not found.'}, status=404)
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
 
+
 @login_required
 def status_view(request):
     search_query = request.GET.get('search', '')
@@ -96,9 +108,152 @@ def status_view(request):
         'page_obj': page_obj,
     })
 
-def generate_base64_image(fig):
-    img_bytes = pio.to_image(fig, format="png", engine="kaleido")
-    return base64.b64encode(img_bytes).decode('utf-8')
+
+@login_required
+def dashboard(request):
+    # Feedbacks
+    feedback_search_query = request.GET.get('feedback_search', '')
+    feedbacks_queryset = Feedback.objects.all()
+    if feedback_search_query:
+        feedbacks_queryset = feedbacks_queryset.filter(
+            Q(user__full_name__icontains=feedback_search_query) |
+            Q(message__icontains=feedback_search_query)
+        )
+    feedbacks_paginator = Paginator(feedbacks_queryset, 10)  # Show 10 feedbacks per page
+    feedback_page_number = request.GET.get('page_feedback')
+    feedbacks = feedbacks_paginator.get_page(feedback_page_number)
+
+    # Testimonials (approved feedbacks)
+    testimonial_search_query = request.GET.get('testimonial_search', '')
+    testimonials_queryset = Feedback.objects.filter(is_approved=True)
+    if testimonial_search_query:
+        testimonials_queryset = testimonials_queryset.filter(
+            Q(user__full_name__icontains=testimonial_search_query) |
+            Q(message__icontains=testimonial_search_query)
+        )
+    testimonials_paginator = Paginator(testimonials_queryset, 10)  # Show 10 testimonials per page
+    testimonial_page_number = request.GET.get('page_testimonial')
+    testimonials = testimonials_paginator.get_page(testimonial_page_number)
+
+    # Contact Us Queries
+    contact_search_query = request.GET.get('contact_search', '')
+    contacts_queryset = ContactUs.objects.all()
+    if contact_search_query:
+        contacts_queryset = contacts_queryset.filter(
+            Q(name__icontains=contact_search_query) |
+            Q(email__icontains=contact_search_query) |
+            Q(subject__icontains=contact_search_query) |
+            Q(message__icontains=contact_search_query)
+        )
+    contacts_paginator = Paginator(contacts_queryset, 10)  # Show 10 contacts per page
+    contact_page_number = request.GET.get('page_contact')
+    contacts = contacts_paginator.get_page(contact_page_number)
+
+    context = {
+        'feedbacks': feedbacks,
+        'feedback_search_query': feedback_search_query,
+        'testimonials': testimonials,
+        'testimonial_search_query': testimonial_search_query,
+        'contacts': contacts,
+        'contact_search_query': contact_search_query,
+    }
+    return render(request, 'admin_tools/dashboard.html', context)
+
+
+@login_required
+def approve_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    feedback.is_approved = True
+    feedback.save()
+    return redirect('dashboard')
+
+
+@login_required
+def delete_feedback(request, feedback_id):
+    feedback = get_object_or_404(Feedback, id=feedback_id)
+    feedback.delete()
+    return redirect('dashboard')
+
+
+@login_required
+def approve_testimonial(request, testimonial_id):
+    testimonial = get_object_or_404(Feedback, id=testimonial_id)
+    testimonial.is_approved = True
+    testimonial.save()
+    return redirect('dashboard')
+
+
+@login_required
+def delete_testimonial(request, testimonial_id):
+    testimonial = get_object_or_404(Feedback, id=testimonial_id)
+    testimonial.delete()
+    return redirect('dashboard')
+
+
+@login_required
+def contact_us_view(request):
+    search_query = request.GET.get('search', '')
+    page_number = request.GET.get('page', 1)
+    page_size = 10
+
+    # Filter contact us queries based on search query
+    contacts = ContactUs.objects.filter(
+        Q(name__icontains=search_query) |
+        Q(email__icontains=search_query) |
+        Q(subject__icontains=search_query) |
+        Q(message__icontains=search_query)
+    )
+
+    paginator = Paginator(contacts, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    if request.method == 'POST':
+        # Handle reply to contact query
+        contact_id = request.POST.get('contact_id')
+        reply_text = request.POST.get('reply_text')
+        if contact_id and reply_text:
+            try:
+                contact = ContactUs.objects.get(id=contact_id)
+                # Assuming ContactUs has a 'reply' field or related model
+                # For simplicity, we'll add a 'reply' field in ContactUs
+                contact.reply = reply_text
+                contact.is_replied = True
+                contact.save()
+                # Optionally, send an email to the user
+                # send_mail(
+                #     'Re: ' + contact.subject,
+                #     reply_text,
+                #     'admin@pilarease.com',
+                #     [contact.email],
+                #     fail_silently=False,
+                # )
+                return redirect('dashboard')
+            except ContactUs.DoesNotExist:
+                pass
+
+    context = {
+        'contacts': page_obj,
+        'search_query': search_query,
+        'page_obj': page_obj,
+    }
+    return render(request, 'admin_tools/dashboard.html', context)
+
+
+def home(request):
+    return render(request, 'home.html')
+
+
+def manage_referral(request):
+    referrals = Referral.objects.all()
+    context = {
+        'referrals': referrals,
+    }
+    return render(request, 'admin_tools/manage_referral.html', context)
+
+
+def chat(request):
+    return render(request, 'admin_tools/chat.html')
+
 
 @login_required
 def statistics_view(request):
@@ -154,6 +309,7 @@ def statistics_view(request):
         'total_students': total_students
     })
 
+
 @login_required
 def analysis_view(request):
     search_query = request.GET.get('search', '')
@@ -184,6 +340,7 @@ def analysis_view(request):
         'page_obj': page_obj,
     })
 
+
 @login_required
 def contact_us_view(request):
     search_query = request.GET.get('search', '')
@@ -201,15 +358,41 @@ def contact_us_view(request):
     paginator = Paginator(contacts, page_size)
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'admin_tools/dashboard.html', {
+    if request.method == 'POST':
+        # Handle reply to contact query
+        contact_id = request.POST.get('contact_id')
+        reply_text = request.POST.get('reply_text')
+        if contact_id and reply_text:
+            try:
+                contact = ContactUs.objects.get(id=contact_id)
+                # Assuming ContactUs has a 'reply' field or related model
+                # For simplicity, we'll add a 'reply' field in ContactUs
+                contact.reply = reply_text
+                contact.is_replied = True
+                contact.save()
+                # Optionally, send an email to the user
+                # send_mail(
+                #     'Re: ' + contact.subject,
+                #     reply_text,
+                #     'admin@pilarease.com',
+                #     [contact.email],
+                #     fail_silently=False,
+                # )
+                return redirect('dashboard')
+            except ContactUs.DoesNotExist:
+                pass
+
+    context = {
         'contacts': page_obj,
         'search_query': search_query,
         'page_obj': page_obj,
-    })
+    }
+    return render(request, 'admin_tools/dashboard.html', context)
+
 
 def admin_login_view(request):
     if request.user.is_authenticated and request.user.is_counselor:
-        return HttpResponseRedirect(reverse('admin_dashboard'))
+        return HttpResponseRedirect(reverse('dashboard'))
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -218,7 +401,7 @@ def admin_login_view(request):
 
         if user is not None and user.is_counselor:
             login(request, user)
-            return redirect('admin_dashboard')
+            return redirect('dashboard')
         else:
             return render(request, 'admin_tools/admin_login.html', {'error': 'Invalid credentials or not authorized.'})
     
@@ -228,10 +411,8 @@ def admin_login_view(request):
 @login_required
 def reports(request):
     if not request.user.is_counselor:
-        return redirect('login')
+        return redirect('admin_login')
     return render(request, 'admin_tools/reports.html')
-
-
 
 
 @login_required
@@ -252,6 +433,7 @@ def manage_users_view(request):
         'page_obj': page_obj,
     }
     return render(request, 'admin_tools/manage_users.html', context)
+
 
 @login_required
 @csrf_exempt
@@ -274,16 +456,49 @@ def block_user(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @login_required
+def contact_us_reply(request, contact_id):
+    if request.method == 'POST':
+        reply_text = request.POST.get('reply_text')
+        if reply_text:
+            try:
+                contact = ContactUs.objects.get(id=contact_id)
+                contact.reply = reply_text
+                contact.is_replied = True
+                contact.save()
+                # Optionally, send an email to the user
+                from django.core.mail import send_mail
+                send_mail(
+                    f"Re: {contact.subject}",
+                    reply_text,
+                    'admin@pilarease.com',
+                    [contact.email],
+                    fail_silently=False,
+                )
+                return redirect('dashboard')
+            except ContactUs.DoesNotExist:
+                pass
+    return redirect('dashboard')
+
+
+@login_required
+def delete_contact_us(request, contact_id):
+    contact = get_object_or_404(ContactUs, id=contact_id)
+    contact.delete()
+    return redirect('dashboard')
+
+@login_required
 def delete_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
     user.delete()
     return redirect('manage_users')
 
+
 @login_required
 def settings(request):
     if not request.user.is_counselor:
-        return redirect('login')
+        return redirect('admin_login')
     return render(request, 'admin_tools/settings.html')
+
 
 @login_required
 def admin_logout(request):

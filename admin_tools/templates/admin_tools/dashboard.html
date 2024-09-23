@@ -1,66 +1,340 @@
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
 %} {% block content %}
-<h1>Dashboard</h1>
-<div class="status-container">
-  <form method="get" class="search-form">
-    <input
-      type="text"
-      name="search"
-      placeholder="Search..."
-      value="{{ search_query }}"
-    />
-    <button type="submit">Search</button>
-  </form>
+<div class="pilarease-admin-dashboard-container">
+  <h1 class="pilarease-admin-dashboard-title">Dashboard</h1>
 
-  <table class="status-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Subject</th>
-        <th>Message</th>
-        <th>Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for contact in contacts.object_list %}
-      <tr>
-        <td>{{ contact.name }}</td>
-        <td>{{ contact.email }}</td>
-        <td>{{ contact.subject }}</td>
-        <td>{{ contact.message }}</td>
-        <td>{{ contact.created_at|date:"Y-m-d" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if not contacts.object_list %}
-  <p>No contact us queries found.</p>
-  {% endif %}
-  <div class="pagination">
-    <span class="step-links">
-      {% if contacts.has_previous %}
-      <a href="?search={{ search_query }}&page=1">&laquo; first</a>
-      <a
-        href="?search={{ search_query }}&page={{ contacts.previous_page_number }}"
-        >previous</a
-      >
-      {% endif %}
+  <!-- Feedback Management Section -->
+  <div class="pilarease-admin-feedback-container">
+    <div class="pilarease-admin-feedback-header">
+      <h2 class="pilarease-admin-section-title">User Feedbacks</h2>
+      <form method="get" class="pilarease-admin-feedback-search-form">
+        <input
+          type="text"
+          name="feedback_search"
+          placeholder="Search Feedback..."
+          value="{{ feedback_search_query }}"
+          class="pilarease-admin-feedback-search-input"
+        />
+        <button type="submit" class="pilarease-admin-feedback-search-button">
+          Search
+        </button>
+      </form>
+    </div>
 
-      <span class="current">
-        Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
+    <table class="pilarease-admin-feedback-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Message</th>
+          <th>Sentiment Score</th>
+          <th>Approval Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for feedback in feedbacks.object_list %}
+        <tr>
+          <td>{{ feedback.user.full_name }}</td>
+          <td>{{ feedback.user.email }}</td>
+          <td>{{ feedback.message }}</td>
+          <td>
+            <div class="pilarease-admin-sentiment-score">
+              <span>{{ feedback.sentiment_score }}</span>
+              <div class="pilarease-admin-sentiment-bar">
+                <div
+                  class="pilarease-admin-sentiment-fill"
+                  style="width: {{ feedback.sentiment_score|floatformat:0 }}%;"
+                ></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if feedback.is_approved %}
+            <span class="pilarease-admin-approved-label">Approved</span>
+            {% else %}
+            <span class="pilarease-admin-pending-label">Pending</span>
+            {% endif %}
+          </td>
+          <td>{{ feedback.created_at|date:"Y-m-d" }}</td>
+          <td>
+            {% if not feedback.is_approved %}
+            <a
+              href="{% url 'approve_feedback' feedback.id %}"
+              class="pilarease-admin-action-button approve-button"
+              >Approve</a
+            >
+            {% endif %}
+            <a
+              href="{% url 'delete_feedback' feedback.id %}"
+              class="pilarease-admin-action-button delete-button"
+              >Delete</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not feedbacks.object_list %}
+    <p class="pilarease-admin-no-feedback">No feedbacks found.</p>
+    {% endif %}
+    <div class="pilarease-admin-pagination">
+      <span class="pilarease-admin-step-links">
+        {% if feedbacks.has_previous %}
+        <a href="?feedback_search={{ feedback_search_query }}&page=1"
+          >&laquo; first</a
+        >
+        <a
+          href="?feedback_search={{ feedback_search_query }}&page={{ feedbacks.previous_page_number }}"
+          >previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ feedbacks.number }} of {{ feedbacks.paginator.num_pages }}.
+        </span>
+
+        {% if feedbacks.has_next %}
+        <a
+          href="?feedback_search={{ feedback_search_query }}&page={{ feedbacks.next_page_number }}"
+          >next</a
+        >
+        <a
+          href="?feedback_search={{ feedback_search_query }}&page={{ feedbacks.paginator.num_pages }}"
+          >last &raquo;</a
+        >
+        {% endif %}
       </span>
+    </div>
+  </div>
 
-      {% if contacts.has_next %}
-      <a href="?search={{ search_query }}&page={{ contacts.next_page_number }}"
-        >next</a
-      >
-      <a
-        href="?search={{ search_query }}&page={{ contacts.paginator.num_pages }}"
-        >last &raquo;</a
-      >
-      {% endif %}
-    </span>
+  <!-- Testimonials Management Section -->
+  <div class="pilarease-admin-testimonials-container">
+    <div class="pilarease-admin-testimonials-header">
+      <h2 class="pilarease-admin-section-title">User Testimonials</h2>
+      <form method="get" class="pilarease-admin-testimonial-search-form">
+        <input
+          type="text"
+          name="testimonial_search"
+          placeholder="Search Testimonials..."
+          value="{{ testimonial_search_query }}"
+          class="pilarease-admin-testimonial-search-input"
+        />
+        <button type="submit" class="pilarease-admin-testimonial-search-button">
+          Search
+        </button>
+      </form>
+    </div>
+
+    <table class="pilarease-admin-testimonial-table">
+      <thead>
+        <tr>
+          <th>Avatar</th>
+          <th>Name</th>
+          <th>Testimonial</th>
+          <th>Sentiment Score</th>
+          <th>Approval Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for testimonial in testimonials.object_list %}
+        <tr>
+          <td>
+            <img
+              src="{% if testimonial.user.profile.avatar %}{{ testimonial.user.profile.avatar.url }}{% else %}{% static 'images/avatars/placeholder.png' %}{% endif %}"
+              alt="{{ testimonial.user.username }}"
+              class="pilarease-admin-testimonial-img"
+            />
+          </td>
+          <td>{{ testimonial.user.full_name }}</td>
+          <td>{{ testimonial.message }}</td>
+          <td>
+            <div class="pilarease-admin-sentiment-score">
+              <span>{{ testimonial.sentiment_score }}</span>
+              <div class="pilarease-admin-sentiment-bar">
+                <div
+                  class="pilarease-admin-sentiment-fill"
+                  style="width: {{ testimonial.sentiment_score|floatformat:0 }}%;"
+                ></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if testimonial.is_approved %}
+            <span class="pilarease-admin-approved-label">Approved</span>
+            {% else %}
+            <span class="pilarease-admin-pending-label">Pending</span>
+            {% endif %}
+          </td>
+          <td>{{ testimonial.created_at|date:"Y-m-d" }}</td>
+          <td>
+            {% if not testimonial.is_approved %}
+            <a
+              href="{% url 'approve_testimonial' testimonial.id %}"
+              class="pilarease-admin-action-button approve-button"
+              >Approve</a
+            >
+            {% endif %}
+            <a
+              href="{% url 'delete_testimonial' testimonial.id %}"
+              class="pilarease-admin-action-button delete-button"
+              >Delete</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not testimonials.object_list %}
+    <p class="pilarease-admin-no-testimonial">No testimonials found.</p>
+    {% endif %}
+    <div class="pilarease-admin-pagination">
+      <span class="pilarease-admin-step-links">
+        {% if testimonials.has_previous %}
+        <a href="?testimonial_search={{ testimonial_search_query }}&page=1"
+          >&laquo; first</a
+        >
+        <a
+          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.previous_page_number }}"
+          >previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ testimonials.number }} of {{ testimonials.paginator.num_pages
+          }}.
+        </span>
+
+        {% if testimonials.has_next %}
+        <a
+          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.next_page_number }}"
+          >next</a
+        >
+        <a
+          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.paginator.num_pages }}"
+          >last &raquo;</a
+        >
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Contact Us Queries Section -->
+  <div class="pilarease-admin-contactus-container">
+    <div class="pilarease-admin-contactus-header">
+      <h2 class="pilarease-admin-section-title">Contact Us Queries</h2>
+      <form method="get" class="pilarease-admin-contactus-search-form">
+        <input
+          type="text"
+          name="contact_search"
+          placeholder="Search Contacts..."
+          value="{{ contact_search_query }}"
+          class="pilarease-admin-contactus-search-input"
+        />
+        <button type="submit" class="pilarease-admin-contactus-search-button">
+          Search
+        </button>
+      </form>
+    </div>
+
+    <table class="pilarease-admin-contactus-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Subject</th>
+          <th>Message</th>
+          <th>Reply</th>
+          <th>Approval Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contact in contacts.object_list %}
+        <tr>
+          <td>{{ contact.name }}</td>
+          <td>{{ contact.email }}</td>
+          <td>{{ contact.subject }}</td>
+          <td>{{ contact.message }}</td>
+          <td>
+            {% if contact.is_replied %}
+            <p>{{ contact.reply }}</p>
+            {% else %}
+            <form
+              method="post"
+              action="{% url 'contact_us_reply' contact.id %}"
+              class="pilarease-admin-reply-form"
+            >
+              {% csrf_token %}
+              <textarea
+                name="reply_text"
+                rows="2"
+                placeholder="Enter your reply..."
+                required
+              ></textarea>
+              <button
+                type="submit"
+                class="pilarease-admin-action-button approve-button"
+              >
+                Reply
+              </button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
+            {% if contact.is_replied %}
+            <span class="pilarease-admin-approved-label">Replied</span>
+            {% else %}
+            <span class="pilarease-admin-pending-label">Pending</span>
+            {% endif %}
+          </td>
+          <td>{{ contact.created_at|date:"Y-m-d" }}</td>
+          <td>
+            <a
+              href="{% url 'delete_contact_us' contact.id %}"
+              class="pilarease-admin-action-button delete-button"
+              >Delete</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not contacts.object_list %}
+    <p class="pilarease-admin-no-contact">No contact us queries found.</p>
+    {% endif %}
+    <div class="pilarease-admin-pagination">
+      <span class="pilarease-admin-step-links">
+        {% if contacts.has_previous %}
+        <a href="?contact_search={{ contact_search_query }}&page=1"
+          >&laquo; first</a
+        >
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.previous_page_number }}"
+          >previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
+        </span>
+
+        {% if contacts.has_next %}
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.next_page_number }}"
+          >next</a
+        >
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.paginator.num_pages }}"
+          >last &raquo;</a
+        >
+        {% endif %}
+      </span>
+    </div>
   </div>
 </div>
 {% endblock %}

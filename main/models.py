@@ -59,8 +59,10 @@ CustomUser = get_user_model()
 
 User = get_user_model()
 
+from textblob import TextBlob  # Ensure TextBlob is installed: pip install textblob
+
 class Feedback(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
     sentiment_score = models.FloatField(default=0.0)
     is_approved = models.BooleanField(default=False)
@@ -68,6 +70,12 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback from {self.user.username}"
+
+    def save(self, *args, **kwargs):
+        blob = TextBlob(self.message)
+        # Sentiment polarity ranges from -1 (negative) to 1 (positive). Normalize it to 0-100.
+        self.sentiment_score = (blob.sentiment.polarity + 1) * 50
+        super().save(*args, **kwargs)
     
 class ChatSession(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -156,14 +164,16 @@ class Reply(models.Model):
         return f"Reply by {self.user.username} on {self.status.title}"
 
 class ContactUs(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     email = models.EmailField()
-    subject = models.CharField(max_length=200)
+    subject = models.CharField(max_length=255)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    reply = models.TextField(blank=True, null=True)
+    is_replied = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.subject
+        return f"Contact Us from {self.name}"
     
  
 
