@@ -1,13 +1,58 @@
 <!-- templates/admin_tools/statistics.html -->
 
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
+{% block content %}
 <div class="pilarease-admin-statistics-container">
   <div class="pilarease-admin-statistics-header">
     <div class="pilarease-admin-title">Statistics</div>
   </div>
 
+  <!-- Filter and Sort Section -->
+  <div class="pilarease-admin-filters">
+    <form method="GET" class="pilarease-admin-filter-form">
+      <div class="pilarease-admin-filter-group">
+        <!-- Emotion Filter -->
+        <label for="emotion_filter" class="pilarease-admin-filter-label">Filter by Emotion:</label>
+        <select name="emotion" id="emotion_filter" class="pilarease-admin-filter-select">
+          <option value="">All Emotions</option>
+          <option value="happiness" {% if request.GET.emotion == 'happiness' %}selected{% endif %}>Happiness</option>
+          <option value="neutral" {% if request.GET.emotion == 'neutral' %}selected{% endif %}>Neutral</option>
+          <option value="anger" {% if request.GET.emotion == 'anger' %}selected{% endif %}>Anger</option>
+          <option value="fear" {% if request.GET.emotion == 'fear' %}selected{% endif %}>Fear</option>
+          <option value="sadness" {% if request.GET.emotion == 'sadness' %}selected{% endif %}>Sadness</option>
+          <option value="disgust" {% if request.GET.emotion == 'disgust' %}selected{% endif %}>Disgust</option>
+          <option value="surprise" {% if request.GET.emotion == 'surprise' %}selected{% endif %}>Surprise</option>
+        </select>
+      </div>
+
+      <div class="pilarease-admin-filter-group">
+        <!-- Time Range Filter -->
+        <label for="time_range" class="pilarease-admin-filter-label">Filter by Time:</label>
+        <select name="time_range" id="time_range" class="pilarease-admin-filter-select">
+          <option value="">All Time</option>
+          <option value="last_week" {% if request.GET.time_range == 'last_week' %}selected{% endif %}>Last Week</option>
+          <option value="last_month" {% if request.GET.time_range == 'last_month' %}selected{% endif %}>Last Month</option>
+          <option value="last_year" {% if request.GET.time_range == 'last_year' %}selected{% endif %}>Last Year</option>
+        </select>
+      </div>
+
+      <div class="pilarease-admin-filter-group">
+        <!-- Text Search -->
+        <label for="text_search" class="pilarease-admin-filter-label">Search Texts:</label>
+        <input type="text" name="text_search" id="text_search" class="pilarease-admin-filter-input" placeholder="Enter keyword..." value="{{ request.GET.text_search }}">
+      </div>
+
+      <div class="pilarease-admin-filter-group pilarease-admin-filter-buttons">
+        <button type="submit" class="pilarease-admin-filter-button">Apply Filters</button>
+        <a href="{% url 'statistics' %}" class="pilarease-admin-filter-button pilarease-admin-reset-button">Reset</a>
+      </div>
+    </form>
+  </div>
+
   <div class="pilarease-admin-statistics-cards">
+    <!-- Existing Statistics Cards -->
     <div class="pilarease-admin-statistics-card">
       <div class="pilarease-admin-statistics-card-content">
         <div class="pilarease-admin-statistics-card-icon">
@@ -52,7 +97,7 @@
   </div>
 
   <div class="pilarease-admin-statistics-charts">
-    <!-- Emotion Percentages Pie Chart -->
+    <!-- Existing Charts -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">Emotion Analysis</div>
       <div class="pilarease-admin-chart-content">
@@ -60,17 +105,13 @@
       </div>
     </div>
 
-    <!-- Emotion Distribution Bar Chart -->
     <div class="pilarease-admin-statistics-chart">
-      <div class="pilarease-admin-chart-header">
-        Emotion Distribution by Title
-      </div>
+      <div class="pilarease-admin-chart-header">Emotion Distribution by Title</div>
       <div class="pilarease-admin-chart-content">
         <canvas id="emotionBarChart"></canvas>
       </div>
     </div>
 
-    <!-- Word Cloud -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">Word Cloud</div>
       <div class="pilarease-admin-chart-content">
@@ -86,12 +127,51 @@
       </div>
     </div>
   </div>
+
+  <!-- New Analysis Features -->
+  <div class="pilarease-admin-new-analysis-section">
+    <h2 class="pilarease-admin-section-title">Advanced Emotion Analysis</h2>
+
+    <div class="pilarease-admin-statistics-charts">
+      <!-- Emotion Trend Over Time (Line Chart) -->
+      <div class="pilarease-admin-statistics-chart">
+        <div class="pilarease-admin-chart-header">Emotion Trend Over Time</div>
+        <div class="pilarease-admin-chart-content">
+          <canvas id="emotionTrendLineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Emotion Frequency (Bar Chart) -->
+      <div class="pilarease-admin-statistics-chart">
+        <div class="pilarease-admin-chart-header">Emotion Frequency</div>
+        <div class="pilarease-admin-chart-content">
+          <canvas id="emotionFrequencyBarChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Emotion Intensity Gauge (Donut Chart) -->
+      <div class="pilarease-admin-statistics-chart">
+        <div class="pilarease-admin-chart-header">Emotion Intensity Gauge</div>
+        <div class="pilarease-admin-chart-content">
+          <canvas id="emotionIntensityDonutChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Emotion Pulse (Area Chart) -->
+      <div class="pilarease-admin-statistics-chart">
+        <div class="pilarease-admin-chart-header">Emotion Pulse</div>
+        <div class="pilarease-admin-chart-content">
+          <canvas id="emotionPulseAreaChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Chart.js Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Pie Chart
+  // Existing Pie Chart
   const pieCtx = document.getElementById('emotionPieChart').getContext('2d');
   const pieChart = new Chart(pieCtx, {
       type: 'pie',
@@ -125,7 +205,7 @@
       },
   });
 
-  // Bar Chart
+  // Existing Bar Chart
   const barCtx = document.getElementById('emotionBarChart').getContext('2d');
   const barChart = new Chart(barCtx, {
       type: 'bar',
@@ -147,6 +227,167 @@
           scales: {
               y: {
                   beginAtZero: true
+              }
+          }
+      },
+  });
+
+  // New Emotion Trend Over Time (Line Chart)
+  const trendCtx = document.getElementById('emotionTrendLineChart').getContext('2d');
+  const trendLineChart = new Chart(trendCtx, {
+      type: 'line',
+      data: {
+          labels: {{ line_labels|safe }},
+          datasets: {{ line_datasets|safe }}
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'top',
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Trend Over Time'
+              }
+          },
+          scales: {
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Time Period'
+                  }
+              },
+              y: {
+                  title: {
+                      display: true,
+                      text: 'Average Emotion Score'
+                  },
+                  beginAtZero: true
+              }
+          }
+      },
+  });
+
+  // New Emotion Frequency (Bar Chart)
+  const frequencyCtx = document.getElementById('emotionFrequencyBarChart').getContext('2d');
+  const frequencyBarChart = new Chart(frequencyCtx, {
+      type: 'bar',
+      data: {
+          labels: {{ frequency_labels|safe }},
+          datasets: [{
+              label: 'Frequency',
+              data: {{ frequency_data|safe }},
+              backgroundColor: [
+                  '#f44336',
+                  '#9c27b0',
+                  '#3f51b5',
+                  '#ffeb3b',
+                  '#2196f3',
+                  '#ff9800',
+                  '#9e9e9e'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  display: false,
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Frequency'
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  title: {
+                      display: true,
+                      text: 'Number of Occurrences'
+                  }
+              },
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Emotions'
+                  }
+              }
+          }
+      },
+  });
+
+  // New Emotion Intensity Gauge (Donut Chart)
+  const intensityCtx = document.getElementById('emotionIntensityDonutChart').getContext('2d');
+  const intensityDonutChart = new Chart(intensityCtx, {
+      type: 'doughnut',
+      data: {
+          labels: {{ intensity_labels|safe }},
+          datasets: [{
+              data: {{ intensity_data|safe }},
+              backgroundColor: [
+                  '#4caf50',
+                  '#ff9800',
+                  '#f44336',
+                  '#9c27b0',
+                  '#2196f3'
+              ],
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Intensity Gauge'
+              }
+          }
+      },
+  });
+
+  // New Emotion Pulse (Area Chart)
+  const pulseCtx = document.getElementById('emotionPulseAreaChart').getContext('2d');
+  const pulseAreaChart = new Chart(pulseCtx, {
+      type: 'line',
+      data: {
+          labels: {{ pulse_labels|safe }},
+          datasets: {{ pulse_datasets|safe }}
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'top',
+              },
+              title: {
+                  display: true,
+                  text: 'Emotion Pulse'
+              }
+          },
+          scales: {
+              x: {
+                  title: {
+                      display: true,
+                      text: 'Time Period'
+                  }
+              },
+              y: {
+                  title: {
+                      display: true,
+                      text: 'Emotion Intensity'
+                  },
+                  beginAtZero: true
+              }
+          },
+          elements: {
+              line: {
+                  fill: true,
               }
           }
       },
