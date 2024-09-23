@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Avg
 from main.models import (
     ContactUs,
     Status,
@@ -28,6 +28,16 @@ from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 from main.models import Referral
+from collections import Counter
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from datetime import timedelta
+from datetime import datetime
+
+# Ensure NLTK data is downloaded
+nltk.download('punkt')
+nltk.download('stopwords')
 
 @require_GET
 def generate_wordcloud(request):
@@ -39,7 +49,7 @@ def generate_wordcloud(request):
     buffer = BytesIO()
     wordcloud.to_image().save(buffer, format='PNG')
     buffer.seek(0)
-    return HttpResponse(buffer, content_type='image/png')
+    return HttpResponse(buffer, content_type='image/png')   
 
 
 def generate_base64_image(fig):
@@ -561,13 +571,76 @@ def analysis_view(request):
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'admin_tools/analysis.html', {
+    # --- Contextual Emotion Comparison User Table ---
+    # Calculate average emotion percentages for each user based on their recent statuses
+    recent_statuses = Status.objects.filter(created_at__gte=timezone.now() - timedelta(days=30))
+    user_emotions = recent_statuses.values('user__id', 'user__full_name').annotate(
+        avg_anger=Avg('anger_percentage'),
+        avg_disgust=Avg('disgust_percentage'),
+        avg_fear=Avg('fear_percentage'),
+        avg_neutral=Avg('neutral_percentage'),
+        avg_happiness=Avg('happiness_percentage'),
+        avg_sadness=Avg('sadness_percentage'),
+        avg_surprise=Avg('surprise_percentage'),
+    )
+
+    # Prepare comparison data: current status vs average
+    comparison_data = []
+    for status in page_obj:
+        user = status.user
+        averages = user_emotions.filter(user__id=user.id).order_by('user__id').first()
+        if averages:
+            comparison = {
+                'user_full_name': user.full_name,
+                'current_status': {
+                    'anger': status.anger_percentage,
+                    'disgust': status.disgust_percentage,
+                    'fear': status.fear_percentage,
+                    'neutral': status.neutral_percentage,
+                    'happiness': status.happiness_percentage,
+                    'sadness': status.sadness_percentage,
+                    'surprise': status.surprise_percentage,
+                },
+                'average_recent': {
+                    'anger': round(averages['avg_anger'], 2) if averages['avg_anger'] else 0,
+                    'disgust': round(averages['avg_disgust'], 2) if averages['avg_disgust'] else 0,
+                    'fear': round(averages['avg_fear'], 2) if averages['avg_fear'] else 0,
+                    'neutral': round(averages['avg_neutral'], 2) if averages['avg_neutral'] else 0,
+                    'happiness': round(averages['avg_happiness'], 2) if averages['avg_happiness'] else 0,
+                    'sadness': round(averages['avg_sadness'], 2) if averages['avg_sadness'] else 0,
+                    'surprise': round(averages['avg_surprise'], 2) if averages['avg_surprise'] else 0,
+                }
+            }
+            comparison_data.append(comparison)
+
+    # --- Keywords or Topics Detection ---
+    # Function to extract keywords from text
+    def extract_keywords(text, num_keywords=5):
+        tokens = word_tokenize(text.lower())
+        stop_words = set(stopwords.words('english'))
+        filtered_tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
+        word_counts = Counter(filtered_tokens)
+        common_words = [word for word, count in word_counts.most_common(num_keywords)]
+        return common_words
+
+    # Extract keywords for each status
+    keywords_data = []
+    for status in page_obj:
+        keywords = extract_keywords(status.plain_description)
+        keywords_data.append({
+            'status_id': status.id,
+            'keywords': keywords
+        })
+
+    context = {
         'statuses': page_obj,
         'search_query': search_query,
         'category': category,
         'page_obj': page_obj,
-    })
-
+        'comparison_data': comparison_data,
+        'keywords_data': keywords_data,
+    }
+    return render(request, 'admin_tools/analysis.html', context)
 
 @login_required
 def contact_us_view(request):

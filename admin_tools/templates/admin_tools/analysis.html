@@ -3,113 +3,198 @@
 {% load compress %}
 
 {% block content %}
-<h1>Analysis</h1>
-<div class="status-container">
-  <form method="get" class="search-form">
-    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}">
-    <select name="category">
-      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
-      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
-      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
-      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
-      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
-      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
-      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
-      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
-    </select>
-    <button type="submit">Search</button>
-  </form>
-  
-  <table class="status-table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Body</th>
-        <th>Anger</th>
-        <th>Disgust</th>
-        <th>Fear</th>
-        <th>Happiness</th>
-        <th>Neutral</th>
-        <th>Sadness</th>
-        <th>Surprise</th>
-        <th>Timestamp</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for status in statuses %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ status.plain_description|truncatewords:10 }}</td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
-            <span class="progress-percentage">{{ status.anger_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
-            <span class="progress-percentage">{{ status.disgust_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
-            <span class="progress-percentage">{{ status.fear_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
-            <span class="progress-percentage">{{ status.happiness_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
-            <span class="progress-percentage">{{ status.neutral_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
-            <span class="progress-percentage">{{ status.sadness_percentage }}%</span>
-          </div>
-        </td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
-            <span class="progress-percentage">{{ status.surprise_percentage }}%</span>
-          </div>
-        </td>
-        <td>{{ status.created_at|date:"Y-m-d" }}</td>
-        <td>
-          <a href="{% url 'delete_status' status.id %}" class="delete-icon"><i class="bx bx-trash"></i></a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if not statuses %}
-  <p>No analysis data found.</p>
-  {% endif %}
-  <div class="pagination">
-    <span class="step-links">
-      {% if page_obj.has_previous %}
-        <a href="?page=1&search={{ search_query }}&category={{ category }}">first</a>
-        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}">previous</a>
-      {% endif %}
-      
-      <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-      </span>
-      
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}">next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}">last</a>
-      {% endif %}
-    </span>
-  </div>
+<div class="pilarease-admin-analysis animate__animated animate__fadeIn">
+    <h1 class="pilarease-admin-title">Analysis</h1>
+
+    <!-- Search and Filter Form -->
+    <div class="pilarease-admin-search-filter animate__animated animate__fadeInDown">
+        <form method="get" class="pilarease-admin-search-form search-form">
+            <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input">
+            <select name="category" class="pilarease-admin-select category-select">
+                <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+                <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
+                <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
+                <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
+                <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
+                <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
+                <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
+                <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
+            </select>
+            <button type="submit" class="pilarease-admin-button search-button animate__animated animate__pulse">Search</button>
+        </form>
+    </div>
+
+    <!-- Statuses Table -->
+    <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
+        <table class="pilarease-admin-statuses-table status-table">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Body</th>
+                    <th>Anger</th>
+                    <th>Disgust</th>
+                    <th>Fear</th>
+                    <th>Happiness</th>
+                    <th>Neutral</th>
+                    <th>Sadness</th>
+                    <th>Surprise</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for status in statuses %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ status.plain_description|truncatewords:10 }}</td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.anger_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.disgust_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.fear_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.happiness_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.neutral_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.sadness_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
+                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
+                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.surprise_percentage }}%</span>
+                        </div>
+                    </td>
+                    <td>{{ status.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-delete-icon delete-icon animate__animated animate__bounceIn"><i class="bx bx-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not statuses %}
+        <p class="pilarease-admin-no-data">No analysis data found.</p>
+        {% endif %}
+        <div class="pilarease-admin-pagination pagination">
+            <span class="pilarease-admin-step-links step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Previous</a>
+                {% endif %}
+
+                <span class="pilarease-admin-current current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Last</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Contextual Emotion Comparison User Table -->
+    <div class="pilarease-admin-comparison-section animate__animated animate__fadeInUp">
+        <h2 class="pilarease-admin-subtitle">Contextual Emotion Comparison</h2>
+        <table class="pilarease-admin-comparison-table comparison-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Anger (Current)</th>
+                    <th>Anger (Avg Recent)</th>
+                    <th>Disgust (Current)</th>
+                    <th>Disgust (Avg Recent)</th>
+                    <th>Fear (Current)</th>
+                    <th>Fear (Avg Recent)</th>
+                    <th>Neutral (Current)</th>
+                    <th>Neutral (Avg Recent)</th>
+                    <th>Happiness (Current)</th>
+                    <th>Happiness (Avg Recent)</th>
+                    <th>Sadness (Current)</th>
+                    <th>Sadness (Avg Recent)</th>
+                    <th>Surprise (Current)</th>
+                    <th>Surprise (Avg Recent)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comparison in comparison_data %}
+                <tr>
+                    <td>{{ comparison.user_full_name }}</td>
+                    <td>{{ comparison.current_status.anger }}%</td>
+                    <td>{{ comparison.average_recent.anger }}%</td>
+                    <td>{{ comparison.current_status.disgust }}%</td>
+                    <td>{{ comparison.average_recent.disgust }}%</td>
+                    <td>{{ comparison.current_status.fear }}%</td>
+                    <td>{{ comparison.average_recent.fear }}%</td>
+                    <td>{{ comparison.current_status.neutral }}%</td>
+                    <td>{{ comparison.average_recent.neutral }}%</td>
+                    <td>{{ comparison.current_status.happiness }}%</td>
+                    <td>{{ comparison.average_recent.happiness }}%</td>
+                    <td>{{ comparison.current_status.sadness }}%</td>
+                    <td>{{ comparison.average_recent.sadness }}%</td>
+                    <td>{{ comparison.current_status.surprise }}%</td>
+                    <td>{{ comparison.average_recent.surprise }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not comparison_data %}
+        <p class="pilarease-admin-no-data">No comparison data available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Keywords or Topics Detection Table -->
+    <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
+        <h2 class="pilarease-admin-subtitle">Keywords or Topics Detection</h2>
+        <table class="pilarease-admin-keywords-table keywords-table">
+            <thead>
+                <tr>
+                    <th>Status ID</th>
+                    <th>Keywords/Topics</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for keyword in keywords_data %}
+                <tr>
+                    <td>{{ keyword.status_id }}</td>
+                    <td>
+                        {% for kw in keyword.keywords %}
+                            <span class="pilarease-admin-tag keyword-tag">{{ kw }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not keywords_data %}
+        <p class="pilarease-admin-no-data">No keywords data available.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

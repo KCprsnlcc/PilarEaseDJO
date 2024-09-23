@@ -930,3 +930,229 @@ body {
 .pilarease-admin-reset-button:hover {
   background-color: #757575;
 }
+
+/* =========================================================
+   Analysis Section Design
+   ========================================================= */
+
+/* General Styling for Analysis Section */
+.pilarease-admin-analysis {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Titles */
+.pilarease-admin-title {
+  font-family: "Inter", sans-serif;
+  font-size: 2em;
+  color: var(--accent-color);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.pilarease-admin-subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 1.5em;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Search and Filter Form */
+.pilarease-admin-search-form {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.pilarease-admin-input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 200px;
+  transition: border-color 0.3s;
+}
+
+.pilarease-admin-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+.pilarease-admin-select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 150px;
+  transition: border-color 0.3s;
+}
+
+.pilarease-admin-select:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+.pilarease-admin-button {
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pilarease-admin-button:hover {
+  background-color: darken(var(--accent-color), 10%);
+}
+
+/* Tables */
+.pilarease-admin-statuses-table,
+.pilarease-admin-comparison-table,
+.pilarease-admin-keywords-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.pilarease-admin-statuses-table th,
+.pilarease-admin-statuses-table td,
+.pilarease-admin-comparison-table th,
+.pilarease-admin-comparison-table td,
+.pilarease-admin-keywords-table th,
+.pilarease-admin-keywords-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+}
+
+.pilarease-admin-statuses-table th,
+.pilarease-admin-comparison-table th,
+.pilarease-admin-keywords-table th {
+  background-color: var(--accent-color);
+  color: white;
+  font-weight: bold;
+}
+
+.pilarease-admin-statuses-table tr:nth-child(even),
+.pilarease-admin-comparison-table tr:nth-child(even),
+.pilarease-admin-keywords-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.pilarease-admin-statuses-table tr:hover,
+.pilarease-admin-comparison-table tr:hover,
+.pilarease-admin-keywords-table tr:hover {
+  background-color: #ddd;
+}
+
+/* Progress Bars */
+.pilarease-admin-progress-bar-container {
+  position: relative;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pilarease-admin-progress-bar {
+  height: 100%;
+  border-radius: 10px 0 0 10px;
+}
+
+.pilarease-admin-progress-percentage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8em;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Delete Icon */
+.pilarease-admin-delete-icon {
+  color: #e74c3c;
+  font-size: 1.2em;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.pilarease-admin-delete-icon:hover {
+  color: #c0392b;
+  transform: scale(1.2);
+}
+
+/* Pagination */
+.pilarease-admin-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pilarease-admin-step-links a,
+.pilarease-admin-step-links span {
+  margin: 0 5px;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.pilarease-admin-step-links a:hover {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.pilarease-admin-current {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+/* Comparison Table */
+.pilarease-admin-comparison-table th,
+.pilarease-admin-comparison-table td {
+  font-size: 0.9em;
+}
+
+/* Keywords Table */
+.pilarease-admin-tag {
+  display: inline-block;
+  background-color: var(--accent-color);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin: 2px;
+  font-size: 0.8em;
+}
+
+/* No Data Messages */
+.pilarease-admin-no-data {
+  text-align: center;
+  color: #777;
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Responsive Tables */
+@media screen and (max-width: 768px) {
+  .pilarease-admin-statuses-table,
+  .pilarease-admin-comparison-table,
+  .pilarease-admin-keywords-table {
+    font-size: 0.8em;
+  }
+
+  .pilarease-admin-search-form {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pilarease-admin-input,
+  .pilarease-admin-select,
+  .pilarease-admin-button {
+    width: 90%;
+    margin-bottom: 10px;
+  }
+}
