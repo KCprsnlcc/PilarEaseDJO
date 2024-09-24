@@ -1,0 +1,1212 @@
+class ChatMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_bot_message = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
+
+// Script for dropdown menu
+const burger = document.getElementById("burger");
+const dropdown = document.querySelector(".dropdown");
+const profileLink = document.getElementById("profileLink");
+const profileModal = document.getElementById("profileModal");
+const closeProfileModal = document.getElementById("closeProfileModal");
+const avatarLink = document.getElementById("avatarLink");
+const avatarModal = document.getElementById("avatarModal");
+const closeAvatarModal = document.getElementById("closeAvatarModal");
+const passwordLink = document.getElementById("passwordLink");
+const passwordModal = document.getElementById("passwordModal");
+const closePasswordModal = document.getElementById("closePasswordModal");
+const statusModal = document.getElementById("statusModal");
+const statusModalOverlay = document.getElementById("statusModalOverlay");
+const closeStatusModal = document.getElementById("closeStatusModal");
+const descriptionDiv = document.getElementById("description");
+var statusComposerButton = document.getElementById("statuscomposer");
+
+var floatingButton = document.getElementById("floatingButton");
+var chatPopup = document.getElementById("chatPopup");
+var isDragging = false;
+var isOpen = false;
+var startX, startY, initialX, initialY;
+
+function updateChatPosition() {
+  var buttonRect = floatingButton.getBoundingClientRect();
+  chatPopup.style.bottom = window.innerHeight - buttonRect.bottom + 70 + "px";
+  chatPopup.style.right = window.innerWidth - buttonRect.right + 20 + "px";
+}
+
+window.addEventListener("resize", updateChatPosition);
+
+floatingButton.addEventListener("mousedown", function (e) {
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  initialX = floatingButton.offsetLeft;
+  initialY = floatingButton.offsetTop;
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+  floatingButton.style.animation = "drag 0.5s infinite";
+});
+
+function onMouseMove(e) {
+  if (isDragging) {
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    floatingButton.style.left = initialX + dx + "px";
+    floatingButton.style.top = initialY + dy + "px";
+    updateChatPosition();
+  }
+}
+
+function onMouseUp() {
+  isDragging = false;
+  document.removeEventListener("mousemove", onMouseMove);
+  document.removeEventListener("mouseup", onMouseUp);
+  floatingButton.style.animation = "float 3s ease-in-out infinite";
+}
+
+floatingButton.addEventListener("click", function () {
+  updateChatPosition(); // Update position before showing
+  if (!isOpen) {
+    chatPopup.style.display = "block";
+    chatPopup.classList.remove("chatPopOut");
+    chatPopup.classList.add("chatPopIn");
+    floatingButton.firstElementChild.classList.add("icon-pop-out");
+    setTimeout(() => {
+      floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
+    }, 300);
+    isOpen = true;
+  } else {
+    chatPopup.classList.remove("chatPopIn");
+    chatPopup.classList.add("chatPopOut");
+    floatingButton.firstElementChild.classList.add("icon-pop-out");
+    setTimeout(function () {
+      chatPopup.style.display = "none";
+      floatingButton.firstElementChild.className = "bx bxs-message icon-pop-in";
+    }, 300); // Match the animation duration
+    isOpen = false;
+  }
+});
+let lastMessageTime = null;
+let greetingDisplayed = false;
+let currentQuestionIndex = -1;
+
+document
+  .getElementById("floatingButton")
+  .addEventListener("click", function () {
+    document.getElementById("chatPopup").style.display = "block";
+
+    const chatBody = document.getElementById("chatBody");
+
+    if (!greetingDisplayed) {
+      showLoader(chatBody);
+
+      setTimeout(function () {
+        removeLoader(chatBody);
+        addTimestampIfNeeded(chatBody);
+        generateMessage(
+          "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?",
+          "bot"
+        );
+
+        setTimeout(displayOptions, 500);
+        greetingDisplayed = true;
+      }, 1500);
+    }
+  });
+
+function displayOptions() {
+  const chatBody = document.getElementById("chatBody");
+
+  const optionsWrapper = document.createElement("div");
+  optionsWrapper.className = "message-wrapper options-wrapper pop-up";
+  optionsWrapper.id = "dialogOptions";
+
+  const startButton = document.createElement("button");
+  startButton.className = "option-button";
+  startButton.textContent = "Start";
+  startButton.onclick = function () {
+    autoSendMessage("Start", optionsWrapper);
+  };
+
+  const notYetButton = document.createElement("button");
+  notYetButton.className = "option-button";
+  notYetButton.textContent = "Not Yet";
+  notYetButton.onclick = function () {
+    autoSendMessage("Not Yet", optionsWrapper);
+  };
+
+  optionsWrapper.appendChild(startButton);
+  optionsWrapper.appendChild(notYetButton);
+  chatBody.appendChild(optionsWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function autoSendMessage(message, optionsWrapper) {
+  optionsWrapper.classList.remove("pop-up");
+  optionsWrapper.classList.add("pop-down");
+
+  setTimeout(() => {
+    optionsWrapper.remove();
+    const chatInput = document.getElementById("chatInput");
+    chatInput.value = message;
+    sendMessage();
+  }, 300);
+}
+
+function sendMessage() {
+  const chatInput = document.getElementById("chatInput");
+  const chatBody = document.getElementById("chatBody");
+  const messageText = chatInput.value;
+
+  const optionsWrapper = document.getElementById("dialogOptions");
+  if (optionsWrapper) {
+    optionsWrapper.classList.remove("pop-up");
+    optionsWrapper.classList.add("pop-down");
+    setTimeout(() => optionsWrapper.remove(), 300);
+  }
+
+  if (messageText.trim() !== "") {
+    generateMessage(messageText, "user");
+
+    fetch("/send_message/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        message: messageText,
+        is_bot_message: false,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          if (messageText.toLowerCase() === "start") {
+            setTimeout(() => {
+              showLoader(chatBody);
+              setTimeout(() => {
+                removeLoader(chatBody);
+                displayQuestion(0);
+              }, 1500);
+            }, 1000);
+          } else if (messageText.toLowerCase() === "not yet") {
+            setTimeout(() => {
+              generateMessage("No worries, take your time.", "bot");
+            }, 1000);
+          }
+        }
+      });
+  }
+}
+
+function showLoader(chatBody) {
+  const loaderElement = document.createElement("div");
+  loaderElement.className = "loader";
+  loaderElement.innerHTML =
+    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  chatBody.appendChild(loaderElement);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function removeLoader(chatBody) {
+  const loaderElement = chatBody.querySelector(".loader");
+  if (loaderElement) {
+    chatBody.removeChild(loaderElement);
+  }
+}
+
+function generateMessage(text, sender) {
+  const chatBody = document.getElementById("chatBody");
+
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
+
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
+
+  messageWrapper.appendChild(messageElement);
+  chatBody.appendChild(messageWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function displayQuestion(questionIndex) {
+  const questions = [
+    "What aspects of your academic life cause you the most stress?",
+    "How would you describe your overall emotional state in the past month?",
+    "How comfortable do you feel talking to friends or family about your mental health?",
+    "How frequently do you experience feelings of anxiety or worry related to school?",
+    "How many hours of sleep do you usually get on a school night?",
+    "How confident do you feel in your academic abilities?",
+    "How do you usually feel about changes in your academic or personal life?",
+    "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+    "How motivated do you feel to complete your academic tasks?",
+    "Are you aware of the mental health resources available at your school?",
+  ];
+
+  if (questionIndex >= questions.length) {
+    generateMessage("Thank you for answering all the questions!", "bot");
+    return;
+  }
+
+  currentQuestionIndex = questionIndex;
+
+  showLoader(document.getElementById("chatBody"));
+  setTimeout(() => {
+    removeLoader(document.getElementById("chatBody"));
+    generateMessage(questions[questionIndex], "bot");
+
+    setTimeout(() => {
+      displayAnswerOptions(questionIndex);
+    }, 500);
+  }, 1500);
+}
+
+function displayAnswerOptions(questionIndex) {
+  const answers = [
+    [
+      "Managing multiple assignments and deadlines.",
+      "Understanding difficult subjects or topics.",
+      "Balancing academics with extracurricular activities.",
+    ],
+    [
+      "Generally positive, with only occasional low moods.",
+      "Mixed, with frequent ups and downs.",
+      "Often stressed or anxious.",
+    ],
+    [
+      "Very comfortable, I often share how I’m feeling.",
+      "Somewhat comfortable, I share occasionally.",
+      "Not comfortable, I usually keep things to myself.",
+    ],
+    [
+      "Almost daily, it’s a constant presence.",
+      "Occasionally, but only around stressful times like exams.",
+      "Rarely, I don’t get anxious easily.",
+    ],
+    [
+      "Less than 6 hours, I often stay up late.",
+      "Between 6 and 8 hours, it varies.",
+      "More than 8 hours, I prioritize my sleep.",
+    ],
+    [
+      "Very confident, I believe in my abilities.",
+      "Somewhat confident, but I have doubts sometimes.",
+      "Not very confident, I often worry about my performance.",
+    ],
+    [
+      "Excited and ready to adapt.",
+      "Nervous but willing to adjust.",
+      "Stressed and resistant to change.",
+    ],
+    [
+      "I create a schedule and stick to it as much as possible.",
+      "I try to balance things, but it’s a challenge.",
+      "I often struggle to manage my time effectively.",
+    ],
+    [
+      "Highly motivated, I’m eager to succeed.",
+      "Moderately motivated, but it depends on the task.",
+      "Often unmotivated, I struggle to find the drive.",
+    ],
+    [
+      "Yes, I know where to find help if I need it.",
+      "Somewhat, I’ve heard of some resources but haven’t explored them.",
+      "No, I’m not aware of the available resources.",
+    ],
+  ];
+
+  const chatBody = document.getElementById("chatBody");
+
+  const answersWrapper = document.createElement("div");
+  answersWrapper.className = "message-wrapper answers-wrapper";
+
+  answers[questionIndex].forEach((answerText, index) => {
+    const answerButton = document.createElement("button");
+    answerButton.className = "answers-button";
+    answerButton.textContent = answerText;
+    answerButton.onclick = function () {
+      handleAnswerSelection(questionIndex, index, answerText);
+    };
+    answersWrapper.appendChild(answerButton);
+  });
+
+  chatBody.appendChild(answersWrapper);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function handleAnswerSelection(questionIndex, answerIndex, answerText) {
+  const chatBody = document.getElementById("chatBody");
+
+  const answersWrapper = document.querySelector(".answers-wrapper");
+  if (answersWrapper) {
+    answersWrapper.classList.remove("pop-up");
+    answersWrapper.classList.add("pop-down");
+    setTimeout(() => answersWrapper.remove(), 300);
+  }
+
+  generateMessage(answerText, "user");
+
+  const responses = [
+    [
+      "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
+      "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
+      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
+    ],
+    [
+      "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
+      "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
+      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
+    ],
+    [
+      "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
+      "It’s good that you share your feelings sometimes. Being open about your mental health can provide relief and support, which are important for emotional well-being.",
+      "Keeping your feelings to yourself can lead to increased stress and affect your mental health. Consider finding a trusted person to talk to, as sharing can be very beneficial.",
+    ],
+    [
+      "Experiencing daily anxiety can significantly impact your mental health. It's important to seek ways to reduce this anxiety, as prolonged stress can have serious effects on your well-being.",
+      "Feeling anxious during stressful times like exams is common, but managing this anxiety is key to protecting your mental health during these periods.",
+      "It's great that you rarely experience anxiety. Maintaining this level of calm is beneficial for your mental health, and it’s important to continue practicing whatever keeps you feeling this way.",
+    ],
+    [
+      "Getting less than 6 hours of sleep can negatively affect your mental health, leading to increased stress and reduced emotional resilience. Prioritizing sleep is crucial for your well-being.",
+      "Getting between 6 and 8 hours of sleep is important, but inconsistency can impact your mental health. A regular sleep routine can improve your emotional stability and reduce stress.",
+      "Prioritizing sleep is one of the best things you can do for your mental health. It helps maintain emotional balance and resilience, which are key to handling stress.",
+    ],
+    [
+      "Feeling confident in your abilities is excellent for your mental health. It can reduce anxiety and stress, contributing to a more positive and balanced state of mind.",
+      "Having some doubts is normal, but too much self-doubt can negatively impact your mental health. Building confidence through small successes can help improve your overall well-being.",
+      "Constant worry about your performance can lead to anxiety and stress, affecting your mental health. It's important to address these worries and work on building self-confidence.",
+    ],
+    [
+      "Being excited about change is a positive sign for your mental health. Adaptability and a positive outlook can help you manage stress and maintain emotional well-being.",
+      "It’s normal to feel nervous about change, but being willing to adjust is important for your mental health. Embracing change gradually can help reduce stress and anxiety.",
+      "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
+    ],
+    [
+      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
+      "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
+      "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
+    ],
+    [
+      "High motivation is a great indicator of good mental health. Staying motivated helps you manage stress and keep a positive outlook.",
+      "It's normal for motivation to vary, but staying engaged in your tasks can support your mental health by providing a sense of accomplishment.",
+      "Struggling with motivation can be a sign of mental fatigue or stress. It’s important to address these feelings to prevent them from negatively impacting your mental health.",
+    ],
+    [
+      "It’s great that you’re aware of the mental health resources available. Knowing where to get help is crucial for maintaining your mental well-being.",
+      "It’s good that you’re somewhat aware, but exploring these resources further can ensure you have the support you need when challenges arise.",
+      "It’s important to be informed about mental health resources, as they can provide crucial support when needed. Taking the time to learn about them can make a big difference.",
+    ],
+  ];
+
+  setTimeout(() => {
+    showLoader(chatBody);
+    setTimeout(() => {
+      removeLoader(chatBody);
+      generateMessage(responses[questionIndex][answerIndex], "bot");
+
+      saveToDatabase(
+        currentQuestionIndex,
+        answerText,
+        responses[questionIndex][answerIndex]
+      );
+
+      setTimeout(() => {
+        displayQuestion(questionIndex + 1);
+      }, 2000);
+    }, 1500);
+  }, 1000);
+}
+
+function saveToDatabase(questionIndex, answerText, responseText) {
+  fetch("/save_questionnaire/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      question_index: questionIndex,
+      answer: answerText || "No answer provided",
+      response: responseText || "No response provided",
+    }),
+  });
+}
+
+function addTimestampIfNeeded(chatBody) {
+  const currentTime = new Date();
+
+  if (!lastMessageTime || currentTime - lastMessageTime > 300000) {
+    const sessionTimestamp = document.createElement("div");
+    sessionTimestamp.className = "session-timestamp";
+    sessionTimestamp.textContent = getCurrentTime();
+    chatBody.appendChild(sessionTimestamp);
+  }
+
+  lastMessageTime = currentTime;
+}
+
+function getCurrentTime() {
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strMinutes = minutes < 10 ? "0" + minutes : minutes;
+  const strTime = hours + ":" + strMinutes + " " + ampm;
+
+  return strTime;
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+document.addEventListener("DOMContentLoaded", updateChatPosition);
+
+if (statusComposerButton) {
+  // Show the modal with pop-in animation
+  statusComposerButton.addEventListener("click", function () {
+    statusModal.style.display = "block";
+    statusModalOverlay.style.display = "block";
+    setTimeout(() => {
+      statusModal.classList.add("pop-in");
+      statusModalOverlay.classList.add("pop-in");
+    }, 10);
+  });
+}
+
+// Close the modal with pop-out animation
+closeStatusModal.addEventListener("click", function () {
+  closeModal();
+});
+
+statusModalOverlay.addEventListener("click", function () {
+  closeModal();
+});
+
+function closeModal() {
+  statusModal.classList.remove("pop-in");
+  statusModal.classList.add("pop-out");
+  statusModalOverlay.classList.remove("pop-in");
+  statusModalOverlay.classList.add("pop-out");
+  setTimeout(() => {
+    statusModal.style.display = "none";
+    statusModal.classList.remove("pop-out");
+    statusModalOverlay.style.display = "none";
+    statusModalOverlay.classList.remove("pop-out");
+  }, 300);
+}
+
+// Placeholder functionality
+function showPlaceholder() {
+  if (!descriptionDiv.textContent.trim().length) {
+    descriptionDiv.classList.add("placeholder");
+    descriptionDiv.textContent = descriptionDiv.getAttribute("placeholder");
+  }
+}
+
+function hidePlaceholder() {
+  if (descriptionDiv.classList.contains("placeholder")) {
+    descriptionDiv.classList.remove("placeholder");
+    descriptionDiv.textContent = "";
+  }
+}
+
+descriptionDiv.addEventListener("focus", hidePlaceholder);
+descriptionDiv.addEventListener("blur", showPlaceholder);
+
+// Initial placeholder display
+showPlaceholder();
+
+// Feeling icons selection
+const feelingIcons = document.querySelectorAll(".feeling-icon");
+feelingIcons.forEach((icon) => {
+  icon.addEventListener("click", () => {
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    icon.classList.add("active");
+  });
+});
+
+// Text formatting
+window.formatText = function (command, value = null) {
+  document.execCommand(command, false, value);
+};
+
+// Function to close currently open modal
+function closeCurrentModal() {
+  const modals = document.querySelectorAll(".modal-content");
+  modals.forEach((modal) => {
+    if (modal.style.display === "block") {
+      modal.classList.add("slide-upSolid");
+      modal.classList.remove("slide-downSolid");
+    }
+  });
+}
+
+// Listen for the end of the slide-up animation to hide the modal
+document.querySelectorAll(".modal-content").forEach((modal) => {
+  modal.addEventListener("animationend", (event) => {
+    if (event.animationName === "slideUpSolid") {
+      modal.style.display = "none";
+    }
+  });
+});
+// Show profile modal when profile link is clicked
+profileLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  profileModal.style.display = "block";
+  profileModal.classList.add("slide-downSolid");
+  profileModal.classList.remove("slide-upSolid");
+  fetchUserProfile(); // Fetch and populate user data when the modal is opened
+});
+burger.addEventListener("change", () => {
+  if (burger.checked) {
+    dropdown.classList.add("slide-down");
+    dropdown.classList.remove("slide-up");
+    dropdown.style.display = "block";
+  } else {
+    dropdown.classList.add("slide-up");
+    dropdown.classList.remove("slide-down");
+  }
+});
+
+dropdown.addEventListener("animationend", (event) => {
+  if (event.animationName === "slideUp") {
+    dropdown.style.display = "none";
+  }
+});
+
+// Close dropdown menu when any link is clicked
+document.querySelectorAll(".dropdown a").forEach((link) => {
+  link.addEventListener("click", () => {
+    burger.checked = false;
+    dropdown.classList.add("slide-up");
+    dropdown.classList.remove("slide-down");
+  });
+});
+
+// Show profile modal when profile link is clicked
+profileLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  profileModal.style.display = "block";
+  profileModal.classList.add("slide-downSolid");
+  profileModal.classList.remove("slide-upSolid");
+});
+
+// Close profile modal when the close button is clicked
+closeProfileModal.addEventListener("click", () => {
+  profileModal.classList.add("slide-upSolid");
+  profileModal.classList.remove("slide-downSolid");
+});
+
+// Show avatar modal when avatar link is clicked
+avatarLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  avatarModal.style.display = "block";
+  avatarModal.classList.add("slide-downSolid");
+  avatarModal.classList.remove("slide-upSolid");
+});
+
+// Close avatar modal when the close button is clicked
+closeAvatarModal.addEventListener("click", () => {
+  avatarModal.classList.add("slide-upSolid");
+  avatarModal.classList.remove("slide-downSolid");
+});
+
+// Show password modal when password link is clicked
+passwordLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  passwordModal.style.display = "block";
+  passwordModal.classList.add("slide-downSolid");
+  passwordModal.classList.remove("slide-upSolid");
+});
+
+// Close password modal when the close button is clicked
+closePasswordModal.addEventListener("click", () => {
+  passwordModal.classList.add("slide-upSolid");
+  passwordModal.classList.remove("slide-downSolid");
+});
+
+
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from datetime import datetime
+import pytz
+import json
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
+from django.contrib.auth.hashers import check_password
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models import UserProfile
+import logging
+from PIL import Image
+from io import BytesIO
+import os
+from .models import Status, Reply, ContactUs, Referral, ChatMessage, Questionnaire
+import re
+from django.utils.timesince import timesince
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Count
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import BytesIO
+import base64
+from wordcloud import WordCloud
+from django.shortcuts import render
+from scipy.special import softmax
+from django.db.models import Avg, Count
+from better_profanity import profanity
+
+logger = logging.getLogger(__name__)
+CustomUser = get_user_model()
+
+def current_time_view(request):
+    tz = pytz.timezone('Asia/Manila')
+    current_time = datetime.now(tz)
+    return HttpResponse(f"The current time in Manila is: {current_time}")
+
+def home(request):
+    return render(request, 'home.html')
+
+def register_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'redirect_url': '/login/'})
+        else:
+            errors = form.errors.get_json_data()
+            return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({'success': True, 'redirect_url': '/'})
+            else:
+                form.add_error(None, "Invalid login credentials")
+        errors = form.errors.get_json_data()
+        return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomAuthenticationForm()
+    return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
+
+def strip_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
+model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+
+def analyze_emotions(text):
+    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+    outputs = model(**inputs)
+    scores = outputs[0][0].detach().numpy()
+    scores = softmax(scores)
+    emotions = {
+        'anger': scores[0],
+        'disgust': scores[1],
+        'fear': scores[2],
+        'happiness': scores[3],
+        'neutral': scores[4],
+        'sadness': scores[5],
+        'surprise': scores[6]
+    }
+    return emotions
+
+# Load the profanity word list
+profanity.load_censor_words()
+
+def check_profanity(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = data.get('title')
+        description = data.get('description')
+
+        if profanity.contains_profanity(title) or profanity.contains_profanity(description):
+            return JsonResponse({'contains_profanity': True})
+        else:
+            return JsonResponse({'contains_profanity': False})
+    return JsonResponse({'contains_profanity': False}, status=400)
+
+def get_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    data = {
+        'success': True,
+        'status': {
+            'id': status.id,
+            'title': status.title,
+            'description': status.description,
+            'plain_description': status.plain_description,
+            'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': status.user.username,
+            'emotion': status.emotion,
+        }
+    }
+    return JsonResponse(data)
+
+@require_POST
+def submit_referral(request):
+    data = json.loads(request.body)
+    try:
+        status = Status.objects.get(id=data['status_id'])
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=data.get('highlighted_title', ''),
+            highlighted_description=data.get('highlighted_description', '')
+        )
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def save_questionnaire(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        question_index = data.get("question_index")
+        answer = data.get("answer", "No answer provided")
+        response = data.get("response", "No response provided")
+
+        # Define the questions list (ensure it matches the JavaScript)
+        questions = [
+            "What aspects of your academic life cause you the most stress?",
+            "How would you describe your overall emotional state in the past month?",
+            "How comfortable do you feel talking to friends or family about your mental health?",
+            "How frequently do you experience feelings of anxiety or worry related to school?",
+            "How many hours of sleep do you usually get on a school night?",
+            "How confident do you feel in your academic abilities?",
+            "How do you usually feel about changes in your academic or personal life?",
+            "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+            "How motivated do you feel to complete your academic tasks?",
+            "Are you aware of the mental health resources available at your school?",
+        ]
+
+        # Fetch the corresponding question text
+        question_text = questions[question_index]
+
+        # Save the data into the Questionnaire model
+        Questionnaire.objects.create(
+            user=request.user,
+            question=question_text,
+            answer=answer,
+            response=response
+        )
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False}, status=400)
+
+@csrf_exempt
+def send_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+        is_bot_message = data.get('is_bot_message')
+
+        if message:
+            # Save the message to the database
+            ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                created_at=timezone.now()
+            )
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'No message provided'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def send_chat_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message', '')
+        is_bot_message = data.get('is_bot_message', False)
+
+        if message:
+            chat_message = ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                timestamp=timezone.now()
+            )
+            return JsonResponse({'success': True, 'message_id': chat_message.id})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def get_chat_messages(request):
+    if request.method == 'GET':
+        messages = ChatMessage.objects.all().order_by('timestamp')
+        message_data = [{
+            'id': msg.id,
+            'user': msg.user.username if msg.user else 'Bot',
+            'message': msg.message,
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'is_bot_message': msg.is_bot_message
+        } for msg in messages]
+        return JsonResponse({'messages': message_data})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+@login_required
+@require_POST
+def refer_status(request, status_id):
+    try:
+        status = get_object_or_404(Status, id=status_id)
+        highlighted_title = request.POST.get('highlightedTitle', '')
+        highlighted_description = request.POST.get('highlightedDescription', '')
+        referral_reason = request.POST.get('referralReason', '')
+        other_reason = request.POST.get('otherReason', '')
+
+        # Save the referral
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=highlighted_title,
+            highlighted_description=highlighted_description,
+            referral_reason=referral_reason,
+            other_reason=other_reason,
+        )
+
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'}, status=404)
+
+@login_required
+@csrf_exempt
+def submit_status(request):
+    if request.method == 'POST':
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            title = data.get('title')
+            description = data.get('description')
+            emotion = data.get('emotion')
+        else:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            emotion = request.POST.get('emotion')
+        
+        plain_description = strip_html_tags(description)
+
+        # Validate the input fields
+        errors = {}
+        if not title:
+            errors['title'] = 'This field is required.'
+        if not description:
+            errors['description'] = 'This field is required.'
+        if not emotion:
+            errors['emotion'] = 'This field is required.'
+
+        # Check for inappropriate words
+        if profanity.contains_profanity(title) or profanity.contains_profanity(plain_description):
+            errors['profanity'] = 'Your status contains inappropriate language. Please edit and try again.'
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Analyze emotions
+        emotions = analyze_emotions(plain_description)
+
+        # Convert emotions to percentages
+        emotion_percentages = {key: int(value * 100) for key, value in emotions.items()}
+
+        # Save the status to the database
+        status = Status.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            plain_description=plain_description,
+            emotion=emotion,
+            anger=emotions['anger'],
+            disgust=emotions['disgust'],
+            fear=emotions['fear'],
+            happiness=emotions['happiness'],
+            sadness=emotions['sadness'],
+            surprise=emotions['surprise'],
+            neutral=emotions['neutral'],
+            anger_percentage=emotion_percentages['anger'],
+            disgust_percentage=emotion_percentages['disgust'],
+            fear_percentage=emotion_percentages['fear'],
+            happiness_percentage=emotion_percentages['happiness'],
+            sadness_percentage=emotion_percentages['sadness'],
+            surprise_percentage=emotion_percentages['surprise'],
+            neutral_percentage=emotion_percentages['neutral']
+        )
+
+        # Prepare the status data to return
+        status_data = {
+            'id': status.id,
+            'username': request.user.username,
+            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else None,
+            'title': status.title,
+            'description': status.plain_description,
+            'emotion': status.emotion,
+            'created_at': timesince(status.created_at),
+            'replies': 0  # Placeholder for replies
+        }
+
+        return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+
+@login_required
+@csrf_exempt
+def add_reply(request, status_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        text = data.get('text')
+
+        if not text:
+            return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
+
+        status = get_object_or_404(Status, id=status_id)
+        reply = Reply.objects.create(status=status, user=request.user, text=text)
+
+        return JsonResponse({'success': True, 'reply': {
+            'id': reply.id,
+            'username': reply.user.username,
+            'text': reply.text,
+            'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+@login_required
+def status_detail(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    replies = status.replies.all()
+    avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
+    return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
+
+@login_required
+@csrf_exempt
+def submit_reply(request, status_id):
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        if text:
+            status = get_object_or_404(Status, id=status_id)
+            reply = Reply.objects.create(status=status, user=request.user, text=text)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+
+@csrf_exempt
+def contact_us_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
+
+        ContactUs.objects.create(name=name, email=email, subject=subject, message=message)
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+@login_required
+def get_all_statuses(request):
+    page_size = 100  # Number of statuses per batch
+    page_number = int(request.GET.get('page', 1))
+    category = request.GET.get('category', 'recent')
+
+    if category == 'recent':
+        statuses = Status.objects.all().order_by('-created_at')
+    elif category == 'popular':
+        statuses = Status.objects.annotate(reply_count=Count('replies')).order_by('-reply_count', '-created_at')
+    else:
+        statuses = Status.objects.filter(emotion__iexact=category).order_by('-created_at')
+
+    paginator = Paginator(statuses, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    authenticated_user_id = request.user.id if request.user.is_authenticated else None
+
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+
+    statuses_data = [
+        {
+            'id': status.id,
+            'username': status.user.username,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else default_avatar_url,
+            'emotion': status.emotion,
+            'title': status.title,
+            'plain_description': status.plain_description,  # Include plain_description
+            'description': status.description,  # Include description with formatted text
+            'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
+            'replies': status.replies.count(),  # Count the number of replies
+            'can_delete': status.user.id == authenticated_user_id
+        }
+        for status in page_obj
+    ]
+
+    return JsonResponse({
+        'statuses': statuses_data,
+        'has_next': page_obj.has_next()
+    })
+
+@login_required
+@csrf_exempt
+def delete_status(request, status_id):
+    if request.method == 'DELETE':
+        try:
+            status = Status.objects.get(id=status_id, user=request.user)
+            status.delete()
+            return JsonResponse({'success': True, 'message': 'Status deleted successfully.'})
+        except Status.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Status not found or you do not have permission to delete this status.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
+@login_required
+def get_user_profile(request):
+    user_profile = request.user.profile
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+    avatar_url = user_profile.avatar.url if user_profile.avatar else default_avatar_url
+    data = {
+        'student_id': request.user.student_id,
+        'username': request.user.username,
+        'full_name': request.user.full_name,
+        'academic_year_level': request.user.academic_year_level,
+        'contact_number': request.user.contact_number,
+        'email': request.user.email,
+        'avatar': avatar_url,
+    }
+    return JsonResponse(data)
+
+@login_required
+@csrf_exempt
+def update_user_profile(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        contact_number = data.get('contact_number')
+        email = data.get('email')
+        academic_year_level = data.get('academic_year_level')
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        # Check if the username or email already exists for another user
+        if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['username'] = 'Username already exists.'
+
+        if CustomUser.objects.filter(email=email).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['email'] = 'Email already registered by another user.'
+            
+        # Update the user details if there are no errors
+        if response_data['success']:
+            user.username = username
+            user.contact_number = contact_number
+            user.email = email
+            user.academic_year_level = academic_year_level
+            user.save()
+        else:
+            return JsonResponse(response_data, status=400)
+        return JsonResponse({'success': True, 'message': 'Profile updated successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def password_manager_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        repeat_new_password = data.get('repeat_new_password')
+
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        if not check_password(current_password, user.password):
+            response_data['success'] = False
+            response_data['errors']['current_password'] = 'Please check your current password.'
+        elif new_password != repeat_new_password:
+            response_data['success'] = False
+            response_data['errors']['new_password'] = 'Passwords do not match.'
+        else:
+            user.set_password(new_password)
+            user.save()
+
+        if response_data['success']:
+            return JsonResponse({'success': True, 'message': 'Password updated successfully!'})
+        else:
+            return JsonResponse(response_data, status=400)
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def upload_avatar(request):
+    if request.method == 'POST':
+        user_profile = request.user.profile
+
+        if 'avatar' in request.FILES:
+            avatar = request.FILES['avatar']
+
+            # Check file size (limit to 1MB)
+            if avatar.size > 1 * 1024 * 1024:
+                return JsonResponse({'success': False, 'errors': 'File size exceeds the 1MB limit.'}, status=400)
+
+            # Save the image file directly
+            user_profile.avatar.save(avatar.name, avatar)
+            user_profile.save()
+
+            return JsonResponse({'success': True, 'avatar_url': user_profile.avatar.url})
+
+        return JsonResponse({'success': False, 'errors': 'No avatar file uploaded.'}, status=400)
+
+    return JsonResponse({'success': False, 'errors': 'Invalid request'}, status=400)
+
+@login_required
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'success': True, 'message': 'Logout successful!', 'redirect_url': '/'})
+    return redirect('home')

@@ -72,7 +72,46 @@ def about_view(request):
     # Fetch the 3 most recent approved testimonials
     approved_feedbacks = Feedback.objects.filter(is_approved=True).order_by('-created_at')[:3]
     return render(request, 'about.html', {'feedbacks': approved_feedbacks})
+# Check if username already exists
+def check_username_exists(request):
+    if request.method == "GET" and request.is_ajax():
+        username = request.GET.get("username", None)
+        if CustomUser.objects.filter(username=username).exists():
+            return JsonResponse({"exists": True, "message": "Username already exists."}, status=200)
+        return JsonResponse({"exists": False}, status=200)
 
+# Check if email already exists
+def check_email_exists(request):
+    if request.method == "GET" and request.is_ajax():
+        email = request.GET.get("email", None)
+        if CustomUser.objects.filter(email=email).exists():
+            return JsonResponse({"exists": True, "message": "Email already exists."}, status=200)
+        return JsonResponse({"exists": False}, status=200)
+
+# Check if student ID already exists
+def check_student_id_exists(request):
+    if request.method == "GET" and request.is_ajax():
+        student_id = request.GET.get("student_id", None)
+        if CustomUser.objects.filter(student_id=student_id).exists():
+            return JsonResponse({"exists": True, "message": "Student ID already exists."}, status=200)
+        return JsonResponse({"exists": False}, status=200)
+
+# Password validation (This can be done via client-side JavaScript)
+def validate_password(request):
+    if request.method == "POST" and request.is_ajax():
+        password = request.POST.get("password", None)
+        if len(password) < 8:
+            return JsonResponse({"valid": False, "message": "Password must be at least 8 characters long."}, status=200)
+        if not any(char.isupper() for char in password):
+            return JsonResponse({"valid": False, "message": "Password must contain at least one uppercase letter."}, status=200)
+        if not any(char.islower() for char in password):
+            return JsonResponse({"valid": False, "message": "Password must contain at least one lowercase letter."}, status=200)
+        if not any(char.isdigit() for char in password):
+            return JsonResponse({"valid": False, "message": "Password must contain at least one number."}, status=200)
+        if not any(char in '!@#$%^&*()_+' for char in password):
+            return JsonResponse({"valid": False, "message": "Password must contain at least one special character."}, status=200)
+        return JsonResponse({"valid": True}, status=200)
+    
 @login_required
 def profile_view(request):
     # Calculate updated statistics

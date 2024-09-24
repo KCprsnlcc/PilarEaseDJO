@@ -1,3 +1,1005 @@
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from asgiref.sync import async_to_sync
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from datetime import timedelta
+from datetime import datetime
+import pytz
+import json
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
+from django.contrib.auth.hashers import check_password
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models import UserProfile
+import logging
+from PIL import Image
+from io import BytesIO
+import os
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification, UserNotificationSettings
+import re
+from django.utils.timesince import timesince
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Count
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import BytesIO
+import base64
+from wordcloud import WordCloud
+from django.shortcuts import render
+from scipy.special import softmax
+from django.db.models import Avg, Count
+from better_profanity import profanity
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str, force_bytes  # Replace force_text with force_str
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.translation import gettext as _
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.templatetags.static import static
+from email.mime.image import MIMEImage
+from django.db.models import Q 
+from django.utils.timezone import make_aware
+from django.utils.html import strip_tags
+from django.utils.timezone import now
+logger = logging.getLogger(__name__)
+CustomUser = get_user_model()
+
+def current_time_view(request):
+    tz = pytz.timezone('Asia/Manila')
+    current_time = datetime.now(tz)
+    return HttpResponse(f"The current time in Manila is: {current_time}")
+
+def home(request):
+    return render(request, 'home.html')
+
+def register_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'redirect_url': '/login/'})
+        else:
+            errors = form.errors.get_json_data()
+            return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
+
+def request_email_change(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_email = data.get('new_email')
+            user = request.user
+
+            # Check if the new email is provided
+            if not new_email:
+                return JsonResponse({'success': False, 'error': 'New email is required.'})
+
+            # Check if the new email is the same as the current email
+            if user.email == new_email:
+                return JsonResponse({'success': False, 'error': 'This is already your current email address.'})
+
+            # Check if the new email was used previously
+            if EmailHistory.objects.filter(Q(user=user) & Q(email=new_email)).exists():
+                return JsonResponse({'success': False, 'error': 'You have already used this email previously. Please choose a different one.'})
+
+            # Check if the new email is already in use by another user
+            if CustomUser.objects.filter(email=new_email).exists():
+                return JsonResponse({'success': False, 'error': 'This email is already in use by another user.'})
+
+            # Generate email change token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            # Store the email change request time (to verify expiry later)
+            user.profile.email_change_requested_at = now()
+            user.profile.new_email = new_email  # Temporarily store the new email in the profile
+            user.profile.save()
+
+            # Generate email verification link
+            verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+
+            # Send the verification email to the new email address
+            email_subject = 'Confirm Your New Email'
+            email_html_content = render_to_string('change_email.html', {
+                'user': user,
+                'verification_link': verification_link,
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [new_email],  # Send to the new email address
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification link sent.'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid data format.'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def request_email_verification(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        if not user.profile.is_email_verified:
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+TOKEN_EXPIRY_MINUTES = 60  # Set token expiry time to 60 minutes
+
+def verify_email_change(request, uidb64, token, new_email):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            token_age = now() - user.profile.email_change_requested_at
+
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "change_email_complete.html", {
+                    "invalid": True,
+                    "message": "The verification link has expired. Please request a new email change."
+                })
+
+            # Ensure the new email is still available (not taken by another user)
+            if CustomUser.objects.filter(email=new_email).exists():
+                return render(request, "change_email_complete.html", {
+                    "invalid": True,
+                    "message": "This email is already in use by another user. Please choose a different email."
+                })
+
+            # Add current email to email history before changing
+            EmailHistory.objects.create(user=user, email=user.email)
+
+            # Update the user's email to the new email and mark it as verified
+            user.email = new_email
+            user.profile.is_email_verified = True  # Automatically verify the new email
+            user.save()
+
+            return render(request, "change_email_complete.html", {"verified": True})
+
+        else:
+            return render(request, "change_email_complete.html", {
+                "invalid": True,
+                "message": "The verification link is invalid. Please request a new email change."
+            })
+
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "change_email_complete.html", {
+            "invalid": True,
+            "message": "Invalid verification link or user not found. Please try again."
+        })
+        return render(request, "change_email_complete.html", {"invalid": True})
+    
+def check_email_verification(request):
+    user = request.user
+    if user.is_authenticated:
+        is_verified = user.profile.is_email_verified
+        return JsonResponse({'is_verified': is_verified})
+    return JsonResponse({'error': 'User not authenticated'}, status=403)
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            token_age = now() - user.profile.email_verification_requested_at
+            logger.info(f"Token age: {token_age}, Token valid: {default_token_generator.check_token(user, token)}")
+
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "email_verification_complete.html", {
+                    "invalid": True,
+                    "message": "The verification link has expired. Please request a new verification link."
+                })
+
+            # Mark email as verified if it is not already verified
+            if not user.profile.is_email_verified:
+                user.profile.is_email_verified = True
+                user.profile.save()
+
+            return render(request, "email_verification_complete.html", {"verified": True})
+        else:
+            return render(request, "email_verification_complete.html", {
+                "invalid": True,
+                "message": "The verification link is invalid. Please request a new verification link."
+            })
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "email_verification_complete.html", {
+            "invalid": True,
+            "message": "Invalid verification link or user not found. Please try again."
+        })
+    
+def send_verification_email(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        if not user.profile.is_email_verified:
+            # Set the email_verification_requested_at timestamp
+            user.profile.email_verification_requested_at = now()
+            user.profile.save()
+
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({'success': True, 'redirect_url': '/'})
+            else:
+                form.add_error(None, "Invalid login credentials")
+        errors = form.errors.get_json_data()
+        return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomAuthenticationForm()
+    return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
+
+def strip_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
+def custom_password_reset_view(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        last_sent = request.session.get('last_password_reset_email', None)
+        # Check if the last email was sent less than 3 minutes ago
+        if last_sent:
+            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
+            if timezone.now() - last_sent_time < timedelta(minutes=3):
+                return JsonResponse({
+                    "success": False, 
+                    "error": "You can request a new password reset link every 3 minutes."
+                })
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_link = request.build_absolute_uri(f"/reset/{uid}/{token}/")
+
+            # Render email content
+            email_subject = "Password Reset Requested"
+            email_html_content = render_to_string("password_reset_email.html", {
+                "user": user,
+                "reset_link": reset_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',  # Use a no-reply email address here
+                [user.email],
+            )
+            email_message.reply_to = ['support@pilarease.com']
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            # Store the current time in session to track the cooldown for this email
+            request.session[f'last_password_reset_email_{email}'] = str(timezone.now())
+
+            return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"success": False, "error": "No user is associated with this email address."})
+    return render(request, "password_reset_form.html")
+
+def custom_password_reset_done_view(request):
+    return render(request, "password_reset_done.html")
+
+def custom_password_reset_confirm_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            if request.method == "POST":
+                new_password = request.POST.get("new_password")
+                new_password_confirm = request.POST.get("new_password_confirm")
+
+                if new_password and new_password == new_password_confirm:
+                    user.set_password(new_password)
+                    user.save()
+                    return redirect("password_reset_complete")
+                else:
+                    # Handle password mismatch
+                    return render(
+                        request, 
+                        "password_reset_confirm.html", 
+                        {"validlink": True, "user": user, "error": "Passwords do not match."}
+                    )
+            return render(request, "password_reset_confirm.html", {"validlink": True, "user": user})
+        else:
+            return render(request, "password_reset_confirm.html", {"validlink": False})
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "password_reset_confirm.html", {"validlink": False})
+
+def custom_password_reset_complete_view(request):
+    return render(request, "password_reset_complete.html")
+
+model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+
+def analyze_emotions(text):
+    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+    outputs = model(**inputs)
+    scores = outputs[0][0].detach().numpy()
+    scores = softmax(scores)
+    emotions = {
+        'anger': scores[0],
+        'disgust': scores[1],
+        'fear': scores[2],
+        'happiness': scores[3],
+        'neutral': scores[4],
+        'sadness': scores[5],
+        'surprise': scores[6]
+    }
+    return emotions
+
+# Load the profanity word list
+profanity.load_censor_words()
+
+def check_profanity(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = data.get('title')
+        description = data.get('description')
+
+        if profanity.contains_profanity(title) or profanity.contains_profanity(description):
+            return JsonResponse({'contains_profanity': True})
+        else:
+            return JsonResponse({'contains_profanity': False})
+    return JsonResponse({'contains_profanity': False}, status=400)
+
+def get_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    data = {
+        'success': True,
+        'status': {
+            'id': status.id,
+            'title': status.title,
+            'description': status.description,
+            'plain_description': status.plain_description,
+            'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': status.user.username,
+            'emotion': status.emotion,
+        }
+    }
+    return JsonResponse(data)
+
+@require_POST
+def submit_referral(request):
+    data = json.loads(request.body)
+    try:
+        status = Status.objects.get(id=data['status_id'])
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=data.get('highlighted_title', ''),
+            highlighted_description=data.get('highlighted_description', '')
+        )
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def save_chat_session(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        session_data = data.get("session_data", [])
+        
+        chat_session, created = ChatSession.objects.get_or_create(
+            user=request.user
+        )
+        chat_session.session_data = session_data
+        chat_session.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
+
+@csrf_exempt
+def load_chat_session(request):
+    if request.method == "GET" and request.user.is_authenticated:
+        try:
+            chat_session = ChatSession.objects.get(user=request.user)
+            return JsonResponse({"success": True, "session_data": chat_session.session_data})
+        except ChatSession.DoesNotExist:
+            return JsonResponse({"success": False, "session_data": []})
+    return JsonResponse({"success": False, "session_data": []}, status=400)
+
+@csrf_exempt
+def save_questionnaire(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        question_index = data.get("question_index")
+        answer = data.get("answer", "No answer provided")
+        response = data.get("response", "No response provided")
+
+        # Define the questions list (ensure it matches the JavaScript)
+        questions = [
+            "What aspects of your academic life cause you the most stress?",
+            "How would you describe your overall emotional state in the past month?",
+            "How comfortable do you feel talking to friends or family about your mental health?",
+            "How frequently do you experience feelings of anxiety or worry related to school?",
+            "How many hours of sleep do you usually get on a school night?",
+            "How confident do you feel in your academic abilities?",
+            "How do you usually feel about changes in your academic or personal life?",
+            "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+            "How motivated do you feel to complete your academic tasks?",
+            "Are you aware of the mental health resources available at your school?",
+        ]
+
+        # Fetch the corresponding question text
+        question_text = questions[question_index]
+
+        # Save the data into the Questionnaire model
+        Questionnaire.objects.create(
+            user=request.user,
+            question=question_text,
+            answer=answer,
+            response=response
+        )
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False}, status=400)
+
+@login_required
+@require_POST
+def refer_status(request, status_id):
+    try:
+        status = get_object_or_404(Status, id=status_id)
+        highlighted_title = request.POST.get('highlightedTitle', '')
+        highlighted_description = request.POST.get('highlightedDescription', '')
+        referral_reason = request.POST.get('referralReason', '')
+        other_reason = request.POST.get('otherReason', '')
+
+        # Save the referral
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=highlighted_title,
+            highlighted_description=highlighted_description,
+            referral_reason=referral_reason,
+            other_reason=other_reason,
+        )
+
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'}, status=404)
+
+@login_required
+@csrf_exempt
+def submit_status(request):
+    if request.method == 'POST':
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            title = data.get('title')
+            description = data.get('description')
+            emotion = data.get('emotion')
+        else:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            emotion = request.POST.get('emotion')
+        
+        plain_description = strip_html_tags(description)
+
+        # Validate the input fields
+        errors = {}
+        if not title:
+            errors['title'] = 'This field is required.'
+        if not description:
+            errors['description'] = 'This field is required.'
+        if not emotion:
+            errors['emotion'] = 'This field is required.'
+
+        # Check for inappropriate words
+        if profanity.contains_profanity(title) or profanity.contains_profanity(plain_description):
+            errors['profanity'] = 'Your status contains inappropriate language. Please edit and try again.'
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Analyze emotions
+        emotions = analyze_emotions(plain_description)
+
+        # Convert emotions to percentages
+        emotion_percentages = {key: int(value * 100) for key, value in emotions.items()}
+
+        # Save the status to the database
+        status = Status.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            plain_description=plain_description,
+            emotion=emotion,
+            anger=emotions['anger'],
+            disgust=emotions['disgust'],
+            fear=emotions['fear'],
+            happiness=emotions['happiness'],
+            sadness=emotions['sadness'],
+            surprise=emotions['surprise'],
+            neutral=emotions['neutral'],
+            anger_percentage=emotion_percentages['anger'],
+            disgust_percentage=emotion_percentages['disgust'],
+            fear_percentage=emotion_percentages['fear'],
+            happiness_percentage=emotion_percentages['happiness'],
+            sadness_percentage=emotion_percentages['sadness'],
+            surprise_percentage=emotion_percentages['surprise'],
+            neutral_percentage=emotion_percentages['neutral']
+        )
+
+        # Prepare the status data to return
+        status_data = {
+            'id': status.id,
+            'username': request.user.username,
+            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else None,
+            'title': status.title,
+            'description': status.plain_description,
+            'emotion': status.emotion,
+            'created_at': timesince(status.created_at),
+            'replies': 0  # Placeholder for replies
+        }
+
+        # Return success response to the user
+        return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+
+def format_timestamp(timestamp):
+    now = timezone.now()
+    diff = now - timestamp
+
+    seconds = diff.total_seconds()
+    minutes = seconds / 60
+    hours = minutes / 60
+    days = hours / 24
+    weeks = days / 7
+
+    if seconds < 60:
+        return f"{int(seconds)}s ago"
+    elif minutes < 60:
+        return f"{int(minutes)}m ago"
+    elif hours < 24:
+        return f"{int(hours)}hr ago"
+    elif days < 7:
+        return f"{int(days)}d ago"
+    else:
+        return f"{int(weeks)}w ago"
+
+@login_required
+def fetch_notifications(request):
+    page_number = request.GET.get('page', 1)
+    notifications = []
+
+    # Set the 7-week limit
+    seven_weeks_ago = timezone.now() - timedelta(weeks=7)
+
+    # Fetch user statuses created within the last 7 weeks
+    user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago)
+
+    # 1. Add notifications for statuses
+    for status in user_statuses:
+        # Create or get a notification entry for the status
+        notification, created = Notification.objects.get_or_create(
+            user=request.user, 
+            status=status,
+            defaults={'is_read': False}
+        )
+
+        # Add notification for the uploaded status
+        notifications.append({
+            'id': f"status_{status.id}",
+            'status_id': status.id,
+            'message': "You uploaded a status. Click to view it.",
+            'link': f'/status/{status.id}/',
+            'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'timestamp': status.created_at,  # Raw timestamp (sorting will be based on this)
+            'is_read': notification.is_read
+        })
+
+        # Fetch replies for the status
+        status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
+        unique_users = {reply.user for reply in status_replies}  # Ensure unique users
+
+        if unique_users:
+            # Fetch only the latest reply from unique users
+            latest_unique_replies = list(status_replies.filter(user__in=unique_users))[:2]
+            latest_usernames = [reply.user.username for reply in latest_unique_replies]
+            latest_user_avatar = latest_unique_replies[0].user.profile.avatar.url if latest_unique_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
+
+            # Create the appropriate message based on the number of unique users
+            if len(unique_users) == 1:
+                message = f"{latest_usernames[0]} replied to your status, click to see it."
+            elif len(unique_users) == 2:
+                message = f"{latest_usernames[0]} and {latest_usernames[1]} replied to your status, click to see it."
+            elif len(unique_users) > 2:
+                message = f"{latest_usernames[0]}, {latest_usernames[1]} and others replied to your status, click to see it."
+
+            # Create or get a notification entry for the replies
+            notification, created = Notification.objects.get_or_create(
+                user=request.user, 
+                status=status,
+                defaults={'is_read': False}
+            )
+
+            # Add reply notifications
+            notifications.append({
+                'id': f"replies_{status.id}",
+                'message': message,
+                'link': f'/status/{status.id}/',
+                'avatar': latest_user_avatar,
+                'timestamp': latest_unique_replies[0].created_at,  # Raw timestamp (sorting will be based on this)
+                'is_read': notification.is_read
+            })
+
+    # Sort the notifications by timestamp in descending order
+    notifications.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    # Paginate notifications (5 per page)
+    paginator = Paginator(notifications, 5)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Convert the raw timestamps to human-readable format after sorting
+    for notification in page_obj.object_list:
+        notification['timestamp'] = format_timestamp(notification['timestamp'])
+
+    return JsonResponse({
+        'notifications': page_obj.object_list,
+        'total_pages': paginator.num_pages
+    })
+
+@login_required
+@csrf_exempt
+def mark_notification_as_read(request, notification_id):
+    try:
+        # Fetch the notification using the correct notification ID
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+    
+@login_required
+def mark_notification_button_clicked(request):
+    try:
+        # Mark the notification button as clicked in user settings
+        user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+        user_settings.has_clicked_notification = True  # Mark as clicked
+        user_settings.save()
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def check_notification_status(request):
+    notifications = Notification.objects.filter(user=request.user, is_read=False)
+    user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+    has_unread_notifications = notifications.exists()
+    
+    return JsonResponse({
+        'has_unread_notifications': has_unread_notifications,
+        'has_clicked_notification': user_settings.has_clicked_notification
+    })
+
+@login_required
+@csrf_exempt
+def add_reply(request, status_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        text = data.get('text')
+        
+        if not text:
+            return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
+
+        status = get_object_or_404(Status, id=status_id)
+        reply = Reply.objects.create(status=status, user=request.user, text=text)
+
+        # Return a success response with the reply details
+        return JsonResponse({'success': True, 'reply': {
+            'id': reply.id,
+            'username': reply.user.username,
+            'text': reply.text,
+            'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+@login_required
+def status_detail(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    replies = status.replies.all()
+
+    # Check if there is an unread notification related to this status for the current user
+    try:
+        notification = Notification.objects.get(status=status, user=request.user, is_read=False)
+        notification.is_read = True  # Mark as read
+        notification.save()
+    except Notification.DoesNotExist:
+        pass  # No unread notification, do nothing
+
+    avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
+    
+    return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
+
+@login_required
+@csrf_exempt
+def submit_reply(request, status_id):
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        if text:
+            status = get_object_or_404(Status, id=status_id)
+            reply = Reply.objects.create(status=status, user=request.user, text=text)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+
+@csrf_exempt
+def contact_us_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
+
+        ContactUs.objects.create(name=name, email=email, subject=subject, message=message)
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+@login_required
+def get_all_statuses(request):
+    page_size = 100  # Number of statuses per batch
+    page_number = int(request.GET.get('page', 1))
+    category = request.GET.get('category', 'recent')
+
+    if category == 'recent':
+        statuses = Status.objects.all().order_by('-created_at')
+    elif category == 'popular':
+        statuses = Status.objects.annotate(reply_count=Count('replies')).order_by('-reply_count', '-created_at')
+    else:
+        statuses = Status.objects.filter(emotion__iexact=category).order_by('-created_at')
+
+    paginator = Paginator(statuses, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    authenticated_user_id = request.user.id if request.user.is_authenticated else None
+
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+
+    statuses_data = [
+        {
+            'id': status.id,
+            'username': status.user.username,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else default_avatar_url,
+            'emotion': status.emotion,
+            'title': status.title,
+            'plain_description': status.plain_description,  # Include plain_description
+            'description': status.description,  # Include description with formatted text
+            'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
+            'replies': status.replies.count(),  # Count the number of replies
+            'can_delete': status.user.id == authenticated_user_id
+        }
+        for status in page_obj
+    ]
+
+    return JsonResponse({
+        'statuses': statuses_data,
+        'has_next': page_obj.has_next()
+    })
+
+@login_required
+@csrf_exempt
+def delete_status(request, status_id):
+    if request.method == 'DELETE':
+        try:
+            status = Status.objects.get(id=status_id, user=request.user)
+            status.delete()
+            return JsonResponse({'success': True, 'message': 'Status deleted successfully.'})
+        except Status.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Status not found or you do not have permission to delete this status.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
+@login_required
+def get_user_profile(request):
+    user_profile = request.user.profile
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+    avatar_url = user_profile.avatar.url if user_profile.avatar else default_avatar_url
+    data = {
+        'student_id': request.user.student_id,
+        'username': request.user.username,
+        'full_name': request.user.full_name,
+        'academic_year_level': request.user.academic_year_level,
+        'contact_number': request.user.contact_number,
+        'email': request.user.email,
+        'avatar': avatar_url,
+    }
+    return JsonResponse(data)
+
+@login_required
+@csrf_exempt
+def update_user_profile(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        contact_number = data.get('contact_number')
+        academic_year_level = data.get('academic_year_level')
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        # Check if the username or email already exists for another user
+        if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['username'] = 'Username already exists.'
+
+        # Update the user details if there are no errors
+        if response_data['success']:
+            user.username = username
+            user.contact_number = contact_number
+            user.academic_year_level = academic_year_level
+            user.save()
+        else:
+            return JsonResponse(response_data, status=400)
+        return JsonResponse({'success': True, 'message': 'Profile updated successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def password_manager_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        repeat_new_password = data.get('repeat_new_password')
+
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        if not check_password(current_password, user.password):
+            response_data['success'] = False
+            response_data['errors']['current_password'] = 'Please check your current password.'
+        elif new_password != repeat_new_password:
+            response_data['success'] = False
+            response_data['errors']['new_password'] = 'Passwords do not match.'
+        else:
+            user.set_password(new_password)
+            user.save()
+
+        if response_data['success']:
+            return JsonResponse({'success': True, 'message': 'Password updated successfully!'})
+        else:
+            return JsonResponse(response_data, status=400)
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def upload_avatar(request):
+    if request.method == 'POST':
+        user_profile = request.user.profile
+
+        if 'avatar' in request.FILES:
+            avatar = request.FILES['avatar']
+
+            # Check file size (limit to 1MB)
+            if avatar.size > 1 * 1024 * 1024:
+                return JsonResponse({'success': False, 'errors': 'File size exceeds the 1MB limit.'}, status=400)
+
+            # Save the image file directly
+            user_profile.avatar.save(avatar.name, avatar)
+            user_profile.save()
+
+            return JsonResponse({'success': True, 'avatar_url': user_profile.avatar.url})
+
+        return JsonResponse({'success': False, 'errors': 'No avatar file uploaded.'}, status=400)
+
+    return JsonResponse({'success': False, 'errors': 'Invalid request'}, status=400)
+
+@login_required
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'success': True, 'message': 'Logout successful!', 'redirect_url': '/'})
+    return redirect('home')
+
 document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("loader-overlay").style.display = "none";
   function fontsAndIconsLoaded() {
@@ -29,245 +1031,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 100); // Check every 100ms
     }
   });
-  // Get overlay and modal elements
-  const feedbackOverlay = document.getElementById("Feedbackoverlay");
-  const feedbackModalContent = document.querySelector(
-    ".feedback-modal-content-pilarease"
-  );
-  const feedbackLink = document.getElementById("feedbackLink");
-  const closeFeedback = document.querySelector(".close-feedback-pilarease");
-  const feedbackForm = document.getElementById("feedbackForm"); // Feedback form element
-  const feedbackMessageInput = document.getElementById("feedbackMessage"); // Feedback textarea
-  const feedbackSubmitButton = document.querySelector(
-    ".submit-feedback-pilarease"
-  ); // Submit button
-
-  // Get loader and notification elements
-  const feedbackCSSOverlay = document.getElementById("feedbackCSSOverlay");
-  const feedbackCSSLoader = document.getElementById("feedbackCSSLoader");
-  const feedbackCSSSuccessBox = document.getElementById(
-    "feedbackCSSSuccessBox"
-  );
-  const feedbackCSSErrorBox = document.getElementById("feedbackCSSErrorBox");
-  const feedbackCSSSuccessContent = document.getElementById(
-    "feedbackCSSSuccessContent"
-  );
-  const feedbackCSSErrorContent = document.getElementById(
-    "feedbackCSSErrorContent"
-  );
-
-  // Function to open the modal and overlay with fadeIn and popIn animations
-  function openFeedbackModal(event) {
-    event.preventDefault();
-
-    // Show the overlay with fadeIn effect
-    feedbackOverlay.style.display = "block";
-    setTimeout(() => {
-      feedbackOverlay.classList.add("show");
-    }, 10); // Slight delay to trigger transition
-
-    // Show the modal content with popIn effect
-    feedbackModalContent.style.display = "block";
-    feedbackModalContent.classList.add("show");
-  }
-
-  // Function to close the modal and overlay with fadeOut and popOut animations
-  function closeFeedbackModal() {
-    feedbackOverlay.classList.remove("show");
-    feedbackOverlay.classList.add("hide");
-    feedbackModalContent.classList.remove("show");
-    feedbackModalContent.classList.add("hide");
-  }
-
-  // When the user clicks the feedback link, open the modal
-  feedbackLink.addEventListener("click", openFeedbackModal);
-
-  // When the user clicks on <span> (x), close the modal
-  closeFeedback.addEventListener("click", closeFeedbackModal);
-
-  // When the user clicks outside of the modal content, close it
-  window.addEventListener("click", function (event) {
-    if (event.target === feedbackOverlay) {
-      closeFeedbackModal();
-    }
-  });
-
-  // When the modal's popOut animation ends, hide the modal content
-  feedbackModalContent.addEventListener("animationend", function (event) {
-    if (event.animationName === "popOut") {
-      feedbackModalContent.style.display = "none";
-      feedbackModalContent.classList.remove("hide");
-    }
-  });
-
-  // When the overlay's fadeOut transition ends, hide the overlay
-  feedbackOverlay.addEventListener("transitionend", function () {
-    if (feedbackOverlay.classList.contains("hide")) {
-      feedbackOverlay.style.display = "none";
-      feedbackOverlay.classList.remove("hide");
-    }
-  });
-
-  // Handle form submission via AJAX
-  feedbackForm.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent the form from submitting traditionally
-
-    const feedbackMessage = feedbackMessageInput.value.trim();
-
-    if (!feedbackMessage) {
-      alert("Please enter your feedback before submitting.");
-      return;
-    }
-
-    feedbackSubmitButton.disabled = true; // Disable button to prevent multiple submissions
-
-    // Show loader
-    showFeedbackCSSLoader();
-
-    // Get the form action URL from data-feedback-url
-    const formUrl = feedbackForm.getAttribute("data-feedback-url");
-
-    // Prepare form data
-    const formData = new FormData();
-    formData.append("message", feedbackMessage);
-
-    // Send the form data to the server via AJAX
-    fetch(formUrl, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCsrfToken(), // Helper function to get CSRF token
-      },
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        hideFeedbackCSSLoader(); // Hide loader
-        feedbackSubmitButton.disabled = false; // Re-enable the button
-
-        if (data.success) {
-          showFeedbackCSSSuccessBox("Thank you for your feedback!");
-          feedbackMessageInput.value = ""; // Clear the input
-        } else {
-          showFeedbackCSSErrorBox(
-            "There was an error submitting your feedback. Please try again."
-          );
-        }
-      })
-      .catch((error) => {
-        hideFeedbackCSSLoader(); // Hide loader
-        feedbackSubmitButton.disabled = false; // Re-enable the button
-        console.error("Error:", error);
-        showFeedbackCSSErrorBox(
-          "An unexpected error occurred. Please try again."
-        );
-      });
-  });
-
-  // Helper function to get CSRF token from cookie
-  function getCsrfToken() {
-    const cookieValue = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken="))
-      ?.split("=")[1];
-    return cookieValue;
-  }
-
-  // Function to show the loader overlay
-  function showFeedbackCSSLoader() {
-    feedbackCSSOverlay.style.display = "flex";
-  }
-
-  // Function to hide the loader overlay
-  function hideFeedbackCSSLoader() {
-    feedbackCSSOverlay.style.display = "none";
-  }
-
-  // Function to show success dialog with pop-in and pop-out animation
-  function showFeedbackCSSSuccessBox(message) {
-    feedbackCSSSuccessContent.innerText = message;
-    feedbackCSSSuccessBox.classList.remove("pop-out");
-    feedbackCSSSuccessBox.classList.add("pop-in");
-    feedbackCSSSuccessBox.style.display = "block";
-
-    // Add event listener for pop-in end to schedule pop-out
-    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopIn);
-
-    function handleSuccessPopIn(event) {
-      if (event.animationName === "popIn") {
-        // Schedule pop-out after a delay (e.g., 3 seconds)
-        setTimeout(() => {
-          feedbackCSSSuccessBox.classList.remove("pop-in");
-          feedbackCSSSuccessBox.classList.add("pop-out");
-        }, 3000); // 3 seconds display time
-
-        // Remove this event listener
-        feedbackCSSSuccessBox.removeEventListener(
-          "animationend",
-          handleSuccessPopIn
-        );
-      }
-    }
-
-    // Add event listener for pop-out end to hide dialog and close modal
-    feedbackCSSSuccessBox.addEventListener("animationend", handleSuccessPopOut);
-
-    function handleSuccessPopOut(event) {
-      if (event.animationName === "popOut") {
-        feedbackCSSSuccessBox.style.display = "none";
-        feedbackCSSSuccessBox.classList.remove("pop-out");
-        closeFeedbackModal(); // Close the modal after animation
-        // Optionally, reload the page or update content
-        // window.location.reload(); // Uncomment if you want to refresh the page
-        feedbackCSSSuccessBox.removeEventListener(
-          "animationend",
-          handleSuccessPopOut
-        );
-      }
-    }
-  }
-
-  // Function to show error dialog with pop-in and pop-out animation
-  function showFeedbackCSSErrorBox(error) {
-    feedbackCSSErrorContent.innerText = error;
-    feedbackCSSErrorBox.classList.remove("pop-out");
-    feedbackCSSErrorBox.classList.add("pop-in");
-    feedbackCSSErrorBox.style.display = "block";
-
-    // Add event listener for pop-in end to schedule pop-out
-    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopIn);
-
-    function handleErrorPopIn(event) {
-      if (event.animationName === "popIn") {
-        // Schedule pop-out after a delay (e.g., 3 seconds)
-        setTimeout(() => {
-          feedbackCSSErrorBox.classList.remove("pop-in");
-          feedbackCSSErrorBox.classList.add("pop-out");
-        }, 3000); // 3 seconds display time
-
-        // Remove this event listener
-        feedbackCSSErrorBox.removeEventListener(
-          "animationend",
-          handleErrorPopIn
-        );
-      }
-    }
-
-    // Add event listener for pop-out end to hide dialog and close modal
-    feedbackCSSErrorBox.addEventListener("animationend", handleErrorPopOut);
-
-    function handleErrorPopOut(event) {
-      if (event.animationName === "popOut") {
-        feedbackCSSErrorBox.style.display = "none";
-        feedbackCSSErrorBox.classList.remove("pop-out");
-        closeFeedbackModal(); // Close the modal after animation
-        feedbackCSSErrorBox.removeEventListener(
-          "animationend",
-          handleErrorPopOut
-        );
-      }
-    }
-  }
-
   const avatarLoader = document.getElementById("avatarLoader");
   const currentAvatar = document.getElementById("currentAvatar");
   const avatarModal = document.getElementById("avatarModal");
@@ -290,6 +1053,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const placeholderUrl = currentAvatar.dataset.placeholderUrl;
 
   const statusModal = document.getElementById("statusModal");
+  const statusModalOverlay = document.getElementById("statusModalOverlay");
+  const closeStatusModal = document.getElementById("closeStatusModal");
+  const statusComposerButton = document.getElementById("statuscomposer");
+
   const statusForm = document.getElementById("statusForm");
   const feelingIcons = document.querySelectorAll(".feeling-icon");
   const statusTitle = document.getElementById("caption");
@@ -299,6 +1066,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const confirmBtn = document.getElementById("confirmBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const categoryElements = document.querySelectorAll(".v1_124 div");
+  const contactUsButton = document.getElementById("contactUsButton");
+  const contactUsModal = document.getElementById("contactUsModal");
+  const closeContactUsModal = document.getElementById("closeContactUsModal");
 
   let selectedEmotion = null;
   let page = 1;
@@ -486,227 +1256,76 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 300);
     }, 3000);
   }
-  // Get overlay and modal elements
-  const contactUsButton = document.getElementById("contactUsButton");
-  const contactUsModal = document.getElementById("contactUsModal");
-  const closeContactUsModalBtn = document.getElementById("closeContactUsModal");
-  const contactUsOverlay = document.getElementById("ContactUsOverlay");
 
-  // Get loader and notification elements
-  const contactCSSOverlay = document.getElementById("contactCSSOverlay");
-  const contactCSSLoader = document.getElementById("contactCSSLoader");
-  const contactCSSSuccessBox = document.getElementById("contactCSSSuccessBox");
-  const contactCSSErrorBox = document.getElementById("contactCSSErrorBox");
-  const contactCSSSuccessContent = document.getElementById(
-    "contactCSSSuccessContent"
-  );
-  const contactCSSErrorContent = document.getElementById(
-    "contactCSSErrorContent"
-  );
+  // Show modal when Contact Us button is clicked
+  contactUsButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    contactUsModal.style.display = "block";
+    setTimeout(() => {
+      contactUsModal.classList.add("pop-in");
+      document.querySelector(".modal-content").classList.add("pop-in");
+    }, 10);
+  });
 
-  // Form element
+  // Close modal when the close button is clicked
+  closeContactUsModal.addEventListener("click", function () {
+    document.querySelector(".modal-content").classList.add("pop-out");
+    contactUsModal.classList.add("pop-out");
+    setTimeout(() => {
+      contactUsModal.style.display = "none";
+      document.querySelector(".modal-content").classList.remove("pop-out");
+      contactUsModal.classList.remove("pop-out");
+    }, 300);
+  });
+
+  // Close modal when clicking outside of the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === contactUsModal) {
+      document.querySelector(".modal-content").classList.add("pop-out");
+      contactUsModal.classList.add("pop-out");
+      setTimeout(() => {
+        contactUsModal.style.display = "none";
+        document.querySelector(".modal-content").classList.remove("pop-out");
+        contactUsModal.classList.remove("pop-out");
+      }, 300);
+    }
+  });
+
+  // Handle form submission
   const contactUsForm = document.getElementById("contactUsForm");
-
-  // Function to open the Contact Us modal
-  function openContactUsModal(event) {
+  contactUsForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    // Show overlay with fadeIn effect
-    contactUsOverlay.style.display = "block";
-    // Trigger reflow to ensure the transition works
-    void contactUsOverlay.offsetWidth;
-    contactUsOverlay.classList.add("show");
-
-    // Show modal with pop-in animation
-    contactUsModal.style.display = "block";
-    // Trigger reflow
-    void contactUsModal.offsetWidth;
-    contactUsModal.classList.add("pop-in");
-    contactUsModal.classList.remove("pop-out");
-  }
-
-  // Function to close the Contact Us modal
-  function closeContactUsModalHandler() {
-    // Start pop-out animation
-    contactUsModal.classList.add("pop-out");
-    contactUsModal.classList.remove("pop-in");
-
-    // Start fade-out animation for overlay
-    contactUsOverlay.classList.remove("show");
-    contactUsOverlay.classList.add("hide");
-  }
-
-  // Event listener for transition end on the overlay to handle display:none
-  contactUsOverlay.addEventListener("transitionend", function (event) {
-    if (event.propertyName === "opacity") {
-      if (contactUsOverlay.classList.contains("hide")) {
-        contactUsOverlay.style.display = "none";
-        contactUsOverlay.classList.remove("hide");
-      }
-    }
-  });
-
-  // Event listener for animation end on the modal to hide it after pop-out
-  contactUsModal.addEventListener("transitionend", function (event) {
-    if (
-      event.propertyName === "transform" &&
-      contactUsModal.classList.contains("pop-out")
-    ) {
-      contactUsModal.style.display = "none";
-      contactUsModal.classList.remove("pop-out");
-    }
-  });
-
-  // Event Listener for opening the modal
-  contactUsButton.addEventListener("click", openContactUsModal);
-
-  // Event Listener for closing the modal via close button
-  closeContactUsModalBtn.addEventListener("click", closeContactUsModalHandler);
-
-  // Event Listener for closing the modal by clicking outside the modal content
-  window.addEventListener("click", function (event) {
-    if (event.target === contactUsOverlay) {
-      closeContactUsModalHandler();
-    }
-  });
-
-  // Function to show the loader overlay
-  function showContactCSSLoader() {
-    contactCSSOverlay.style.display = "flex";
-  }
-
-  // Function to hide the loader overlay
-  function hideContactCSSLoader() {
-    contactCSSOverlay.style.display = "none";
-  }
-
-  // Function to show success dialog with pop-in and pop-out animations
-  function showContactCSSSuccessBox(message) {
-    contactCSSSuccessContent.innerText = message;
-    contactCSSSuccessBox.style.display = "block";
-    // Trigger reflow
-    void contactCSSSuccessBox.offsetWidth;
-    contactCSSSuccessBox.classList.add("pop-in");
-    contactCSSSuccessBox.classList.remove("pop-out");
-
-    // Automatically hide after 3 seconds
-    setTimeout(() => {
-      contactCSSSuccessBox.classList.remove("pop-in");
-      contactCSSSuccessBox.classList.add("pop-out");
-    }, 3000); // 3 seconds
-
-    // Event listener to hide after pop-out animation
-    contactCSSSuccessBox.addEventListener(
-      "transitionend",
-      handleSuccessPopOut,
-      { once: true }
-    );
-  }
-
-  // Handler for pop-out animation end of success dialog
-  function handleSuccessPopOut(event) {
-    if (
-      event.propertyName === "opacity" &&
-      contactCSSSuccessBox.classList.contains("pop-out")
-    ) {
-      contactCSSSuccessBox.style.display = "none";
-      contactCSSSuccessBox.classList.remove("pop-out");
-      closeContactUsModalHandler(); // Close the modal after success dialog
-    }
-  }
-
-  // Function to show error dialog with pop-in and pop-out animations
-  function showContactCSSErrorBox(error) {
-    contactCSSErrorContent.innerText = error;
-    contactCSSErrorBox.style.display = "block";
-    // Trigger reflow
-    void contactCSSErrorBox.offsetWidth;
-    contactCSSErrorBox.classList.add("pop-in");
-    contactCSSErrorBox.classList.remove("pop-out");
-
-    // Automatically hide after 3 seconds
-    setTimeout(() => {
-      contactCSSErrorBox.classList.remove("pop-in");
-      contactCSSErrorBox.classList.add("pop-out");
-    }, 3000); // 3 seconds
-
-    // Event listener to hide after pop-out animation
-    contactCSSErrorBox.addEventListener("transitionend", handleErrorPopOut, {
-      once: true,
-    });
-  }
-
-  // Handler for pop-out animation end of error dialog
-  function handleErrorPopOut(event) {
-    if (
-      event.propertyName === "opacity" &&
-      contactCSSErrorBox.classList.contains("pop-out")
-    ) {
-      contactCSSErrorBox.style.display = "none";
-      contactCSSErrorBox.classList.remove("pop-out");
-      closeContactUsModalHandler(); // Close the modal after error dialog
-    }
-  }
-
-  // Handle form submission via AJAX
-  contactUsForm.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent default form submission
-
     const formData = new FormData(contactUsForm);
-    const data = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      subject: formData.get("subject"),
-      message: formData.get("message"),
-    };
 
-    // Disable the submit button to prevent multiple submissions
-    const submitButton = contactUsForm.querySelector("button[type='submit']");
-    submitButton.disabled = true;
-
-    // Show loader overlay
-    showContactCSSLoader();
-
-    // Send the form data to the server via AJAX
     fetch("/contact_us/", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject"),
+        message: formData.get("message"),
+      }),
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": getCsrfToken(),
+        "X-CSRFToken": getCookie("csrftoken"),
       },
     })
       .then((response) => response.json())
       .then((data) => {
-        // Hide loader overlay
-        hideContactCSSLoader();
-
-        // Re-enable the submit button
-        submitButton.disabled = false;
-
         if (data.success) {
-          showContactCSSSuccessBox("Your message has been sent successfully!");
-          contactUsForm.reset(); // Reset the form
+          alert("Your message has been sent successfully!");
+          contactUsModal.style.display = "none";
+          contactUsForm.reset();
         } else {
-          showContactCSSErrorBox(
-            "There was an error sending your message. Please try again."
-          );
+          alert("There was an error sending your message. Please try again.");
         }
       })
       .catch((error) => {
         console.error("Error:", error);
-        // Hide loader overlay
-        hideContactCSSLoader();
-
-        // Re-enable the submit button
-        submitButton.disabled = false;
-
-        showContactCSSErrorBox(
-          "There was an error sending your message. Please try again."
-        );
+        alert("There was an error sending your message. Please try again.");
       });
   });
-
   // Added back button functionality
   const backButton = document.getElementById("backButton");
   if (backButton) {
@@ -726,516 +1345,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   addPopAnimation();
-
-  // Auto-mention the username in the reply form when clicking the reply label
-  const replyLabels = document.querySelectorAll(".reply-label");
-
-  replyLabels.forEach((label) => {
-    label.addEventListener("click", function () {
-      const replyId = this.getAttribute("data-reply-id");
-      const replyForm = document.getElementById(`replyForm-${replyId}`);
-      const username = this.getAttribute("data-username");
-      const level = parseInt(this.getAttribute("data-level"));
-
-      // Show the reply form
-      if (
-        replyForm.style.display === "none" ||
-        replyForm.style.display === ""
-      ) {
-        replyForm.style.display = "block";
-      } else {
-        replyForm.style.display = "none";
-      }
-
-      // Insert the mentioned username at the beginning of the textarea
-      const textarea = replyForm.querySelector("textarea");
-      textarea.value = `@${username} `; // Mention the user
-      textarea.focus(); // Auto-focus on the textarea
-    });
-  });
-
-  // Handle reply submission with AJAX
-  const submitReplyButtons = document.querySelectorAll(".submit-reply");
-
-  submitReplyButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const replyId = this.getAttribute("data-reply-id");
-      const level = parseInt(this.getAttribute("data-level"));
-      const replyForm = document.getElementById(`replyForm-${replyId}`);
-      const textarea = replyForm.querySelector("textarea");
-      const replyText = textarea.value;
-
-      // Use AJAX to submit the reply without reloading the page
-      const statusId = document
-        .querySelector(".status-detail-container")
-        .getAttribute("data-status-id");
-
-      let parentReplyId = replyId;
-
-      // If level is 3, we should not create further nesting
-      if (level >= 3) {
-        parentReplyId = null; // Do not pass parent reply ID to prevent nesting
-      }
-
-      // Build the URL accordingly
-      let url = `/add_reply/${statusId}/`;
-      if (parentReplyId) {
-        url += `${parentReplyId}/`;
-      }
-
-      fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": "{{ csrf_token }}",
-        },
-        body: JSON.stringify({ text: replyText }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            // Append the new reply to the DOM
-            // Depending on the level, we need to insert the new reply in the appropriate place
-            if (level >= 3) {
-              // Append the reply as a Level 3 reply (without further nesting)
-              const nestedRepliesContainer =
-                replyForm.closest(".nested-replies");
-              const newReply = `
-              <div class="reply nested-reply level-3" id="reply-${data.reply.id}">
-                <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
-                <div class="reply-content">
-                  <strong>${data.reply.username}</strong>
-                  <p>${data.reply.text}</p>
-                  <div class="reply-footer">
-                    <span class="reply-timestamp">${data.reply.created_at}</span>
-                    <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}" data-level="3">Reply</span>
-                  </div>
-                  <!-- Reply Form -->
-                  <div class="reply-form-container" id="replyForm-${data.reply.id}" style="display: none;">
-                    <textarea placeholder="Write a reply..."></textarea>
-                    <button class="submit-reply" data-reply-id="${data.reply.id}" data-level="3">Submit Reply</button>
-                  </div>
-                </div>
-              </div>
-              `;
-              nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
-            } else {
-              // For levels less than 3, append the reply as a nested reply
-              const nestedRepliesContainer = document.getElementById(
-                `nestedReplies-${replyId}`
-              );
-              const newReply = `
-              <div class="reply nested-reply level-${level + 1}" id="reply-${
-                data.reply.id
-              }">
-                <img src="${
-                  data.reply.avatar_url
-                }" alt="Avatar" class="reply-avatar" />
-                <div class="reply-content">
-                  <strong>${data.reply.username}</strong>
-                  <p>${data.reply.text}</p>
-                  <div class="reply-footer">
-                    <span class="reply-timestamp">${
-                      data.reply.created_at
-                    }</span>
-                    <span class="reply-label" data-reply-id="${
-                      data.reply.id
-                    }" data-username="${data.reply.username}" data-level="${
-                level + 1
-              }">Reply</span>
-                  </div>
-                  <!-- Reply Form -->
-                  <div class="reply-form-container" id="replyForm-${
-                    data.reply.id
-                  }" style="display: none;">
-                    <textarea placeholder="Write a reply..."></textarea>
-                    <button class="submit-reply" data-reply-id="${
-                      data.reply.id
-                    }" data-level="${level + 1}">Submit Reply</button>
-                  </div>
-                </div>
-                <!-- Nested Replies Container -->
-                <div class="nested-replies" id="nestedReplies-${
-                  data.reply.id
-                }"></div>
-              </div>
-              `;
-              nestedRepliesContainer.insertAdjacentHTML("beforeend", newReply);
-            }
-
-            // Clear the textarea after submission
-            textarea.value = "";
-            replyForm.style.display = "none";
-
-            // Re-attach event listeners to new elements
-            attachReplyLabelListeners();
-            attachSubmitReplyListeners();
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    });
-  });
-
-  // Functions to re-attach event listeners
-  function attachReplyLabelListeners() {
-    const replyLabels = document.querySelectorAll(".reply-label");
-    replyLabels.forEach((label) => {
-      if (!label.hasAttribute("data-listener-attached")) {
-        label.addEventListener("click", function () {
-          // Same logic as above
-        });
-        label.setAttribute("data-listener-attached", "true");
-      }
-    });
-  }
-
-  function attachSubmitReplyListeners() {
-    const submitReplyButtons = document.querySelectorAll(".submit-reply");
-
-    submitReplyButtons.forEach((button) => {
-      if (!button.hasAttribute("data-listener-attached")) {
-        button.addEventListener("click", function () {
-          const replyId = this.getAttribute("data-reply-id");
-          const level = parseInt(this.getAttribute("data-level"));
-          const replyForm = document.getElementById(`replyForm-${replyId}`);
-          const textarea = replyForm.querySelector("textarea");
-          const replyText = textarea.value;
-
-          // Use AJAX to submit the reply without reloading the page
-          const statusId = document
-            .querySelector(".status-detail-container")
-            .getAttribute("data-status-id");
-
-          let parentReplyId = replyId;
-
-          // If level is 3, we should not create further nesting
-          if (level >= 3) {
-            parentReplyId = null; // Do not pass parent reply ID to prevent nesting
-          }
-
-          // Build the URL accordingly
-          let url = `/add_reply/${statusId}/`;
-          if (parentReplyId) {
-            url += `${parentReplyId}/`;
-          }
-
-          fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify({ text: replyText }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                // Append the new reply to the DOM
-                let newReplyHtml = "";
-                if (level >= 3) {
-                  // Append the reply as a Level 3 reply (without further nesting)
-                  const nestedRepliesContainer =
-                    replyForm.closest(".nested-replies");
-                  newReplyHtml = `
-                  <div class="reply nested-reply level-3" id="reply-${data.reply.id}">
-                    <img src="${data.reply.avatar_url}" alt="Avatar" class="reply-avatar" />
-                    <div class="reply-content">
-                      <strong>${data.reply.username}</strong>
-                      <p>${data.reply.text}</p>
-                      <div class="reply-footer">
-                        <span class="reply-timestamp">${data.reply.created_at}</span>
-                        <span class="reply-label" data-reply-id="${data.reply.id}" data-username="${data.reply.username}" data-level="3">Reply</span>
-                      </div>
-                      <!-- Reply Form -->
-                      <div class="reply-form-container" id="replyForm-${data.reply.id}" style="display: none; position: relative;">
-                        <textarea placeholder="Write a reply..."></textarea>
-                        <div class="mention-autocomplete" id="mentionAutocomplete-${data.reply.id}"></div>
-                        <button class="submit-reply" data-reply-id="${data.reply.id}" data-level="3">Submit Reply</button>
-                      </div>
-                    </div>
-                  </div>
-                  `;
-                  nestedRepliesContainer.insertAdjacentHTML(
-                    "beforeend",
-                    newReplyHtml
-                  );
-                } else {
-                  // For levels less than 3, append the reply as a nested reply
-                  const nestedRepliesContainer = document.getElementById(
-                    `nestedReplies-${replyId}`
-                  );
-                  newReplyHtml = `
-                  <div class="reply nested-reply level-${
-                    level + 1
-                  }" id="reply-${data.reply.id}">
-                    <img src="${
-                      data.reply.avatar_url
-                    }" alt="Avatar" class="reply-avatar" />
-                    <div class="reply-content">
-                      <strong>${data.reply.username}</strong>
-                      <p>${data.reply.text}</p>
-                      <div class="reply-footer">
-                        <span class="reply-timestamp">${
-                          data.reply.created_at
-                        }</span>
-                        <span class="reply-label" data-reply-id="${
-                          data.reply.id
-                        }" data-username="${data.reply.username}" data-level="${
-                    level + 1
-                  }">Reply</span>
-                      </div>
-                      <!-- Reply Form -->
-                      <div class="reply-form-container" id="replyForm-${
-                        data.reply.id
-                      }" style="display: none; position: relative;">
-                        <textarea placeholder="Write a reply..."></textarea>
-                        <div class="mention-autocomplete" id="mentionAutocomplete-${
-                          data.reply.id
-                        }"></div>
-                        <button class="submit-reply" data-reply-id="${
-                          data.reply.id
-                        }" data-level="${level + 1}">Submit Reply</button>
-                      </div>
-                    </div>
-                    <!-- Nested Replies Container -->
-                    <div class="nested-replies" id="nestedReplies-${
-                      data.reply.id
-                    }"></div>
-                  </div>
-                  `;
-                  nestedRepliesContainer.insertAdjacentHTML(
-                    "beforeend",
-                    newReplyHtml
-                  );
-                }
-
-                // Clear the textarea after submission
-                textarea.value = "";
-                replyForm.style.display = "none";
-
-                // Re-attach event listeners to new elements
-                attachReplyLabelListeners();
-                attachSubmitReplyListeners();
-                reinitializeAutocomplete();
-
-                // **Auto-scroll to the new reply**
-                const newReplyElement = document.getElementById(
-                  `reply-${data.reply.id}`
-                );
-                if (newReplyElement) {
-                  newReplyElement.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }
-              } else {
-                // Handle error (e.g., display error message)
-                alert(
-                  data.error || "An error occurred while submitting your reply."
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-            });
-        });
-        button.setAttribute("data-listener-attached", "true");
-      }
-    });
-  }
-  function initMentionAutocomplete(textarea, autocompleteContainer) {
-    let cursorPosition = 0;
-    let mentionQuery = "";
-    let mentionStartPos = -1;
-
-    textarea.addEventListener("keyup", function (event) {
-      const caretPosition = textarea.selectionStart;
-      const text = textarea.value;
-      const char = event.key;
-
-      // Check if '@' is typed
-      if (char === "@") {
-        mentionStartPos = caretPosition - 1;
-        mentionQuery = "";
-        showAutocomplete();
-      } else if (mentionStartPos >= 0) {
-        // If we are in a mention query
-        if (event.key === "Backspace") {
-          if (caretPosition <= mentionStartPos) {
-            // Cursor moved before the mention start, cancel mention
-            hideAutocomplete();
-            mentionStartPos = -1;
-            mentionQuery = "";
-            return;
-          } else {
-            mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
-          }
-        } else if (event.key.length === 1) {
-          mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
-        } else if (
-          event.key === "ArrowUp" ||
-          event.key === "ArrowDown" ||
-          event.key === "Enter"
-        ) {
-          // Handle these keys in keydown event
-          return;
-        } else {
-          mentionQuery = text.substring(mentionStartPos + 1, caretPosition);
-        }
-
-        if (mentionQuery.length > 0) {
-          fetchUsernames(mentionQuery);
-        } else {
-          hideAutocomplete();
-        }
-      }
-    });
-
-    // Handle keydown for navigation in the autocomplete
-    textarea.addEventListener("keydown", function (event) {
-      if (autocompleteContainer.style.display === "block") {
-        if (event.key === "ArrowDown") {
-          event.preventDefault();
-          moveSelection(1);
-        } else if (event.key === "ArrowUp") {
-          event.preventDefault();
-          moveSelection(-1);
-        } else if (event.key === "Enter") {
-          event.preventDefault();
-          selectUsername();
-        }
-      }
-    });
-
-    // Fetch usernames from server
-    function fetchUsernames(query) {
-      fetch(`/get_usernames/?q=${encodeURIComponent(query)}`)
-        .then((response) => response.json())
-        .then((data) => {
-          showAutocomplete(data.usernames);
-        })
-        .catch((error) => {
-          console.error("Error fetching usernames:", error);
-        });
-    }
-
-    // Show autocomplete suggestions
-    function showAutocomplete(usernames = []) {
-      if (usernames.length === 0) {
-        hideAutocomplete();
-        return;
-      }
-
-      autocompleteContainer.innerHTML = "<ul></ul>";
-      const ul = autocompleteContainer.querySelector("ul");
-
-      usernames.forEach((username, index) => {
-        const li = document.createElement("li");
-        li.textContent = username;
-        li.dataset.index = index;
-        li.addEventListener("mousedown", function (e) {
-          e.preventDefault(); // Prevent textarea from losing focus
-          selectUsername(username);
-        });
-        ul.appendChild(li);
-      });
-
-      autocompleteContainer.style.display = "block";
-      setActiveItem(0);
-    }
-
-    // Hide autocomplete suggestions
-    function hideAutocomplete() {
-      autocompleteContainer.style.display = "none";
-      autocompleteContainer.innerHTML = "";
-    }
-
-    let activeIndex = -1;
-
-    function moveSelection(direction) {
-      const items = autocompleteContainer.querySelectorAll("li");
-      if (items.length === 0) return;
-
-      activeIndex += direction;
-
-      if (activeIndex < 0) activeIndex = items.length - 1;
-      if (activeIndex >= items.length) activeIndex = 0;
-
-      setActiveItem(activeIndex);
-    }
-
-    function setActiveItem(index) {
-      const items = autocompleteContainer.querySelectorAll("li");
-      items.forEach((item, idx) => {
-        if (idx === index) {
-          item.classList.add("active");
-        } else {
-          item.classList.remove("active");
-        }
-      });
-    }
-
-    function selectUsername(username = null) {
-      const items = autocompleteContainer.querySelectorAll("li");
-      if (!username && activeIndex >= 0 && activeIndex < items.length) {
-        username = items[activeIndex].textContent;
-      }
-      if (username) {
-        const beforeMention = textarea.value.substring(0, mentionStartPos);
-        const afterMention = textarea.value.substring(textarea.selectionStart);
-        textarea.value = `${beforeMention}@${username} ${afterMention}`;
-        const newCaretPosition = beforeMention.length + username.length + 2;
-        textarea.setSelectionRange(newCaretPosition, newCaretPosition);
-        hideAutocomplete();
-        mentionStartPos = -1;
-        mentionQuery = "";
-      }
-    }
-
-    // Click outside to hide autocomplete
-    document.addEventListener("click", function (event) {
-      if (
-        !autocompleteContainer.contains(event.target) &&
-        event.target !== textarea
-      ) {
-        hideAutocomplete();
-      }
-    });
-  }
-
-  // Initialize autocomplete for all reply textareas
-  function initializeAllAutocomplete() {
-    const replyForms = document.querySelectorAll(".reply-form-container");
-    replyForms.forEach((form) => {
-      const textarea = form.querySelector("textarea");
-      const autocompleteContainer = form.querySelector(".mention-autocomplete");
-      initMentionAutocomplete(textarea, autocompleteContainer);
-    });
-
-    // Initialize for the main reply form
-    const mainTextarea = document.querySelector("#replyFormMain textarea");
-    const mainAutocompleteContainer = document.querySelector(
-      "#mentionAutocompleteMain"
-    );
-    if (mainTextarea && mainAutocompleteContainer) {
-      initMentionAutocomplete(mainTextarea, mainAutocompleteContainer);
-    }
-  }
-
-  initializeAllAutocomplete();
-
-  // Re-initialize autocomplete when new reply forms are added dynamically
-  function reinitializeAutocomplete() {
-    // Remove existing autocomplete initialization to prevent duplicates
-    const replyForms = document.querySelectorAll(".reply-form-container");
-    replyForms.forEach((form) => {
-      const textarea = form.querySelector("textarea");
-      textarea.replaceWith(textarea.cloneNode(true));
-    });
-    initializeAllAutocomplete();
-  }
 
   categoryElements.forEach((categoryElement) => {
     categoryElement.addEventListener("click", function () {
@@ -1533,46 +1642,51 @@ document.addEventListener("DOMContentLoaded", function () {
   function countTokens(text) {
     return text.split(/\s+/).filter(Boolean).length;
   }
-
-  // Function to count words (splitting by spaces and filtering empty entries)
-  function countWords(text) {
-    return text.split(/\s+/).filter(Boolean).length; // Same logic as counting tokens
-  }
-
   // Update the token and character count
   function updateCounters() {
     const descriptionElement = document.getElementById("description");
+    const characterCount = descriptionElement.textContent.length;
+    const tokenCount = countTokens(descriptionElement.textContent);
 
-    // Check if the description is showing the placeholder; if so, ignore counting
-    if (descriptionElement.classList.contains("placeholder")) {
-      document.getElementById("characterCount").textContent = `0 characters`;
-      document.getElementById("wordCount").textContent = `0 words`;
-      document.getElementById("tokenCount").textContent = `0 tokens`;
-      return;
-    }
-
-    // Get the text content of the description (ignoring placeholder)
-    const plainDescription = descriptionElement.textContent.trim();
-
-    // Update the counts
-    const characterCount = plainDescription.length;
-    const wordCount = countWords(plainDescription);
-    const tokenCount = countTokens(plainDescription);
-
-    // Update the DOM elements with the counts
     document.getElementById(
       "characterCount"
     ).textContent = `${characterCount} characters`;
-    document.getElementById("wordCount").textContent = `${wordCount} words`;
     document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
 
-    // If token count exceeds the limit, show the max token count
     if (tokenCount > 512) {
       document.getElementById(
         "tokenCount"
       ).textContent = `512 tokens (Max reached)`;
     }
   }
+
+  // // Show the diary suggestion dialog
+  // function showSuggestDiary() {
+  //   const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //   suggestDiaryDialog.classList.remove("pop-out");
+  //   suggestDiaryDialog.classList.add("pop-in");
+  //   suggestDiaryDialog.style.display = "block";
+  // }
+
+  // // Close the diary suggestion dialog
+  // document
+  //   .getElementById("closeDiarySuggestionBtn")
+  //   .addEventListener("click", function () {
+  //     const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //     suggestDiaryDialog.classList.remove("pop-in");
+  //     suggestDiaryDialog.classList.add("pop-out");
+  //     setTimeout(() => {
+  //       suggestDiaryDialog.style.display = "none";
+  //     }, 300);
+  //   });
+
+  // // Redirect to the diary module when clicked
+  // document
+  //   .getElementById("openDiaryBtn")
+  //   .addEventListener("click", function () {
+  //     window.location.href = "/diary_module_url"; // Replace with the actual diary module URL
+  //   });
+
   // Add event listener to update counters on input
   document
     .getElementById("description")
@@ -1766,48 +1880,42 @@ document.addEventListener("DOMContentLoaded", function () {
           const newBox = document.createElement("div");
           newBox.classList.add("box5", "pop");
           newBox.innerHTML = `
-                  <div class="avatar-content">
-                      <a href="/status/${status.id}/">
-                          <img src="${
-                            status.avatar_url
-                          }" alt="Avatar" class="circle-avatar-placeholder" />
-                      </a>
-                      <p class="username-placeholder">${status.username}</p>
-                  </div>
-                  <div class="content">
-                      <a href="/status/${status.id}/">
-                          <h2 class="title-placeholder">${status.title}</h2>
-                          <p class="description-placeholder">${truncateText(
-                            status.plain_description
-                          )}</p>
-                      </a>
-                      <span class="time-stamp time-stamp-placeholder">${
-                        status.created_at
-                      } ago</span>
-                      <span class="feelings feelings-placeholder">${getEmotionIcon(
-                        status.emotion
-                      )} ${mapEmotion(status.emotion)}</span>
-                      <span class="replies replies-placeholder">${
-                        status.replies
-                      } ${status.replies === 1 ? "Reply" : "Replies"}</span>
-                      ${
-                        status.can_delete
-                          ? `
-                            <button id="edit-${status.id}" class="edit-button status">
-                              <i class='bx bx-edit'></i>
-                            </button>
-                            <button id="delete-${status.id}" class="delete-button status">
-                              <i class='bx bxs-trash bx-flip-horizontal'></i>
-                            </button>`
-                          : ""
-                      }
-                      ${
-                        !status.can_delete
-                          ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
-                          : ""
-                      }
-                  </div>
-              `;
+                    <div class="avatar-content">
+                        <a href="/status/${status.id}/">
+                            <img src="${
+                              status.avatar_url
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                        </a>
+                        <p class="username-placeholder">${status.username}</p>
+                    </div>
+                    <div class="content">
+                        <a href="/status/${status.id}/">
+                            <h2 class="title-placeholder">${status.title}</h2>
+                            <p class="description-placeholder">${truncateText(
+                              status.plain_description
+                            )}</p>
+                        </a>
+                        <span class="time-stamp time-stamp-placeholder">${
+                          status.created_at
+                        } ago</span>
+                        <span class="feelings feelings-placeholder">${getEmotionIcon(
+                          status.emotion
+                        )} ${mapEmotion(status.emotion)}</span>
+                        <span class="replies replies-placeholder">${
+                          status.replies
+                        } ${status.replies === 1 ? "Reply" : "Replies"}</span>
+                        ${
+                          status.can_delete
+                            ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                            : ""
+                        }
+                        ${
+                          !status.can_delete
+                            ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
+                            : ""
+                        }
+                    </div>
+                `;
           container.appendChild(newBox);
 
           if (status.can_delete) {
@@ -1815,13 +1923,6 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
-              });
-
-            // Add event listener for the edit button
-            document
-              .getElementById(`edit-${status.id}`)
-              .addEventListener("click", function () {
-                editStatus(status.id);
               });
           } else {
             document
@@ -2364,57 +2465,27 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   function deleteStatus(statusId) {
-    const deleteDialog = document.getElementById("deleteConfirmationDialog");
-    const confirmDeleteButton = document.getElementById("confirmSubmitDelete");
-    const cancelDeleteButton = document.getElementById("cancelSubmitDelete");
-
-    // Show the delete confirmation dialog with pop-in animation
-    deleteDialog.classList.remove("pop-out");
-    deleteDialog.classList.add("pop-in");
-    deleteDialog.style.display = "block";
-
-    // Handle cancel button click
-    cancelDeleteButton.onclick = function () {
-      closeDeleteDialog();
-    };
-
-    // Handle confirm delete button click
-    confirmDeleteButton.onclick = function () {
-      fetch(`/delete_status/${statusId}/`, {
-        method: "DELETE",
-        headers: {
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
+    fetch(`/delete_status/${statusId}/`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document
+            .getElementById(`delete-${statusId}`)
+            .closest(".box5")
+            .remove();
+        } else {
+          showStatusError(data.message);
+        }
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            document
-              .getElementById(`delete-${statusId}`)
-              .closest(".box5")
-              .remove();
-            closeDeleteDialog(); // Close dialog after delete
-          } else {
-            showStatusError(data.message);
-            closeDeleteDialog(); // Close dialog even if there's an error
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting status:", error);
-          showStatusError("Error deleting status. Please try again.");
-          closeDeleteDialog(); // Close dialog even if there's an error
-        });
-    };
-
-    function closeDeleteDialog() {
-      // Add pop-out animation and hide the dialog after the animation
-      deleteDialog.classList.remove("pop-in");
-      deleteDialog.classList.add("pop-out");
-
-      setTimeout(() => {
-        deleteDialog.style.display = "none";
-      }, 300); // Match the animation duration
-    }
+      .catch((error) => {
+        console.error("Error deleting status:", error);
+        showStatusError("Error deleting status. Please try again.");
+      });
   }
 
   function getEmotionIcon(emotion) {
@@ -2459,6 +2530,45 @@ document.addEventListener("DOMContentLoaded", function () {
       return text;
     }
     return text.substring(0, maxLength) + "...";
+  }
+
+  function displayNewStatus(status) {
+    const container = document.getElementById("boxContainer");
+    const newBox = document.createElement("div");
+    newBox.classList.add("box5", "pop");
+    newBox.innerHTML = `
+            <div class="avatar-content">
+                <img src="${
+                  status.avatar_url
+                }" alt="Avatar" class="circle-avatar-placeholder" />
+                <p class="username-placeholder">${status.username}</p>
+            </div>
+            <div class="content">
+                <h2 class="title-placeholder">${status.title}</h2>
+                <p class="description-placeholder">${truncateText(
+                  status.description
+                )}</p>
+                <span class="time-stamp time-stamp-placeholder">${
+                  status.created_at
+                } ago</span>
+                <span class="feelings feelings-placeholder">${getEmotionIcon(
+                  status.emotion
+                )} ${mapEmotion(status.emotion)}</span>
+                <span class="replies replies-placeholder">${status.replies} ${
+      status.replies === 1 ? "Reply" : "Replies"
+    }</span>
+            </div>
+             ${
+               status.can_delete
+                 ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                 : ""
+             }
+          `;
+    container.prepend(newBox); // Prepend to show the new status at the top
+
+    newBox.addEventListener("animationend", function () {
+      newBox.classList.remove("pop");
+    });
   }
 
   statusDescription.addEventListener("focus", hidePlaceholder);
@@ -2568,77 +2678,41 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000); // Error message visible for 3 seconds
   }
 
-  // Function to close the status modal with fade-out and pop-out animation
   function closeStatusComposerModal(callback) {
-    const statusModal = document.getElementById("statusModal");
-    const statusModalOverlay = document.getElementById("statusModalOverlay");
-
-    // Add pop-out and fade-out animations
     statusModal.classList.remove("pop-in");
     statusModal.classList.add("pop-out");
     statusModalOverlay.classList.remove("fade-in");
     statusModalOverlay.classList.add("fade-out");
-
-    // Once the animations finish, hide the modal and overlay
     setTimeout(() => {
-      statusModal.style.display = "none"; // Hide modal
-      statusModal.classList.remove("pop-out"); // Remove pop-out class after animation
-
-      statusModalOverlay.style.display = "none"; // Hide overlay
-      statusModalOverlay.classList.remove("fade-out"); // Remove fade-out class after animation
-
-      // If there's a callback (e.g., a page reload or additional action), call it
+      statusModal.style.display = "none";
+      statusModal.classList.remove("pop-out");
+      statusModalOverlay.style.display = "none";
+      statusModalOverlay.classList.remove("fade-out");
       if (callback) {
         callback();
       }
-    }, 300); // Match animation duration (0.3s)
+    }, 300); // Animation duration
   }
-
-  // Function to clear the modal content when closed
   function clearStatusComposerModal() {
-    const statusTitle = document.getElementById("caption");
-    const statusDescription = document.getElementById("description");
-    const feelingIcons = document.querySelectorAll(".feeling-icon");
-
-    selectedEmotion = null; // Reset selected emotion
-    statusTitle.value = ""; // Clear title
-    statusDescription.innerHTML = ""; // Clear description
-    statusDescription.classList.add("placeholder"); // Reset placeholder
-    feelingIcons.forEach((icon) => icon.classList.remove("active")); // Deselect emotion icons
-
-    clearFormData(); // Clear local storage or form data
+    selectedEmotion = null;
+    statusTitle.value = "";
+    statusDescription.innerHTML = "";
+    statusDescription.classList.add("placeholder");
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    clearFormData();
   }
 
-  // Event listener to open the modal with animations
-  const statusComposerButton = document.getElementById("statuscomposer");
+  // Clear the modal fields when opened
   if (statusComposerButton) {
     statusComposerButton.addEventListener("click", function () {
-      loadFormData(); // Load saved form data (if any)
-
-      const statusModal = document.getElementById("statusModal");
-      const statusModalOverlay = document.getElementById("statusModalOverlay");
-
-      // Show modal and overlay
+      loadFormData();
       statusModal.style.display = "block";
       statusModalOverlay.style.display = "block";
-
-      // Trigger pop-in and fade-in animations
       setTimeout(() => {
         statusModal.classList.add("pop-in");
         statusModalOverlay.classList.add("fade-in");
-      }, 10); // Minor delay to trigger CSS transition
+      }, 10);
     });
-  }
-
-  // Additional event listeners to close the modal with animations
-  const closeStatusModal = document.getElementById("closeStatusModal");
-  if (closeStatusModal) {
-    closeStatusModal.addEventListener("click", closeStatusComposerModal);
-  }
-
-  const statusModalOverlay = document.getElementById("statusModalOverlay");
-  if (statusModalOverlay) {
-    statusModalOverlay.addEventListener("click", closeStatusComposerModal);
   }
 
   // Close the modal with pop-out animation
@@ -3429,19 +3503,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // Show the loader and process the login form submission...
   });
 
-  // Real-time validation for each field
-  Object.values(registerFields).forEach((field) => {
-    field.addEventListener("input", function () {
-      validateField(field);
-    });
-  });
-
-  // Form submission handler
   registerForm.addEventListener("submit", function (event) {
     event.preventDefault();
-    const formData = new FormData(this);
+    signupButton.disabled = true; // Disable the button initially
 
-    // Final validation check during form submission
+    const formData = new FormData(registerForm);
     let errorMessage = checkEmptyFields(formData, {
       student_id: "Student ID No.",
       username: "Username",
@@ -3454,45 +3520,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     if (errorMessage) {
-      // Highlight each invalid field during form submission
       Object.values(registerFields).forEach((field) => {
         validateFieldOnSubmit(field);
       });
       showError(errorMessage, "register");
+      signupButton.disabled = false; // Re-enable if there's an error
       return;
     }
 
-    // Submit the form data to the server via Fetch API
-    fetch(this.action, {
-      method: "POST",
-      headers: { "X-CSRFToken": csrftoken },
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showSuccess("Registration successful!", "register");
-          setTimeout(() => {
-            registerModal.classList.add("pop-out");
-            setTimeout(() => {
-              registerModal.style.display = "none";
-              registerModal.classList.remove("pop-out");
-              loginModal.style.display = "block";
-              setTimeout(() => {
-                loginModal.classList.add("pop-in");
-                overlay.classList.add("fade-in");
-              }, 10);
-            }, 300);
-            registerForm.reset();
-          }, 1500);
-        } else {
-          let errorMessage = parseErrorMessages(data.error_message);
-          showError(errorMessage, "register");
-        }
-      })
-      .catch((error) => {
-        showError("An error occurred. Please try again.", "register");
-      });
+    // Show the loader and process the register form submission...
   });
 
   // Validation function for real-time checks
@@ -3625,6 +3661,16 @@ document.addEventListener("DOMContentLoaded", function () {
   function validateFieldStatus(field) {
     if (field.value.trim() === "") {
       field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
       field.classList.add("invalid");
     } else {
       field.classList.remove("invalid");
@@ -4671,301 +4717,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Initial check for notification status when the page loads
   checkNotificationStatus();
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  // Tab Navigation
-  const tabs = document.querySelectorAll(".pilarease-tab");
-  const tabPanes = document.querySelectorAll(".pilarease-tab-pane");
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", function () {
-      // Remove active class from all tabs
-      tabs.forEach((t) => t.classList.remove("active"));
-      // Add active class to clicked tab
-      this.classList.add("active");
-
-      // Hide all tab panes
-      tabPanes.forEach((pane) => pane.classList.remove("active"));
-      // Show the associated tab pane
-      const target = this.getAttribute("data-tab");
-      document.getElementById(target).classList.add("active");
-    });
-  });
-
-  // Statuses Section
-  let statusPage = 1;
-  let statusIsLoading = false;
-  let statusHasNext = true;
-  const pilareaseStatusContainer = document.getElementById(
-    "pilareaseStatusContainer"
-  );
-  const pilareaseStatusLoader = document.getElementById(
-    "pilareaseStatusLoader"
-  );
-  const pilareaseStatusOverlay = document.getElementById(
-    "pilareaseStatusOverlay"
-  );
-
-  // Fetch initial statuses
-  fetchPilareaseStatuses(statusPage);
-
-  // Add scroll event listener for infinite scrolling in Statuses tab
-  const statusesTab = document.getElementById("statuses");
-  statusesTab.addEventListener("click", () => {
-    window.addEventListener("scroll", handleStatusScroll);
-  });
-
-  function handleStatusScroll() {
-    if (
-      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-      !statusIsLoading &&
-      statusHasNext &&
-      document.getElementById("statuses").classList.contains("active")
-    ) {
-      statusPage++;
-      fetchPilareaseStatuses(statusPage);
-    }
-  }
-
-  function fetchPilareaseStatuses(page) {
-    statusIsLoading = true;
-    pilareaseStatusLoader.style.display = "block";
-    pilareaseStatusOverlay.style.display = "block";
-
-    fetch(`/get_user_statuses/?page=${page}`)
-      .then((response) => response.json())
-      .then((data) => {
-        statusIsLoading = false;
-        pilareaseStatusLoader.style.display = "none";
-        pilareaseStatusOverlay.style.display = "none";
-
-        data.statuses.forEach((status) => {
-          const statusBox = document.createElement("div");
-          statusBox.classList.add("pilarease-status-box", "pop");
-          statusBox.setAttribute("data-id", status.id); // For easier DOM manipulation
-
-          statusBox.innerHTML = `
-              <div class="pilarease-status-header">
-                <img src="${status.avatar_url}" alt="${
-            status.username
-          }'s Avatar" class="pilarease-status-avatar" />
-                <div>
-                  <p class="pilarease-status-username">${status.username}</p>
-                  <span class="pilarease-status-time">${
-                    status.created_at
-                  } ago</span>
-                </div>
-              </div>
-              <h3 class="pilarease-status-title">${status.title}</h3>
-              <p class="pilarease-status-description">${status.description}</p>
-              <div class="pilarease-status-actions">
-                <button class="pilarease-action-button">
-                  <i class='bx bxs-comment'></i> Comment (${status.comments})
-                </button>
-                ${
-                  status.can_edit
-                    ? `<button class="pilarease-action-button" onclick="editPilareaseStatus(${status.id})">
-                        <i class='bx bx-edit'></i> Edit
-                      </button>
-                      <button class="pilarease-action-button" onclick="deletePilareaseStatus(${status.id})">
-                        <i class='bx bxs-trash'></i> Delete
-                      </button>`
-                    : ""
-                }
-              </div>
-            `;
-
-          pilareaseStatusContainer.appendChild(statusBox);
-
-          // Remove 'pop' class after animation
-          statusBox.addEventListener("animationend", function () {
-            statusBox.classList.remove("pop");
-          });
-        });
-
-        statusHasNext = data.has_next;
-      })
-      .catch((error) => {
-        statusIsLoading = false;
-        pilareaseStatusLoader.style.display = "none";
-        pilareaseStatusOverlay.style.display = "none";
-        console.error("Error fetching user statuses:", error);
-      });
-  }
-
-  // Recent Activity Section
-  let activityPage = 1;
-  let activityIsLoading = false;
-  let activityHasNext = true;
-  const pilareaseActivityContainer = document.getElementById(
-    "pilareaseActivityContainer"
-  );
-  const pilareaseActivityLoader = document.getElementById(
-    "pilareaseActivityLoader"
-  );
-  const pilareaseActivityOverlay = document.getElementById(
-    "pilareaseActivityOverlay"
-  );
-
-  // Fetch initial activities
-  fetchPilareaseActivities(activityPage);
-
-  // Add scroll event listener for infinite scrolling in Activity tab
-  const activityTab = document.getElementById("activity");
-  activityTab.addEventListener("click", () => {
-    window.addEventListener("scroll", handleActivityScroll);
-  });
-
-  function handleActivityScroll() {
-    if (
-      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-      !activityIsLoading &&
-      activityHasNext &&
-      document.getElementById("activity").classList.contains("active")
-    ) {
-      activityPage++;
-      fetchPilareaseActivities(activityPage);
-    }
-  }
-
-  function fetchPilareaseActivities(page) {
-    activityIsLoading = true;
-    pilareaseActivityLoader.style.display = "block";
-    pilareaseActivityOverlay.style.display = "block";
-
-    fetch(`/get_recent_activity/?page=${page}`)
-      .then((response) => response.json())
-      .then((data) => {
-        activityIsLoading = false;
-        pilareaseActivityLoader.style.display = "none";
-        pilareaseActivityOverlay.style.display = "none";
-
-        data.activities.forEach((activity) => {
-          const activityItem = document.createElement("div");
-          activityItem.classList.add("pilarease-activity-item");
-
-          activityItem.innerHTML = `
-              <p><strong>${activity.actor}</strong> ${activity.action} your status titled "<em>${activity.status_title}</em>".</p>
-              <span class="pilarease-activity-time">${activity.timestamp} ago</span>
-            `;
-
-          pilareaseActivityContainer.appendChild(activityItem);
-        });
-
-        activityHasNext = data.has_next;
-      })
-      .catch((error) => {
-        activityIsLoading = false;
-        pilareaseActivityLoader.style.display = "none";
-        pilareaseActivityOverlay.style.display = "none";
-        console.error("Error fetching recent activities:", error);
-      });
-  }
-
-  // Edit Profile Modal
-  const pilareaseEditProfileBtn = document.getElementById(
-    "pilareaseEditProfileBtn"
-  );
-  const pilareaseEditProfileModal = document.getElementById(
-    "pilareaseEditProfileModal"
-  );
-  const pilareaseCloseEditProfile = document.getElementById(
-    "pilareaseCloseEditProfile"
-  );
-  const pilareaseEditProfileForm = document.getElementById(
-    "pilareaseEditProfileForm"
-  );
-
-  // Open Modal
-  pilareaseEditProfileBtn.addEventListener("click", () => {
-    pilareaseEditProfileModal.style.display = "block";
-  });
-
-  // Close Modal
-  pilareaseCloseEditProfile.addEventListener("click", () => {
-    pilareaseEditProfileModal.style.display = "none";
-  });
-
-  // Close Modal when clicking outside the modal content
-  window.addEventListener("click", (event) => {
-    if (event.target == pilareaseEditProfileModal) {
-      pilareaseEditProfileModal.style.display = "none";
-    }
-  });
-
-  // Handle Edit Profile Form Submission
-  pilareaseEditProfileForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    fetch(`/edit_profile/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrftoken, // Ensure csrftoken is defined
-      },
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          alert("Profile updated successfully!");
-          // Optionally, refresh the page or update the UI dynamically
-          location.reload();
-        } else {
-          // Handle errors
-          const errors = data.errors;
-          let errorMessages = "";
-          for (const field in errors) {
-            errorMessages += `${field}: ${errors[field]} \n`;
-          }
-          alert(`Failed to update profile:\n${errorMessages}`);
-        }
-      })
-      .catch((error) => {
-        console.error("Error updating profile:", error);
-        alert("An error occurred while updating the profile.");
-      });
-  });
-
-  // Recent Activity Infinite Scroll
-  // (No changes needed as likes and gallery are removed)
-
-  // Status Actions (Edit and Delete)
-  window.editPilareaseStatus = function (statusId) {
-    // Implement edit functionality, e.g., redirect to edit page
-    window.location.href = `/status/${statusId}/edit/`;
-  };
-
-  window.deletePilareaseStatus = function (statusId) {
-    if (confirm("Are you sure you want to delete this status?")) {
-      fetch(`/delete_status/${statusId}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken, // Ensure csrftoken is defined
-        },
-        body: JSON.stringify({}),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            // Remove the status box from the DOM
-            const statusBox = document.querySelector(
-              `.pilarease-status-box[data-id="${statusId}"]`
-            );
-            if (statusBox) {
-              statusBox.remove();
-            }
-          } else {
-            alert("Failed to delete status.");
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting status:", error);
-          alert("An error occurred while deleting the status.");
-        });
-    }
-  };
 });
