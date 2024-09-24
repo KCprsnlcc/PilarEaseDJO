@@ -19,7 +19,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification, UserNotificationSettings
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -73,45 +73,58 @@ def about_view(request):
     approved_feedbacks = Feedback.objects.filter(is_approved=True).order_by('-created_at')[:3]
     return render(request, 'about.html', {'feedbacks': approved_feedbacks})
 # Check if username already exists
-def check_username_exists(request):
-    if request.method == "GET" and request.is_ajax():
-        username = request.GET.get("username", None)
-        if CustomUser.objects.filter(username=username).exists():
-            return JsonResponse({"exists": True, "message": "Username already exists."}, status=200)
-        return JsonResponse({"exists": False}, status=200)
 
-# Check if email already exists
-def check_email_exists(request):
-    if request.method == "GET" and request.is_ajax():
-        email = request.GET.get("email", None)
-        if CustomUser.objects.filter(email=email).exists():
-            return JsonResponse({"exists": True, "message": "Email already exists."}, status=200)
-        return JsonResponse({"exists": False}, status=200)
+@csrf_exempt
+def send_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+        is_bot_message = data.get('is_bot_message')
 
-# Check if student ID already exists
-def check_student_id_exists(request):
-    if request.method == "GET" and request.is_ajax():
-        student_id = request.GET.get("student_id", None)
-        if CustomUser.objects.filter(student_id=student_id).exists():
-            return JsonResponse({"exists": True, "message": "Student ID already exists."}, status=200)
-        return JsonResponse({"exists": False}, status=200)
+        if message:
+            # Save the message to the database
+            ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                created_at=timezone.now()
+            )
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'No message provided'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
-# Password validation (This can be done via client-side JavaScript)
-def validate_password(request):
-    if request.method == "POST" and request.is_ajax():
-        password = request.POST.get("password", None)
-        if len(password) < 8:
-            return JsonResponse({"valid": False, "message": "Password must be at least 8 characters long."}, status=200)
-        if not any(char.isupper() for char in password):
-            return JsonResponse({"valid": False, "message": "Password must contain at least one uppercase letter."}, status=200)
-        if not any(char.islower() for char in password):
-            return JsonResponse({"valid": False, "message": "Password must contain at least one lowercase letter."}, status=200)
-        if not any(char.isdigit() for char in password):
-            return JsonResponse({"valid": False, "message": "Password must contain at least one number."}, status=200)
-        if not any(char in '!@#$%^&*()_+' for char in password):
-            return JsonResponse({"valid": False, "message": "Password must contain at least one special character."}, status=200)
-        return JsonResponse({"valid": True}, status=200)
-    
+@csrf_exempt
+def send_chat_message(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message', '')
+        is_bot_message = data.get('is_bot_message', False)
+
+        if message:
+            chat_message = ChatMessage.objects.create(
+                user=request.user if not is_bot_message else None,
+                message=message,
+                is_bot_message=is_bot_message,
+                timestamp=timezone.now()
+            )
+            return JsonResponse({'success': True, 'message_id': chat_message.id})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def get_chat_messages(request):
+    if request.method == 'GET':
+        messages = ChatMessage.objects.all().order_by('timestamp')
+        message_data = [{
+            'id': msg.id,
+            'user': msg.user.username if msg.user else 'Bot',
+            'message': msg.message,
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'is_bot_message': msg.is_bot_message
+        } for msg in messages]
+        return JsonResponse({'messages': message_data})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
 @login_required
 def profile_view(request):
     # Calculate updated statistics
@@ -674,30 +687,6 @@ def submit_referral(request):
         return JsonResponse({'success': False, 'error': 'Status not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
-
-@csrf_exempt
-def save_chat_session(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        session_data = data.get("session_data", [])
-        
-        chat_session, created = ChatSession.objects.get_or_create(
-            user=request.user
-        )
-        chat_session.session_data = session_data
-        chat_session.save()
-        return JsonResponse({"success": True})
-    return JsonResponse({"success": False}, status=400)
-
-@csrf_exempt
-def load_chat_session(request):
-    if request.method == "GET" and request.user.is_authenticated:
-        try:
-            chat_session = ChatSession.objects.get(user=request.user)
-            return JsonResponse({"success": True, "session_data": chat_session.session_data})
-        except ChatSession.DoesNotExist:
-            return JsonResponse({"success": False, "session_data": []})
-    return JsonResponse({"success": False, "session_data": []}, status=400)
 
 @csrf_exempt
 def save_questionnaire(request):

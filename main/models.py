@@ -77,14 +77,14 @@ class Feedback(models.Model):
         self.sentiment_score = (blob.sentiment.polarity + 1) * 50
         super().save(*args, **kwargs)
     
-class ChatSession(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    session_data = models.JSONField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
+class ChatMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_bot_message = models.BooleanField(default=False)
+
     def __str__(self):
-        return f"ChatSession for {self.user.username} at {self.created_at}"
+        return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
 
 class Questionnaire(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
