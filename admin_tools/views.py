@@ -14,6 +14,7 @@ from main.models import (
     Reply,
     Feedback,
 )
+from django.contrib import messages
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
@@ -37,11 +38,72 @@ from datetime import timedelta
 from datetime import datetime
 import os
 from django.conf import settings
+from main.models import NLTKResource
+import logging
 
-# Ensure NLTK data is downloaded
-nltk.download('punkt')
-nltk.download('stopwords')
+# Define the directory for NLTK data inside the project
+nltk_data_path = os.path.join(settings.BASE_DIR, 'nltk_data')
 
+# Ensure the directory exists
+if not os.path.exists(nltk_data_path):
+    os.makedirs(nltk_data_path)
+
+# Set the NLTK_DATA environment variable to this directory
+os.environ['NLTK_DATA'] = nltk_data_path
+
+# Suppress unnecessary logs from NLTK downloads
+nltk_logger = logging.getLogger('nltk')
+nltk_logger.setLevel(logging.CRITICAL)
+
+# Function to save NLTK resource download status to the database
+def save_nltk_resource(resource_name):
+    resource, created = NLTKResource.objects.get_or_create(
+        name=resource_name,
+        defaults={'is_downloaded': True, 'download_date': timezone.now()}
+    )
+    if not created:
+        resource.is_downloaded = True
+        resource.download_date = timezone.now()
+        resource.save()
+
+# Silent download function for NLTK resources if they are missing
+def silent_nltk_download(resource_name):
+    try:
+        # Check if the resource exists in the database
+        resource = NLTKResource.objects.filter(name=resource_name, is_downloaded=True).first()
+        if resource:
+            print(f"{resource_name} already downloaded.")
+            return
+        
+        # Check if the resource is already downloaded in nltk_data_path
+        if resource_name == 'punkt':
+            nltk.data.find('tokenizers/punkt/english.pickle')
+        elif resource_name == 'stopwords':
+            nltk.data.find('corpora/stopwords.zip')
+        
+        # Save the resource to the database as downloaded
+        save_nltk_resource(resource_name)
+        
+    except LookupError:
+        # If the resource is not found, download it silently
+        print(f"Downloading {resource_name}...")
+        nltk.download(resource_name, download_dir=nltk_data_path)
+        
+        # Save the download status to the database
+        save_nltk_resource(resource_name)
+
+# Ensure required NLTK data is available silently
+silent_nltk_download('punkt')
+silent_nltk_download('stopwords')
+
+# Now you can use NLTK in your views like this
+def my_nltk_view(request):
+    text = request.GET.get('text', '')
+    words = nltk.word_tokenize(text.lower())
+    stop_words = set(nltk.corpus.stopwords.words('english'))
+    filtered_words = [word for word in words if word.isalpha() and word not in stop_words]
+
+    return JsonResponse({'filtered_words': filtered_words})
 @require_GET
 def generate_wordcloud(request):
     text = request.GET.get('text', '')

@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
     full_name = models.CharField(max_length=100)
@@ -86,6 +86,13 @@ class ChatMessage(models.Model):
     def __str__(self):
         return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
 
+class NLTKResource(models.Model):
+    name = models.CharField(default='No nltk downloaded', max_length=100, unique=True)
+    is_downloaded = models.BooleanField(default=False)
+    download_date = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return self.name
 class Questionnaire(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     question = models.TextField()
