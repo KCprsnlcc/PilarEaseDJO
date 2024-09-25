@@ -1,74 +1,113 @@
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
-<h1>Replies</h1>
-<div class="status-container">
-  <form method="get" class="search-form">
-    <input
-      type="text"
-      name="search"
-      placeholder="Search..."
-      value="{{ search_query }}"
-    />
-    <button type="submit">Search</button>
-  </form>
+%} {% block extra_head %}
+<!-- Animate.css CDN -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+/>
+{% endblock %} {% block content %}
+<div class="pilarease-admin-replies animate__animated animate__fadeIn">
+  <h1 class="pilarease-admin-replies-title">Replies</h1>
 
-  <table class="status-table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Student ID</th>
-        <th>Title</th>
-        <th>Reply</th>
-        <th>Last Sent</th>
-        <th>Date</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for reply in replies %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ reply.student_id }}</td>
-        <td>{{ reply.status_title }}</td>
-        <td>{{ reply.text|truncatewords:10 }}</td>
-        <td>{{ reply.last_sent }}</td>
-        <td>{{ reply.created_at|date:"Y-m-d" }}</td>
-        <td>
-          <a href="{% url 'delete_reply' reply.id %}" class="delete-icon"
-            ><i class="bx bx-trash"></i
-          ></a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if not replies %}
-  <p>No replies found.</p>
-  {% endif %}
-  <div class="pagination">
-    <span class="step-links">
-      {% if page_obj.has_previous %}
-      <a href="?page=1&search={{ search_query }}">first</a>
-      <a
-        href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"
-        >previous</a
+  <div class="pilarease-admin-replies-container">
+    <!-- Search Form -->
+    <form
+      method="get"
+      class="pilarease-admin-replies-search-form pilarease-admin-feedback-search-form animate__animated animate__fadeInDown"
+    >
+      <input
+        type="text"
+        name="search"
+        class="pilarease-admin-replies-search-input"
+        placeholder="Search replies..."
+        value="{{ search_query }}"
+      />
+      <button
+        type="submit"
+        class="pilarease-admin-action-button approve-button"
       >
-      {% endif %}
+        Search
+      </button>
+    </form>
 
-      <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+    <!-- Replies Table -->
+    <table class="pilarease-admin-replies-table pilarease-admin-feedback-table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Student ID</th>
+          <th>Title</th>
+          <th>Reply</th>
+          <th>Last Sent</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reply in replies %}
+        <tr
+          class="pilarease-admin-replies-row animate__animated animate__fadeInUp"
+        >
+          <td>{{ forloop.counter }}</td>
+          <td>{{ reply.student_id }}</td>
+          <td>{{ reply.status_title }}</td>
+          <td>{{ reply.text|truncatewords:10 }}</td>
+          <td>{{ reply.last_sent }}</td>
+          <td>{{ reply.created_at|date:"Y-m-d" }}</td>
+          <td>
+            <a
+              href="{% url 'delete_reply' reply.id %}"
+              class="pilarease-admin-action-button delete-button animate__animated animate__bounceIn"
+            >
+              Delete
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- No Replies Message -->
+    {% if not replies %}
+    <p class="pilarease-admin-replies-no-data">No replies found.</p>
+    {% endif %}
+
+    <!-- Pagination -->
+    <div
+      class="pilarease-admin-replies-pagination pilarease-admin-pagination animate__animated animate__fadeInUp"
+    >
+      <span class="pilarease-admin-step-links pilarease-admin-step-links">
+        {% if page_obj.has_previous %}
+        <a
+          href="?page=1&search={{ search_query }}"
+          class="pilarease-admin-step-link"
+          >&laquo; First</a
+        >
+        <a
+          href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"
+          class="pilarease-admin-step-link"
+          >Previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current pilarease-admin-current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a
+          href="?page={{ page_obj.next_page_number }}&search={{ search_query }}"
+          class="pilarease-admin-step-link"
+          >Next</a
+        >
+        <a
+          href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}"
+          class="pilarease-admin-step-link"
+          >Last &raquo;</a
+        >
+        {% endif %}
       </span>
-
-      {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}"
-        >next</a
-      >
-      <a
-        href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}"
-        >last</a
-      >
-      {% endif %}
-    </span>
+    </div>
   </div>
 </div>
 {% endblock %}

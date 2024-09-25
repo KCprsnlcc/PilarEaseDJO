@@ -418,8 +418,8 @@ body {
 
 .pilarease-admin-current {
   padding: 6px 12px;
-  background-color: #f0f0f0;
-  color: #333333;
+  background-color: var(--accent-color);
+  color: #ffffff;
   border-radius: 4px;
   font-weight: bold;
 }
@@ -445,7 +445,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: var(--modal-background);
+  background-color: rgba(0, 0, 0, 0.5); /* Updated to semi-transparent */
 }
 
 .pilarease-admin-modal-content {
@@ -1020,7 +1020,7 @@ body {
 }
 
 .pilarease-admin-button:hover {
-  background-color: darken(var(--accent-color), 10%);
+  background-color: #145f63; /* Darker shade of accent-color */
 }
 
 /* Tables */
@@ -1578,4 +1578,180 @@ body {
 
 .pilarease-admin-tooltip.animate__fadeOut {
   opacity: 0;
+}
+
+/* =========================================================
+   Replies Page Specific Styles
+   ========================================================= */
+
+/* Container for Replies Page */
+.pilarease-admin-replies {
+  padding: 20px;
+  background-color: var(--background-color);
+}
+
+/* Replies Title */
+.pilarease-admin-replies-title {
+  font-size: 32px;
+  color: var(--accent-color);
+  text-align: center;
+  margin-bottom: 30px;
+  font-family: "Aguafina Script", cursive;
+}
+
+/* Replies Container */
+.pilarease-admin-replies-container {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: var(--box-shadow);
+}
+
+/* Search Form */
+.pilarease-admin-replies-search-form {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+/* Reuse Existing Input and Button Styles */
+/* The search input uses existing styles from feedback, testimonial, and contactus */
+.pilarease-admin-replies-search-input {
+  padding: 10px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  width: 250px;
+  transition: border-color 0.3s ease;
+}
+
+.pilarease-admin-replies-search-input:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-replies-search-button {
+  /* Reuse the existing action button classes for consistency */
+  /* Using 'approve-button' to inherit styles */
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 16px;
+}
+
+.pilarease-admin-replies-search-button:hover {
+  background-color: var(--accent-light);
+}
+
+/* Replies Table */
+.pilarease-admin-replies-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.pilarease-admin-replies-table th,
+.pilarease-admin-replies-table td {
+  padding: 15px 20px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+}
+
+.pilarease-admin-replies-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.pilarease-admin-replies-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.pilarease-admin-replies-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Delete Button */
+.pilarease-admin-replies-delete-button {
+  /* Reuse existing delete-button styles for consistency */
+  background-color: var(--delete-color);
+  color: #ffffff;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pilarease-admin-replies-delete-button:hover {
+  background-color: #da190b;
+  transform: scale(1.05);
+}
+
+/* No Data Message */
+.pilarease-admin-replies-no-data {
+  text-align: center;
+  color: #666666;
+  font-size: 18px;
+  font-style: italic;
+  margin-top: 20px;
+}
+
+/* Pagination */
+.pilarease-admin-replies-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pilarease-admin-replies-step-links a.pilarease-admin-replies-page-link {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-replies-step-links a.pilarease-admin-replies-page-link:hover {
+  background-color: var(--accent-light);
+}
+
+.pilarease-admin-replies-step-links .pilarease-admin-replies-current {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-replies-search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pilarease-admin-replies-search-input {
+    width: 100%;
+  }
+
+  .pilarease-admin-replies-search-button {
+    width: 100%;
+  }
+
+  .pilarease-admin-replies-table th,
+  .pilarease-admin-replies-table td {
+    padding: 10px 15px;
+    font-size: 12px;
+  }
 }
