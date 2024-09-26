@@ -230,7 +230,7 @@ body {
 }
 
 /* =========================================================
-   Dashboard Styles
+   Dashboard Page Specific Styles
    ========================================================= */
 
 /* Dashboard Container */
@@ -238,29 +238,123 @@ body {
   padding: 20px;
 }
 
-/* Section Titles */
+/* Dashboard Header */
+.pilarease-admin-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Dashboard Title */
 .pilarease-admin-dashboard-title {
   font-size: 28px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   color: var(--accent-color);
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.pilarease-admin-section-title {
-  font-size: 22px;
-  margin-bottom: 10px;
-  color: var(--accent-color);
+/* Info Icon for Dashboard Title */
+.pilarease-admin-dashboard-title .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 18px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
 }
 
-/* Feedback and Testimonial Containers */
+/* Tooltip for Dashboard Title */
+.pilarease-admin-tooltip {
+  position: absolute;
+  top: -5px; /* Adjusted to appear above */
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: normal; /* Allows text to wrap */
+  max-width: 250px; /* Ensures tooltip doesn't become too wide */
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Tooltip Positioned Above */
+.pilarease-admin-tooltip-top {
+  position: absolute;
+  bottom: 100%; /* Positions tooltip above the icon */
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px); /* Slight upward shift */
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: normal; /* Allows text to wrap */
+  max-width: 250px; /* Ensures tooltip doesn't become too wide */
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip,
+.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip-top {
+  opacity: 1;
+}
+
+/* Notification Icon Container */
+.pilarease-admin-notification-container {
+  position: relative; /* Ensures tooltip is positioned relative to this container */
+  display: inline-block; /* Allows the container to wrap around the icon */
+}
+
+/* Management Sections Containers */
 .pilarease-admin-feedback-container,
 .pilarease-admin-testimonials-container,
 .pilarease-admin-contactus-container {
   background-color: #ffffff;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: var(--box-shadow);
   margin-bottom: 30px;
   animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-feedback-container:hover,
+.pilarease-admin-testimonials-container:hover,
+.pilarease-admin-contactus-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+/* Section Headers */
+.pilarease-admin-section-title {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Info Icon for Section Titles */
+.pilarease-admin-section-title .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 16px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
 }
 
 /* Search Forms */
@@ -270,8 +364,10 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 15px;
 }
 
+/* Search Inputs */
 .pilarease-admin-feedback-search-input,
 .pilarease-admin-testimonial-search-input,
 .pilarease-admin-contactus-search-input {
@@ -280,6 +376,8 @@ body {
   border-radius: 4px;
   width: 250px;
   transition: border-color 0.3s ease;
+  font-size: 14px;
+  word-wrap: break-word;
 }
 
 .pilarease-admin-feedback-search-input:focus,
@@ -289,6 +387,7 @@ body {
   outline: none;
 }
 
+/* Search Buttons */
 .pilarease-admin-feedback-search-button,
 .pilarease-admin-testimonial-search-button,
 .pilarease-admin-contactus-search-button {
@@ -299,6 +398,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px;
 }
 
 .pilarease-admin-feedback-search-button:hover,
@@ -314,7 +414,7 @@ body {
 .pilarease-admin-contactus-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .pilarease-admin-feedback-table th,
@@ -326,6 +426,8 @@ body {
   padding: 12px 15px;
   border: 1px solid var(--border-color);
   text-align: center;
+  font-size: 14px;
+  word-wrap: break-word;
 }
 
 .pilarease-admin-feedback-table th,
@@ -333,6 +435,12 @@ body {
 .pilarease-admin-contactus-table th {
   background-color: var(--accent-color);
   color: #ffffff;
+}
+
+.pilarease-admin-feedback-table tr:nth-child(even),
+.pilarease-admin-testimonial-table tr:nth-child(even),
+.pilarease-admin-contactus-table tr:nth-child(even) {
+  background-color: #f9f9f9;
 }
 
 .pilarease-admin-feedback-table tr:hover,
@@ -347,6 +455,12 @@ body {
   align-items: center;
   justify-content: center;
   gap: 5px;
+}
+
+.pilarease-admin-sentiment-score span {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--accent-color);
 }
 
 .pilarease-admin-sentiment-bar {
@@ -370,6 +484,7 @@ body {
   color: #ffffff;
   border-radius: 4px;
   font-weight: bold;
+  font-size: 12px;
 }
 
 .pilarease-admin-pending-label {
@@ -378,6 +493,7 @@ body {
   color: #ffffff;
   border-radius: 4px;
   font-weight: bold;
+  font-size: 12px;
 }
 
 /* Action Buttons */
@@ -388,11 +504,12 @@ body {
   cursor: pointer;
   text-decoration: none;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12px;
   transition: background-color 0.3s ease, transform 0.3s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
 }
 
 .pilarease-admin-action-button.approve-button {
@@ -405,16 +522,25 @@ body {
 }
 
 .pilarease-admin-action-button.delete-button {
-  background-color: var(--accent-color);
-  margin-left: 5px;
+  background-color: var(--delete-color);
 }
 
 .pilarease-admin-action-button.delete-button:hover {
-  background-color: rgba(14, 35, 38, 0.9);
+  background-color: #da190b;
   transform: translateY(-2px);
 }
 
-/* No Feedback/Testimonial/Contact Message */
+/* Reply Button */
+.pilarease-admin-action-button.reply-button {
+  background-color: var(--reply-color);
+}
+
+.pilarease-admin-action-button.reply-button:hover {
+  background-color: #1976d2;
+  transform: translateY(-2px);
+}
+
+/* No Data Messages */
 .pilarease-admin-no-feedback,
 .pilarease-admin-no-testimonial,
 .pilarease-admin-no-contact {
@@ -444,6 +570,7 @@ body {
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 12px;
 }
 
 .pilarease-admin-step-links a:hover {
@@ -457,14 +584,106 @@ body {
   color: #ffffff;
   border-radius: 4px;
   font-weight: bold;
+  font-size: 12px;
 }
 
-/* Testimonial Image within Admin Table */
+/* Tooltip Styles */
+.pilarease-admin-tooltip,
+.pilarease-admin-tooltip-top {
+  position: absolute;
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: normal; /* Allows text to wrap */
+  max-width: 250px; /* Ensures tooltip doesn't become too wide */
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip,
+.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip-top {
+  opacity: 1;
+}
+
+/* Form Textareas */
+.pilarease-admin-reply-form textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.pilarease-admin-reply-form textarea:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+/* Testimonials Avatar Image */
 .pilarease-admin-testimonial-img {
-  width: 50px;
-  height: 50px;
+  width: 40px; /* Reduced from 60px to 40px */
+  height: 40px; /* Reduced from 60px to 40px */
   border-radius: 50%;
   object-fit: cover;
+  border: 1px solid var(--border-color); /* Optional: Add border for better visibility */
+}
+
+/* Adjust table cell padding for smaller avatars */
+.pilarease-admin-testimonial-table th,
+.pilarease-admin-testimonial-table td {
+  padding: 10px 12px; /* Reduced padding for a more compact look */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-testimonial-img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .pilarease-admin-testimonial-table th,
+  .pilarease-admin-testimonial-table td {
+    padding: 8px 10px;
+  }
+
+  /* Adjust search input widths */
+  .pilarease-admin-feedback-search-input,
+  .pilarease-admin-testimonial-search-input,
+  .pilarease-admin-contactus-search-input {
+    width: 200px;
+  }
+
+  /* Adjust table font sizes */
+  .pilarease-admin-feedback-table th,
+  .pilarease-admin-feedback-table td,
+  .pilarease-admin-testimonial-table th,
+  .pilarease-admin-testimonial-table td,
+  .pilarease-admin-contactus-table th,
+  .pilarease-admin-contactus-table td {
+    font-size: 12px;
+  }
+
+  /* Adjust button sizes */
+  .pilarease-admin-action-button {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  /* Adjust tooltip font sizes */
+  .pilarease-admin-tooltip,
+  .pilarease-admin-tooltip-top {
+    font-size: 12px;
+    padding: 6px 10px;
+    max-width: 200px;
+  }
 }
 /* =========================================================
    Statistics Page Specific Styles

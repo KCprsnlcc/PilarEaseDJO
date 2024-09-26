@@ -1,12 +1,51 @@
+<!-- templates/admin_tools/dashboard.html -->
+
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
 %} {% block content %}
 <div class="pilarease-admin-dashboard-container">
-  <h1 class="pilarease-admin-dashboard-title">Dashboard</h1>
+  <!-- Dashboard Header with Tooltip -->
+  <div class="pilarease-admin-dashboard-header">
+    <h1 class="pilarease-admin-dashboard-title">
+      Dashboard
+      <i
+        class="bx bx-info-circle pilarease-admin-info-icon"
+        aria-label="More information about the Dashboard"
+        tabindex="0"
+      ></i>
+      <span class="pilarease-admin-tooltip">
+        Overview of all administrative tools including user feedback,
+        testimonials, and contact queries.
+      </span>
+    </h1>
+
+    <!-- Notification Icon with Tooltip Above -->
+    <div class="pilarease-admin-notification-container">
+      <i
+        class="bx bx-bell pilarease-admin-info-icon"
+        aria-label="Notifications"
+        tabindex="0"
+      ></i>
+      <span class="pilarease-admin-tooltip-top">
+        You have new notifications related to user feedback and testimonials.
+      </span>
+    </div>
+  </div>
 
   <!-- Feedback Management Section -->
   <div class="pilarease-admin-feedback-container">
     <div class="pilarease-admin-feedback-header">
-      <h2 class="pilarease-admin-section-title">User Feedbacks</h2>
+      <h2 class="pilarease-admin-section-title">
+        User Feedbacks
+        <i
+          class="bx bx-info-circle pilarease-admin-info-icon"
+          aria-label="More information about User Feedbacks"
+          tabindex="0"
+        ></i>
+        <span class="pilarease-admin-tooltip">
+          Manage and review feedback submitted by users. Approve or delete
+          feedback as necessary.
+        </span>
+      </h2>
       <form method="get" class="pilarease-admin-feedback-search-form">
         <input
           type="text"
@@ -69,6 +108,7 @@
             <a
               href="{% url 'delete_feedback' feedback.id %}"
               class="pilarease-admin-action-button delete-button"
+              onclick="return confirm('Are you sure you want to delete this feedback?');"
               >Delete</a
             >
           </td>
@@ -112,7 +152,18 @@
   <!-- Testimonials Management Section -->
   <div class="pilarease-admin-testimonials-container">
     <div class="pilarease-admin-testimonials-header">
-      <h2 class="pilarease-admin-section-title">User Testimonials</h2>
+      <h2 class="pilarease-admin-section-title">
+        User Testimonials
+        <i
+          class="bx bx-info-circle pilarease-admin-info-icon"
+          aria-label="More information about User Testimonials"
+          tabindex="0"
+        ></i>
+        <span class="pilarease-admin-tooltip">
+          Manage and review testimonials provided by users. Approve or delete
+          testimonials as necessary.
+        </span>
+      </h2>
       <form method="get" class="pilarease-admin-testimonial-search-form">
         <input
           type="text"
@@ -181,6 +232,7 @@
             <a
               href="{% url 'delete_testimonial' testimonial.id %}"
               class="pilarease-admin-action-button delete-button"
+              onclick="return confirm('Are you sure you want to delete this testimonial?');"
               >Delete</a
             >
           </td>
@@ -225,7 +277,17 @@
   <!-- Contact Us Queries Section -->
   <div class="pilarease-admin-contactus-container">
     <div class="pilarease-admin-contactus-header">
-      <h2 class="pilarease-admin-section-title">Contact Us Queries</h2>
+      <h2 class="pilarease-admin-section-title">
+        Contact Us Queries
+        <i
+          class="bx bx-info-circle pilarease-admin-info-icon"
+          aria-label="More information about Contact Us Queries"
+          tabindex="0"
+        ></i>
+        <span class="pilarease-admin-tooltip">
+          Manage and respond to queries submitted through the Contact Us form.
+        </span>
+      </h2>
       <form method="get" class="pilarease-admin-contactus-search-form">
         <input
           type="text"
@@ -278,7 +340,7 @@
               ></textarea>
               <button
                 type="submit"
-                class="pilarease-admin-action-button approve-button"
+                class="pilarease-admin-action-button reply-button"
               >
                 Reply
               </button>
@@ -297,6 +359,7 @@
             <a
               href="{% url 'delete_contact_us' contact.id %}"
               class="pilarease-admin-action-button delete-button"
+              onclick="return confirm('Are you sure you want to delete this contact query?');"
               >Delete</a
             >
           </td>
