@@ -50,45 +50,6 @@
   </div>
 </div>
 
-<!-- Profanity List Management -->
-<div
-  class="pilarease-admin-profanity-container animate__animated animate__fadeInUp"
->
-  <h3 class="pilarease-admin-profanity-title">Custom Profanity List</h3>
-  <ul class="pilarease-admin-profanity-list">
-    {% for word in profanities %}
-    <li class="pilarease-admin-profanity-item">
-      <span class="pilarease-admin-profanity-word">{{ word }}</span>
-      <div class="pilarease-admin-profanity-actions">
-        <button
-          class="pilarease-admin-button delete-button"
-          onclick="deleteProfanity('{{ word }}')"
-        >
-          Delete
-        </button>
-      </div>
-    </li>
-    {% empty %}
-    <li class="pilarease-admin-profanity-item">
-      <p>No profane words added yet.</p>
-    </li>
-    {% endfor %}
-  </ul>
-
-  <form
-    class="pilarease-admin-add-profanity-form"
-    onsubmit="addProfanity(event)"
-  >
-    <input
-      type="text"
-      id="newProfanity"
-      placeholder="Add new profane word"
-      required
-    />
-    <button type="submit">Add</button>
-  </form>
-</div>
-
 <script>
   // Open Referral Modal
   function openReferralModal(referralId) {

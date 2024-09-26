@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
+
+
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
     full_name = models.CharField(max_length=100)
@@ -161,7 +163,11 @@ class Referral(models.Model):
             return f"Referral by {self.referred_by.username} for {self.status.title}"
         return f"Profane Word: {self.referral_reason} by {self.referred_by.username}"
 
-    
+class ProfanityWord(models.Model):
+    word_list = models.JSONField()  # Use Django's built-in JSONField
+
+    def __str__(self):
+        return f"Profanity Words"
 class Reply(models.Model):
     status = models.ForeignKey('Status', related_name='replies', on_delete=models.CASCADE)
     parent_reply = models.ForeignKey('self', related_name='nested_replies', on_delete=models.CASCADE, null=True, blank=True)

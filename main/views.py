@@ -19,7 +19,7 @@ import logging
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -642,19 +642,34 @@ def check_profanity(request):
         title = data.get('title', '')
         description = data.get('description', '')
 
-        # Check using built-in profanity filter
-        built_in_profanity_check = profanity.contains_profanity(title) or profanity.contains_profanity(description)
+        # Check using custom profanity list from the database
+        custom_profanity_check = contains_custom_profanity_by_lines(title) or contains_custom_profanity_by_lines(description)
 
-        # Check using custom profanity list
-        custom_profanity_check = contains_custom_profanity(title) or contains_custom_profanity(description)
-
-        # If either check finds profanity, return True
-        if built_in_profanity_check or custom_profanity_check:
+        if custom_profanity_check:
             return JsonResponse({'contains_profanity': True})
         else:
             return JsonResponse({'contains_profanity': False})
     
     return JsonResponse({'contains_profanity': False}, status=400)
+
+def contains_custom_profanity_by_lines(text):
+    """Check each line of the input text for profanities stored in the database."""
+    lines = text.splitlines()
+    
+    # Query the database for the profanity words stored in the `ProfanityWord` model
+    try:
+        profanity_entry = ProfanityWord.objects.get(id=1)
+        custom_profanities = profanity_entry.word_list
+    except ProfanityWord.DoesNotExist:
+        return False  # If the profanity list isn't set, return False by default
+
+    # Check each line for profane words
+    for line in lines:
+        for profanity_word in custom_profanities:
+            if re.search(rf'\b{profanity_word}\b', line, re.IGNORECASE):
+                return True
+    return False
+
 def get_status(request, status_id):
     status = get_object_or_404(Status, id=status_id)
     data = {
