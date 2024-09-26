@@ -17,8 +17,8 @@
   --approved-color: #689e4b;
   --pending-color: rgba(14, 35, 38, 0.5);
   --delete-color: rgba(14, 35, 38, 0.7);
-  --keyword-tag-color: #ffc300; /* Example color for keyword tags */
-  --keyword-tag-background: #ffeb3b; /* Example background for keyword tags */
+  --keyword-tag-color: #689e4b; /* Example color for keyword tags */
+  --keyword-tag-background: #689e4b; /* Example background for keyword tags */
 }
 /* =========================================================
    Base Styles
@@ -1646,6 +1646,343 @@ body {
   border-radius: 4px;
   font-weight: bold;
   font-size: 12px;
+}
+
+/* =========================================================
+   Manage Users Page Specific Styles
+   ========================================================= */
+
+/* Manage Users Container */
+.pilarease-admin-manageusers-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-manageusers-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+/* Page Title */
+.pilarease-admin-manageusers-title {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: var(--accent-color);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Info Icon for Page Title */
+.pilarease-admin-manageusers-title .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 18px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+}
+
+/* Tooltip for Page Title */
+.pilarease-admin-manageusers-title .pilarease-admin-tooltip {
+  position: absolute;
+  top: 100%; /* Positions tooltip below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-manageusers-title
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+}
+
+/* Notification Icon Container */
+.pilarease-admin-notification-container {
+  position: relative; /* Ensures tooltip is positioned relative to this container */
+  display: inline-block; /* Allows the container to wrap around the icon */
+}
+
+/* Tooltip Positioned Above */
+.pilarease-admin-tooltip-top {
+  position: absolute;
+  bottom: 100%; /* Positions tooltip above the icon */
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px); /* Slight upward shift */
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover (Above) */
+.pilarease-admin-notification-container
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip-top {
+  opacity: 1;
+}
+
+/* Search Form */
+.pilarease-admin-manageusers-search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pilarease-admin-manageusers-search-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 250px;
+  transition: border-color 0.3s ease;
+  font-size: 14px;
+}
+
+.pilarease-admin-manageusers-search-input:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.pilarease-admin-button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.pilarease-admin-reset-button {
+  background-color: #6c757d; /* Gray color for reset button */
+}
+
+.pilarease-admin-reset-button:hover {
+  background-color: #5a6268;
+}
+
+/* Manage Users Table */
+.pilarease-admin-manageusers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pilarease-admin-manageusers-table th,
+.pilarease-admin-manageusers-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
+}
+
+.pilarease-admin-manageusers-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.pilarease-admin-manageusers-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Remove Hover Effect on Table Rows */
+.pilarease-admin-manageusers-table tr:hover {
+  background-color: transparent;
+}
+
+/* Avatar Image Styling */
+.pilarease-admin-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Delete Button */
+.pilarease-admin-action-button.delete-button {
+  background-color: var(--delete-color); /* rgba(14, 35, 38, 0.7) */
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-action-button.delete-button:hover {
+  background-color: rgba(14, 35, 38, 0.9); /* Slightly darker on hover */
+  transform: translateY(-2px);
+}
+
+/* Block Button */
+.pilarease-admin-manageusers-block-button {
+  background-color: #ffc107; /* Bootstrap warning color */
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  color: #212529;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-right: 5px;
+}
+
+.pilarease-admin-manageusers-block-button:hover {
+  background-color: #e0a800;
+  transform: translateY(-2px);
+}
+
+/* Pagination */
+.pilarease-admin-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pilarease-admin-step-links {
+  display: flex;
+  gap: 10px;
+}
+
+.pilarease-admin-step-link {
+  padding: 6px 12px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 12px;
+}
+
+.pilarease-admin-step-link:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.pilarease-admin-current {
+  padding: 6px 12px;
+  background-color: var(--accent-light);
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* No Users Message */
+.pilarease-admin-manageusers-no-users {
+  text-align: center;
+  color: rgba(14, 35, 38, 0.5);
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+/* Modal Styles */
+.pilarease-admin-manageusers-modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1001; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  /* Removed the semi-transparent background to eliminate overlay effect */
+  background-color: transparent;
+}
+
+.pilarease-admin-manageusers-modal-content {
+  background-color: #fefefe;
+  margin: 10% auto; /* 10% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+  border-radius: 8px;
+  position: relative;
+}
+
+.pilarease-admin-manageusers-close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.pilarease-admin-manageusers-close:hover,
+.pilarease-admin-manageusers-close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pilarease-admin-manageusers-modal-content h2 {
+  margin-top: 0;
+}
+
+.pilarease-admin-manageusers-modal-content form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pilarease-admin-manageusers-modal-content label {
+  font-weight: bold;
+}
+
+.pilarease-admin-manageusers-modal-content input,
+.pilarease-admin-manageusers-modal-content textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.pilarease-admin-manageusers-modal-content button {
+  align-self: flex-start;
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px;
+}
+
+.pilarease-admin-manageusers-modal-content button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
 }
 
 /* =========================================================
