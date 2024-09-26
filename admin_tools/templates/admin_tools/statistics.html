@@ -6,7 +6,13 @@
 {% block content %}
 <div class="pilarease-admin-statistics-container">
   <div class="pilarease-admin-statistics-header">
-    <div class="pilarease-admin-title">Statistics</div>
+    <div class="pilarease-admin-title">
+      Statistics
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Overview of key statistics and analyses related to user emotions and engagement.
+      </span>
+    </div>
   </div>
 
   <!-- Filter and Sort Section -->
@@ -107,7 +113,13 @@
   <div class="pilarease-admin-statistics-charts">
     <!-- Emotion Analysis Pie Chart -->
     <div class="pilarease-admin-statistics-chart">
-      <div class="pilarease-admin-chart-header">Emotion Analysis</div>
+      <div class="pilarease-admin-chart-header">
+        Emotion Analysis
+        <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+        <span class="pilarease-admin-tooltip">
+          This pie chart represents the distribution of different emotions expressed by users.
+        </span>
+      </div>
       <div class="pilarease-admin-chart-content">
         <canvas id="emotionPieChart"></canvas>
       </div>
@@ -115,7 +127,13 @@
 
     <!-- Emotion Distribution by Title Bar Chart -->
     <div class="pilarease-admin-statistics-chart">
-      <div class="pilarease-admin-chart-header">Emotion Distribution by Title</div>
+      <div class="pilarease-admin-chart-header">
+        Emotion Distribution by Title
+        <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+        <span class="pilarease-admin-tooltip">
+          This bar chart shows the average emotion percentages across different user titles.
+        </span>
+      </div>
       <div class="pilarease-admin-chart-content">
         <canvas id="emotionBarChart"></canvas>
       </div>
@@ -123,7 +141,13 @@
 
     <!-- Word Cloud -->
     <div class="pilarease-admin-statistics-chart">
-      <div class="pilarease-admin-chart-header">Word Cloud</div>
+      <div class="pilarease-admin-chart-header">
+        Word Cloud
+        <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+        <span class="pilarease-admin-tooltip">
+          The word cloud visualizes the most frequently used words in user feedback.
+        </span>
+      </div>
       <div class="pilarease-admin-chart-content">
         {% if wordcloud_text %}
         <img
@@ -132,7 +156,7 @@
           class="pilarease-admin-wordcloud-image"
         />
         {% else %}
-        <p>No data available</p>
+        <p class="pilarease-admin-no-data">No data available</p>
         {% endif %}
       </div>
     </div>
@@ -145,7 +169,13 @@
     <div class="pilarease-admin-statistics-charts">
       <!-- Emotion Trend Over Time (Line Chart) -->
       <div class="pilarease-admin-statistics-chart">
-        <div class="pilarease-admin-chart-header">Emotion Trend Over Time</div>
+        <div class="pilarease-admin-chart-header">
+          Emotion Trend Over Time
+          <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+          <span class="pilarease-admin-tooltip">
+            This line chart displays the trend of emotions over selected time periods.
+          </span>
+        </div>
         <div class="pilarease-admin-chart-content">
           <canvas id="emotionTrendLineChart"></canvas>
         </div>
@@ -153,7 +183,13 @@
 
       <!-- Emotion Frequency (Bar Chart) -->
       <div class="pilarease-admin-statistics-chart">
-        <div class="pilarease-admin-chart-header">Emotion Frequency</div>
+        <div class="pilarease-admin-chart-header">
+          Emotion Frequency
+          <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+          <span class="pilarease-admin-tooltip">
+            This bar chart shows the frequency of each emotion detected in user interactions.
+          </span>
+        </div>
         <div class="pilarease-admin-chart-content">
           <canvas id="emotionFrequencyBarChart"></canvas>
         </div>
@@ -161,7 +197,13 @@
 
       <!-- Emotion Intensity Gauge (Donut Chart) -->
       <div class="pilarease-admin-statistics-chart">
-        <div class="pilarease-admin-chart-header">Emotion Intensity Gauge</div>
+        <div class="pilarease-admin-chart-header">
+          Emotion Intensity Gauge
+          <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+          <span class="pilarease-admin-tooltip">
+            The donut chart represents the intensity levels of different emotions.
+          </span>
+        </div>
         <div class="pilarease-admin-chart-content">
           <canvas id="emotionIntensityDonutChart"></canvas>
         </div>
@@ -169,7 +211,13 @@
 
       <!-- Emotion Pulse (Area Chart) -->
       <div class="pilarease-admin-statistics-chart">
-        <div class="pilarease-admin-chart-header">Emotion Pulse</div>
+        <div class="pilarease-admin-chart-header">
+          Emotion Pulse
+          <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+          <span class="pilarease-admin-tooltip">
+            This area chart illustrates the fluctuation of emotion intensities over time.
+          </span>
+        </div>
         <div class="pilarease-admin-chart-content">
           <canvas id="emotionPulseAreaChart"></canvas>
         </div>
@@ -258,7 +306,7 @@
                       text: 'Titles'
                   }
               }
-          }
+          },
       },
   });
 
@@ -295,7 +343,7 @@
                   },
                   beginAtZero: true
               }
-          }
+          },
       },
   });
 
@@ -345,7 +393,7 @@
                       text: 'Emotions'
                   }
               }
-          }
+          },
       },
   });
 
@@ -358,8 +406,8 @@
           datasets: [{
               data: parseJSON('{{ intensity_data|escapejs }}'),
               backgroundColor: [
-                  '#4caf50', // Happiness
-                  '#ff9800', // Neutral
+                  '#689e4b', // Happiness
+                  '#0e2326', // Neutral
                   '#f44336', // Anger
                   '#9c27b0', // Fear
                   '#2196f3'  // Sadness
@@ -418,8 +466,9 @@
           elements: {
               line: {
                   fill: true,
+                  tension: 0.4, /* Smooth curves */
               }
-          }
+          },
       },
   });
 </script>
