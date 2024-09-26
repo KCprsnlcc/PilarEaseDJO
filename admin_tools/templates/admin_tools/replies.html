@@ -13,11 +13,11 @@
     class="pilarease-admin-dashboard-header"
     style="display: flex; justify-content: space-between; align-items: center"
   >
-    <h1 class="pilarease-admin-replies-title">
+    <h1 class="pilarease-admin-title">
       Replies
       <i
         class="bx bx-info-circle pilarease-admin-info-icon"
-        aria-label="More information about Replies"
+        aria-label="More information about Replies Management"
         tabindex="0"
       ></i>
       <span class="pilarease-admin-tooltip">
@@ -25,6 +25,18 @@
         deletion.
       </span>
     </h1>
+
+    <!-- Notification Icon with Tooltip Above -->
+    <div class="pilarease-admin-notification-container">
+      <i
+        class="bx bx-bell pilarease-admin-info-icon"
+        aria-label="Notifications"
+        tabindex="0"
+      ></i>
+      <span class="pilarease-admin-tooltip-top">
+        You have new notifications related to replies updates.
+      </span>
+    </div>
   </div>
 
   <div class="pilarease-admin-replies-container">
@@ -36,16 +48,16 @@
       <input
         type="text"
         name="search"
-        class="pilarease-admin-replies-search-input"
+        class="pilarease-admin-input search-input"
         placeholder="Search replies..."
         value="{{ search_query }}"
       />
-      <button
-        type="submit"
-        class="pilarease-admin-action-button approve-button"
+      <button type="submit" class="pilarease-admin-button">Search</button>
+      <a
+        href="{% url 'replies' %}"
+        class="pilarease-admin-button pilarease-admin-reset-button"
+        >Reset</a
       >
-        Search
-      </button>
     </form>
 
     <!-- Replies Table -->
@@ -63,10 +75,7 @@
       </thead>
       <tbody>
         {% for reply in replies %}
-        <tr
-          class="pilarease-admin-replies-row animate__animated animate__fadeInUp"
-          data-reply-id="{{ reply.id }}"
-        >
+        <tr class="pilarease-admin-replies-row" data-reply-id="{{ reply.id }}">
           <td>{{ forloop.counter }}</td>
           <td>{{ reply.student_id }}</td>
           <td>{{ reply.status_title }}</td>
@@ -123,7 +132,7 @@
 
     <!-- No Replies Message -->
     {% if not replies %}
-    <p class="pilarease-admin-replies-no-data">No replies found.</p>
+    <p class="pilarease-admin-no-data">No replies found.</p>
     {% endif %}
 
     <!-- Pagination -->
@@ -184,36 +193,6 @@
           expandedView.style.display = "none";
         } else {
           expandedView.style.display = "table-row";
-        }
-      });
-    });
-  });
-</script>
-
-<!-- JavaScript for Tooltip on Reply Text (Optional) -->
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const replyTexts = document.querySelectorAll(".pilarease-admin-reply-text");
-    replyTexts.forEach((text) => {
-      text.addEventListener("mouseenter", function () {
-        const tooltip = document.createElement("div");
-        tooltip.classList.add("pilarease-admin-tooltip");
-        tooltip.innerText = this.getAttribute("title");
-        document.body.appendChild(tooltip);
-
-        const rect = this.getBoundingClientRect();
-        tooltip.style.top =
-          rect.top + window.scrollY - tooltip.offsetHeight - 5 + "px";
-        tooltip.style.left = rect.left + window.scrollX + "px";
-        tooltip.classList.add("animate__animated", "animate__fadeIn");
-      });
-
-      text.addEventListener("mouseleave", function () {
-        const tooltip = document.querySelector(".pilarease-admin-tooltip");
-        if (tooltip) {
-          tooltip.classList.remove("animate__fadeIn");
-          tooltip.classList.add("animate__fadeOut");
-          tooltip.addEventListener("animationend", () => tooltip.remove());
         }
       });
     });

@@ -1397,18 +1397,17 @@ body {
   font-size: 12px;
   margin: 2px;
 }
-
 /* =========================================================
    Replies Page Specific Styles
    ========================================================= */
 
 /* Replies Container */
-.pilarease-admin-replies {
+.pilarease-admin-main-content {
   padding: 20px;
 }
 
 /* Page Title */
-.pilarease-admin-replies-title {
+.pilarease-admin-title {
   font-size: 28px;
   margin-bottom: 30px;
   color: var(--accent-color);
@@ -1419,7 +1418,7 @@ body {
 }
 
 /* Info Icon for Page Title */
-.pilarease-admin-replies-title .pilarease-admin-info-icon {
+.pilarease-admin-title .pilarease-admin-info-icon {
   margin-left: 10px;
   font-size: 18px;
   color: var(--accent-light);
@@ -1428,13 +1427,13 @@ body {
 }
 
 /* Tooltip for Page Title */
-.pilarease-admin-replies-title .pilarease-admin-tooltip {
+.pilarease-admin-title .pilarease-admin-tooltip {
   position: absolute;
   top: 100%; /* Positions tooltip below the icon */
   left: 50%;
   transform: translateX(-50%);
   background-color: rgba(14, 35, 38, 0.9);
-  color: #ffffff;
+  color: #FFFFFF;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
@@ -1446,9 +1445,7 @@ body {
 }
 
 /* Show Tooltip on Hover */
-.pilarease-admin-replies-title
-  .pilarease-admin-info-icon:hover
-  + .pilarease-admin-tooltip {
+.pilarease-admin-title .pilarease-admin-info-icon:hover + .pilarease-admin-tooltip {
   opacity: 1;
 }
 
@@ -1465,7 +1462,7 @@ body {
   left: 50%;
   transform: translateX(-50%) translateY(-8px); /* Slight upward shift */
   background-color: rgba(14, 35, 38, 0.9);
-  color: #ffffff;
+  color: #FFFFFF;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
@@ -1477,22 +1474,19 @@ body {
 }
 
 /* Show Tooltip on Hover (Above) */
-.pilarease-admin-notification-container
-  .pilarease-admin-info-icon:hover
-  + .pilarease-admin-tooltip-top {
+.pilarease-admin-notification-container .pilarease-admin-info-icon:hover + .pilarease-admin-tooltip-top {
   opacity: 1;
 }
 
 /* Search and Filter Form */
-.pilarease-admin-replies-search-form {
+.pilarease-admin-search-form {
   display: flex;
   gap: 10px;
   align-items: center;
   margin-bottom: 20px;
 }
 
-/* Search Input */
-.pilarease-admin-replies-search-input {
+.pilarease-admin-input.search-input {
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
@@ -1501,16 +1495,28 @@ body {
   font-size: 14px;
 }
 
-.pilarease-admin-replies-search-input:focus {
+.pilarease-admin-input.search-input:focus {
   border-color: var(--accent-light);
   outline: none;
 }
 
-/* Approve Button */
-.pilarease-admin-action-button.approve-button {
+.pilarease-admin-select.category-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.pilarease-admin-select.category-select:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-button {
   padding: 8px 16px;
   background-color: var(--accent-color);
-  color: #ffffff;
+  color: #FFFFFF;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -1520,25 +1526,37 @@ body {
   display: inline-block;
 }
 
-.pilarease-admin-action-button.approve-button:hover {
+.pilarease-admin-button:hover {
   background-color: var(--accent-light);
   transform: translateY(-2px);
 }
 
-/* Reset Button */
-.pilarease-admin-action-button.pilarease-admin-reset-button {
+.pilarease-admin-reset-button {
   background-color: #6c757d; /* Gray color for reset button */
 }
 
-.pilarease-admin-action-button.pilarease-admin-reset-button:hover {
+.pilarease-admin-reset-button:hover {
   background-color: #5a6268;
+}
+
+/* Replies Table Container */
+.pilarease-admin-replies-container {
+  background-color: #FFFFFF;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-replies-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }
 
 /* Replies Table */
 .pilarease-admin-replies-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
 }
 
 .pilarease-admin-replies-table th,
@@ -1551,15 +1569,16 @@ body {
 
 .pilarease-admin-replies-table th {
   background-color: var(--accent-color);
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 .pilarease-admin-replies-table tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
+/* Remove Hover Effect on Table Rows */
 .pilarease-admin-replies-table tr:hover {
-  background-color: rgba(104, 158, 75, 0.1);
+  background-color: transparent;
 }
 
 /* Expanded View Content */
@@ -1576,7 +1595,7 @@ body {
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
-  color: #ffffff;
+  color: #FFFFFF;
   font-size: 12px;
   cursor: pointer;
   text-decoration: none;
@@ -1586,14 +1605,6 @@ body {
 .pilarease-admin-action-button.delete-button:hover {
   background-color: rgba(14, 35, 38, 0.9); /* Slightly darker on hover */
   transform: translateY(-2px);
-}
-
-/* No Replies Message */
-.pilarease-admin-replies-no-data {
-  text-align: center;
-  color: rgba(14, 35, 38, 0.5);
-  margin-top: 20px;
-  font-size: 16px;
 }
 
 /* Pagination */
@@ -1612,7 +1623,7 @@ body {
 .pilarease-admin-step-link {
   padding: 6px 12px;
   background-color: var(--accent-color);
-  color: #ffffff;
+  color: #FFFFFF;
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.3s ease, transform 0.3s ease;
@@ -1627,7 +1638,7 @@ body {
 .pilarease-admin-current {
   padding: 6px 12px;
   background-color: var(--accent-light);
-  color: #ffffff;
+  color: #FFFFFF;
   border-radius: 4px;
   font-weight: bold;
   font-size: 12px;
