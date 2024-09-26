@@ -1,10 +1,28 @@
+<!-- templates/admin_tools/analysis.html -->
+
 {% extends "admin_tools/base_admin.html" %}
 {% load static %}
 {% load compress %}
 
 {% block content %}
 <div class="pilarease-admin-analysis animate__animated animate__fadeIn">
-    <h1 class="pilarease-admin-title">Analysis</h1>
+    <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="pilarease-admin-title">
+            Analysis
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Analysis"></i>
+            <span class="pilarease-admin-tooltip">
+                Comprehensive analysis of user emotions, trends, and keyword detections.
+            </span>
+        </h1>
+        
+        <!-- Notification Icon with Tooltip Above -->
+        <div class="pilarease-admin-notification-container">
+            <i class="bx bx-bell pilarease-admin-info-icon" aria-label="Notifications"></i>
+            <span class="pilarease-admin-tooltip-top">
+                You have new notifications related to analysis updates.
+            </span>
+        </div>
+    </div>
 
     <!-- Search and Filter Form -->
     <div class="pilarease-admin-search-filter animate__animated animate__fadeInDown">
@@ -26,6 +44,13 @@
 
     <!-- Statuses Table -->
     <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
+        <h2 class="pilarease-admin-subtitle">
+            Statuses
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Statuses"></i>
+            <span class="pilarease-admin-tooltip">
+                Overview of user statuses with corresponding emotion percentages.
+            </span>
+        </h2>
         <table class="pilarease-admin-statuses-table status-table">
             <thead>
                 <tr>
@@ -48,50 +73,50 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ status.plain_description|truncatewords:10 }}</td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.anger_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.anger_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.disgust_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.disgust_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.fear_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.fear_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.happiness_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.happiness_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.neutral_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.neutral_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.sadness_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.sadness_percentage }}%</span>
                         </div>
                     </td>
                     <td>
-                        <div class="pilarease-admin-progress-bar-container progress-bar-container">
-                            <div class="pilarease-admin-progress-bar progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
-                            <span class="pilarease-admin-progress-percentage progress-percentage">{{ status.surprise_percentage }}%</span>
+                        <div class="pilarease-admin-progress-bar-container">
+                            <div class="pilarease-admin-progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
+                            <span class="pilarease-admin-progress-percentage">{{ status.surprise_percentage }}%</span>
                         </div>
                     </td>
                     <td>{{ status.created_at|date:"Y-m-d" }}</td>
                     <td>
-                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-delete-icon delete-icon animate__animated animate__bounceIn"><i class="bx bx-trash"></i></a>
+                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-delete-icon delete-icon animate__animated animate__bounceIn" aria-label="Delete Status"><i class="bx bx-trash"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -121,7 +146,13 @@
 
     <!-- Contextual Emotion Comparison User Table -->
     <div class="pilarease-admin-comparison-section animate__animated animate__fadeInUp">
-        <h2 class="pilarease-admin-subtitle">Contextual Emotion Comparison</h2>
+        <h2 class="pilarease-admin-subtitle">
+            Contextual Emotion Comparison
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Contextual Emotion Comparison"></i>
+            <span class="pilarease-admin-tooltip">
+                Compare current emotion statuses against average recent emotions for each user.
+            </span>
+        </h2>
         <table class="pilarease-admin-comparison-table comparison-table">
             <thead>
                 <tr>
@@ -171,7 +202,13 @@
 
     <!-- Keywords or Topics Detection Table -->
     <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
-        <h2 class="pilarease-admin-subtitle">Keywords or Topics Detection</h2>
+        <h2 class="pilarease-admin-subtitle">
+            Keywords or Topics Detection
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Keywords or Topics Detection"></i>
+            <span class="pilarease-admin-tooltip">
+                Detect and analyze keywords or topics from user statuses for better insights.
+            </span>
+        </h2>
         <table class="pilarease-admin-keywords-table keywords-table">
             <thead>
                 <tr>

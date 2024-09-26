@@ -238,13 +238,6 @@ body {
   padding: 20px;
 }
 
-/* Dashboard Header */
-.pilarease-admin-dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 /* Dashboard Title */
 .pilarease-admin-dashboard-title {
   font-size: 28px;
@@ -253,6 +246,7 @@ body {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 /* Info Icon for Dashboard Title */
@@ -262,27 +256,37 @@ body {
   color: var(--accent-light);
   cursor: pointer;
   position: relative;
-  display: inline-block;
 }
 
 /* Tooltip for Dashboard Title */
-.pilarease-admin-tooltip {
+.pilarease-admin-dashboard-title .pilarease-admin-tooltip {
   position: absolute;
-  top: -5px; /* Adjusted to appear above */
+  top: 100%; /* Positions tooltip below the icon */
   left: 50%;
-  transform: translate(-50%, -100%);
+  transform: translateX(-50%);
   background-color: rgba(14, 35, 38, 0.9);
   color: #ffffff;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
-  white-space: normal; /* Allows text to wrap */
-  max-width: 250px; /* Ensures tooltip doesn't become too wide */
-  box-sizing: border-box;
+  white-space: nowrap;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
   z-index: 1000;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-dashboard-title
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+}
+
+/* Notification Icon Container */
+.pilarease-admin-notification-container {
+  position: relative; /* Ensures tooltip is positioned relative to this container */
+  display: inline-block; /* Allows the container to wrap around the icon */
 }
 
 /* Tooltip Positioned Above */
@@ -296,25 +300,18 @@ body {
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
-  white-space: normal; /* Allows text to wrap */
-  max-width: 250px; /* Ensures tooltip doesn't become too wide */
-  box-sizing: border-box;
+  white-space: nowrap;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
   z-index: 1000;
 }
 
-/* Show Tooltip on Hover */
-.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip,
-.pilarease-admin-info-icon:hover + .pilarease-admin-tooltip-top {
+/* Show Tooltip on Hover (Above) */
+.pilarease-admin-notification-container
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip-top {
   opacity: 1;
-}
-
-/* Notification Icon Container */
-.pilarease-admin-notification-container {
-  position: relative; /* Ensures tooltip is positioned relative to this container */
-  display: inline-block; /* Allows the container to wrap around the icon */
 }
 
 /* Management Sections Containers */
@@ -354,7 +351,31 @@ body {
   color: var(--accent-light);
   cursor: pointer;
   position: relative;
-  display: inline-block;
+}
+
+/* Tooltip for Section Titles */
+.pilarease-admin-section-title .pilarease-admin-tooltip {
+  position: absolute;
+  top: 100%; /* Positions tooltip below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover for Section Titles */
+.pilarease-admin-section-title
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
 }
 
 /* Search Forms */
@@ -377,7 +398,6 @@ body {
   width: 250px;
   transition: border-color 0.3s ease;
   font-size: 14px;
-  word-wrap: break-word;
 }
 
 .pilarease-admin-feedback-search-input:focus,
@@ -427,7 +447,6 @@ body {
   border: 1px solid var(--border-color);
   text-align: center;
   font-size: 14px;
-  word-wrap: break-word;
 }
 
 .pilarease-admin-feedback-table th,
@@ -532,7 +551,7 @@ body {
 
 /* Reply Button */
 .pilarease-admin-action-button.reply-button {
-  background-color: var(--reply-color);
+  background-color: #2196f3; /* Example color for reply */
 }
 
 .pilarease-admin-action-button.reply-button:hover {
@@ -587,7 +606,7 @@ body {
   font-size: 12px;
 }
 
-/* Tooltip Styles */
+/* Tooltip Styles (General) */
 .pilarease-admin-tooltip,
 .pilarease-admin-tooltip-top {
   position: absolute;
@@ -596,11 +615,9 @@ body {
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 14px;
-  white-space: normal; /* Allows text to wrap */
-  max-width: 250px; /* Ensures tooltip doesn't become too wide */
-  box-sizing: border-box;
-  opacity: 0;
+  white-space: nowrap;
   pointer-events: none;
+  opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 1000;
 }
@@ -682,9 +699,9 @@ body {
   .pilarease-admin-tooltip-top {
     font-size: 12px;
     padding: 6px 10px;
-    max-width: 200px;
   }
 }
+
 /* =========================================================
    Statistics Page Specific Styles
    ========================================================= */
