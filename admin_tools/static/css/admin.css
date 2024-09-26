@@ -17,8 +17,9 @@
   --approved-color: #689e4b;
   --pending-color: rgba(14, 35, 38, 0.5);
   --delete-color: rgba(14, 35, 38, 0.7);
+  --keyword-tag-color: #ffc300; /* Example color for keyword tags */
+  --keyword-tag-background: #ffeb3b; /* Example background for keyword tags */
 }
-
 /* =========================================================
    Base Styles
    ========================================================= */
@@ -999,6 +1000,413 @@ body {
 }
 
 /* =========================================================
+   Analysis Page Specific Styles
+   ========================================================= */
+
+/* Analysis Container */
+.pilarease-admin-analysis {
+  padding: 20px;
+}
+
+/* Page Title */
+.pilarease-admin-title {
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: var(--accent-color);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Info Icon for Page Title */
+.pilarease-admin-title .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 18px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+}
+
+/* Tooltip for Page Title */
+.pilarease-admin-title .pilarease-admin-tooltip {
+  position: absolute;
+  top: 100%; /* Positions tooltip below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-title
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+}
+
+/* Notification Icon Container */
+.pilarease-admin-notification-container {
+  position: relative; /* Ensures tooltip is positioned relative to this container */
+  display: inline-block; /* Allows the container to wrap around the icon */
+}
+
+/* Tooltip Positioned Above */
+.pilarease-admin-tooltip-top {
+  position: absolute;
+  bottom: 100%; /* Positions tooltip above the icon */
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px); /* Slight upward shift */
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* Show Tooltip on Hover (Above) */
+.pilarease-admin-notification-container
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip-top {
+  opacity: 1;
+}
+
+/* Search and Filter Form */
+.pilarease-admin-search-filter {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pilarease-admin-search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pilarease-admin-input.search-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 250px;
+  transition: border-color 0.3s ease;
+  font-size: 14px;
+}
+
+.pilarease-admin-input.search-input:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-select.category-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.pilarease-admin-select.category-select:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-button.search-button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px;
+}
+
+.pilarease-admin-button.search-button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+/* Statuses Table */
+.pilarease-admin-statuses-table-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-statuses-table-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.status-table th,
+.status-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
+}
+
+.status-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.status-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.status-table tr:hover {
+  background-color: rgba(104, 158, 75, 0.1);
+}
+
+/* Progress Bars */
+.pilarease-admin-progress-bar-container {
+  position: relative;
+  width: 100%;
+  background-color: rgba(14, 35, 38, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  height: 10px;
+}
+
+.pilarease-admin-progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.pilarease-admin-progress-percentage {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+/* Delete Button */
+.pilarease-admin-action-button.delete-button {
+  background-color: var(--delete-color); /* rgba(14, 35, 38, 0.7) */
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-action-button.delete-button:hover {
+  background-color: #da190b;
+  transform: translateY(-2px);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.step-links {
+  display: flex;
+  gap: 10px;
+}
+
+.pilarease-admin-pagination-link {
+  padding: 6px 12px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 12px;
+}
+
+.pilarease-admin-pagination-link:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.current {
+  padding: 6px 12px;
+  background-color: var(--accent-light);
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Contextual Emotion Comparison Section */
+.pilarease-admin-comparison-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-comparison-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+.pilarease-admin-subtitle {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--accent-color);
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pilarease-admin-subtitle .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 16px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+}
+
+/* Tooltip for Subtitles */
+.pilarease-admin-subtitle .pilarease-admin-tooltip {
+  position: absolute;
+  top: 100%; /* Positions tooltip below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.pilarease-admin-subtitle
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
+}
+
+.comparison-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.comparison-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.comparison-table tr:hover {
+  background-color: rgba(104, 158, 75, 0.1);
+}
+
+/* Keywords or Topics Detection Section */
+.pilarease-admin-keywords-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-keywords-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+.keywords-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.keywords-table th,
+.keywords-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
+}
+
+.keywords-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.keywords-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.keywords-table tr:hover {
+  background-color: rgba(104, 158, 75, 0.1);
+}
+
+.keyword-tag {
+  display: inline-block;
+  background-color: var(--keyword-tag-background);
+  color: var(--accent-color);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin: 2px;
+}
+
+/* No Data Messages */
+.pilarease-admin-no-data {
+  text-align: center;
+  color: rgba(14, 35, 38, 0.5);
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+/* =========================================================
    Modal Styles
    ========================================================= */
 
@@ -1427,4 +1835,18 @@ body::-webkit-scrollbar-thumb {
 .pilarease-admin-contactus-container:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 12px rgba(14, 35, 38, 0.2);
+}
+
+/* Elevated Containers */
+.pilarease-admin-statuses-table-container,
+.pilarease-admin-comparison-section,
+.pilarease-admin-keywords-section {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-statuses-table-container:hover,
+.pilarease-admin-comparison-section:hover,
+.pilarease-admin-keywords-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }

@@ -9,7 +9,7 @@
     <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="pilarease-admin-title">
             Analysis
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Analysis"></i>
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Analysis" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
                 Comprehensive analysis of user emotions, trends, and keyword detections.
             </span>
@@ -17,7 +17,7 @@
         
         <!-- Notification Icon with Tooltip Above -->
         <div class="pilarease-admin-notification-container">
-            <i class="bx bx-bell pilarease-admin-info-icon" aria-label="Notifications"></i>
+            <i class="bx bx-bell pilarease-admin-info-icon" aria-label="Notifications" tabindex="0"></i>
             <span class="pilarease-admin-tooltip-top">
                 You have new notifications related to analysis updates.
             </span>
@@ -46,7 +46,7 @@
     <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
         <h2 class="pilarease-admin-subtitle">
             Statuses
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Statuses"></i>
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Statuses" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
                 Overview of user statuses with corresponding emotion percentages.
             </span>
@@ -116,7 +116,7 @@
                     </td>
                     <td>{{ status.created_at|date:"Y-m-d" }}</td>
                     <td>
-                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-delete-icon delete-icon animate__animated animate__bounceIn" aria-label="Delete Status"><i class="bx bx-trash"></i></a>
+                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status">Delete</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -148,7 +148,7 @@
     <div class="pilarease-admin-comparison-section animate__animated animate__fadeInUp">
         <h2 class="pilarease-admin-subtitle">
             Contextual Emotion Comparison
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Contextual Emotion Comparison"></i>
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Contextual Emotion Comparison" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
                 Compare current emotion statuses against average recent emotions for each user.
             </span>
@@ -178,19 +178,19 @@
                 <tr>
                     <td>{{ comparison.user_full_name }}</td>
                     <td>{{ comparison.current_status.anger }}%</td>
-                    <td>{{ comparison.average_recent.anger }}%</td>
+                    <td>{{ comparison.average_recent.anger|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.disgust }}%</td>
-                    <td>{{ comparison.average_recent.disgust }}%</td>
+                    <td>{{ comparison.average_recent.disgust|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.fear }}%</td>
-                    <td>{{ comparison.average_recent.fear }}%</td>
+                    <td>{{ comparison.average_recent.fear|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.neutral }}%</td>
-                    <td>{{ comparison.average_recent.neutral }}%</td>
+                    <td>{{ comparison.average_recent.neutral|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.happiness }}%</td>
-                    <td>{{ comparison.average_recent.happiness }}%</td>
+                    <td>{{ comparison.average_recent.happiness|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.sadness }}%</td>
-                    <td>{{ comparison.average_recent.sadness }}%</td>
+                    <td>{{ comparison.average_recent.sadness|floatformat:1 }}%</td>
                     <td>{{ comparison.current_status.surprise }}%</td>
-                    <td>{{ comparison.average_recent.surprise }}%</td>
+                    <td>{{ comparison.average_recent.surprise|floatformat:1 }}%</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -204,7 +204,7 @@
     <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
         <h2 class="pilarease-admin-subtitle">
             Keywords or Topics Detection
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Keywords or Topics Detection"></i>
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Keywords or Topics Detection" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
                 Detect and analyze keywords or topics from user statuses for better insights.
             </span>
