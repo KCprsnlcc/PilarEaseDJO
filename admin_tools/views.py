@@ -279,7 +279,6 @@ def status_view(request):
         'page_obj': page_obj,
     })
 
-
 @login_required
 def dashboard(request):
     # Feedbacks
@@ -294,9 +293,9 @@ def dashboard(request):
     feedback_page_number = request.GET.get('page_feedback')
     feedbacks = feedbacks_paginator.get_page(feedback_page_number)
 
-    # Testimonials (approved feedbacks)
+    # Testimonials (approved feedbacks, including excluded)
     testimonial_search_query = request.GET.get('testimonial_search', '')
-    testimonials_queryset = Feedback.objects.filter(is_approved=True, is_excluded=False)
+    testimonials_queryset = Feedback.objects.filter(is_approved=True)  # Removed is_excluded=False
     if testimonial_search_query:
         testimonials_queryset = testimonials_queryset.filter(
             Q(user__full_name__icontains=testimonial_search_query) |
@@ -329,6 +328,7 @@ def dashboard(request):
         'contact_search_query': contact_search_query,
     }
     return render(request, 'admin_tools/dashboard.html', context)
+
 
 @login_required
 def exclude_testimonial(request, testimonial_id):
