@@ -1,8 +1,39 @@
-{% extends 'admin_tools/base_admin.html' %} {% block content %}
+<!-- templates/admin_tools/referral.html -->
+
+{% extends 'admin_tools/base_admin.html' %} {% load static %} {% load compress
+%} {% block content %}
 <div
   class="pilarease-admin-referral-container animate__animated animate__fadeIn"
 >
-  <h2 class="pilarease-admin-referral-title">Referral Management</h2>
+  <div
+    class="pilarease-admin-dashboard-header"
+    style="display: flex; justify-content: space-between; align-items: center"
+  >
+    <h2 class="pilarease-admin-referral-title">
+      Referral Management
+      <i
+        class="bx bx-info-circle pilarease-admin-info-icon"
+        aria-label="More information about Referral Management"
+        tabindex="0"
+      ></i>
+      <span class="pilarease-admin-tooltip">
+        Manage and oversee user referrals, including viewing details and
+        handling profanities.
+      </span>
+    </h2>
+
+    <!-- Notification Icon with Tooltip Above -->
+    <div class="pilarease-admin-notification-container">
+      <i
+        class="bx bx-bell pilarease-admin-info-icon"
+        aria-label="Notifications"
+        tabindex="0"
+      ></i>
+      <span class="pilarease-admin-tooltip-top">
+        You have new notifications related to referral updates.
+      </span>
+    </div>
+  </div>
 
   <!-- Referral List -->
   <ul class="pilarease-admin-referral-list">
@@ -17,6 +48,7 @@
         <button
           class="pilarease-admin-button view-button"
           onclick="openReferralModal({{ referral.id }})"
+          aria-label="View Referral Details"
         >
           View
         </button>
@@ -32,145 +64,383 @@
 
 <!-- Referral Detail Modal -->
 <div
-  id="referralModal"
-  class="pilarease-admin-modal animate__animated animate__zoomIn"
+  id="pilarease-admin-referral-modal"
+  class="pilarease-admin-referral-modal animate__animated animate__zoomIn"
+  role="dialog"
+  aria-labelledby="referralModalTitle"
+  aria-modal="true"
 >
-  <div class="pilarease-admin-modal-content">
-    <span class="pilarease-admin-close">&times;</span>
-    <h2>Referral Details</h2>
-    <div id="referralDetails">
-      <!-- Dynamic Content via JavaScript -->
-    </div>
-    <button
-      class="pilarease-admin-button highlight-button"
-      onclick="addToProfanity()"
+  <div class="pilarease-admin-referral-modal-content">
+    <span
+      class="pilarease-admin-referral-close"
+      onclick="closeReferralModal()"
+      aria-label="Close Referral Details Modal"
+      >&times;</span
     >
-      Add to Profanity List
-    </button>
+    <h2 id="referralModalTitle">Referral Details</h2>
+    <div class="pilarease-admin-referral-detail">
+      <div class="pilarease-admin-user-profile">
+        <img
+          id="pilarease-admin-avatar"
+          src=""
+          alt="User Avatar"
+          class="pilarease-admin-avatar"
+        />
+        <span id="pilarease-admin-username"></span>
+      </div>
+      <div>
+        <label for="pilarease-admin-highlightedTitle"
+          ><strong>Highlighted Title:</strong></label
+        >
+        <input
+          type="text"
+          id="pilarease-admin-highlightedTitle"
+          class="pilarease-admin-input"
+        />
+      </div>
+      <div>
+        <label for="pilarease-admin-highlightedDescription"
+          ><strong>Highlighted Description:</strong></label
+        >
+        <textarea
+          id="pilarease-admin-highlightedDescription"
+          class="pilarease-admin-input"
+          rows="4"
+        ></textarea>
+      </div>
+      <div>
+        <label><strong>Referral Reason:</strong></label>
+        <p id="pilarease-admin-referralReason"></p>
+      </div>
+      <div id="pilarease-admin-otherReasonContainer" style="display: none">
+        <label><strong>Other Reason:</strong></label>
+        <p id="pilarease-admin-otherReason"></p>
+      </div>
+      <div class="pilarease-admin-referral-status">
+        <label><strong>Posted By:</strong></label>
+        <p id="pilarease-admin-postedBy"></p>
+      </div>
+      <div class="pilarease-admin-referral-referredBy">
+        <label><strong>Referred By:</strong></label>
+        <p id="pilarease-admin-referredBy"></p>
+      </div>
+    </div>
+    <div class="pilarease-admin-referral-modal-actions">
+      <button
+        class="pilarease-admin-button highlight-button"
+        onclick="addToProfanity()"
+        aria-label="Add to Profanity List"
+      >
+        Add to Profanity List
+      </button>
+      <button
+        class="pilarease-admin-button save-button"
+        onclick="saveReferralChanges()"
+        aria-label="Save Referral Changes"
+      >
+        Save Changes
+      </button>
+    </div>
   </div>
 </div>
 
+<!-- Profanity Management Modal -->
+<div
+  id="pilarease-admin-profanity-modal"
+  class="pilarease-admin-profanity-modal animate__animated animate__zoomIn"
+  role="dialog"
+  aria-labelledby="profanityModalTitle"
+  aria-modal="true"
+>
+  <div class="pilarease-admin-profanity-modal-content">
+    <span
+      class="pilarease-admin-referral-close"
+      onclick="closeProfanityModal()"
+      aria-label="Close Profanity Management Modal"
+      >&times;</span
+    >
+    <h2 id="profanityModalTitle">Manage Profanity Words</h2>
+    <div>
+      <ul id="profanityList">
+        {% for word in profanities %}
+        <li>
+          {{ word }}
+          <button
+            onclick="deleteProfanity({{ forloop.counter0 }})"
+            aria-label="Delete {{ word }}"
+          >
+            Delete
+          </button>
+        </li>
+        {% empty %}
+        <li>No profanity words found.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <input
+        type="text"
+        id="pilarease-admin-newProfanity"
+        placeholder="Add new profanity word"
+        aria-label="New Profanity Word"
+      />
+      <button onclick="addProfanity()" aria-label="Add Profanity Word">
+        Add
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Modal and Form Handling -->
 <script>
-  // Open Referral Modal
-  function openReferralModal(referralId) {
-    fetch(`/admin_tools/get_referral/${referralId}/`)
-      .then(response => response.json())
-      .then(data => {
-        const detailsDiv = document.getElementById('referralDetails');
-        detailsDiv.innerHTML = `
-          <h4>Title</h4>
-          <p>${highlightText(data.title)}</p>
-          <h4>Description</h4>
-          <p>${highlightText(data.description)}</p>
-          <h4>Referral Reason</h4>
-          <p>${data.referral_reason}</p>
-          ${data.other_reason ? `<h4>Other Reason</h4><p>${data.other_reason}</p>` : ''}
-        `;
-        document.getElementById('referralModal').style.display = 'block';
-        window.currentReferral = data; // Store current referral data
-      });
-  }
-
-  // Highlight Text Function
-  function highlightText(text) {
-    // Example: Highlighting profane words from the profanity list
-    const profanities = {{ profanities|safe }};
-    let highlightedText = text;
-    profanities.forEach(word => {
-      const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-      highlightedText = highlightedText.replace(regex, '<span style="background-color: yellow;">$1</span>');
-    });
-    return highlightedText;
-  }
-
-  // Add to Profanity List
-  function addToProfanity() {
-    const titleProfanities = extractHighlightedWords(document.getElementById('referralDetails').innerHTML);
-    const descriptionProfanities = extractHighlightedWords(document.getElementById('referralDetails').innerHTML);
-    const wordsToAdd = [...titleProfanities, ...descriptionProfanities].filter((word, index, self) => self.indexOf(word) === index);
-
-    if (wordsToAdd.length === 0) {
-      alert('No profane words found to add.');
-      return;
+  document.addEventListener("DOMContentLoaded", function () {
+    // Function to get CSRF token from cookies
+    function getCSRFToken() {
+      let cookieValue = null;
+      const name = "csrftoken";
+      if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === name + "=") {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
     }
 
-    fetch(`/admin_tools/add_profanity/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({ words: wordsToAdd })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Profane words added successfully.');
-        location.reload();
-      } else {
-        alert('Error adding profane words.');
+    const csrftoken = getCSRFToken();
+
+    // Select the referral modal and profanity modal
+    const referralModal = document.getElementById(
+      "pilarease-admin-referral-modal"
+    );
+    const profanityModal = document.getElementById(
+      "pilarease-admin-profanity-modal"
+    );
+
+    // Close buttons
+    const closeReferralModalBtn = referralModal.querySelector(
+      ".pilarease-admin-referral-close"
+    );
+    const closeProfanityModalBtn = profanityModal.querySelector(
+      ".pilarease-admin-referral-close"
+    );
+
+    // Function to open the referral modal
+    window.openReferralModal = function (referralId) {
+      fetch(`/admin/referrals/${referralId}/`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          // Populate user avatar and username (Status User)
+          const userAvatar = document.getElementById("pilarease-admin-avatar");
+          userAvatar.src = data.status_user_avatar_url
+            ? data.status_user_avatar_url
+            : "{% static 'images/avatars/placeholder.png' %}";
+          userAvatar.alt = `${data.status_user_username}'s Avatar`;
+
+          const username = document.getElementById("pilarease-admin-username");
+          username.textContent = data.status_user_username;
+
+          // Populate referral details
+          document.getElementById("pilarease-admin-highlightedTitle").value =
+            data.highlighted_title;
+          document.getElementById(
+            "pilarease-admin-highlightedDescription"
+          ).value = data.highlighted_description;
+          document.getElementById(
+            "pilarease-admin-referralReason"
+          ).textContent = data.referral_reason;
+
+          if (data.other_reason) {
+            document.getElementById(
+              "pilarease-admin-otherReasonContainer"
+            ).style.display = "block";
+            document.getElementById("pilarease-admin-otherReason").textContent =
+              data.other_reason;
+          } else {
+            document.getElementById(
+              "pilarease-admin-otherReasonContainer"
+            ).style.display = "none";
+          }
+
+          // Populate posted by and referred by usernames
+          document.getElementById("pilarease-admin-postedBy").textContent =
+            data.status_user_username;
+          document.getElementById("pilarease-admin-referredBy").textContent =
+            data.referred_by_username;
+
+          // Store current referral ID for saving changes
+          window.currentReferralId = data.id;
+
+          // Show the modal with pop-in animation
+          referralModal.style.display = "block";
+          referralModal.classList.remove("animate__zoomOut");
+          referralModal.classList.add("animate__zoomIn");
+        })
+        .catch((error) => {
+          console.error("Error fetching referral data:", error);
+          alert("Failed to fetch referral details.");
+        });
+    };
+
+    // Function to close the referral modal with pop-out animation
+    window.closeReferralModal = function () {
+      referralModal.classList.remove("animate__zoomIn");
+      referralModal.classList.add("animate__zoomOut");
+      // Wait for the animation to finish before hiding
+      setTimeout(() => {
+        referralModal.style.display = "none";
+        referralModal.classList.remove("animate__zoomOut");
+        window.currentReferralId = null;
+      }, 500); // Duration should match the animation duration
+    };
+
+    // Function to save referral changes
+    window.saveReferralChanges = function () {
+      const referralId = window.currentReferralId;
+      if (!referralId) {
+        alert("No referral selected.");
+        return;
       }
-    });
-  }
 
-  // Extract Highlighted Words
-  function extractHighlightedWords(htmlText) {
-    const div = document.createElement('div');
-    div.innerHTML = htmlText;
-    const highlightedSpans = div.querySelectorAll('span[style="background-color: yellow;"]');
-    let words = [];
-    highlightedSpans.forEach(span => {
-      words.push(span.textContent);
-    });
-    return words;
-  }
+      const highlightedTitle = document
+        .getElementById("pilarease-admin-highlightedTitle")
+        .value.trim();
+      const highlightedDescription = document
+        .getElementById("pilarease-admin-highlightedDescription")
+        .value.trim();
 
-  // Add Profanity via Form
-  function addProfanity(event) {
-    event.preventDefault();
-    const newWord = document.getElementById('newProfanity').value.trim();
-    if (newWord === '') return;
-
-    fetch(`/admin_tools/add_profanity/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({ words: [newWord] })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Profane word added successfully.');
-        location.reload();
-      } else {
-        alert('Error adding profane word.');
+      if (!highlightedTitle || !highlightedDescription) {
+        alert("Highlighted Title and Description cannot be empty.");
+        return;
       }
-    });
-  }
 
-  // Delete Profanity
-  function deleteProfanity(word) {
-    if (!confirm(`Are you sure you want to delete the word "${word}" from the profanity list?`)) return;
+      fetch(`/admin/referrals/${referralId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        body: JSON.stringify({
+          highlighted_title: highlightedTitle,
+          highlighted_description: highlightedDescription,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            alert(data.message);
+            closeReferralModal();
+            // Optionally, refresh the referrals list or update the specific item
+            location.reload(); // Simple way to refresh
+          } else {
+            alert("Failed to update referral.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating referral:", error);
+          alert("An error occurred while updating the referral.");
+        });
+    };
 
-    fetch(`/admin_tools/delete_profanity/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': '{{ csrf_token }}'
-      },
-      body: JSON.stringify({ word: word })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert('Profane word deleted successfully.');
-        location.reload();
-      } else {
-        alert('Error deleting profane word.');
+    // Function to open the profanity modal
+    window.addToProfanity = function () {
+      profanityModal.style.display = "block";
+      profanityModal.classList.remove("animate__fadeOut");
+      profanityModal.classList.add("animate__fadeIn");
+    };
+
+    // Function to close the profanity modal with pop-out animation
+    window.closeProfanityModal = function () {
+      profanityModal.classList.remove("animate__fadeIn");
+      profanityModal.classList.add("animate__fadeOut");
+      // Wait for the animation to finish before hiding
+      setTimeout(() => {
+        profanityModal.style.display = "none";
+        profanityModal.classList.remove("animate__fadeOut");
+      }, 500); // Duration should match the animation duration
+    };
+
+    // Function to add a new profanity word
+    window.addProfanity = function () {
+      const newWordInput = document.getElementById(
+        "pilarease-admin-newProfanity"
+      );
+      const newWord = newWordInput.value.trim().toLowerCase();
+      if (!newWord) {
+        alert("Please enter a word.");
+        return;
       }
-    });
-  }
+
+      fetch("{% url 'add_profanity' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        body: JSON.stringify({
+          word: newWord,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            alert(data.message);
+            location.reload(); // Refresh to show the new word
+          } else {
+            alert(data.message || "Failed to add profanity.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error adding profanity:", error);
+          alert("An error occurred while adding the profanity.");
+        });
+    };
+
+    // Function to delete a profanity word
+    window.deleteProfanity = function (profanityId) {
+      if (!confirm("Are you sure you want to delete this profanity word?")) {
+        return;
+      }
+
+      fetch(`/admin/profanities/delete/${profanityId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            alert(data.message);
+            location.reload(); // Refresh to remove the deleted word
+          } else {
+            alert("Failed to delete profanity.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error deleting profanity:", error);
+          alert("An error occurred while deleting the profanity.");
+        });
+    };
+
+    // Close modals when clicking outside of them
+    window.onclick = function (event) {
+      if (event.target == referralModal) {
+        closeReferralModal();
+      }
+      if (event.target == profanityModal) {
+        closeProfanityModal();
+      }
+    };
+  });
 </script>
 {% endblock %}
