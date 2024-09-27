@@ -497,7 +497,7 @@ body {
 .pilarease-admin-sentiment-fill {
   height: 100%;
   background-color: var(--accent-light);
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
 }
 
 /* Approval Labels */
@@ -704,6 +704,19 @@ body {
     font-size: 12px;
     padding: 6px 10px;
   }
+}
+
+/* Sentiment Fill Colors */
+.sentiment-positive {
+  background-color: #4caf50; /* Green */
+}
+
+.sentiment-neutral {
+  background-color: #9e9e9e; /* Gray */
+}
+
+.sentiment-negative {
+  background-color: #f44336; /* Red */
 }
 
 /* =========================================================

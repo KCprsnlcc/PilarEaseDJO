@@ -428,7 +428,7 @@ def manage_profanities_view(request):
     context = {
         'profanities': profanity_words.word_list,
     }
-    return render(request, 'admin_tools/manage_profanities.html', context)
+    return render(request, 'admin_tools/profanity_list.html', context)
 
 @login_required
 @user_passes_test(is_counselor)

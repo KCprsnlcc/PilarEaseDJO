@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils import timezone
-
+from decimal import Decimal
 
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
@@ -64,9 +64,9 @@ User = get_user_model()
 from textblob import TextBlob  # Ensure TextBlob is installed: pip install textblob
 
 class Feedback(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     message = models.TextField()
-    sentiment_score = models.FloatField(default=0.0)
+    sentiment_score = models.IntegerField(default=0)  # Changed to IntegerField
     is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -75,8 +75,9 @@ class Feedback(models.Model):
 
     def save(self, *args, **kwargs):
         blob = TextBlob(self.message)
-        # Sentiment polarity ranges from -1 (negative) to 1 (positive). Normalize it to 0-100.
-        self.sentiment_score = (blob.sentiment.polarity + 1) * 50
+        # Sentiment polarity ranges from -1 (negative) to 1 (positive). Normalize it to -100 to 100.
+        normalized_score = blob.sentiment.polarity * 100  # Changed normalization
+        self.sentiment_score = int(round(normalized_score))  # Convert to integer
         super().save(*args, **kwargs)
     
 class ChatMessage(models.Model):

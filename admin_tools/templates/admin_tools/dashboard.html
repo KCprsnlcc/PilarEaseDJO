@@ -1,8 +1,12 @@
 <!-- templates/admin_tools/dashboard.html -->
 
 {% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
+%} {% load sentiment_tags %}
+<!-- Load the custom sentiment_tags -->
+
+{% block content %}
 <div class="pilarease-admin-dashboard-container">
+  <!-- Dashboard Header -->
   <div
     class="pilarease-admin-dashboard-header"
     style="display: flex; justify-content: space-between; align-items: center"
@@ -68,12 +72,24 @@
           <td>{{ feedback.message }}</td>
           <td>
             <div class="pilarease-admin-sentiment-score">
-              <span>{{ feedback.sentiment_score }}</span>
+              <span>{{ feedback.sentiment_score }}%</span>
               <div class="pilarease-admin-sentiment-bar">
+                {% if feedback.sentiment_score > 0 %}
                 <div
-                  class="pilarease-admin-sentiment-fill"
-                  style="width: {{ feedback.sentiment_score|floatformat:0 }}%;"
+                  class="pilarease-admin-sentiment-fill sentiment-positive"
+                  style="width: {{ feedback.sentiment_score }}%;"
                 ></div>
+                {% elif feedback.sentiment_score < 0 %}
+                <div
+                  class="pilarease-admin-sentiment-fill sentiment-negative"
+                  style="width: {{ feedback.sentiment_score|absolute }}%;"
+                ></div>
+                {% else %}
+                <div
+                  class="pilarease-admin-sentiment-fill sentiment-neutral"
+                  style="width: 50%"
+                ></div>
+                {% endif %}
               </div>
             </div>
           </td>
@@ -190,12 +206,24 @@
           <td>{{ testimonial.message }}</td>
           <td>
             <div class="pilarease-admin-sentiment-score">
-              <span>{{ testimonial.sentiment_score }}</span>
+              <span>{{ testimonial.sentiment_score }}%</span>
               <div class="pilarease-admin-sentiment-bar">
+                {% if testimonial.sentiment_score > 0 %}
                 <div
-                  class="pilarease-admin-sentiment-fill"
-                  style="width: {{ testimonial.sentiment_score|floatformat:0 }}%;"
+                  class="pilarease-admin-sentiment-fill sentiment-positive"
+                  style="width: {{ testimonial.sentiment_score }}%;"
                 ></div>
+                {% elif testimonial.sentiment_score < 0 %}
+                <div
+                  class="pilarease-admin-sentiment-fill sentiment-negative"
+                  style="width: {{ testimonial.sentiment_score|absolute }}%;"
+                ></div>
+                {% else %}
+                <div
+                  class="pilarease-admin-sentiment-fill sentiment-neutral"
+                  style="width: 50%"
+                ></div>
+                {% endif %}
               </div>
             </div>
           </td>
