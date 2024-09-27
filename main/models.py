@@ -68,6 +68,7 @@ class Feedback(models.Model):
     message = models.TextField()
     sentiment_score = models.IntegerField(default=0)  # Changed to IntegerField
     is_approved = models.BooleanField(default=False)
+    is_excluded = models.BooleanField(default=False)  # New Field
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
