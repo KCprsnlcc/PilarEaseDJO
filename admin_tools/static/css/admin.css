@@ -22,6 +22,8 @@
   --highlight-color: #ffc107; /* Highlight Button Color */
   --save-color: #28a745; /* Save Button Color */
   --profanity-color: #dc3545; /* Profanity Button Color */
+  --exclude-color: #ff9800; /* Orange color for Exclude button */
+  --excluded-label-color: #ff5722; /* Deep orange for Excluded status */
 }
 /* =========================================================
    Base Styles
@@ -500,6 +502,16 @@ body {
   transition: width 0.3s ease, background-color 0.3s ease;
 }
 
+/* Unexclude Button */
+.pilarease-admin-action-button.unexclude-button {
+  background-color: #4caf50; /* Green color for Unexclude */
+}
+
+.pilarease-admin-action-button.unexclude-button:hover {
+  background-color: #388e3c; /* Darker green on hover */
+  transform: translateY(-2px);
+}
+
 /* Approval Labels */
 .pilarease-admin-approved-label {
   padding: 5px 10px;
@@ -717,6 +729,25 @@ body {
 
 .sentiment-negative {
   background-color: #f44336; /* Red */
+}
+
+.pilarease-admin-action-button.exclude-button {
+  background-color: var(--exclude-color); /* Orange */
+}
+
+.pilarease-admin-action-button.exclude-button:hover {
+  background-color: #fb8c00; /* Darker orange on hover */
+  transform: translateY(-2px);
+}
+
+/* Excluded Status Label */
+.pilarease-admin-excluded-label {
+  padding: 5px 10px;
+  background-color: var(--excluded-label-color); /* Deep orange */
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
 }
 
 /* =========================================================

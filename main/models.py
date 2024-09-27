@@ -64,15 +64,16 @@ User = get_user_model()
 from textblob import TextBlob  # Ensure TextBlob is installed: pip install textblob
 
 class Feedback(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='feedbacks')
     message = models.TextField()
-    sentiment_score = models.IntegerField(default=0)  # Changed to IntegerField
+    sentiment_score = models.IntegerField(default=0)
     is_approved = models.BooleanField(default=False)
-    is_excluded = models.BooleanField(default=False)  # New Field
+    is_excluded = models.BooleanField(default=False)  # Ensure this field exists
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Feedback from {self.user.username}"
+        status = "Excluded" if self.is_excluded else ("Approved" if self.is_approved else "Pending")
+        return f"Feedback by {self.user.username} - {status}"
 
     def save(self, *args, **kwargs):
         blob = TextBlob(self.message)

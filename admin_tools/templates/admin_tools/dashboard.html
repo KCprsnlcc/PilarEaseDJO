@@ -162,8 +162,8 @@
           aria-label="More information about User Testimonials"
         ></i>
         <span class="pilarease-admin-tooltip">
-          Manage and review testimonials provided by users. Approve or delete
-          testimonials as necessary.
+          Manage and review testimonials provided by users. Approve, delete, or
+          exclude testimonials as necessary.
         </span>
       </h2>
       <form method="get" class="pilarease-admin-testimonial-search-form">
@@ -194,7 +194,7 @@
       </thead>
       <tbody>
         {% for testimonial in testimonials.object_list %}
-        <tr>
+        <tr id="testimonial-row-{{ testimonial.id }}">
           <td>
             <img
               src="{% if testimonial.user.profile.avatar %}{{ testimonial.user.profile.avatar.url }}{% else %}{% static 'images/avatars/placeholder.png' %}{% endif %}"
@@ -212,23 +212,28 @@
                 <div
                   class="pilarease-admin-sentiment-fill sentiment-positive"
                   style="width: {{ testimonial.sentiment_score }}%;"
+                  aria-label="Positive sentiment: {{ testimonial.sentiment_score }}%"
                 ></div>
                 {% elif testimonial.sentiment_score < 0 %}
                 <div
                   class="pilarease-admin-sentiment-fill sentiment-negative"
                   style="width: {{ testimonial.sentiment_score|absolute }}%;"
+                  aria-label="Negative sentiment: {{ testimonial.sentiment_score }}%"
                 ></div>
                 {% else %}
                 <div
                   class="pilarease-admin-sentiment-fill sentiment-neutral"
                   style="width: 50%"
+                  aria-label="Neutral sentiment"
                 ></div>
                 {% endif %}
               </div>
             </div>
           </td>
           <td>
-            {% if testimonial.is_approved %}
+            {% if testimonial.is_excluded %}
+            <span class="pilarease-admin-excluded-label">Excluded</span>
+            {% elif testimonial.is_approved %}
             <span class="pilarease-admin-approved-label">Approved</span>
             {% else %}
             <span class="pilarease-admin-pending-label">Pending</span>
@@ -248,6 +253,22 @@
               class="pilarease-admin-action-button delete-button"
               >Delete</a
             >
+            <!-- Exclude or Unexclude Button -->
+            {% if not testimonial.is_excluded %}
+            <button
+              class="pilarease-admin-action-button exclude-button"
+              data-testimonial-id="{{ testimonial.id }}"
+            >
+              Exclude
+            </button>
+            {% else %}
+            <button
+              class="pilarease-admin-action-button unexclude-button"
+              data-testimonial-id="{{ testimonial.id }}"
+            >
+              Unexclude
+            </button>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -411,4 +432,84 @@
     </div>
   </div>
 </div>
+<!-- AJAX Script for Excluding and Unexcluding Testimonials -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $(".exclude-button, .unexclude-button").click(function () {
+      var action = $(this).hasClass("exclude-button") ? "exclude" : "unexclude";
+      var testimonialId = $(this).data("testimonial-id");
+      var row = $("#testimonial-row-" + testimonialId); // Get the testimonial row
+
+      var confirmMessage =
+        action === "exclude"
+          ? "Are you sure you want to exclude this testimonial?"
+          : "Are you sure you want to unexclude this testimonial?";
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      var url =
+        action === "exclude"
+          ? "{% url 'exclude_testimonial' 0 %}".replace("0", testimonialId)
+          : "{% url 'unexclude_testimonial' 0 %}".replace("0", testimonialId);
+
+      $.ajax({
+        url: url,
+        type: "POST",
+        data: {
+          csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function (response) {
+          if (response.success) {
+            alert(
+              "Testimonial " +
+                (action === "exclude" ? "excluded" : "unexcluded") +
+                " successfully."
+            );
+            if (action === "exclude") {
+              // Update the Approval Status cell
+              row
+                .find("td:nth-child(5)")
+                .html(
+                  '<span class="pilarease-admin-excluded-label">Excluded</span>'
+                );
+              // Remove the Exclude button and add Unexclude button
+              row.find(".exclude-button").remove();
+              row
+                .find("td:last-child")
+                .append(
+                  '<button class="pilarease-admin-action-button unexclude-button" data-testimonial-id="' +
+                    testimonialId +
+                    '">Unexclude</button>'
+                );
+            } else {
+              // Update the Approval Status cell
+              row
+                .find("td:nth-child(5)")
+                .html(
+                  '<span class="pilarease-admin-pending-label">Pending</span>'
+                );
+              // Remove the Unexclude button and add Exclude button
+              row.find(".unexclude-button").remove();
+              row
+                .find("td:last-child")
+                .append(
+                  '<button class="pilarease-admin-action-button exclude-button" data-testimonial-id="' +
+                    testimonialId +
+                    '">Exclude</button>'
+                );
+            }
+          } else {
+            alert("Error: " + response.error);
+          }
+        },
+        error: function (xhr, status, error) {
+          alert("An error occurred: " + error);
+        },
+      });
+    });
+  });
+</script>
 {% endblock %}

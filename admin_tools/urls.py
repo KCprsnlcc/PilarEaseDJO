@@ -26,6 +26,8 @@ urlpatterns = [
     # Testimonial Management
     path('approve-testimonial/<int:testimonial_id>/', views.approve_testimonial, name='approve_testimonial'),
     path('delete-testimonial/<int:testimonial_id>/', views.delete_testimonial, name='delete_testimonial'),
+    path('exclude_testimonial/<int:testimonial_id>/', views.exclude_testimonial, name='exclude_testimonial'),
+    path('unexclude_testimonial/<int:testimonial_id>/', views.unexclude_testimonial, name='unexclude_testimonial'),
 
     # Contact Us Management
     path('contact-us/', views.contact_us_view, name='contact_us'),

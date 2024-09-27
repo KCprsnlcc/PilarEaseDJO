@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadReque
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q, Avg
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from main.models import (
     ContactUs,
     Status,
@@ -296,7 +296,7 @@ def dashboard(request):
 
     # Testimonials (approved feedbacks)
     testimonial_search_query = request.GET.get('testimonial_search', '')
-    testimonials_queryset = Feedback.objects.filter(is_approved=True)
+    testimonials_queryset = Feedback.objects.filter(is_approved=True, is_excluded=False)
     if testimonial_search_query:
         testimonials_queryset = testimonials_queryset.filter(
             Q(user__full_name__icontains=testimonial_search_query) |
@@ -330,6 +330,19 @@ def dashboard(request):
     }
     return render(request, 'admin_tools/dashboard.html', context)
 
+@login_required
+def exclude_testimonial(request, testimonial_id):
+    testimonial = get_object_or_404(Feedback, id=testimonial_id, is_excluded=False)
+    testimonial.is_excluded = True
+    testimonial.save()
+    return JsonResponse({'success': True})
+
+@login_required
+def unexclude_testimonial(request, testimonial_id):
+    testimonial = get_object_or_404(Feedback, id=testimonial_id, is_excluded=True)
+    testimonial.is_excluded = False
+    testimonial.save()
+    return JsonResponse({'success': True})
 
 @login_required
 def approve_feedback(request, feedback_id):
