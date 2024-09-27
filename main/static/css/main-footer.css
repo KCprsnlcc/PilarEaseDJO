@@ -1,9 +1,15 @@
 footer {
-  position: fixed; /* Stick to the bottom of the viewport */
-  bottom: 0;
+  position: relative; /* Changed from fixed to relative */
   width: 100%;
-  z-index: 9999; /* Set the z-index to 99999 */
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Add a drop box shadow */
+  z-index: 9999; /* Keep the z-index for layering */
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Drop shadow */
+  background-color: #0f2326; /* Footer background color */
+  color: #fff; /* Footer text color */
+  padding: 10px 0; /* Footer padding */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto; /* This ensures the footer moves to the bottom */
 }
 
 .learn-more-link-pilarease {

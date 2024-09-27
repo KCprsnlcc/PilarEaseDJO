@@ -11,7 +11,13 @@ body {
   font-size: 14px;
   font-family: "Inter", sans-serif;
 }
-
+html,
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
 button {
   padding: 12px;
   background-color: #689e4b;
