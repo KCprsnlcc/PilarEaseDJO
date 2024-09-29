@@ -4280,7 +4280,7 @@ button#generatePassword:hover {
   width: 250px;
   display: none;
   text-align: center;
-  position: absolute;
+  position: fixed;
   transform: translate(-50%, -50%);
   background-color: #fff;
   border-radius: 8px;
