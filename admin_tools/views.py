@@ -16,6 +16,7 @@ from main.models import (
     Feedback,
     Referral,
     ProfanityWord,
+    Questionnaire,
 )
 from django.contrib import messages
 import pandas as pd
@@ -61,6 +62,44 @@ nltk_logger.setLevel(logging.CRITICAL)
 def is_counselor(user):
     return user.is_authenticated and user.is_counselor
 
+@user_passes_test(is_counselor)
+@login_required
+def get_user_questionnaire(request, user_id):
+    """
+    Fetch all questionnaire responses and basic profile details for a specific user.
+    Only accessible by counselors.
+    """
+    # Ensure the user is a student
+    user = get_object_or_404(CustomUser, id=user_id, is_counselor=False)
+    
+    # Fetch questionnaire responses
+    questionnaires = Questionnaire.objects.filter(user=user).order_by('timestamp')
+    
+    # Serialize questionnaire data
+    questionnaire_data = []
+    for q in questionnaires:
+        questionnaire_data.append({
+            'question': q.question,
+            'answer': q.answer,
+            'response': q.response,
+            'timestamp': q.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    
+    # Serialize user profile data
+    profile_data = {
+        'student_id': user.student_id,
+        'full_name': user.full_name,
+        'academic_year_level': user.academic_year_level,
+        'contact_number': user.contact_number,
+        'email': user.email,
+        'bio': user.profile.bio or 'No bio available.',
+        'avatar_url': user.profile.avatar.url if user.profile.avatar else '',  # Empty string if no avatar
+    }
+    
+    return JsonResponse({
+        'questionnaires': questionnaire_data,
+        'profile': profile_data,
+    })
 # Function to save NLTK resource download status to the database
 def save_nltk_resource(resource_name):
     resource, created = NLTKResource.objects.get_or_create(
@@ -590,8 +629,11 @@ def contact_us_view(request):
 def home(request):
     return render(request, 'home.html')
 
-def chat(request):
-    return render(request, 'admin_tools/chat.html')
+@login_required
+def chat_view(request):
+    # Fetch users who are not counselors
+    users = CustomUser.objects.filter(is_counselor=False)
+    return render(request, 'admin_tools/chat.html', {'users': users})
 
 
 @login_required

@@ -1,0 +1,297 @@
+<!-- admin_tools/templates/admin_tools/chat.html -->
+
+{% extends 'admin_tools/base_admin.html' %} {% load static %} {% load compress
+%} {% block content %}
+<div class="pilarease-admin-chat-container">
+  <!-- User List Sidebar -->
+  <div class="pilarease-admin-chat-user-list">
+    <div class="pilarease-admin-chat-user-list-header">Users</div>
+    <ul class="pilarease-admin-chat-user-items">
+      {% for user in users %}
+      <li
+        class="pilarease-admin-chat-user-item"
+        onclick="openUserProfile({{ user.id }})"
+      >
+        <img
+          src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'images/avatars/placeholder.png' %}{% endif %}"
+          alt="{{ user.username }}'s Avatar"
+          class="pilarease-admin-chat-user-avatar"
+        />
+        <div class="pilarease-admin-chat-user-info">
+          <span class="pilarease-admin-chat-user-name"
+            >{{ user.full_name }}</span
+          >
+          <span class="pilarease-admin-chat-user-status">
+            {% if user.is_counselor %} Counselor {% else %} Student {% endif %}
+          </span>
+        </div>
+      </li>
+      {% endfor %} {% if not users %}
+      <li class="pilarease-admin-chat-user-item">
+        <p>No users available.</p>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <!-- Chat Window -->
+  <div class="pilarease-admin-chat-window">
+    <div class="pilarease-admin-chat-header">
+      <img
+        src="{% static 'images/avatars/placeholder.png' %}"
+        alt="Selected User's Avatar"
+        class="pilarease-admin-chat-header-avatar"
+      />
+      <div class="pilarease-admin-chat-header-info">
+        <span class="pilarease-admin-chat-header-name"
+          >Select a user to start chatting</span
+        >
+        <span class="pilarease-admin-chat-header-status"></span>
+      </div>
+    </div>
+    <div
+      class="pilarease-admin-chat-messages"
+      id="pilarease-admin-chat-messages"
+    >
+      <!-- Messages will appear here -->
+      <p
+        style="
+          color: rgba(14, 35, 38, 0.5);
+          text-align: center;
+          margin-top: 20px;
+        "
+      >
+        No conversation selected.
+      </p>
+    </div>
+    <div class="pilarease-admin-chat-input-container">
+      <input
+        type="text"
+        class="pilarease-admin-chat-input"
+        id="pilarease-admin-chat-input"
+        placeholder="Type your message here..."
+        disabled
+      />
+      <button
+        class="pilarease-admin-chat-send-button"
+        id="pilarease-admin-chat-send-button"
+        disabled
+      >
+        Send
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- User Profile Modal -->
+<div
+  id="pilarease-admin-chat-profile-modal"
+  class="pilarease-admin-chat-profile-modal animate__animated animate__zoomIn"
+>
+  <div class="pilarease-admin-chat-profile-modal-content">
+    <span
+      class="pilarease-admin-chat-profile-close"
+      onclick="closeUserProfile()"
+      >&times;</span
+    >
+    <h2>User Profile</h2>
+    <div class="pilarease-admin-chat-profile-details">
+      <img
+        id="pilarease-admin-chat-profile-avatar"
+        src="{% static 'images/avatars/placeholder.png' %}"
+        alt="User Avatar"
+        class="pilarease-admin-chat-profile-avatar"
+      />
+      <span
+        class="pilarease-admin-chat-profile-name"
+        id="pilarease-admin-chat-profile-name"
+        >User Name</span
+      >
+      <div class="pilarease-admin-chat-profile-info">
+        <p>
+          <strong>Student ID:</strong>
+          <span id="pilarease-admin-chat-profile-student-id">1234567890</span>
+        </p>
+        <p>
+          <strong>Academic Year Level:</strong>
+          <span id="pilarease-admin-chat-profile-year-level">Sophomore</span>
+        </p>
+        <p>
+          <strong>Contact Number:</strong>
+          <span id="pilarease-admin-chat-profile-contact"
+            >+1 (234) 567-8901</span
+          >
+        </p>
+        <p>
+          <strong>Email:</strong>
+          <span id="pilarease-admin-chat-profile-email">user@example.com</span>
+        </p>
+        <p>
+          <strong>Bio:</strong>
+          <span id="pilarease-admin-chat-profile-bio"
+            >This is a short bio about the user.</span
+          >
+        </p>
+        <!-- Questionnaire Section -->
+        <div
+          class="pilarease-admin-chat-profile-questionnaire"
+          id="pilarease-admin-chat-profile-questionnaire"
+        >
+          <h3>Questionnaire Responses</h3>
+          <!-- Questionnaire items will be dynamically inserted here -->
+          <div id="questionnaire-content">
+            <p>No questionnaire responses available.</p>
+          </div>
+        </div>
+        <!-- Connect Button -->
+        <button
+          class="pilarease-admin-chat-connect-button"
+          id="pilarease-admin-chat-connect-button"
+          onclick="connectToUser()"
+        >
+          Connect
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Fetching and Displaying Questionnaire Data -->
+<script>
+  // Function to open user profile and fetch questionnaire data
+  function openUserProfile(userId) {
+    // Fetch questionnaire data and profile details from the correct URL
+    fetch(`/admin/chat/get_user_questionnaire/${userId}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.questionnaires && data.profile) {
+          populateUserProfileModal(userId, data);
+        } else {
+          alert("Failed to fetch user questionnaire data.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching questionnaire data:", error);
+        alert("An error occurred while fetching user data.");
+      });
+  }
+
+  // Function to populate the user profile modal with fetched data
+  function populateUserProfileModal(userId, data) {
+    const profileName = document.getElementById(
+      "pilarease-admin-chat-profile-name"
+    );
+    const profileStudentId = document.getElementById(
+      "pilarease-admin-chat-profile-student-id"
+    );
+    const profileYearLevel = document.getElementById(
+      "pilarease-admin-chat-profile-year-level"
+    );
+    const profileContact = document.getElementById(
+      "pilarease-admin-chat-profile-contact"
+    );
+    const profileEmail = document.getElementById(
+      "pilarease-admin-chat-profile-email"
+    );
+    const profileBio = document.getElementById(
+      "pilarease-admin-chat-profile-bio"
+    );
+    const profileAvatar = document.getElementById(
+      "pilarease-admin-chat-profile-avatar"
+    );
+    const questionnaireSection = document.getElementById(
+      "pilarease-admin-chat-profile-questionnaire"
+    );
+    const questionnaireContent = document.getElementById(
+      "questionnaire-content"
+    );
+
+    // Update profile details
+    const profile = data.profile;
+    profileName.textContent = profile.full_name;
+    profileStudentId.textContent = profile.student_id;
+    profileYearLevel.textContent = profile.academic_year_level;
+    profileContact.textContent = profile.contact_number;
+    profileEmail.textContent = profile.email;
+    profileBio.textContent = profile.bio || "No bio available.";
+
+    if (profile.avatar_url) {
+      profileAvatar.src = profile.avatar_url;
+    } else {
+      profileAvatar.src = "{% static 'images/avatars/placeholder.png' %}";
+    }
+
+    // Populate questionnaire responses
+    const questionnaires = data.questionnaires;
+    if (questionnaires.length > 0) {
+      questionnaireContent.innerHTML = ""; // Clear existing content
+      questionnaires.forEach((q) => {
+        const questionItem = document.createElement("div");
+        questionItem.className = "question-item";
+
+        const question = document.createElement("p");
+        question.className = "question";
+        question.textContent = q.question;
+
+        const answer = document.createElement("p");
+        answer.className = "answer";
+        answer.textContent = `Answer: ${q.answer}`;
+
+        const response = document.createElement("p");
+        response.className = "response";
+        response.textContent = `Counselor's Response: ${q.response}`;
+
+        questionItem.appendChild(question);
+        questionItem.appendChild(answer);
+        questionItem.appendChild(response);
+
+        questionnaireContent.appendChild(questionItem);
+      });
+    } else {
+      questionnaireContent.innerHTML =
+        "<p>No questionnaire responses available.</p>";
+    }
+
+    // Show the profile modal
+    const profileModal = document.getElementById(
+      "pilarease-admin-chat-profile-modal"
+    );
+    profileModal.style.display = "block";
+    profileModal.classList.remove("animate__zoomOut");
+    profileModal.classList.add("animate__zoomIn");
+  }
+
+  // Function to close the user profile modal
+  function closeUserProfile() {
+    const profileModal = document.getElementById(
+      "pilarease-admin-chat-profile-modal"
+    );
+    profileModal.classList.remove("animate__zoomIn");
+    profileModal.classList.add("animate__zoomOut");
+    setTimeout(() => {
+      profileModal.style.display = "none";
+      profileModal.classList.remove("animate__zoomOut");
+    }, 500);
+  }
+
+  // Function to handle "Connect" button click
+  function connectToUser() {
+    alert("Connect button clicked! Implement connection logic here.");
+    // TODO: Implement the actual connection logic (e.g., initiate a chat, send a request, etc.)
+  }
+
+  // Disable chat input and send button initially
+  document.getElementById("pilarease-admin-chat-input").disabled = true;
+  document.getElementById("pilarease-admin-chat-send-button").disabled = true;
+</script>
+{% endblock %}

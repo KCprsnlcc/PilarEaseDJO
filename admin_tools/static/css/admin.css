@@ -2658,6 +2658,432 @@ body {
 }
 
 /* =========================================================
+   Chat Interface Specific Styles
+   ========================================================= */
+
+/* Chat Container */
+.pilarease-admin-chat-container {
+  display: flex;
+  height: calc(100vh - 60px); /* Adjust based on header height */
+}
+
+/* User List Sidebar */
+.pilarease-admin-chat-user-list {
+  width: 250px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+.pilarease-admin-chat-user-list-header {
+  padding: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pilarease-admin-chat-user-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pilarease-admin-chat-user-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-chat-user-item:hover {
+  background-color: #e6e6e6;
+}
+
+.pilarease-admin-chat-user-avatar {
+  width: 50px; /* Adjusted size */
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.pilarease-admin-chat-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pilarease-admin-chat-user-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pilarease-admin-chat-user-status {
+  font-size: 14px;
+  color: #888888;
+}
+
+/* Chat Window */
+.pilarease-admin-chat-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pilarease-admin-chat-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pilarease-admin-chat-header-avatar {
+  width: 60px; /* Adjusted size */
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.pilarease-admin-chat-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pilarease-admin-chat-header-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pilarease-admin-chat-header-status {
+  font-size: 14px;
+  color: #888888;
+}
+
+.pilarease-admin-chat-messages {
+  flex: 1;
+  padding: 20px;
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  background-color: #ffffff;
+}
+
+.pilarease-admin-chat-input-container {
+  display: flex;
+  padding: 15px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
+
+.pilarease-admin-chat-input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 1px solid #cccccc;
+  border-radius: 20px;
+  font-size: 16px;
+}
+
+.pilarease-admin-chat-send-button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  background-color: var(--accent-color, #0e2326);
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-chat-send-button:hover {
+  background-color: #0a1c1f;
+}
+
+.pilarease-admin-chat-send-button:disabled,
+.pilarease-admin-chat-input:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* User Profile Modal */
+.pilarease-admin-chat-profile-modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Removed scroll from overlay */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+.pilarease-admin-chat-profile-modal-content {
+  background-color: #ffffff;
+  margin: 5% auto; /* 5% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888888;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+  position: relative;
+  overflow-y: auto; /* Enable scrolling if content overflows */
+  max-height: 90vh; /* Ensure modal doesn't exceed viewport height */
+}
+
+.pilarease-admin-chat-profile-close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  cursor: pointer;
+}
+
+.pilarease-admin-chat-profile-close:hover,
+.pilarease-admin-chat-profile-close:focus {
+  color: #000000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pilarease-admin-chat-profile-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pilarease-admin-chat-profile-avatar {
+  width: 80px; /* Adjusted size */
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-chat-profile-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-chat-profile-info {
+  width: 100%;
+}
+
+.pilarease-admin-chat-profile-info p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.pilarease-admin-chat-profile-info p span {
+  font-weight: 500;
+}
+
+/* Questionnaire Section */
+.pilarease-admin-chat-profile-questionnaire {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.pilarease-admin-chat-profile-questionnaire h3 {
+  margin-bottom: 15px;
+  color: var(--accent-color, #0e2326);
+  font-size: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+/* Questionnaire Content with Fixed Height and Flat Scrollbar */
+#questionnaire-content {
+  max-height: 300px; /* Adjust as needed */
+  overflow-y: auto;
+  padding-right: 10px; /* Space for scrollbar */
+}
+
+/* Questionnaire Items */
+.pilarease-admin-chat-profile-questionnaire .question-item {
+  margin-bottom: 20px;
+}
+
+.pilarease-admin-chat-profile-questionnaire .question-item:last-child {
+  margin-bottom: 0;
+}
+
+.pilarease-admin-chat-profile-questionnaire .question {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333333;
+}
+
+.pilarease-admin-chat-profile-questionnaire .answer,
+.pilarease-admin-chat-profile-questionnaire .response {
+  padding-left: 20px;
+  color: #555555;
+}
+
+.pilarease-admin-chat-profile-questionnaire .answer::before {
+  content: "• ";
+  color: var(--accent-color, #0e2326);
+}
+
+.pilarease-admin-chat-profile-questionnaire .response::before {
+  content: "↳ ";
+  color: #888888;
+}
+
+/* Connect Button */
+.pilarease-admin-chat-connect-button {
+  margin-top: 20px;
+  padding: 10px 25px;
+  background-color: var(--accent-color, #0e2326);
+  color: #ffffff;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-chat-connect-button:hover {
+  background-color: #0a1c1f;
+}
+
+.pilarease-admin-chat-connect-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 35, 38, 0.3);
+}
+
+/* Flat Scrollbar Styles */
+
+/* For WebKit Browsers (Chrome, Safari) */
+#questionnaire-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+#questionnaire-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#questionnaire-content::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
+/* For Firefox */
+#questionnaire-content {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Responsive Adjustments for Questionnaire Section */
+@media (max-width: 768px) {
+  .pilarease-admin-chat-profile-modal-content {
+    width: 90%;
+  }
+
+  .pilarease-admin-chat-profile-avatar {
+    width: 60px; /* Reduced size for tablets */
+    height: 60px;
+  }
+
+  .pilarease-admin-chat-user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pilarease-admin-chat-header-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  #questionnaire-content {
+    max-height: 200px; /* Reduced height for tablets */
+  }
+
+  .pilarease-admin-chat-profile-questionnaire h3 {
+    font-size: 18px;
+  }
+
+  .pilarease-admin-chat-profile-questionnaire .question {
+    font-size: 16px;
+  }
+
+  .pilarease-admin-chat-profile-questionnaire .answer,
+  .pilarease-admin-chat-profile-questionnaire .response {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pilarease-admin-chat-profile-avatar {
+    width: 50px; /* Further reduced size for mobile */
+    height: 50px;
+  }
+
+  .pilarease-admin-chat-user-avatar {
+    width: 35px;
+    height: 35px;
+  }
+
+  .pilarease-admin-chat-header-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  #questionnaire-content {
+    max-height: 150px; /* Further reduced height for mobile */
+  }
+
+  .pilarease-admin-chat-profile-questionnaire h3 {
+    font-size: 16px;
+  }
+
+  .pilarease-admin-chat-profile-questionnaire .question {
+    font-size: 14px;
+  }
+
+  .pilarease-admin-chat-profile-questionnaire .answer,
+  .pilarease-admin-chat-profile-questionnaire .response {
+    font-size: 12px;
+  }
+
+  .pilarease-admin-chat-connect-button {
+    width: 100%;
+    padding: 10px 0;
+  }
+}
+
+/* Additional Modal Scrollbar Styling (Optional) */
+
+/* For WebKit Browsers (Chrome, Safari) */
+.pilarease-admin-chat-profile-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pilarease-admin-chat-profile-modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.pilarease-admin-chat-profile-modal-content::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
+/* For Firefox */
+.pilarease-admin-chat-profile-modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+/* =========================================================
    Modal Styles
    ========================================================= */
 
@@ -2706,24 +3132,33 @@ body {
 
 /* Add CSS for pop animations */
 @keyframes popIn {
-  0% {
-    transform: scale(0);
+  from {
+    opacity: 0;
+    transform: scale(0.9);
   }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
+  to {
+    opacity: 1;
     transform: scale(1);
   }
 }
 
 @keyframes popOut {
-  0% {
+  from {
+    opacity: 1;
     transform: scale(1);
   }
-  100% {
-    transform: scale(0);
+  to {
+    opacity: 0;
+    transform: scale(0.9);
   }
+}
+
+.pilarease-admin-chat-profile-modal.animate__zoomIn {
+  animation-name: popIn;
+}
+
+.pilarease-admin-chat-profile-modal.animate__zoomOut {
+  animation-name: popOut;
 }
 
 /* Custom Fade In Animation */
@@ -2884,7 +3319,6 @@ body {
 
 /* Rotate Animation for Icons */
 .pilarease-admin-header-right i:hover,
-.pilarease-admin-chat-header .pilarease-admin-chat-icon:hover,
 .pilarease-admin-manage-referral-header .pilarease-admin-referral-icon:hover {
   animation: rotate 0.5s forwards;
 }
@@ -2994,6 +3428,26 @@ body::-webkit-scrollbar-thumb {
 }
 
 .pilarease-admin-referral-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+/* Apply Pop-In and Pop-Out Animations to Modals */
+.pilarease-admin-chat-modal.animate__zoomIn {
+  animation-name: popIn;
+}
+
+.pilarease-admin-chat-modal.animate__zoomOut {
+  animation-name: popOut;
+}
+
+/* Elevated Containers (Existing) */
+.pilarease-admin-referral-container,
+.pilarease-admin-chat-container {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-referral-container:hover,
+.pilarease-admin-chat-container:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }

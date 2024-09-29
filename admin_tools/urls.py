@@ -56,7 +56,8 @@ urlpatterns = [
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 
     # Chat
-    path('chat/', views.chat, name='chat'),
+    path('chat/', views.chat_view, name='chat'),
+    path('chat/get_user_questionnaire/<int:user_id>/', views.get_user_questionnaire, name='get_user_questionnaire'),
 
     # Analysis
     path('analysis/', views.analysis_view, name='analysis'),
