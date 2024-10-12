@@ -1,0 +1,23 @@
+<!-- itrc_tools/templates/itrc_tools/upload_masterlist.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div class="pilarease-admin-feedback-container">
+  <h1 class="pilarease-admin-section-title">Upload Enrollment Masterlist</h1>
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="pilarease-admin-upload-form"
+  >
+    {% csrf_token %} {{ form.non_field_errors }}
+    <div class="form-group">
+      {{ form.csv_file.label_tag }} {{ form.csv_file }} {% if
+      form.csv_file.errors %}
+      <div class="error">{{ form.csv_file.errors }}</div>
+      {% endif %}
+    </div>
+    <button type="submit" class="pilarease-admin-action-button save-button">
+      Upload
+    </button>
+  </form>
+</div>
+{% endblock %}

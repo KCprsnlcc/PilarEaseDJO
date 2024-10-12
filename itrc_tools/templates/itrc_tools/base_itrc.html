@@ -1,0 +1,94 @@
+<!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
+
+{% extends "admin_tools/base_admin.html" %} {% block title %}ITRC Dashboard |
+PilarEase{% endblock %} {% block sidebar %}
+<div
+  class="pilarease-admin-sidebar sidebar animate__animated animate__fadeInLeft"
+>
+  <div class="pilarease-admin-sidebar-header sidebar-header">
+    <img
+      src="{% static 'images/PilarLogo.png' %}"
+      alt="Logo"
+      class="pilarease-admin-sidebar-logo sidebar-logo"
+    />
+    <img
+      src="{% static 'images/PilarEaseLogo.png' %}"
+      alt="Additional Logo"
+      class="pilarease-admin-sidebar-additional-logo sidebar-additional-logo"
+    />
+    <span class="pilarease-admin-sidebar-title sidebar-title">PilarEase</span>
+  </div>
+  <ul class="pilarease-admin-sidebar-menu sidebar-menu">
+    <li>
+      <a href="{% url 'itrc_dashboard' %}">
+        <i class="bx bx-dashboard"></i>
+        <span class="pilarease-admin-menu-text menu-text">Dashboard</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'upload_masterlist' %}">
+        <i class="bx bx-upload"></i>
+        <span class="pilarease-admin-menu-text menu-text"
+          >Upload Masterlist</span
+        >
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'manage_users' %}">
+        <i class="bx bx-user-check"></i>
+        <span class="pilarease-admin-menu-text menu-text">Manage Users</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'system_settings' %}">
+        <i class="bx bx-cog"></i>
+        <span class="pilarease-admin-menu-text menu-text">System Settings</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'generate_reports' %}">
+        <i class="bx bx-file"></i>
+        <span class="pilarease-admin-menu-text menu-text">Reports</span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'admin_logout' %}">
+        <i class="bx bx-log-out"></i>
+        <span class="pilarease-admin-menu-text menu-text">Logout</span>
+      </a>
+    </li>
+  </ul>
+</div>
+{% endblock %} {% block content %}
+<div class="pilarease-admin-main-content main-content">
+  <div class="pilarease-admin-header header">
+    <div class="pilarease-admin-header-right header-right">
+      <i class="bx bx-bell"></i>
+      <div class="pilarease-admin-profile-icon profile-icon">M</div>
+    </div>
+  </div>
+  <div class="pilarease-admin-content content">
+    {% block itrc_content %}
+    <!-- ITRC-specific content will be injected here -->
+    {% endblock %}
+  </div>
+</div>
+
+<!-- Toastr Notifications -->
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        toastr.success("{{ message|escapejs }}", "Success");
+      {% elif message.tags == 'error' %}
+        toastr.error("{{ message|escapejs }}", "Error");
+      {% elif message.tags == 'warning' %}
+        toastr.warning("{{ message|escapejs }}", "Warning");
+      {% elif message.tags == 'info' %}
+        toastr.info("{{ message|escapejs }}", "Information");
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %} {% endblock %}

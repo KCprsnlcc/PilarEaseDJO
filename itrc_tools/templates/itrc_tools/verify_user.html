@@ -1,0 +1,47 @@
+<!-- itrc_tools/templates/itrc_tools/verify_user.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div class="pilarease-admin-feedback-container">
+  <h1 class="pilarease-admin-section-title">Verify User</h1>
+  <div class="user-details">
+    <p><strong>User ID:</strong> {{ user_obj.id }}</p>
+    <p><strong>Student ID:</strong> {{ user_obj.student_id }}</p>
+    <p><strong>Username:</strong> {{ user_obj.username }}</p>
+    <p><strong>Full Name:</strong> {{ user_obj.full_name }}</p>
+    <p><strong>Email:</strong> {{ user_obj.email }}</p>
+    <p>
+      <strong>Academic Year Level:</strong> {{ user_obj.academic_year_level }}
+    </p>
+    <p><strong>Contact Number:</strong> {{ user_obj.contact_number }}</p>
+  </div>
+
+  <form method="post" class="pilarease-admin-reply-form">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="remarks">Remarks:</label>
+      <textarea
+        name="remarks"
+        id="remarks"
+        rows="3"
+        placeholder="Optional remarks..."
+      ></textarea>
+    </div>
+    <button
+      type="submit"
+      name="action"
+      value="approve"
+      class="pilarease-admin-action-button approve-button"
+    >
+      Approve
+    </button>
+    <button
+      type="submit"
+      name="action"
+      value="reject"
+      class="pilarease-admin-action-button delete-button"
+    >
+      Reject
+    </button>
+  </form>
+</div>
+{% endblock %}

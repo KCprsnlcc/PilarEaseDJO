@@ -1,0 +1,228 @@
+<!-- itrc_tools/templates/itrc_tools/manage_users.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div class="pilarease-admin-feedback-container">
+  <h1 class="pilarease-admin-section-title">Manage Users</h1>
+
+  <form method="get" class="pilarease-admin-feedback-search-form">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search users..."
+      class="pilarease-admin-feedback-search-input"
+      value="{{ search_query }}"
+    />
+    <button type="submit" class="pilarease-admin-feedback-search-button">
+      Search
+    </button>
+  </form>
+
+  <table class="pilarease-admin-feedback-table">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Student ID</th>
+        <th>Username</th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Academic Year Level</th>
+        <th>Contact Number</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.student_id }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.full_name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.academic_year_level }}</td>
+        <td>{{ user.contact_number }}</td>
+        <td>
+          {% if user.is_verified %}
+          <span class="pilarease-admin-approved-label">Verified</span>
+          {% else %}
+          <span class="pilarease-admin-pending-label">Pending</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if not user.is_verified %}
+          <button
+            class="pilarease-admin-action-button activate-button"
+            data-user-id="{{ user.id }}"
+          >
+            Activate
+          </button>
+          {% else %}
+          <button
+            class="pilarease-admin-action-button deactivate-button"
+            data-user-id="{{ user.id }}"
+          >
+            Deactivate
+          </button>
+          {% endif %}
+          <button
+            class="pilarease-admin-action-button delete-button"
+            data-user-id="{{ user.id }}"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="pilarease-admin-no-feedback">No users found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pilarease-admin-pagination">
+    <div class="pilarease-admin-step-links">
+      {% if users.has_previous %}
+      <a href="?page={{ users.previous_page_number }}&search={{ search_query }}"
+        >Previous</a
+      >
+      {% endif %}
+
+      <span class="pilarease-admin-current"
+        >Page {{ users.number }} of {{ users.paginator.num_pages }}</span
+      >
+
+      {% if users.has_next %}
+      <a href="?page={{ users.next_page_number }}&search={{ search_query }}"
+        >Next</a
+      >
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Toastr Notifications -->
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        toastr.success("{{ message|escapejs }}", "Success");
+      {% elif message.tags == 'error' %}
+        toastr.error("{{ message|escapejs }}", "Error");
+      {% elif message.tags == 'warning' %}
+        toastr.warning("{{ message|escapejs }}", "Warning");
+      {% elif message.tags == 'info' %}
+        toastr.info("{{ message|escapejs }}", "Information");
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %}
+
+<!-- AJAX for Activate, Deactivate, Delete Actions -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Activate User
+    const activateButtons = document.querySelectorAll(".activate-button");
+    activateButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        if (confirm("Are you sure you want to activate this user?")) {
+          fetch(`/itrc/activate-user/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message, "Success");
+                setTimeout(() => {
+                  location.reload();
+                }, 1000);
+              } else {
+                toastr.error(data.message, "Error");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An unexpected error occurred.", "Error");
+            });
+        }
+      });
+    });
+
+    // Deactivate User
+    const deactivateButtons = document.querySelectorAll(".deactivate-button");
+    deactivateButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        if (confirm("Are you sure you want to deactivate this user?")) {
+          fetch(`/itrc/deactivate-user/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message, "Success");
+                setTimeout(() => {
+                  location.reload();
+                }, 1000);
+              } else {
+                toastr.error(data.message, "Error");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An unexpected error occurred.", "Error");
+            });
+        }
+      });
+    });
+
+    // Delete User
+    const deleteButtons = document.querySelectorAll(".delete-button");
+    deleteButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        if (
+          confirm(
+            "Are you sure you want to delete this user? This action cannot be undone."
+          )
+        ) {
+          fetch(`/itrc/delete-user/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message, "Success");
+                setTimeout(() => {
+                  location.reload();
+                }, 1000);
+              } else {
+                toastr.error(data.message, "Error");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An unexpected error occurred.", "Error");
+            });
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
