@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main', 
     'admin_tools',
+    'itrc_tools',
     'corsheaders',
     'debug_toolbar',
     'compressor',
@@ -99,10 +100,16 @@ CORS_ALLOWED_ORIGINS = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'main', 'templates'),
+            os.path.join(BASE_DIR, 'admin_tools', 'templates'),
+            os.path.join(BASE_DIR, 'itrc_tools', 'templates'),
+            # Add other template directories if necessary
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                # ... existing context processors ...
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -192,7 +199,10 @@ STATICFILES_FINDERS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'main', 'static'),
+    os.path.join(BASE_DIR, 'staticfiles'),
+    os.path.join(BASE_DIR, 'admin_tools', 'static'),
+    os.path.join(BASE_DIR, 'itrc_tools', 'static'),
+    # Add other static directories if necessary
 ]
 
 COMPRESS_ENABLED = True
