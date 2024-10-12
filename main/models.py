@@ -1,3 +1,5 @@
+# main/models.py
+
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 from django.conf import settings
@@ -16,6 +18,9 @@ class CustomUser(AbstractUser):
     is_counselor = models.BooleanField(default=False)
     block_reason = models.CharField(max_length=255, blank=True, null=True)
     block_duration = models.IntegerField(blank=True, null=True)
+
+    # New field to identify ITRC staff
+    is_itrc_staff = models.BooleanField(default=False)
 
     is_verified = models.BooleanField(default=False)
     VERIFICATION_STATUS_CHOICES = [
@@ -263,6 +268,7 @@ class ContactUs(models.Model):
     def __str__(self):
         return f"Contact Us from {self.name}"
 
+# Signal Receivers
 @receiver(post_save, sender=CustomUser)
 def create_user_notification_settings(sender, instance, created, **kwargs):
     if created:
