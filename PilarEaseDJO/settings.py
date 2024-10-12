@@ -199,7 +199,6 @@ STATICFILES_FINDERS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'staticfiles'),
     os.path.join(BASE_DIR, 'admin_tools', 'static'),
     os.path.join(BASE_DIR, 'itrc_tools', 'static'),
     # Add other static directories if necessary
