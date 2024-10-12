@@ -1,0 +1,33 @@
+/* itrc_tools/static/css/itrc.css */
+
+/* Add any ITRC-specific CSS here. For example: */
+
+/* Highlight the active menu item in the ITRC sidebar */
+.pilarease-admin-sidebar-menu li a.active {
+  background-color: var(--accent-light);
+}
+
+/* Custom styles for the ITRC dashboard */
+.pilarease-admin-dashboard-container {
+  padding: 20px;
+}
+
+.pilarease-admin-section-title {
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-sidebar {
+    width: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-main-content {
+    margin-left: var(--sidebar-expanded-width);
+  }
+
+  .pilarease-admin-header {
+    left: var(--sidebar-expanded-width);
+  }
+}

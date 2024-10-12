@@ -1,7 +1,19 @@
 <!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
 
-{% extends "admin_tools/base_admin.html" %} {% block title %}ITRC Dashboard |
-PilarEase{% endblock %} {% block sidebar %}
+{% extends "admin_tools/base_admin.html" %} {% block extra_head %} {{
+block.super }}
+<!-- Toastr CSS -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+/>
+{% compress css %}
+<link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
+{% endcompress %} {% endblock %} {% block extra_js %} {{ block.super }}
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+{% endblock %}
+
 <div
   class="pilarease-admin-sidebar sidebar animate__animated animate__fadeInLeft"
 >
