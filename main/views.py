@@ -54,6 +54,9 @@ from django.db.models import Q
 from django.utils.timezone import make_aware
 from django.utils.html import strip_tags
 from django.utils.timezone import now
+from itrc_tools.models import EnrollmentMasterlist, VerificationRequest
+from django.contrib import messages
+
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
 
@@ -256,15 +259,41 @@ def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            return JsonResponse({'success': True, 'redirect_url': '/login/'})
+            student_id = form.cleaned_data.get('student_id')
+            email = form.cleaned_data.get('email')
+
+            # Check if the student is in the EnrollmentMasterlist
+            try:
+                EnrollmentMasterlist.objects.get(student_id=student_id)
+            except EnrollmentMasterlist.DoesNotExist:
+                errors = {
+                    'student_id': [
+                        {
+                            'message': 'Student ID not found in enrollment records.',
+                            'code': 'invalid'
+                        }
+                    ]
+                }
+                return JsonResponse({'success': False, 'error_message': errors}, status=400)
+
+            user = form.save(commit=False)
+            user.is_active = False  # User cannot login until verified
+            user.verification_status = 'pending'
+            user.save()
+            VerificationRequest.objects.create(user=user)
+
+            # Instead of messages.info, return a JSON response
+            return JsonResponse({
+                'success': True,
+                'message': 'Your registration is pending verification.',
+                'redirect_url': '/login/'
+            })
         else:
             errors = form.errors.get_json_data()
             return JsonResponse({'success': False, 'error_message': errors})
     else:
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
-
 def request_email_change(request):
     if request.method == 'POST':
         try:
@@ -497,8 +526,20 @@ def login_view(request):
             password = form.cleaned_data.get('password')
             user = authenticate(request, username=username, password=password)
             if user is not None:
-                login(request, user)
-                return JsonResponse({'success': True, 'redirect_url': '/'})
+                if user.is_active:
+                    login(request, user)
+                    return JsonResponse({'success': True, 'redirect_url': '/'})
+                else:
+                    # User account is inactive (pending verification)
+                    error_message = {
+                        '__all__': [
+                            {
+                                'message': 'Your account is pending verification.',
+                                'code': 'inactive'
+                            }
+                        ]
+                    }
+                    return JsonResponse({'success': False, 'error_message': error_message}, status=400)
             else:
                 form.add_error(None, "Invalid login credentials")
         errors = form.errors.get_json_data()
