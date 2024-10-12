@@ -1,0 +1,48 @@
+<!-- itrc_tools/templates/itrc_tools/system_settings.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div class="pilarease-admin-feedback-container">
+  <h1 class="pilarease-admin-section-title">System Settings</h1>
+
+  <form method="post" class="pilarease-admin-feedback-form">
+    {% csrf_token %} {{ form.non_field_errors }}
+    <div class="form-group">
+      {{ form.key.label_tag }} {{ form.key }} {% if form.key.errors %}
+      <div class="error">{{ form.key.errors }}</div>
+      {% endif %}
+    </div>
+    <div class="form-group">
+      {{ form.value.label_tag }} {{ form.value }} {% if form.value.errors %}
+      <div class="error">{{ form.value.errors }}</div>
+      {% endif %}
+    </div>
+    <button type="submit" class="pilarease-admin-action-button save-button">
+      Save Setting
+    </button>
+  </form>
+
+  <h2 class="pilarease-admin-section-title">Current Settings</h2>
+  <table class="pilarease-admin-feedback-table">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for setting in settings %}
+      <tr>
+        <td>{{ setting.key }}</td>
+        <td>{{ setting.value }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2" class="pilarease-admin-no-feedback">
+          No system settings found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+<!-- itrc_tools/templates/itrc_tools/reports.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div class="pilarease-admin-feedback-container">
+  <h1 class="pilarease-admin-section-title">Reports & Analytics</h1>
+
+  <h2 class="pilarease-admin-section-title">Audit Logs</h2>
+
+  <table class="pilarease-admin-feedback-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Action</th>
+        <th>Details</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in audit_logs %}
+      <tr>
+        <td>{{ log.user.username }}</td>
+        <td>{{ log.get_action_display }}</td>
+        <td>{{ log.details }}</td>
+        <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="pilarease-admin-no-feedback">
+          No audit logs available.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
