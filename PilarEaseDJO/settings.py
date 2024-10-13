@@ -51,6 +51,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000/'
 ]
 
+LOGIN_URL = '/itrc/'  # or whatever your login URL is
+LOGIN_REDIRECT_URL = '/itrc/dashboard/'
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
