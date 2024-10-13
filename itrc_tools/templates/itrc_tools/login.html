@@ -1,0 +1,28 @@
+<!-- itrc_tools/templates/itrc_tools/login.html -->
+
+{% block itrc_content %}
+<div class="pilarease-itrc-login-container">
+  <h2 class="pilarease-itrc-login-title">ITRC Tools Login</h2>
+  <form method="post" class="pilarease-itrc-login-form">
+    {% csrf_token %} {{ form.non_field_errors }}
+
+    <div class="pilarease-itrc-form-group">
+      <label for="id_username">Username:</label>
+      {{ form.username }} {% if form.username.errors %}
+      <div class="pilarease-itrc-error">{{ form.username.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="pilarease-itrc-form-group">
+      <label for="id_password">Password:</label>
+      {{ form.password }} {% if form.password.errors %}
+      <div class="pilarease-itrc-error">{{ form.password.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="pilarease-itrc-action-button login-button">
+      Login
+    </button>
+  </form>
+</div>
+{% endblock %}

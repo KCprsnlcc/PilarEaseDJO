@@ -1,28 +1,28 @@
 <!-- itrc_tools/templates/itrc_tools/system_settings.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-feedback-container">
-  <h1 class="pilarease-admin-section-title">System Settings</h1>
+<div class="pilarease-itrc-system-settings-container">
+  <h1 class="pilarease-itrc-section-title">System Settings</h1>
 
-  <form method="post" class="pilarease-admin-feedback-form">
+  <form method="post" class="pilarease-itrc-settings-form">
     {% csrf_token %} {{ form.non_field_errors }}
-    <div class="form-group">
+    <div class="pilarease-itrc-form-group">
       {{ form.key.label_tag }} {{ form.key }} {% if form.key.errors %}
-      <div class="error">{{ form.key.errors }}</div>
+      <div class="pilarease-itrc-error">{{ form.key.errors }}</div>
       {% endif %}
     </div>
-    <div class="form-group">
+    <div class="pilarease-itrc-form-group">
       {{ form.value.label_tag }} {{ form.value }} {% if form.value.errors %}
-      <div class="error">{{ form.value.errors }}</div>
+      <div class="pilarease-itrc-error">{{ form.value.errors }}</div>
       {% endif %}
     </div>
-    <button type="submit" class="pilarease-admin-action-button save-button">
+    <button type="submit" class="pilarease-itrc-action-button save-button">
       Save Setting
     </button>
   </form>
 
-  <h2 class="pilarease-admin-section-title">Current Settings</h2>
-  <table class="pilarease-admin-feedback-table">
+  <h2 class="pilarease-itrc-subsection-title">Current Settings</h2>
+  <table class="pilarease-itrc-table">
     <thead>
       <tr>
         <th>Key</th>
@@ -37,7 +37,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="2" class="pilarease-admin-no-feedback">
+        <td colspan="2" class="pilarease-itrc-no-settings">
           No system settings found.
         </td>
       </tr>
@@ -45,4 +45,22 @@
     </tbody>
   </table>
 </div>
-{% endblock %}
+
+<!-- Toastr Notifications -->
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        toastr.success("{{ message|escapejs }}", "Success");
+      {% elif message.tags == 'error' %}
+        toastr.error("{{ message|escapejs }}", "Error");
+      {% elif message.tags == 'warning' %}
+        toastr.warning("{{ message|escapejs }}", "Warning");
+      {% elif message.tags == 'info' %}
+        toastr.info("{{ message|escapejs }}", "Information");
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %} {% endblock %}

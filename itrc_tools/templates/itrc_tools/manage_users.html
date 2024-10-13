@@ -1,23 +1,21 @@
 <!-- itrc_tools/templates/itrc_tools/manage_users.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-feedback-container">
-  <h1 class="pilarease-admin-section-title">Manage Users</h1>
+<div class="pilarease-itrc-manage-users-container">
+  <h1 class="pilarease-itrc-section-title">Manage Users</h1>
 
-  <form method="get" class="pilarease-admin-feedback-search-form">
+  <form method="get" class="pilarease-itrc-search-form">
     <input
       type="text"
       name="search"
       placeholder="Search users..."
-      class="pilarease-admin-feedback-search-input"
+      class="pilarease-itrc-search-input"
       value="{{ search_query }}"
     />
-    <button type="submit" class="pilarease-admin-feedback-search-button">
-      Search
-    </button>
+    <button type="submit" class="pilarease-itrc-search-button">Search</button>
   </form>
 
-  <table class="pilarease-admin-feedback-table">
+  <table class="pilarease-itrc-table">
     <thead>
       <tr>
         <th>User ID</th>
@@ -43,29 +41,29 @@
         <td>{{ user.contact_number }}</td>
         <td>
           {% if user.is_verified %}
-          <span class="pilarease-admin-approved-label">Verified</span>
+          <span class="pilarease-itrc-status-label verified">Verified</span>
           {% else %}
-          <span class="pilarease-admin-pending-label">Pending</span>
+          <span class="pilarease-itrc-status-label pending">Pending</span>
           {% endif %}
         </td>
         <td>
           {% if not user.is_verified %}
           <button
-            class="pilarease-admin-action-button activate-button"
+            class="pilarease-itrc-action-button activate-button"
             data-user-id="{{ user.id }}"
           >
             Activate
           </button>
           {% else %}
           <button
-            class="pilarease-admin-action-button deactivate-button"
+            class="pilarease-itrc-action-button deactivate-button"
             data-user-id="{{ user.id }}"
           >
             Deactivate
           </button>
           {% endif %}
           <button
-            class="pilarease-admin-action-button delete-button"
+            class="pilarease-itrc-action-button delete-button"
             data-user-id="{{ user.id }}"
           >
             Delete
@@ -74,24 +72,24 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="9" class="pilarease-admin-no-feedback">No users found.</td>
+        <td colspan="9" class="pilarease-itrc-no-users">No users found.</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
   <!-- Pagination -->
-  <div class="pilarease-admin-pagination">
-    <div class="pilarease-admin-step-links">
+  <div class="pilarease-itrc-pagination">
+    <div class="pilarease-itrc-step-links">
       {% if users.has_previous %}
       <a href="?page={{ users.previous_page_number }}&search={{ search_query }}"
         >Previous</a
       >
       {% endif %}
 
-      <span class="pilarease-admin-current"
-        >Page {{ users.number }} of {{ users.paginator.num_pages }}</span
-      >
+      <span class="pilarease-itrc-current">
+        Page {{ users.number }} of {{ users.paginator.num_pages }}
+      </span>
 
       {% if users.has_next %}
       <a href="?page={{ users.next_page_number }}&search={{ search_query }}"

@@ -1,27 +1,51 @@
 # itrc_tools/views.py
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
-from main.models import CustomUser
-from .models import VerificationRequest, EnrollmentMasterlist, SystemSetting, AuditLog
-from .forms import UploadMasterlistForm, SystemSettingForm
 import csv
 import io
-from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.views import LoginView
+from django.contrib import messages
 from django.http import JsonResponse
-from django.utils import timezone
+from django.urls import reverse
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q
+from django.views.decorators.http import require_POST
+
+from .models import (
+    VerificationRequest,
+    EnrollmentMasterlist,
+    SystemSetting,
+    AuditLog,
+)
+from .forms import UploadMasterlistForm, SystemSettingForm
+from main.models import CustomUser  # Assuming main app contains CustomUser
 
 def is_itrc_staff(user):
     return user.is_authenticated and user.is_itrc_staff
 
+class ItrcLoginView(LoginView):
+    """
+    Custom Login View for ITRC Tools
+    """
+    template_name = 'itrc_tools/login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return reverse('itrc_dashboard')
+
 @user_passes_test(is_itrc_staff)
 @login_required
 def itrc_dashboard(request):
+    """
+    Display key statistics and pending verification requests.
+    """
     pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
     total_requests = VerificationRequest.objects.count()
     verified_requests = VerificationRequest.objects.filter(status='verified').count()
     rejected_requests = VerificationRequest.objects.filter(status='rejected').count()
+
     context = {
         'pending_requests': pending_requests,
         'total_requests': total_requests,
@@ -33,18 +57,22 @@ def itrc_dashboard(request):
 @user_passes_test(is_itrc_staff)
 @login_required
 def verify_user(request, user_id):
+    """
+    Approve or reject a user's verification request.
+    """
     user = get_object_or_404(CustomUser, id=user_id)
     verification_request = get_object_or_404(VerificationRequest, user=user)
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        remarks = request.POST.get('remarks', '')
+        remarks = request.POST.get('remarks', '').strip()
 
         if action == 'approve':
             user.is_active = True
             user.is_verified = True
             user.verification_status = 'verified'
             user.save()
+
             verification_request.status = 'verified'
             verification_request.remarks = remarks
             verification_request.save()
@@ -62,6 +90,7 @@ def verify_user(request, user_id):
             user.is_verified = False
             user.verification_status = 'rejected'
             user.save()
+
             verification_request.status = 'rejected'
             verification_request.remarks = remarks
             verification_request.save()
@@ -74,6 +103,8 @@ def verify_user(request, user_id):
             )
 
             messages.info(request, f'User {user.username} has been rejected.')
+        else:
+            messages.error(request, 'Invalid action.')
 
         return redirect('itrc_dashboard')
 
@@ -86,6 +117,9 @@ def verify_user(request, user_id):
 @user_passes_test(is_itrc_staff)
 @login_required
 def upload_masterlist(request):
+    """
+    Upload and process the enrollment masterlist CSV file.
+    """
     if request.method == 'POST':
         form = UploadMasterlistForm(request.POST, request.FILES)
         if form.is_valid():
@@ -99,18 +133,29 @@ def upload_masterlist(request):
                 data_set = csv_file.read().decode('UTF-8')
                 io_string = io.StringIO(data_set)
                 reader = csv.DictReader(io_string)
+
                 with transaction.atomic():
                     for row in reader:
+                        # Ensure required fields are present
+                        student_id = row.get('student_id')
+                        full_name = row.get('full_name')
+                        academic_year_level = row.get('academic_year_level')
+
+                        if not all([student_id, full_name, academic_year_level]):
+                            continue  # Skip incomplete rows
+
                         EnrollmentMasterlist.objects.update_or_create(
-                            student_id=row['student_id'],
+                            student_id=student_id,
                             defaults={
-                                'full_name': row['full_name'],
-                                'academic_year_level': row['academic_year_level'],
+                                'full_name': full_name,
+                                'academic_year_level': academic_year_level,
                                 'contact_number': row.get('contact_number', ''),
                                 'email': row.get('email', ''),
                             }
                         )
+
                 messages.success(request, 'Enrollment masterlist has been successfully uploaded and updated.')
+
                 # Log the action
                 AuditLog.objects.create(
                     user=request.user,
@@ -123,28 +168,34 @@ def upload_masterlist(request):
                 return redirect('upload_masterlist')
     else:
         form = UploadMasterlistForm()
-    return render(request, 'itrc_tools/upload_masterlist.html', {'form': form})
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'itrc_tools/upload_masterlist.html', context)
 
 @user_passes_test(is_itrc_staff)
 @login_required
 def manage_users(request):
-    search_query = request.GET.get('search', '')
+    """
+    Display and manage user accounts.
+    """
+    search_query = request.GET.get('search', '').strip()
     if search_query:
         users = CustomUser.objects.filter(
-            models.Q(username__icontains=search_query) |
-            models.Q(student_id__icontains=search_query) |
-            models.Q(full_name__icontains=search_query) |
-            models.Q(email__icontains=search_query)
+            Q(username__icontains=search_query) |
+            Q(student_id__icontains=search_query) |
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query)
         )
     else:
         users = CustomUser.objects.all()
 
-    # Exclude ITRC staff and counselors from being managed here if necessary
-    users = users.exclude(is_itrc_staff=True, is_counselor=True)
+    # Exclude ITRC staff and counselors from being managed here
+    users = users.exclude(Q(is_itrc_staff=True) | Q(is_counselor=True))
 
-    # Pagination (optional)
-    from django.core.paginator import Paginator
-    paginator = Paginator(users, 10)  # Show 10 users per page
+    # Pagination: Show 10 users per page
+    paginator = Paginator(users.order_by('-id'), 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -154,16 +205,17 @@ def manage_users(request):
     }
     return render(request, 'itrc_tools/manage_users.html', context)
 
-# itrc_tools/views.py
-
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
 def activate_user(request, user_id):
+    """
+    Activate and verify a user account via AJAX.
+    """
     user = get_object_or_404(CustomUser, id=user_id)
+    if user.is_itrc_staff or user.is_counselor:
+        return JsonResponse({'success': False, 'message': 'Cannot activate ITRC staff or counselors.'}, status=400)
+
     user.is_active = True
     user.is_verified = True
     user.verification_status = 'verified'
@@ -182,7 +234,13 @@ def activate_user(request, user_id):
 @login_required
 @require_POST
 def deactivate_user(request, user_id):
+    """
+    Deactivate and reject a user account via AJAX.
+    """
     user = get_object_or_404(CustomUser, id=user_id)
+    if user.is_itrc_staff or user.is_counselor:
+        return JsonResponse({'success': False, 'message': 'Cannot deactivate ITRC staff or counselors.'}, status=400)
+
     user.is_active = False
     user.is_verified = False
     user.verification_status = 'rejected'
@@ -201,8 +259,16 @@ def deactivate_user(request, user_id):
 @login_required
 @require_POST
 def delete_user(request, user_id):
+    """
+    Delete a user account via AJAX.
+    """
     user = get_object_or_404(CustomUser, id=user_id)
     username = user.username
+
+    # Prevent deletion of ITRC staff and counselors
+    if user.is_itrc_staff or user.is_counselor:
+        return JsonResponse({'success': False, 'message': 'Cannot delete ITRC staff or counselors.'}, status=400)
+
     user.delete()
 
     # Log the action
@@ -214,12 +280,14 @@ def delete_user(request, user_id):
 
     return JsonResponse({'success': True, 'message': f'User {username} has been deleted.'})
 
-# itrc_tools/views.py
-
 @user_passes_test(is_itrc_staff)
 @login_required
 def system_settings(request):
+    """
+    View and update system settings.
+    """
     settings_qs = SystemSetting.objects.all()
+
     if request.method == 'POST':
         form = SystemSettingForm(request.POST)
         if form.is_valid():
@@ -231,28 +299,36 @@ def system_settings(request):
             )
             if created:
                 messages.success(request, f'System setting "{key}" has been created.')
+                action = 'create_setting'
             else:
                 messages.success(request, f'System setting "{key}" has been updated.')
+                action = 'update_setting'
+
             # Log the action
             AuditLog.objects.create(
                 user=request.user,
-                action='update_setting',
-                details=f"Updated setting {key} to {value}."
+                action=action,
+                details=f"Set {key} to {value}."
             )
+
             return redirect('system_settings')
+        else:
+            messages.error(request, 'There was an error with the form. Please check the fields.')
     else:
         form = SystemSettingForm()
+
     context = {
         'settings': settings_qs,
         'form': form,
     }
     return render(request, 'itrc_tools/system_settings.html', context)
 
-# itrc_tools/views.py
-
 @user_passes_test(is_itrc_staff)
 @login_required
 def generate_reports(request):
+    """
+    Generate and display audit logs and other reports.
+    """
     audit_logs = AuditLog.objects.all().order_by('-timestamp')
 
     # Implement filtering based on GET parameters if needed

@@ -1,12 +1,12 @@
 <!-- itrc_tools/templates/itrc_tools/reports.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-feedback-container">
-  <h1 class="pilarease-admin-section-title">Reports & Analytics</h1>
+<div class="pilarease-itrc-reports-container">
+  <h1 class="pilarease-itrc-section-title">Reports & Analytics</h1>
 
-  <h2 class="pilarease-admin-section-title">Audit Logs</h2>
+  <h2 class="pilarease-itrc-subsection-title">Audit Logs</h2>
 
-  <table class="pilarease-admin-feedback-table">
+  <table class="pilarease-itrc-table">
     <thead>
       <tr>
         <th>User</th>
@@ -25,7 +25,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4" class="pilarease-admin-no-feedback">
+        <td colspan="4" class="pilarease-itrc-no-logs">
           No audit logs available.
         </td>
       </tr>

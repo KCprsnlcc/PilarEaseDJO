@@ -1,9 +1,10 @@
 <!-- itrc_tools/templates/itrc_tools/verify_user.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-feedback-container">
-  <h1 class="pilarease-admin-section-title">Verify User</h1>
-  <div class="user-details">
+<div class="pilarease-itrc-verify-user-container">
+  <h1 class="pilarease-itrc-section-title">Verify User</h1>
+
+  <div class="pilarease-itrc-user-details">
     <p><strong>User ID:</strong> {{ user_obj.id }}</p>
     <p><strong>Student ID:</strong> {{ user_obj.student_id }}</p>
     <p><strong>Username:</strong> {{ user_obj.username }}</p>
@@ -15,22 +16,23 @@
     <p><strong>Contact Number:</strong> {{ user_obj.contact_number }}</p>
   </div>
 
-  <form method="post" class="pilarease-admin-reply-form">
+  <form method="post" class="pilarease-itrc-action-form">
     {% csrf_token %}
-    <div class="form-group">
+    <div class="pilarease-itrc-form-group">
       <label for="remarks">Remarks:</label>
       <textarea
         name="remarks"
         id="remarks"
         rows="3"
         placeholder="Optional remarks..."
+        class="pilarease-itrc-textarea"
       ></textarea>
     </div>
     <button
       type="submit"
       name="action"
       value="approve"
-      class="pilarease-admin-action-button approve-button"
+      class="pilarease-itrc-action-button approve-button"
     >
       Approve
     </button>
@@ -38,10 +40,28 @@
       type="submit"
       name="action"
       value="reject"
-      class="pilarease-admin-action-button delete-button"
+      class="pilarease-itrc-action-button reject-button"
     >
       Reject
     </button>
   </form>
 </div>
-{% endblock %}
+
+<!-- Toastr Notifications -->
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        toastr.success("{{ message|escapejs }}", "Success");
+      {% elif message.tags == 'error' %}
+        toastr.error("{{ message|escapejs }}", "Error");
+      {% elif message.tags == 'warning' %}
+        toastr.warning("{{ message|escapejs }}", "Warning");
+      {% elif message.tags == 'info' %}
+        toastr.info("{{ message|escapejs }}", "Information");
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %} {% endblock %}

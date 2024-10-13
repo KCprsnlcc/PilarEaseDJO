@@ -8,6 +8,53 @@ from decimal import Decimal
 from textblob import TextBlob  # Ensure TextBlob is installed: pip install textblob
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import BaseUserManager
+import re
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, username, email, password=None, **extra_fields):
+        """
+        Creates and saves a regular user with the given username, email, and password.
+        """
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None, **extra_fields):
+        """
+        Creates and saves a superuser with the given username, email, and password.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        # Ensure the superuser has a unique student_id
+        extra_fields.setdefault('student_id', self._get_next_student_id())
+
+        return self.create_user(username, email, password, **extra_fields)
+
+    def _get_next_student_id(self):
+        # Fetch the last user, assuming student_id starts with a character followed by numbers (e.g., 'C665736').
+        last_user = CustomUser.objects.filter(student_id__regex=r'^[A-Za-z]\d+$').order_by('student_id').last()
+
+        if last_user:
+            # Extract the numeric part of the student_id
+            match = re.match(r'([A-Za-z]+)(\d+)', last_user.student_id)
+            if match:
+                prefix, number = match.groups()
+                next_number = str(int(number) + 1).zfill(len(number))
+                return f"{prefix}{next_number}"
+
+        # Default for the first student_id if no users exist
+        return "C000001"
 
 class CustomUser(AbstractUser):
     student_id = models.CharField(max_length=10, unique=True)
@@ -18,6 +65,8 @@ class CustomUser(AbstractUser):
     is_counselor = models.BooleanField(default=False)
     block_reason = models.CharField(max_length=255, blank=True, null=True)
     block_duration = models.IntegerField(blank=True, null=True)
+    
+    objects = CustomUserManager()
 
     # New field to identify ITRC staff
     is_itrc_staff = models.BooleanField(default=False)

@@ -1,43 +1,43 @@
 <!-- itrc_tools/templates/itrc_tools/itrc_dashboard.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-dashboard-container">
-  <h1 class="pilarease-admin-dashboard-title">
-    ITRC Dashboard
-    <span
-      class="pilarease-admin-info-icon"
-      title="Information about the dashboard"
-    >
-      <i class="bx bx-info-circle"></i>
-    </span>
-  </h1>
+<div class="pilarease-itrc-dashboard-container">
+  <h1 class="pilarease-itrc-section-title">ITRC Dashboard</h1>
+
+  <!-- Key Statistics -->
+  <div class="pilarease-itrc-statistics">
+    <div class="pilarease-itrc-stat">
+      <h3>{{ total_requests }}</h3>
+      <p>Total Verification Requests</p>
+    </div>
+    <div class="pilarease-itrc-stat">
+      <h3>{{ verified_requests }}</h3>
+      <p>Verified Users</p>
+    </div>
+    <div class="pilarease-itrc-stat">
+      <h3>{{ rejected_requests }}</h3>
+      <p>Rejected Users</p>
+    </div>
+  </div>
 
   <!-- Pending Verification Requests -->
-  <div class="pilarease-admin-feedback-container">
-    <h2 class="pilarease-admin-section-title">
+  <div class="pilarease-itrc-pending-requests-container">
+    <h2 class="pilarease-itrc-subsection-title">
       Pending Verification Requests
-      <span
-        class="pilarease-admin-info-icon"
-        title="List of users awaiting verification"
-      >
-        <i class="bx bx-info-circle"></i>
-      </span>
     </h2>
 
-    <form method="get" class="pilarease-admin-feedback-search-form">
+    <form method="get" class="pilarease-itrc-search-form">
       <input
         type="text"
         name="search"
         placeholder="Search users..."
-        class="pilarease-admin-feedback-search-input"
+        class="pilarease-itrc-search-input"
         value="{{ request.GET.search }}"
       />
-      <button type="submit" class="pilarease-admin-feedback-search-button">
-        Search
-      </button>
+      <button type="submit" class="pilarease-itrc-search-button">Search</button>
     </form>
 
-    <table class="pilarease-admin-feedback-table">
+    <table class="pilarease-itrc-table">
       <thead>
         <tr>
           <th>User ID</th>
@@ -57,14 +57,15 @@
           <td>
             <a
               href="{% url 'verify_user' request.user.id %}"
-              class="pilarease-admin-action-button"
-              >Review</a
+              class="pilarease-itrc-action-button review-button"
             >
+              Review
+            </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="pilarease-admin-no-feedback">
+          <td colspan="5" class="pilarease-itrc-no-requests">
             No pending verification requests.
           </td>
         </tr>
@@ -72,7 +73,5 @@
       </tbody>
     </table>
   </div>
-
-  <!-- Additional Dashboard Features (e.g., Reports, System Status) can be added here -->
 </div>
 {% endblock %}

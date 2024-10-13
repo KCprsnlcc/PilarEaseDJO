@@ -1,23 +1,45 @@
 <!-- itrc_tools/templates/itrc_tools/upload_masterlist.html -->
 
-{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-admin-feedback-container">
-  <h1 class="pilarease-admin-section-title">Upload Enrollment Masterlist</h1>
+{% extends "itrc_tools/base_itrc.html" %} {% load static %} {% block
+itrc_content %}
+<div class="pilarease-itrc-upload-masterlist-container">
+  <h1 class="pilarease-itrc-section-title">Upload Enrollment Masterlist</h1>
+
   <form
     method="post"
     enctype="multipart/form-data"
-    class="pilarease-admin-upload-form"
+    class="pilarease-itrc-upload-form"
   >
     {% csrf_token %} {{ form.non_field_errors }}
-    <div class="form-group">
+
+    <div class="pilarease-itrc-form-group">
       {{ form.csv_file.label_tag }} {{ form.csv_file }} {% if
       form.csv_file.errors %}
-      <div class="error">{{ form.csv_file.errors }}</div>
+      <div class="pilarease-itrc-error">{{ form.csv_file.errors }}</div>
       {% endif %}
     </div>
-    <button type="submit" class="pilarease-admin-action-button save-button">
+
+    <button type="submit" class="pilarease-itrc-action-button upload-button">
       Upload
     </button>
   </form>
 </div>
-{% endblock %}
+
+<!-- Toastr Notifications -->
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        toastr.success("{{ message|escapejs }}", "Success");
+      {% elif message.tags == 'error' %}
+        toastr.error("{{ message|escapejs }}", "Error");
+      {% elif message.tags == 'warning' %}
+        toastr.warning("{{ message|escapejs }}", "Warning");
+      {% elif message.tags == 'info' %}
+        toastr.info("{{ message|escapejs }}", "Information");
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %} {% endblock %}
