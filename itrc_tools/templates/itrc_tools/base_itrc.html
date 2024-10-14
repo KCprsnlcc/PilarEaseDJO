@@ -1,47 +1,45 @@
 <!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
 
-{% load static %} {% load compress %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <title>PilarEase ITRC Tools</title>
-    {% block extra_head %} {{ block.super }}
-    <!-- Toastr CSS -->
+    <!-- Include Boxicons -->
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <!-- Include Animate.css -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <!-- Include Toastr CSS -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
     />
-    {% compress css %}
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
-    {% endcompress %} {% endblock %}
   </head>
   <body>
-    {% block content %}
     <!-- Sidebar -->
-    <div
-      class="pilarease-itrc-sidebar sidebar animate__animated animate__fadeInLeft"
-    >
-      <div class="pilarease-itrc-sidebar-header sidebar-header">
+    <div class="pilarease-itrc-sidebar animate__animated animate__fadeInLeft">
+      <div class="pilarease-itrc-sidebar-header">
         <img
           src="{% static 'images/PilarLogo.png' %}"
           alt="Logo"
-          class="pilarease-itrc-sidebar-logo sidebar-logo"
+          class="pilarease-itrc-sidebar-logo"
         />
-        <img
-          src="{% static 'images/PilarEaseLogo.png' %}"
-          alt="Additional Logo"
-          class="pilarease-itrc-sidebar-additional-logo sidebar-additional-logo"
-        />
-        <span class="pilarease-itrc-sidebar-title sidebar-title"
-          >PilarEase</span
-        >
+        <span class="pilarease-itrc-sidebar-title">PilarEase</span>
       </div>
-      <ul class="pilarease-itrc-sidebar-menu sidebar-menu">
+      <ul class="pilarease-itrc-sidebar-menu">
         <li>
           <a href="{% url 'itrc_dashboard' %}" class="pilarease-itrc-menu-item">
-            <i class="bx bx-dashboard"></i>
+            <i class="bx bxs-dashboard"></i>
             <span class="pilarease-itrc-menu-text">Dashboard</span>
           </a>
         </li>
@@ -50,13 +48,13 @@
             href="{% url 'upload_masterlist' %}"
             class="pilarease-itrc-menu-item"
           >
-            <i class="bx bx-upload"></i>
+            <i class="bx bxs-cloud-upload"></i>
             <span class="pilarease-itrc-menu-text">Upload Masterlist</span>
           </a>
         </li>
         <li>
           <a href="{% url 'manage_users' %}" class="pilarease-itrc-menu-item">
-            <i class="bx bx-user-check"></i>
+            <i class="bx bxs-user-detail"></i>
             <span class="pilarease-itrc-menu-text">Manage Users</span>
           </a>
         </li>
@@ -65,7 +63,7 @@
             href="{% url 'system_settings' %}"
             class="pilarease-itrc-menu-item"
           >
-            <i class="bx bx-cog"></i>
+            <i class="bx bxs-cog"></i>
             <span class="pilarease-itrc-menu-text">System Settings</span>
           </a>
         </li>
@@ -74,13 +72,13 @@
             href="{% url 'generate_reports' %}"
             class="pilarease-itrc-menu-item"
           >
-            <i class="bx bx-file"></i>
+            <i class="bx bxs-report"></i>
             <span class="pilarease-itrc-menu-text">Reports</span>
           </a>
         </li>
         <li>
-          <a href="{% url 'logout' %}" class="pilarease-itrc-menu-item">
-            <i class="bx bx-log-out"></i>
+          <a href="{% url 'itrc_logout' %}" class="pilarease-itrc-menu-item">
+            <i class="bx bxs-log-out"></i>
             <span class="pilarease-itrc-menu-text">Logout</span>
           </a>
         </li>
@@ -88,30 +86,48 @@
     </div>
 
     <!-- Main Content -->
-    <div class="pilarease-itrc-main-content main-content">
+    <div class="pilarease-itrc-main-content">
       <!-- Header -->
-      <div class="pilarease-itrc-header header">
-        <div class="pilarease-itrc-header-right header-right">
-          <i class="bx bx-bell pilarease-itrc-bell-icon"></i>
-          <div class="pilarease-itrc-profile-icon profile-icon">
+      <div class="pilarease-itrc-header">
+        <div class="pilarease-itrc-header-right">
+          <i class="bx bxs-bell pilarease-itrc-bell-icon">
+            <span class="notification-count">3</span>
+          </i>
+          <div class="pilarease-itrc-profile-icon">
             {{ request.user.username|slice:":1"|upper }}
           </div>
         </div>
       </div>
 
       <!-- Content Area -->
-      <div class="pilarease-itrc-content content">
+      <div class="pilarease-itrc-content">
         {% block itrc_content %}
         <!-- ITRC-specific content will be injected here -->
         {% endblock %}
       </div>
     </div>
 
+    <!-- Include Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Include jQuery (required for Toastr) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Toastr Notifications -->
     {% if messages %}
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
+      $(document).ready(function() {
           {% for message in messages %}
+              toastr.options.closeButton = true;
+              toastr.options.progressBar = true;
+              toastr.options.positionClass = "toast-bottom-right";
+              toastr.options.showDuration = 300;
+              toastr.options.hideDuration = 1000;
+              toastr.options.timeOut = 5000;
+              toastr.options.extendedTimeOut = 1000;
+              toastr.options.showEasing = "swing";
+              toastr.options.hideEasing = "linear";
+              toastr.options.showMethod = "fadeIn";
+              toastr.options.hideMethod = "fadeOut";
+
               {% if message.tags == 'success' %}
                   toastr.success("{{ message|escapejs }}", "Success");
               {% elif message.tags == 'error' %}
@@ -124,6 +140,6 @@
           {% endfor %}
       });
     </script>
-    {% endif %} {% endblock %}
+    {% endif %}
   </body>
 </html>
