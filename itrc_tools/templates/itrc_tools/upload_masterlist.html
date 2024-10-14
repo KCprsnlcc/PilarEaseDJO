@@ -1,8 +1,9 @@
 <!-- itrc_tools/templates/itrc_tools/upload_masterlist.html -->
 
-{% extends "itrc_tools/base_itrc.html" %} {% load static %} {% block
-itrc_content %}
-<div class="pilarease-itrc-upload-masterlist-container">
+{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+<div
+  class="pilarease-itrc-upload-masterlist-container animate__animated animate__fadeIn"
+>
   <h1 class="pilarease-itrc-section-title">Upload Enrollment Masterlist</h1>
 
   <form
@@ -20,7 +21,7 @@ itrc_content %}
     </div>
 
     <button type="submit" class="pilarease-itrc-action-button upload-button">
-      Upload
+      <i class="bx bxs-cloud-upload"></i> Upload
     </button>
   </form>
 </div>
@@ -28,18 +29,30 @@ itrc_content %}
 <!-- Toastr Notifications -->
 {% if messages %}
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    {% for message in messages %}
-      {% if message.tags == 'success' %}
-        toastr.success("{{ message|escapejs }}", "Success");
-      {% elif message.tags == 'error' %}
-        toastr.error("{{ message|escapejs }}", "Error");
-      {% elif message.tags == 'warning' %}
-        toastr.warning("{{ message|escapejs }}", "Warning");
-      {% elif message.tags == 'info' %}
-        toastr.info("{{ message|escapejs }}", "Information");
-      {% endif %}
-    {% endfor %}
+  $(document).ready(function() {
+      {% for message in messages %}
+          toastr.options.closeButton = true;
+          toastr.options.progressBar = true;
+          toastr.options.positionClass = "toast-bottom-right";
+          toastr.options.showDuration = 300;
+          toastr.options.hideDuration = 1000;
+          toastr.options.timeOut = 5000;
+          toastr.options.extendedTimeOut = 1000;
+          toastr.options.showEasing = "swing";
+          toastr.options.hideEasing = "linear";
+          toastr.options.showMethod = "fadeIn";
+          toastr.options.hideMethod = "fadeOut";
+
+          {% if message.tags == 'success' %}
+              toastr.success("{{ message|escapejs }}", "Success");
+          {% elif message.tags == 'error' %}
+              toastr.error("{{ message|escapejs }}", "Error");
+          {% elif message.tags == 'warning' %}
+              toastr.warning("{{ message|escapejs }}", "Warning");
+          {% elif message.tags == 'info' %}
+              toastr.info("{{ message|escapejs }}", "Information");
+          {% endif %}
+      {% endfor %}
   });
 </script>
 {% endif %} {% endblock %}
