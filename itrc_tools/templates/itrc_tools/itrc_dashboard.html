@@ -1,20 +1,25 @@
 <!-- itrc_tools/templates/itrc_tools/itrc_dashboard.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-itrc-dashboard-container">
+<div
+  class="pilarease-itrc-dashboard-container animate__animated animate__fadeIn"
+>
   <h1 class="pilarease-itrc-section-title">ITRC Dashboard</h1>
 
   <!-- Key Statistics -->
   <div class="pilarease-itrc-statistics">
     <div class="pilarease-itrc-stat">
+      <i class="bx bxs-user-account"></i>
       <h3>{{ total_requests }}</h3>
-      <p>Total Verification Requests</p>
+      <p>Total Requests</p>
     </div>
     <div class="pilarease-itrc-stat">
+      <i class="bx bxs-check-circle"></i>
       <h3>{{ verified_requests }}</h3>
       <p>Verified Users</p>
     </div>
     <div class="pilarease-itrc-stat">
+      <i class="bx bxs-x-circle"></i>
       <h3>{{ rejected_requests }}</h3>
       <p>Rejected Users</p>
     </div>
@@ -34,7 +39,9 @@
         class="pilarease-itrc-search-input"
         value="{{ request.GET.search }}"
       />
-      <button type="submit" class="pilarease-itrc-search-button">Search</button>
+      <button type="submit" class="pilarease-itrc-search-button">
+        <i class="bx bx-search"></i>
+      </button>
     </form>
 
     <table class="pilarease-itrc-table">
@@ -65,7 +72,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="pilarease-itrc-no-requests">
+          <td colspan="5" class="pilarease-itrc-no-data">
             No pending verification requests.
           </td>
         </tr>
