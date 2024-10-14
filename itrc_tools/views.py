@@ -7,11 +7,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView, LogoutView  # Import LogoutView
 from django.contrib import messages
+from django.utils import timezone
 from django.http import JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count, Avg, Case, When, Value, DurationField
 from django.views.decorators.http import require_POST
 import tablib
 from import_export.formats.base_formats import CSV
@@ -20,12 +21,28 @@ from .models import (
     EnrollmentMasterlist,
     SystemSetting,
     AuditLog,
+    CustomUser,
+    SessionLog,
+    APIPerformanceLog,
+    ErrorLog,
+    SystemDowntime,
+    PageViewLog,
+    FeatureUtilizationLog,
+    Feedback
 )
+from django.db import models
 from .forms import SystemSettingForm
 from main.models import CustomUser  # Assuming main app contains CustomUser
 from .resources import EnrollmentMasterlistResource
-from .models import EnrollmentMasterlist, AuditLog
-from .forms import SystemSettingForm 
+from .forms import SystemSettingForm
+from django.db.models.functions import TruncDay
+from datetime import datetime, timedelta
+import json
+from collections import Counter
+import string
+from wordcloud import WordCloud
+
+# Existing functions and classes (ItrcLoginView, ItrcLogoutView, etc.)
 
 def is_itrc_staff(user):
     return user.is_authenticated and user.is_itrc_staff
@@ -41,11 +58,15 @@ class ItrcLoginView(LoginView):
         return reverse_lazy('itrc_dashboard')
 
     def form_valid(self, form):
-        """
-        If the form is valid, add a success message.
-        """
         response = super().form_valid(form)
         messages.success(self.request, "Successfully logged in.")
+        # Log the login event
+        AuditLog.objects.create(
+            user=self.request.user,
+            action='login',
+            details=f"User {self.request.user.username} logged in.",
+            timestamp=timezone.now()
+        )
         return response
 
 class ItrcLogoutView(LogoutView):
@@ -56,10 +77,15 @@ class ItrcLogoutView(LogoutView):
     next_page = reverse_lazy('itrc_login')  # Redirect to login page after logout
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Override dispatch to add a success message before logout.
-        """
         messages.success(request, "Successfully logged out.")
+        # Log the logout event
+        if request.user.is_authenticated:
+            AuditLog.objects.create(
+                user=request.user,
+                action='logout',
+                details=f"User {request.user.username} logged out.",
+                timestamp=timezone.now()
+            )
         return super().dispatch(request, *args, **kwargs)
 
 @user_passes_test(is_itrc_staff)
@@ -358,7 +384,6 @@ def system_settings(request):
         'form': form,
     }
     return render(request, 'itrc_tools/system_settings.html', context)
-
 @user_passes_test(is_itrc_staff)
 @login_required
 def generate_reports(request):
@@ -367,10 +392,341 @@ def generate_reports(request):
     """
     audit_logs = AuditLog.objects.all().order_by('-timestamp')
 
-    # Implement filtering based on GET parameters if needed
-    # For example, filter by user, action, date range, etc.
+    # Define the time range (last 30 days)
+    today = timezone.now()
+    thirty_days_ago = today - timedelta(days=30)
+
+    # -------------------------
+    # 1. User Activity Metrics
+    # -------------------------
+
+    # Login Activity Analysis
+    login_activity = (
+        AuditLog.objects.filter(action='login', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('timestamp__date')
+        .annotate(count=Count('id'))
+        .order_by('timestamp__date')
+    )
+    login_activity_labels = [
+        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        for entry in login_activity 
+        if entry['timestamp__date'] is not None
+    ]
+    login_activity_counts = [entry['count'] for entry in login_activity if entry['timestamp__date'] is not None]
+
+    # User Registration Trends
+    user_registrations = (
+        CustomUser.objects.filter(date_joined__gte=thirty_days_ago)
+        .values('date_joined__date')
+        .annotate(count=Count('id'))
+        .order_by('date_joined__date')
+    )
+    user_registration_labels = [
+        entry['date_joined__date'].strftime('%Y-%m-%d') 
+        for entry in user_registrations 
+        if entry['date_joined__date'] is not None
+    ]
+    user_registration_counts = [entry['count'] for entry in user_registrations if entry['date_joined__date'] is not None]
+
+    # User Retention Rate (DAU)
+    dau = (
+        AuditLog.objects.filter(action='login', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('user', 'timestamp__date')
+        .distinct()
+        .values('timestamp__date')
+        .annotate(active_users=Count('user'))
+        .order_by('timestamp__date')
+    )
+    dau_labels = [
+        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        for entry in dau 
+        if entry['timestamp__date'] is not None
+    ]
+    dau_counts = [entry['active_users'] for entry in dau if entry['timestamp__date'] is not None]
+
+    # Average Session Duration per User
+    average_session_duration = (
+        SessionLog.objects.filter(session_end__isnull=False)
+        .annotate(duration=Case(
+            When(session_end__isnull=False, then=models.F('session_end') - models.F('session_start')),
+            default=Value(timedelta()),
+            output_field=DurationField(),
+        ))
+        .aggregate(avg_duration=Avg('duration'))
+    )
+    avg_session_duration_seconds = average_session_duration['avg_duration'].total_seconds() if average_session_duration['avg_duration'] else 0
+
+    # -----------------------------
+    # 2. System Performance Metrics
+    # -----------------------------
+
+    # API Response Time Analysis
+    api_response_time = (
+        APIPerformanceLog.objects.filter(timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('timestamp__date')
+        .annotate(avg_response_time=Avg('response_time'))
+        .order_by('timestamp__date')
+    )
+    api_response_time_labels = [
+        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        for entry in api_response_time 
+        if entry['timestamp__date'] is not None
+    ]
+    api_response_time_avg = [round(entry['avg_response_time'], 2) for entry in api_response_time if entry['timestamp__date'] is not None]
+
+    # Error Rates
+    error_rates = (
+        ErrorLog.objects.filter(timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('error_type', 'timestamp__date')
+        .annotate(count=Count('id'))
+        .order_by('timestamp__date')
+    )
+    # Structure error rates as a list of dictionaries with date and counts per error type
+    error_rate_data = {}
+    for entry in error_rates:
+        if entry['timestamp__date'] is None:
+            continue  # Skip entries with null dates
+        date_str = entry['timestamp__date'].strftime('%Y-%m-%d')
+        error_type = entry['error_type']
+        count = entry['count']
+        if date_str not in error_rate_data:
+            error_rate_data[date_str] = {}
+        error_rate_data[date_str][error_type] = count
+
+    error_rate_labels = sorted(error_rate_data.keys())
+    error_types = ErrorLog.ERROR_TYPE_CHOICES
+    error_type_labels = [choice[1] for choice in error_types]
+
+    # Prepare data for stacked bar chart
+    error_rate_chart_data = {etype: [] for etype in error_type_labels}
+    for date in error_rate_labels:
+        for etype in error_type_labels:
+            error_rate_chart_data[etype].append(error_rate_data[date].get(etype, 0))
+
+    # System Downtime
+    system_downtimes = SystemDowntime.objects.filter(end_time__isnull=True)
+    ongoing_downtime = system_downtimes.exists()
+    latest_downtime = system_downtimes.first() if ongoing_downtime else None
+
+    # ----------------------------
+    # 3. User Feedback Analysis
+    # ----------------------------
+
+    # Sentiment Analysis
+    feedback_data = Feedback.objects.all().annotate(
+        sentiment_category=Case(
+            When(sentiment_score__gt=0.1, then=Value('Positive')),
+            When(sentiment_score__lt=-0.1, then=Value('Negative')),
+            default=Value('Neutral'),
+            output_field=models.CharField(),
+        )
+    )
+
+    feedback_counts = feedback_data.values('sentiment_category').annotate(count=Count('id'))
+
+    sentiment_labels = [entry['sentiment_category'] for entry in feedback_counts]
+    sentiment_counts = [entry['count'] for entry in feedback_counts]
+
+    # Top Feedback Keywords
+    # Collect all feedback messages
+    all_feedback_messages = Feedback.objects.values_list('message', flat=True)
+
+    # Concatenate all messages
+    all_text = ' '.join(all_feedback_messages)
+
+    # Remove punctuation and make lowercase
+    translator = str.maketrans('', '', string.punctuation)
+    all_text = all_text.translate(translator).lower()
+
+    # Split into words
+    words = all_text.split()
+
+    # Remove stopwords
+    stopwords = set([
+        'the', 'and', 'to', 'of', 'a', 'in', 'it', 'is', 'that', 'i',
+        'this', 'for', 'with', 'was', 'on', 'but', 'are', 'not', 'have',
+        'as', 'be', 'you', 'at', 'or', 'so', 'we', 'if', 'an', 'my',
+        'they', 'your', 'can', 'from', 'me', 'all', 'just', 'about',
+        'do', 'no', 'us', 'what', 'there', 'their', 'our', 'more', 'like'
+    ])
+
+    # Filter words
+    filtered_words = [word for word in words if word not in stopwords]
+
+    # Count words
+    word_counts = Counter(filtered_words)
+
+    # Get top 20 words
+    top_words = word_counts.most_common(20)
+
+    keywords = [word for word, count in top_words]
+    keyword_counts = [count for word, count in top_words]
+
+    # ----------------------------
+    # 4. Usage Statistics
+    # ----------------------------
+
+    # Page Views
+    page_views = (
+        PageViewLog.objects.filter(timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('page')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:10]  # Top 10 most viewed pages
+    )
+    page_view_labels = [entry['page'] for entry in page_views]
+    page_view_counts = [entry['count'] for entry in page_views]
+
+    # Feature Utilization
+    feature_utilizations = (
+        FeatureUtilizationLog.objects.filter(last_used__gte=thirty_days_ago, last_used__isnull=False)
+        .values('feature_name')
+        .annotate(total_usage=Count('id'))
+        .order_by('-total_usage')[:10]  # Top 10 most used features
+    )
+    feature_utilization_labels = [entry['feature_name'] for entry in feature_utilizations]
+    feature_utilization_counts = [entry['total_usage'] for entry in feature_utilizations]
+
+    # ----------------------------
+    # 5. Data Volume Metrics
+    # ----------------------------
+
+    # Masterlist Uploads Over Time
+    masterlist_uploads = (
+        AuditLog.objects.filter(action='upload_masterlist', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('timestamp__date')
+        .annotate(count=Count('id'))
+        .order_by('timestamp__date')
+    )
+    masterlist_uploads_labels = [
+        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        for entry in masterlist_uploads 
+        if entry['timestamp__date'] is not None
+    ]
+    masterlist_uploads_counts = [entry['count'] for entry in masterlist_uploads if entry['timestamp__date'] is not None]
+
+    # Data Storage Usage (Assuming file uploads are stored in EnrollmentMasterlist)
+    # Replace 'csv_file__size' with the actual field that holds the file size in your EnrollmentMasterlist model
+    # If you don't have a size field, you'll need to calculate it based on the file path or use a different approach
+    total_data_storage = EnrollmentMasterlist.objects.aggregate(
+        total_size=Count('id') * 100  # Placeholder: replace with actual size calculation
+    )['total_size'] or 0  # Size in bytes or adjusted as needed
+
+    # ----------------------------
+    # 6. System Notifications & Alerts
+    # ----------------------------
+
+    # Notification Delivery Metrics
+    # Assuming you have a model to track notification deliveries, replace 'send_notification' with the actual action
+    notification_deliveries = (
+        AuditLog.objects.filter(action='send_notification', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        .values('timestamp__date')
+        .annotate(successful=Count('id'))
+        .order_by('timestamp__date')
+    )
+    notification_delivery_labels = [
+        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        for entry in notification_deliveries 
+        if entry['timestamp__date'] is not None
+    ]
+    notification_delivery_success = [entry['successful'] for entry in notification_deliveries if entry['timestamp__date'] is not None]
+
+    # Pending Notifications
+    # Assuming you have a related name 'notification' in your CustomUser model pointing to notifications
+    pending_notifications = CustomUser.objects.filter(notification__is_read=False).distinct().count()
+
+    # ----------------------------
+    # 7. User Demographic Insights
+    # ----------------------------
+
+    # User Role Distribution
+    user_roles = CustomUser.objects.values('is_itrc_staff', 'is_counselor').annotate(count=Count('id'))
+    role_labels = []
+    role_counts = []
+    for role in user_roles:
+        if role['is_itrc_staff']:
+            role_labels.append('ITRC Staff')
+        elif role['is_counselor']:
+            role_labels.append('Counselor')
+        else:
+            role_labels.append('User')
+        role_counts.append(role['count'])
+
+    # User Verification Status
+    user_verification = CustomUser.objects.values('verification_status').annotate(count=Count('id'))
+    verification_labels = [entry['verification_status'].capitalize() for entry in user_verification]
+    verification_counts = [entry['count'] for entry in user_verification]
+
+    # ----------------------------
+    # 8. User Retention Rate (Weekly)
+    # ----------------------------
+
+    retention_weeks = 12  # Last 12 weeks
+    retention_labels = []
+    retention_counts = []
+    for i in range(retention_weeks):
+        week_start = today - timedelta(weeks=i+1)
+        week_end = today - timedelta(weeks=i)
+        count = CustomUser.objects.filter(date_joined__range=(week_start, week_end)).count()
+        retention_labels.append(week_start.strftime('%b %d'))
+        retention_counts.append(count)
+    retention_labels.reverse()
+    retention_counts.reverse()
+
+    # ----------------------------
+    # 9. Compile Context
+    # ----------------------------
 
     context = {
         'audit_logs': audit_logs,
+
+        # User Activity Metrics
+        'login_activity_labels': json.dumps(login_activity_labels),
+        'login_activity_counts': json.dumps(login_activity_counts),
+        'user_registration_labels': json.dumps(user_registration_labels),
+        'user_registration_counts': json.dumps(user_registration_counts),
+        'dau_labels': json.dumps(dau_labels),
+        'dau_counts': json.dumps(dau_counts),
+        'avg_session_duration_seconds': avg_session_duration_seconds,
+
+        # System Performance Metrics
+        'api_response_time_labels': json.dumps(api_response_time_labels),
+        'api_response_time_avg': json.dumps(api_response_time_avg),
+        'error_rate_labels': json.dumps(error_type_labels),
+        'error_rate_data': json.dumps(error_rate_chart_data),
+        'system_downtime': ongoing_downtime,
+        'latest_downtime': latest_downtime,
+
+        # User Feedback Analysis
+        'sentiment_labels': json.dumps(sentiment_labels),
+        'sentiment_counts': json.dumps(sentiment_counts),
+        'keywords': json.dumps(keywords),
+        'keyword_counts': json.dumps(keyword_counts),
+
+        # Usage Statistics
+        'page_view_labels': json.dumps(page_view_labels),
+        'page_view_counts': json.dumps(page_view_counts),
+        'feature_utilization_labels': json.dumps(feature_utilization_labels),
+        'feature_utilization_counts': json.dumps(feature_utilization_counts),
+
+        # Data Volume Metrics
+        'masterlist_uploads_labels': json.dumps(masterlist_uploads_labels),
+        'masterlist_uploads_counts': json.dumps(masterlist_uploads_counts),
+        'total_data_storage': round(total_data_storage / (1024 * 1024), 2),  # Convert to MB (adjust as needed)
+
+        # System Notifications & Alerts
+        'notification_delivery_labels': json.dumps(notification_delivery_labels),
+        'notification_delivery_success': json.dumps(notification_delivery_success),
+        'pending_notifications': pending_notifications,
+
+        # User Demographic Insights
+        'role_labels': json.dumps(role_labels),
+        'role_counts': json.dumps(role_counts),
+        'verification_labels': json.dumps(verification_labels),
+        'verification_counts': json.dumps(verification_counts),
+
+        # User Retention Rate
+        'retention_labels': json.dumps(retention_labels),
+        'retention_counts': json.dumps(retention_counts),
     }
+
     return render(request, 'itrc_tools/reports.html', context)

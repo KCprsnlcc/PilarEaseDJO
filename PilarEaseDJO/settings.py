@@ -76,6 +76,12 @@ MIDDLEWARE = [
     # 'django.middleware.cache.FetchFromCacheMiddleware', 
 ]
 
+# settings.py
+
+USE_TZ = True
+TIME_ZONE = 'Asia/Manila'
+
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_SSL_REDIRECT = False
