@@ -259,30 +259,13 @@ def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            student_id = form.cleaned_data.get('student_id')
-            email = form.cleaned_data.get('email')
-
-            # Check if the student is in the EnrollmentMasterlist
-            try:
-                EnrollmentMasterlist.objects.get(student_id=student_id)
-            except EnrollmentMasterlist.DoesNotExist:
-                errors = {
-                    'student_id': [
-                        {
-                            'message': 'Student ID not found in enrollment records.',
-                            'code': 'invalid'
-                        }
-                    ]
-                }
-                return JsonResponse({'success': False, 'error_message': errors}, status=400)
-
             user = form.save(commit=False)
             user.is_active = False  # User cannot login until verified
             user.verification_status = 'pending'
             user.save()
             VerificationRequest.objects.create(user=user)
 
-            # Instead of messages.info, return a JSON response
+            # Return a JSON response indicating success
             return JsonResponse({
                 'success': True,
                 'message': 'Your registration is pending verification.',
@@ -290,10 +273,11 @@ def register_view(request):
             })
         else:
             errors = form.errors.get_json_data()
-            return JsonResponse({'success': False, 'error_message': errors})
+            return JsonResponse({'success': False, 'error_message': errors}, status=400)
     else:
         form = CustomUserCreationForm()
     return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
+
 def request_email_change(request):
     if request.method == 'POST':
         try:
