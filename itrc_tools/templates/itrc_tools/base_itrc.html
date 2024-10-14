@@ -25,9 +25,9 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
 
-    <!-- Custom CSS for Toastr Notifications -->
+    <!-- Custom CSS for Toastr Notifications (Optional) -->
     <style>
-      /* Customize Toastr Notifications (Optional) */
+      /* Customize Toastr Notifications */
       #toast-container > .toast-success {
         background-color: #28a745;
       }
@@ -42,6 +42,46 @@
 
       #toast-container > .toast-info {
         background-color: #17a2b8;
+      }
+
+      /* Style the Logout Button to look like a menu item */
+      .pilarease-itrc-logout-form {
+        display: block; /* Changed from inline to block for full-width */
+      }
+
+      .pilarease-itrc-logout-button {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
+        font: inherit;
+        text-align: left;
+        width: 100%;
+        height: 100%;
+      }
+
+      .pilarease-itrc-logout-button:hover {
+        background-color: #f0f0f0; /* Matches hover for other menu items */
+      }
+
+      /* Ensure the logout button spans the entire menu item area */
+      .pilarease-itrc-menu-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        text-decoration: none;
+        color: #333;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width */
+      }
+
+      .pilarease-itrc-menu-item i {
+        margin-right: 10px;
+      }
+
+      .pilarease-itrc-menu-item:hover {
+        background-color: #f0f0f0;
       }
     </style>
   </head>
@@ -97,10 +137,21 @@
           </a>
         </li>
         <li>
-          <a href="{% url 'itrc_logout' %}" class="pilarease-itrc-menu-item">
-            <i class="bx bxs-log-out"></i>
-            <span class="pilarease-itrc-menu-text">Logout</span>
-          </a>
+          <!-- Logout Button as a Form -->
+          <form
+            action="{% url 'itrc_logout' %}"
+            method="post"
+            class="pilarease-itrc-logout-form"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="pilarease-itrc-menu-item pilarease-itrc-logout-button"
+            >
+              <i class="bx bxs-log-out"></i>
+              <span class="pilarease-itrc-menu-text">Logout</span>
+            </button>
+          </form>
         </li>
       </ul>
     </div>

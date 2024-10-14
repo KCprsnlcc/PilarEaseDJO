@@ -1,10 +1,11 @@
 # itrc_tools/views.py
 
 import csv
+from django.urls import reverse_lazy
 import io
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView  # Import LogoutView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
@@ -37,7 +38,29 @@ class ItrcLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        return reverse('itrc_dashboard')
+        return reverse_lazy('itrc_dashboard')
+
+    def form_valid(self, form):
+        """
+        If the form is valid, add a success message.
+        """
+        response = super().form_valid(form)
+        messages.success(self.request, "Successfully logged in.")
+        return response
+
+class ItrcLogoutView(LogoutView):
+    """
+    Custom Logout View for ITRC Tools
+    Adds a success message upon logout.
+    """
+    next_page = reverse_lazy('itrc_login')  # Redirect to login page after logout
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Override dispatch to add a success message before logout.
+        """
+        messages.success(request, "Successfully logged out.")
+        return super().dispatch(request, *args, **kwargs)
 
 @user_passes_test(is_itrc_staff)
 @login_required
