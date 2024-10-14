@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'debug_toolbar',
     'compressor',
+    'import_export',
     # 'channels',
 ]
 

@@ -12,15 +12,19 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.views.decorators.http import require_POST
-
+import tablib
+from import_export.formats.base_formats import CSV
 from .models import (
     VerificationRequest,
     EnrollmentMasterlist,
     SystemSetting,
     AuditLog,
 )
-from .forms import UploadMasterlistForm, SystemSettingForm
+from .forms import SystemSettingForm
 from main.models import CustomUser  # Assuming main app contains CustomUser
+from .resources import EnrollmentMasterlistResource
+from .models import EnrollmentMasterlist, AuditLog
+from .forms import SystemSettingForm 
 
 def is_itrc_staff(user):
     return user.is_authenticated and user.is_itrc_staff
@@ -118,61 +122,64 @@ def verify_user(request, user_id):
 @login_required
 def upload_masterlist(request):
     """
-    Upload and process the enrollment masterlist CSV file.
+    Upload and process the enrollment masterlist CSV file using django-import-export.
     """
     if request.method == 'POST':
-        form = UploadMasterlistForm(request.POST, request.FILES)
-        if form.is_valid():
-            csv_file = form.cleaned_data['csv_file']
+        # Check if a file was uploaded
+        if 'csv_file' not in request.FILES:
+            messages.error(request, 'No file was uploaded.')
+            return redirect('upload_masterlist')
 
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, 'Please upload a valid CSV file.')
-                return redirect('upload_masterlist')
+        csv_file = request.FILES['csv_file']
 
-            try:
-                data_set = csv_file.read().decode('UTF-8')
-                io_string = io.StringIO(data_set)
-                reader = csv.DictReader(io_string)
+        # Ensure the file is a CSV
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Please upload a valid CSV file with a .csv extension.')
+            return redirect('upload_masterlist')
 
-                with transaction.atomic():
-                    for row in reader:
-                        # Ensure required fields are present
-                        student_id = row.get('student_id')
-                        full_name = row.get('full_name')
-                        academic_year_level = row.get('academic_year_level')
+        try:
+            dataset = tablib.Dataset().load(csv_file.read().decode('utf-8'), format='csv', headers=True)
 
-                        if not all([student_id, full_name, academic_year_level]):
-                            continue  # Skip incomplete rows
+            # Create a resource instance
+            resource = EnrollmentMasterlistResource()
 
-                        EnrollmentMasterlist.objects.update_or_create(
-                            student_id=student_id,
-                            defaults={
-                                'full_name': full_name,
-                                'academic_year_level': academic_year_level,
-                                'contact_number': row.get('contact_number', ''),
-                                'email': row.get('email', ''),
-                            }
-                        )
+            # Perform import
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=True)  # Dry run to test for errors
 
-                messages.success(request, 'Enrollment masterlist has been successfully uploaded and updated.')
+                if result.has_errors():
+                    # Collect errors and display them
+                    error_messages = []
+                    for row in result.invalid_rows:
+                        error = row.error
+                        row_index = row.number
+                        error_messages.append(f"Row {row_index}: {error}")
 
-                # Log the action
-                AuditLog.objects.create(
-                    user=request.user,
-                    action='upload_masterlist',
-                    details=f"Uploaded masterlist with {reader.line_num - 1} records."
-                )
-                return redirect('itrc_dashboard')
-            except Exception as e:
-                messages.error(request, f'An error occurred while processing the file: {e}')
-                return redirect('upload_masterlist')
+                    messages.error(request, 'There were errors in the uploaded file:')
+                    for error_message in error_messages:
+                        messages.error(request, error_message)
+                    return redirect('upload_masterlist')
+
+                # No errors, perform the actual import
+                resource.import_data(dataset, dry_run=False)
+
+            records_processed = len(dataset)
+            messages.success(request, f'Successfully imported {records_processed} records.')
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='upload_masterlist',
+                details=f"Uploaded masterlist with {records_processed} records."
+            )
+            return redirect('itrc_dashboard')
+
+        except Exception as e:
+            messages.error(request, f'An error occurred while processing the file: {e}')
+            return redirect('upload_masterlist')
     else:
-        form = UploadMasterlistForm()
-
-    context = {
-        'form': form,
-    }
-    return render(request, 'itrc_tools/upload_masterlist.html', context)
+        # No form needed since we're not using Django forms
+        return render(request, 'itrc_tools/upload_masterlist.html')
 
 @user_passes_test(is_itrc_staff)
 @login_required

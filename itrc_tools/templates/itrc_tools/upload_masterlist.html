@@ -11,13 +11,15 @@
     enctype="multipart/form-data"
     class="pilarease-itrc-upload-form"
   >
-    {% csrf_token %} {{ form.non_field_errors }}
+    {% csrf_token %}
 
     <div class="pilarease-itrc-form-group">
-      {{ form.csv_file.label_tag }} {{ form.csv_file }} {% if
-      form.csv_file.errors %}
-      <div class="pilarease-itrc-error">{{ form.csv_file.errors }}</div>
-      {% endif %}
+      <label for="csv_file">Select CSV File</label>
+      <input type="file" name="csv_file" id="csv_file" accept=".csv" />
+      <small class="pilarease-itrc-form-help">
+        Upload a CSV file with headers: student_id, full_name,
+        academic_year_level, contact_number, email
+      </small>
     </div>
 
     <button type="submit" class="pilarease-itrc-action-button upload-button">
