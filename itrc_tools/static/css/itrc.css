@@ -9,8 +9,17 @@
   --background-color: #f0f2f5;
   --text-color: #333333;
   --header-height: 60px;
-  --sidebar-width: 250px;
+  --sidebar-width: 220px;
   --transition-speed: 0.3s;
+  --font-family: "Roboto", sans-serif;
+}
+
+/* Global Styles */
+body {
+  font-family: var(--font-family);
+  color: var(--text-color);
+  background-color: var(--background-color);
+  margin: 0;
 }
 
 /* Sidebar Styles */
@@ -18,35 +27,29 @@
   width: var(--sidebar-width);
   height: 100vh;
   background-color: #ffffff;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   position: fixed;
   left: 0;
   top: 0;
   transition: width var(--transition-speed);
   overflow-y: auto;
   z-index: 1000;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .pilarease-itrc-sidebar-header {
-  padding: 20px;
+  padding: 15px;
   text-align: center;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .pilarease-itrc-sidebar-logo {
-  width: 50px;
+  width: 40px;
   height: auto;
-}
-
-.pilarease-itrc-sidebar-additional-logo {
-  width: 100px;
-  height: auto;
-  margin-top: 10px;
 }
 
 .pilarease-itrc-sidebar-title {
   display: block;
-  margin-top: 10px;
+  margin-top: 5px;
   font-size: 1.2em;
   font-weight: bold;
   color: var(--primary-color);
@@ -65,10 +68,11 @@
 .pilarease-itrc-sidebar-menu li a {
   display: flex;
   align-items: center;
-  padding: 15px 20px;
+  padding: 12px 15px;
   color: var(--text-color);
   text-decoration: none;
   transition: background-color var(--transition-speed);
+  font-size: 0.95em;
 }
 
 .pilarease-itrc-sidebar-menu li a:hover,
@@ -76,15 +80,17 @@
   background-color: var(--accent-light);
 }
 
+.pilarease-itrc-sidebar-menu li a i {
+  font-size: 1.2em;
+}
+
 .pilarease-itrc-sidebar-menu li a .pilarease-itrc-menu-text {
-  margin-left: 10px;
-  font-size: 1em;
+  margin-left: 12px;
 }
 
 /* Main Content Styles */
 .pilarease-itrc-main-content {
   margin-left: var(--sidebar-width);
-  padding: 20px;
   transition: margin-left var(--transition-speed);
 }
 
@@ -95,7 +101,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 15px;
   position: fixed;
   left: var(--sidebar-width);
   top: 0;
@@ -110,13 +116,25 @@
 
 .pilarease-itrc-header-right .pilarease-itrc-bell-icon {
   font-size: 1.5em;
-  margin-right: 20px;
+  margin-right: 15px;
   cursor: pointer;
+  position: relative;
+}
+
+.pilarease-itrc-header-right .pilarease-itrc-bell-icon .notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #dc3545;
+  color: #ffffff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.7em;
 }
 
 .pilarease-itrc-profile-icon {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   background-color: var(--primary-color);
   color: #ffffff;
   border-radius: 50%;
@@ -130,31 +148,45 @@
 /* Content Area */
 .pilarease-itrc-content {
   margin-top: var(--header-height);
-  background-color: var(--background-color);
-  min-height: calc(100vh - var(--header-height));
   padding: 20px;
+  min-height: calc(100vh - var(--header-height));
 }
 
 /* Section Titles */
 .pilarease-itrc-section-title {
-  font-size: 1.5em;
+  font-size: 1.4em;
   color: var(--text-color);
   margin-bottom: 20px;
   position: relative;
 }
 
+.pilarease-itrc-section-title::after {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 3px;
+  background-color: var(--primary-color);
+  left: 0;
+  bottom: -5px;
+}
+
+/* Subsection Titles */
 .pilarease-itrc-subsection-title {
   font-size: 1.2em;
   color: var(--text-color);
-  margin-top: 30px;
+  margin-top: 25px;
   margin-bottom: 15px;
   position: relative;
 }
 
-.pilarease-itrc-info-icon {
-  margin-left: 10px;
-  color: #888888;
-  cursor: pointer;
+.pilarease-itrc-subsection-title::after {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 2px;
+  background-color: var(--secondary-color);
+  left: 0;
+  bottom: -3px;
 }
 
 /* Tables */
@@ -162,14 +194,15 @@
   width: 100%;
   border-collapse: collapse;
   background-color: #ffffff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 .pilarease-itrc-table th,
 .pilarease-itrc-table td {
-  padding: 12px 15px;
+  padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9em;
 }
 
 .pilarease-itrc-table th {
@@ -181,11 +214,12 @@
   background-color: #f9f9f9;
 }
 
+/* Status Labels */
 .pilarease-itrc-status-label {
-  padding: 5px 10px;
+  padding: 3px 8px;
   border-radius: 4px;
   color: #ffffff;
-  font-size: 0.9em;
+  font-size: 0.8em;
 }
 
 .pilarease-itrc-status-label.verified {
@@ -205,31 +239,42 @@
   display: block;
   margin-bottom: 5px;
   color: var(--text-color);
+  font-size: 0.9em;
 }
 
 .pilarease-itrc-form-group input,
-.pilarease-itrc-form-group textarea {
+.pilarease-itrc-form-group textarea,
+.pilarease-itrc-form-group select {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid #cccccc;
   border-radius: 4px;
   box-sizing: border-box;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 
 .pilarease-itrc-form-group textarea {
   resize: vertical;
 }
 
+.pilarease-itrc-form-group input:focus,
+.pilarease-itrc-form-group textarea:focus,
+.pilarease-itrc-form-group select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+}
+
+/* Buttons */
 .pilarease-itrc-action-button {
-  padding: 10px 20px;
+  padding: 8px 15px;
   background-color: var(--primary-color);
   color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1em;
-  margin-right: 10px;
+  font-size: 0.9em;
+  margin-right: 8px;
   transition: background-color var(--transition-speed);
 }
 
@@ -269,36 +314,36 @@
   background-color: #e89e1c;
 }
 
+/* Error Messages */
 .pilarease-itrc-error {
   color: #dc3545;
-  font-size: 0.9em;
+  font-size: 0.85em;
   margin-top: 5px;
 }
 
-.pilarease-itrc-no-requests,
-.pilarease-itrc-no-users,
-.pilarease-itrc-no-logs,
-.pilarease-itrc-no-settings {
+/* No Data Messages */
+.pilarease-itrc-no-data {
   text-align: center;
   color: #888888;
-  padding: 20px;
+  padding: 15px;
+  font-style: italic;
 }
 
 /* Pagination */
 .pilarease-itrc-pagination {
-  margin-top: 20px;
+  margin-top: 15px;
   text-align: center;
 }
 
-.pilarease-itrc-step-links a {
-  margin: 0 10px;
+.pilarease-itrc-pagination a {
+  margin: 0 5px;
   text-decoration: none;
   color: var(--primary-color);
-  font-weight: bold;
+  font-size: 0.9em;
 }
 
-.pilarease-itrc-step-links .pilarease-itrc-current {
-  margin: 0 10px;
+.pilarease-itrc-pagination .pilarease-itrc-current {
+  margin: 0 5px;
   color: var(--text-color);
   font-weight: bold;
 }
@@ -306,25 +351,25 @@
 /* Search Forms */
 .pilarease-itrc-search-form {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .pilarease-itrc-search-input {
   flex: 1;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid #cccccc;
   border-radius: 4px 0 0 4px;
-  font-size: 1em;
+  font-size: 0.9em;
 }
 
 .pilarease-itrc-search-button {
-  padding: 10px 20px;
+  padding: 8px 15px;
   border: none;
   background-color: var(--primary-color);
   color: #ffffff;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 0.9em;
   transition: background-color var(--transition-speed);
 }
 
@@ -332,139 +377,40 @@
   background-color: #357ab8;
 }
 
-/* Specific Components */
-.pilarease-itrc-upload-form,
-.pilarease-itrc-settings-form,
-.pilarease-itrc-action-form {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* Buttons within tables */
-.pilarease-itrc-table .pilarease-itrc-action-button {
-  padding: 5px 10px;
-  font-size: 0.9em;
-}
-
-.pilarease-itrc-table .activate-button {
-  background-color: #28a745;
-}
-
-.pilarease-itrc-table .activate-button:hover {
-  background-color: #218838;
-}
-
-.pilarease-itrc-table .deactivate-button {
-  background-color: #ffc107;
-}
-
-.pilarease-itrc-table .deactivate-button:hover {
-  background-color: #e0a800;
-}
-
-.pilarease-itrc-table .delete-button {
-  background-color: #dc3545;
-}
-
-.pilarease-itrc-table .delete-button:hover {
-  background-color: #c82333;
-}
-/* itrc_tools/static/css/itrc.css */
-
-/* Existing Styles... */
-
-/* Additional Enhancements */
-
-/* Hover Effects for Buttons */
-.pilarease-itrc-action-button:hover {
-  opacity: 0.9;
-}
-
-/* Tooltips */
-.pilarease-itrc-info-icon {
-  position: relative;
-}
-
-.pilarease-itrc-info-icon::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #333333;
-  color: #ffffff;
-  padding: 5px 10px;
-  border-radius: 4px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--transition-speed);
-  font-size: 0.8em;
-  z-index: 10;
-}
-
-.pilarease-itrc-info-icon:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Responsive Tables */
-.pilarease-itrc-table {
-  width: 100%;
-  overflow-x: auto;
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
-  .pilarease-itrc-table th,
-  .pilarease-itrc-table td {
-    padding: 8px 10px;
+  .pilarease-itrc-sidebar {
+    width: 60px;
   }
 
-  .pilarease-itrc-action-button {
-    padding: 5px 8px;
-    font-size: 0.8em;
+  .pilarease-itrc-sidebar-menu li a .pilarease-itrc-menu-text {
+    display: none;
   }
 
-  .pilarease-itrc-search-form {
-    flex-direction: column;
+  .pilarease-itrc-main-content {
+    margin-left: 60px;
   }
 
-  .pilarease-itrc-search-input,
-  .pilarease-itrc-search-button {
-    width: 100%;
-    border-radius: 4px;
-    margin-bottom: 10px;
-  }
-
-  .pilarease-itrc-search-button {
-    border-radius: 4px;
+  .pilarease-itrc-header {
+    left: 60px;
   }
 }
 
-/* Forms Styling */
-.pilarease-itrc-form-group input:focus,
-.pilarease-itrc-form-group textarea:focus {
-  border-color: var(--primary-color);
-  outline: none;
-  box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+/* Animate.css Integration */
+.animated {
+  animation-duration: 1s;
+  animation-fill-mode: both;
 }
 
-/* Status Labels */
-.pilarease-itrc-status-label.verified {
-  background-color: #28a745; /* Green */
+/* SVG Animations */
+.pilarease-itrc-animated-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  fill: var(--text-color);
+  transition: fill var(--transition-speed);
 }
 
-.pilarease-itrc-status-label.pending {
-  background-color: #ffc107; /* Yellow */
-}
-
-/* No Data Messages */
-.pilarease-itrc-no-requests,
-.pilarease-itrc-no-users,
-.pilarease-itrc-no-logs,
-.pilarease-itrc-no-settings {
-  text-align: center;
-  color: #888888;
-  padding: 20px;
-  font-style: italic;
+.pilarease-itrc-menu-item:hover .pilarease-itrc-animated-icon {
+  fill: var(--primary-color);
 }
