@@ -123,6 +123,7 @@ def verify_user(request, user_id):
 def upload_masterlist(request):
     """
     Upload and process the enrollment masterlist CSV file using django-import-export.
+    Display the masterlist data in a table.
     """
     if request.method == 'POST':
         # Check if a file was uploaded
@@ -172,14 +173,19 @@ def upload_masterlist(request):
                 action='upload_masterlist',
                 details=f"Uploaded masterlist with {records_processed} records."
             )
-            return redirect('itrc_dashboard')
+            return redirect('upload_masterlist')  # Redirect back to display the data
 
         except Exception as e:
             messages.error(request, f'An error occurred while processing the file: {e}')
             return redirect('upload_masterlist')
     else:
-        # No form needed since we're not using Django forms
-        return render(request, 'itrc_tools/upload_masterlist.html')
+        # Fetch data from EnrollmentMasterlist
+        masterlist_data = EnrollmentMasterlist.objects.all().order_by('student_id')
+
+        context = {
+            'masterlist_data': masterlist_data,
+        }
+        return render(request, 'itrc_tools/upload_masterlist.html', context)
 
 @user_passes_test(is_itrc_staff)
 @login_required

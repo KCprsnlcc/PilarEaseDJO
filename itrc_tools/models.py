@@ -2,7 +2,6 @@
 
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 
 class VerificationRequest(models.Model):
     STATUS_CHOICES = [
@@ -31,8 +30,7 @@ class EnrollmentMasterlist(models.Model):
     student_id = models.CharField(max_length=10, unique=True)
     full_name = models.CharField(max_length=100)
     academic_year_level = models.CharField(max_length=20)
-    contact_number = models.CharField(max_length=15, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
+    # Removed contact_number and email fields
 
     def __str__(self):
         return f"{self.student_id} - {self.full_name}"
@@ -65,7 +63,6 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"AuditLog({self.user.username} - {self.action} at {self.timestamp})"
-
 
 class AuditLogEntry(models.Model):
     audit_log = models.ForeignKey(

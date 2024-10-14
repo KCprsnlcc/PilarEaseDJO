@@ -17,8 +17,8 @@ class VerificationRequestAdmin(admin.ModelAdmin):
 
 @admin.register(EnrollmentMasterlist)
 class EnrollmentMasterlistAdmin(admin.ModelAdmin):
-    list_display = ('student_id', 'full_name', 'academic_year_level', 'email')
-    search_fields = ('student_id', 'full_name', 'email')
+    list_display = ('student_id', 'full_name', 'academic_year_level')
+    search_fields = ('student_id', 'full_name')
     list_filter = ('academic_year_level',)
 
 @admin.register(SystemSetting)
