@@ -1,7 +1,7 @@
 <!-- itrc_tools/templates/itrc_tools/reports.html -->
 
 {% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-itrc-reports-container">
+<div class="pilarease-itrc-reports-container animate__animated animate__fadeIn">
   <h1 class="pilarease-itrc-section-title">Reports & Analytics</h1>
 
   <h2 class="pilarease-itrc-subsection-title">Audit Logs</h2>
@@ -25,7 +25,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4" class="pilarease-itrc-no-logs">
+        <td colspan="4" class="pilarease-itrc-no-data">
           No audit logs available.
         </td>
       </tr>
