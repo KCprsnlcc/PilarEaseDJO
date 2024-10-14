@@ -18,7 +18,7 @@
       <input type="file" name="csv_file" id="csv_file" accept=".csv" />
       <small class="pilarease-itrc-form-help">
         Upload a CSV file with headers: student_id, full_name,
-        academic_year_level, contact_number, email
+        academic_year_level
       </small>
     </div>
 
@@ -26,6 +26,31 @@
       <i class="bx bxs-cloud-upload"></i> Upload
     </button>
   </form>
+
+  <!-- Display Enrollment Masterlist Data -->
+  <h2 class="pilarease-itrc-subsection-title">Enrollment Masterlist</h2>
+  {% if masterlist_data %}
+  <table class="pilarease-itrc-table">
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Full Name</th>
+        <th>Academic Year Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in masterlist_data %}
+      <tr>
+        <td>{{ student.student_id }}</td>
+        <td>{{ student.full_name }}</td>
+        <td>{{ student.academic_year_level }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="pilarease-itrc-no-data">No enrollment data available.</p>
+  {% endif %}
 </div>
 
 <!-- Toastr Notifications -->
