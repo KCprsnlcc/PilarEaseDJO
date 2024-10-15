@@ -28,15 +28,7 @@ class CustomUserManager(BaseUserManager):
         """
         Creates and saves a superuser with the given username, email, and password.
         """
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-
-        # Ensure the superuser has a unique student_id
+        extra_fields.setdefault('is_itrc_staff', True)
         extra_fields.setdefault('student_id', self._get_next_student_id())
 
         return self.create_user(username, email, password, **extra_fields)
@@ -57,6 +49,7 @@ class CustomUserManager(BaseUserManager):
         return "C000001"
 
 class CustomUser(AbstractUser):
+    # Removed `is_superuser` and `is_staff`
     student_id = models.CharField(max_length=10, unique=True)
     full_name = models.CharField(max_length=100)
     academic_year_level = models.CharField(max_length=20)
@@ -68,7 +61,7 @@ class CustomUser(AbstractUser):
     
     objects = CustomUserManager()
 
-    # New field to identify ITRC staff
+    # Custom field to identify ITRC staff
     is_itrc_staff = models.BooleanField(default=False)
 
     is_verified = models.BooleanField(default=False)
