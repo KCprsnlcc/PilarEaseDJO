@@ -111,6 +111,9 @@ class AuditLog(models.Model):
         ('update_setting', 'Update Setting'),
         ('create_setting', 'Create Setting'),
         ('delete_user', 'Delete User'),
+        ('register', 'User Registration'),    # New Action
+        ('login', 'User Login'),              # New Action
+        ('logout', 'User Logout'),            # New Action
     ]
 
     user = models.ForeignKey(
@@ -118,7 +121,10 @@ class AuditLog(models.Model):
         on_delete=models.CASCADE,
         related_name='audit_logs'
     )
-    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    action = models.CharField(
+        max_length=50,
+        choices=ACTION_CHOICES
+    )
     details = models.TextField(default="Details not provided")
     timestamp = models.DateTimeField(auto_now_add=True)
 

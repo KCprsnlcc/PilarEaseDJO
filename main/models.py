@@ -316,6 +316,20 @@ class ContactUs(models.Model):
 
     def __str__(self):
         return f"Contact Us from {self.name}"
+    
+class UserSession(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_sessions'
+    )
+    session_key = models.CharField(max_length=40, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    expire_date = models.DateTimeField()
+    session_end = models.DateTimeField(null=True, blank=True)  # To mark logout time
+
+    def __str__(self):
+        return f"Session for {self.user.username} - {self.session_key}"
 
 # Signal Receivers
 @receiver(post_save, sender=CustomUser)
