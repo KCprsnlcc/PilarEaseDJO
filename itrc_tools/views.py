@@ -242,7 +242,6 @@ def upload_masterlist(request):
             'masterlist_page_obj': masterlist_page_obj,
         }
         return render(request, 'itrc_tools/upload_masterlist.html', context)
-
 @user_passes_test(is_itrc_staff)
 @login_required
 def manage_users(request):
@@ -271,12 +270,15 @@ def manage_users(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Generate the page range for pagination (similar to logs_page_range)
+    users_page_range = paginator.get_elided_page_range(page_number, on_each_side=2, on_ends=1)
+
     context = {
         'users': page_obj,
         'search_query': search_query,
+        'users_page_range': users_page_range,  # Add this to use in pagination
     }
     return render(request, 'itrc_tools/manage_users.html', context)
-
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
