@@ -251,6 +251,7 @@ def manage_users(request):
     """
     search_query = request.GET.get('search', '').strip()
     
+    # Search functionality
     if search_query:
         users = CustomUser.objects.filter(
             Q(username__icontains=search_query) |
@@ -259,12 +260,11 @@ def manage_users(request):
             Q(email__icontains=search_query)
         )
     else:
+        # Fetch all users including verified and not verified
         users = CustomUser.objects.all()
 
-    # Including ITRC staff, counselors, and regular users
-    users = users.filter(
-        Q(is_itrc_staff=True) | Q(is_counselor=True) | Q(is_verified=True)
-    ).order_by('-id')
+    # Order the users (newest first)
+    users = users.order_by('-id')
 
     # Pagination: Show 10 users per page
     paginator = Paginator(users, 10)
