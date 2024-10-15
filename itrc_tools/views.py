@@ -753,3 +753,31 @@ def generate_reports(request):
     }
 
     return render(request, 'itrc_tools/reports.html', context)
+@user_passes_test(is_itrc_staff)
+@login_required
+def audit_logs_view(request):
+    """
+    Display paginated audit logs with search filtering.
+    """
+    search_query = request.GET.get('search', '').strip()
+
+    if search_query:
+        logs = AuditLog.objects.filter(
+            Q(user__username__icontains=search_query) |
+            Q(action__icontains=search_query) |
+            Q(details__icontains=search_query)
+        ).order_by('-timestamp')
+    else:
+        logs = AuditLog.objects.all().order_by('-timestamp')
+
+    # Pagination: 10 logs per page
+    paginator = Paginator(logs, 10)
+    page_number = request.GET.get('page')
+    logs_page_obj = paginator.get_page(page_number)
+
+    context = {
+        'logs': logs_page_obj,
+        'search_query': search_query,
+        'logs_page_range': paginator.get_elided_page_range(logs_page_obj.number, on_each_side=2, on_ends=1)
+    }
+    return render(request, 'itrc_tools/auditlog.html', context)

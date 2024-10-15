@@ -684,3 +684,8 @@ body {
   color: #666666;
   margin-bottom: 15px;
 }
+/* Audit Logs Styles */
+.pilarease-itrc-audit-logs-container {
+  padding: 20px;
+  background-color: var(--background-color);
+}

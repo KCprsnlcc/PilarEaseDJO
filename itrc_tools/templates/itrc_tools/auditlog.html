@@ -1,0 +1,91 @@
+{% extends "itrc_tools/base_itrc.html" %} {% block page_title %} Audit Logs
+{%endblock %} {% block itrc_content %}
+<div
+  class="pilarease-itrc-audit-logs-container animate__animated animate__fadeIn"
+>
+  <h1 class="pilarease-itrc-section-title">Audit Logs</h1>
+  <p class="pilarease-itrc-section-info">
+    View and manage system audit logs. This records actions taken within the
+    system.
+  </p>
+
+  <!-- Search and Filter -->
+  <form method="get" class="pilarease-itrc-search-form">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search by user, action, or details..."
+      class="pilarease-itrc-search-input"
+      value="{{ search_query }}"
+    />
+    <button type="submit" class="pilarease-itrc-search-button">
+      <i class="bx bx-search"></i>
+    </button>
+  </form>
+
+  <!-- Display Audit Log Data -->
+  <table class="pilarease-itrc-table table table-striped">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Action</th>
+        <th>Details</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.user.username }}</td>
+        <td>{{ log.get_action_display }}</td>
+        <td>{{ log.details }}</td>
+        <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="pilarease-itrc-no-data">No audit logs found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
+    <ul class="pagination">
+      {% if logs.has_previous %}
+      <li class="page-item">
+        <a
+          class="page-link"
+          href="?page={{ logs.previous_page_number }}&search={{ search_query }}"
+          >&laquo;</a
+        >
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">&laquo;</span>
+      </li>
+      {% endif %} {% for num in logs_page_range %} {% if num == logs.number %}
+      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% else %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ num }}&search={{ search_query }}"
+          >{{ num }}</a
+        >
+      </li>
+      {% endif %} {% endfor %} {% if logs.has_next %}
+      <li class="page-item">
+        <a
+          class="page-link"
+          href="?page={{ logs.next_page_number }}&search={{ search_query }}"
+          >&raquo;</a
+        >
+      </li>
+      {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">&raquo;</span>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+</div>
+{% endblock %}

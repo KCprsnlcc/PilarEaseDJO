@@ -111,38 +111,6 @@ Analytics{% endblock %} {% block itrc_content %}
       </div>
     </div>
   </div>
-
-  <!-- Audit Logs -->
-  <h2 class="pilarease-itrc-subsection-title">Audit Logs</h2>
-  <p class="pilarease-itrc-section-info">
-    Review system activities and user actions for auditing purposes.
-  </p>
-  <table class="pilarease-itrc-table table table-striped">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Action</th>
-        <th>Details</th>
-        <th>Timestamp</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for log in audit_logs %}
-      <tr>
-        <td>{{ log.user.username }}</td>
-        <td>{{ log.get_action_display }}</td>
-        <td>{{ log.details }}</td>
-        <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="4" class="pilarease-itrc-no-data">
-          No audit logs available.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
 </div>
 {% endblock %} {% block extra_scripts %}
 <!-- Include Chart.js -->

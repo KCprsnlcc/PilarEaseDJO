@@ -72,17 +72,21 @@ Masterlist {% endblock %} {% block itrc_content %}
   <!-- Pagination -->
  <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
     <ul class="pagination">
-        {% if masterlist_page_obj.has_previous %}
+        {% if logs.has_previous %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ masterlist_page_obj.previous_page_number }}&search={{ request.GET.search }}">&laquo;</a>
+            <a class="page-link" href="?page={{ logs.previous_page_number }}&search={{ request.GET.search }}">&laquo;</a>
         </li>
         {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        <li class="page-item disabled">
+            <span class="page-link">&laquo;</span>
+        </li>
         {% endif %}
 
-        {% for num in masterlist_page_range %}
-            {% if num == masterlist_page_obj.number %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% for num in logs.paginator.page_range %}
+            {% if num == logs.number %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
             {% else %}
             <li class="page-item">
                 <a class="page-link" href="?page={{ num }}&search={{ request.GET.search }}">{{ num }}</a>
@@ -90,12 +94,14 @@ Masterlist {% endblock %} {% block itrc_content %}
             {% endif %}
         {% endfor %}
 
-        {% if masterlist_page_obj.has_next %}
+        {% if logs.has_next %}
         <li class="page-item">
-            <a class="page-link" href="?page={{ masterlist_page_obj.next_page_number }}&search={{ request.GET.search }}">&raquo;</a>
+            <a class="page-link" href="?page={{ logs.next_page_number }}&search={{ request.GET.search }}">&raquo;</a>
         </li>
         {% else %}
-        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        <li class="page-item disabled">
+            <span class="page-link">&raquo;</span>
+        </li>
         {% endif %}
     </ul>
 </nav>

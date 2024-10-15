@@ -17,6 +17,7 @@ urlpatterns = [
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('system-settings/', views.system_settings, name='system_settings'),
     path('generate-reports/', views.generate_reports, name='generate_reports'),
+    path('audit-logs/', views.audit_logs_view, name='audit_logs'),
 
     # Add a path for logging out
     path('logout/', LogoutView.as_view(next_page='/itrc/'), name='itrc_logout'),
