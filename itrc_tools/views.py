@@ -230,11 +230,16 @@ def upload_masterlist(request):
             messages.error(request, f'An error occurred while processing the file: {e}')
             return redirect('upload_masterlist')
     else:
-        # Fetch data from EnrollmentMasterlist
+        # Fetch data from EnrollmentMasterlist and paginate it
         masterlist_data = EnrollmentMasterlist.objects.all().order_by('student_id')
+        paginator = Paginator(masterlist_data, 10)  # Show 10 records per page
+        page_number = request.GET.get('page')
+        masterlist_page_obj = paginator.get_page(page_number)
 
         context = {
-            'masterlist_data': masterlist_data,
+            'masterlist_data': masterlist_page_obj,
+            'masterlist_page_range': paginator.get_elided_page_range(masterlist_page_obj.number, on_each_side=2, on_ends=1),
+            'masterlist_page_obj': masterlist_page_obj,
         }
         return render(request, 'itrc_tools/upload_masterlist.html', context)
 
@@ -242,9 +247,10 @@ def upload_masterlist(request):
 @login_required
 def manage_users(request):
     """
-    Display and manage user accounts.
+    Display and manage user accounts, including ITRC staff, counselors, and regular users.
     """
     search_query = request.GET.get('search', '').strip()
+    
     if search_query:
         users = CustomUser.objects.filter(
             Q(username__icontains=search_query) |
@@ -255,11 +261,13 @@ def manage_users(request):
     else:
         users = CustomUser.objects.all()
 
-    # Exclude ITRC staff and counselors from being managed here
-    users = users.exclude(Q(is_itrc_staff=True) | Q(is_counselor=True))
+    # Including ITRC staff, counselors, and regular users
+    users = users.filter(
+        Q(is_itrc_staff=True) | Q(is_counselor=True) | Q(is_verified=True)
+    ).order_by('-id')
 
     # Pagination: Show 10 users per page
-    paginator = Paginator(users.order_by('-id'), 10)
+    paginator = Paginator(users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

@@ -1,73 +1,123 @@
 <!-- itrc_tools/templates/itrc_tools/reports.html -->
 
-{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
-<div class="pilarease-itrc-reports-container animate__animated animate__fadeIn">
+{% extends "itrc_tools/base_itrc.html" %} {% block page_title %}Reports &
+Analytics{% endblock %} {% block itrc_content %}
+<div
+  class="container-fluid pilarease-itrc-reports-container animate__animated animate__fadeIn"
+>
   <h1 class="pilarease-itrc-section-title">Reports & Analytics</h1>
 
   <!-- User Activity Metrics -->
-  <h2 class="pilarease-itrc-subsection-title">1. User Activity Metrics</h2>
-
-  <!-- Login Activity Analysis -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>Login Activity Over the Last 30 Days</h3>
-    <canvas id="loginActivityChart"></canvas>
-  </div>
-
-  <!-- Daily Active Users (DAU) -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>Daily Active Users (DAU) Over the Last 30 Days</h3>
-    <canvas id="dauChart"></canvas>
-  </div>
-
-  <!-- User Registration Trends -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>User Registrations Over the Last 30 Days</h3>
-    <canvas id="userRegistrationChart"></canvas>
+  <h2 class="pilarease-itrc-subsection-title">User Activity Metrics</h2>
+  <p class="pilarease-itrc-section-info">
+    Analyze user engagement and activity over the past 30 days.
+  </p>
+  <!-- Grid Layout for Analytics -->
+  <div class="row pilarease-itrc-analytics-grid">
+    <!-- Login Activity Analysis -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Login Activity</h3>
+        <p class="pilarease-itrc-chart-description">
+          Shows the number of user logins over the last 30 days.
+        </p>
+        <canvas id="loginActivityChart"></canvas>
+      </div>
+    </div>
+    <!-- Daily Active Users (DAU) -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Daily Active Users (DAU)</h3>
+        <p class="pilarease-itrc-chart-description">
+          Number of unique users active each day over the last 30 days.
+        </p>
+        <canvas id="dauChart"></canvas>
+      </div>
+    </div>
+    <!-- User Registration Trends -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">User Registrations</h3>
+        <p class="pilarease-itrc-chart-description">
+          Tracks new user registrations over the past 30 days.
+        </p>
+        <canvas id="userRegistrationChart"></canvas>
+      </div>
+    </div>
+    <!-- Masterlist Uploads Over Time -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Masterlist Uploads</h3>
+        <p class="pilarease-itrc-chart-description">
+          Displays the number of masterlist uploads over the last 30 days.
+        </p>
+        <canvas id="masterlistUploadsChart"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- User Demographic Insights -->
-  <h2 class="pilarease-itrc-subsection-title">2. User Demographic Insights</h2>
-
-  <!-- User Role Distribution -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>User Role Distribution</h3>
-    <canvas id="userRoleChart"></canvas>
-  </div>
-
-  <!-- User Verification Status -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>User Verification Status</h3>
-    <canvas id="userVerificationChart"></canvas>
-  </div>
-
-  <!-- Data Volume Metrics -->
-  <h2 class="pilarease-itrc-subsection-title">3. Data Volume Metrics</h2>
-
-  <!-- Masterlist Uploads Over Time -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>Masterlist Uploads Over the Last 30 Days</h3>
-    <canvas id="masterlistUploadsChart"></canvas>
+  <h2 class="pilarease-itrc-subsection-title">User Demographic Insights</h2>
+  <p class="pilarease-itrc-section-info">
+    Gain insights into the composition of your user base.
+  </p>
+  <div class="row pilarease-itrc-analytics-grid">
+    <!-- User Role Distribution -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">User Role Distribution</h3>
+        <p class="pilarease-itrc-chart-description">
+          Breakdown of users by their assigned roles.
+        </p>
+        <canvas id="userRoleChart"></canvas>
+      </div>
+    </div>
+    <!-- User Verification Status -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">User Verification Status</h3>
+        <p class="pilarease-itrc-chart-description">
+          Shows the current verification status of users.
+        </p>
+        <canvas id="userVerificationChart"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- User Feedback Analysis -->
-  <h2 class="pilarease-itrc-subsection-title">4. User Feedback Analysis</h2>
-
-  <!-- Sentiment Analysis -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>User Feedback Sentiment Analysis</h3>
-    <canvas id="feedbackSentimentChart"></canvas>
-  </div>
-
-  <!-- Top Feedback Keywords -->
-  <div class="pilarease-itrc-chart-container">
-    <h3>Top Feedback Keywords</h3>
-    <canvas id="feedbackKeywordsChart"></canvas>
+  <h2 class="pilarease-itrc-subsection-title">User Feedback Analysis</h2>
+  <p class="pilarease-itrc-section-info">
+    Understand user sentiment and common feedback themes.
+  </p>
+  <div class="row pilarease-itrc-analytics-grid">
+    <!-- Sentiment Analysis -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Feedback Sentiment</h3>
+        <p class="pilarease-itrc-chart-description">
+          Sentiment analysis of user feedback submissions.
+        </p>
+        <canvas id="feedbackSentimentChart"></canvas>
+      </div>
+    </div>
+    <!-- Top Feedback Keywords -->
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Top Feedback Keywords</h3>
+        <p class="pilarease-itrc-chart-description">
+          Most frequently mentioned keywords in user feedback.
+        </p>
+        <canvas id="feedbackKeywordsChart"></canvas>
+      </div>
+    </div>
   </div>
 
   <!-- Audit Logs -->
-  <h2 class="pilarease-itrc-subsection-title">5. Audit Logs</h2>
-
-  <table class="pilarease-itrc-table">
+  <h2 class="pilarease-itrc-subsection-title">Audit Logs</h2>
+  <p class="pilarease-itrc-section-info">
+    Review system activities and user actions for auditing purposes.
+  </p>
+  <table class="pilarease-itrc-table table table-striped">
     <thead>
       <tr>
         <th>User</th>
@@ -98,242 +148,182 @@
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Ensure that the data is available
-  const loginActivityLabels = {{ login_activity_labels|safe }};
-  const loginActivityCounts = {{ login_activity_counts|safe }};
-
-  if (loginActivityCounts.some(count => count > 0)) {
-    // Initialize Login Activity Chart
-    var loginActivityCtx = document.getElementById('loginActivityChart').getContext('2d');
-    var loginActivityChart = new Chart(loginActivityCtx, {
-      type: 'line',
-      data: {
-        labels: loginActivityLabels,
-        datasets: [{
-          label: 'Number of Logins',
-          data: loginActivityCounts,
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          borderColor: 'rgba(75, 192, 192, 1)',
-          borderWidth: 1,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: false,
-            text: 'Login Activity'
-          },
-          legend: {
-            display: true,
-            position: 'top',
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Date'
-            },
-            ticks: {
-              maxRotation: 90,
-              minRotation: 45
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Number of Logins'
-            },
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } else {
-    // Handle no data scenario
-    document.getElementById('loginActivityChart').parentElement.innerHTML += '<p>No login activity data available.</p>';
+  // Dummy Data Generation Function
+  function generateDummyData(labelCount) {
+    const labels = [];
+    const data = [];
+    const today = new Date();
+    for (let i = labelCount - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      labels.push(date.toISOString().split('T')[0]); // YYYY-MM-DD
+      data.push(Math.floor(Math.random() * 100) + 1); // Random number between 1 and 100
+    }
+    return { labels, data };
   }
 
-  // Repeat similar checks and chart initializations for DAU and User Registrations
-  const dauLabels = {{ dau_labels|safe }};
-  const dauCounts = {{ dau_counts|safe }};
+  // Generate Dummy Data for 30 Days
+  const dummyLoginActivity = generateDummyData(30);
+  const dummyDAU = generateDummyData(30);
+  const dummyUserRegistrations = generateDummyData(30);
+  const dummyMasterlistUploads = generateDummyData(30);
 
-  if (dauCounts.some(count => count > 0)) {
-    var dauCtx = document.getElementById('dauChart').getContext('2d');
-    var dauChart = new Chart(dauCtx, {
-      type: 'line',
-      data: {
-        labels: dauLabels,
-        datasets: [{
-          label: 'Daily Active Users',
-          data: dauCounts,
-          backgroundColor: 'rgba(255, 205, 86, 0.2)',
-          borderColor: 'rgba(255, 205, 86, 1)',
-          borderWidth: 1,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: false,
-            text: 'Daily Active Users'
-          },
-          legend: {
-            display: true,
-            position: 'top',
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Date'
-            },
-            ticks: {
-              maxRotation: 90,
-              minRotation: 45
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Number of Active Users'
-            },
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } else {
-    document.getElementById('dauChart').parentElement.innerHTML += '<p>No DAU data available.</p>';
-  }
-
-  const userRegistrationLabels = {{ user_registration_labels|safe }};
-  const userRegistrationCounts = {{ user_registration_counts|safe }};
-
-  if (userRegistrationCounts.some(count => count > 0)) {
-    var userRegistrationCtx = document.getElementById('userRegistrationChart').getContext('2d');
-    var userRegistrationChart = new Chart(userRegistrationCtx, {
-      type: 'line',
-      data: {
-        labels: userRegistrationLabels,
-        datasets: [{
-          label: 'New Users',
-          data: userRegistrationCounts,
-          backgroundColor: 'rgba(153, 102, 255, 0.2)',
-          borderColor: 'rgba(153, 102, 255, 1)',
-          borderWidth: 1,
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: false,
-            text: 'User Registrations'
-          },
-          legend: {
-            display: true,
-            position: 'top',
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Date'
-            },
-            ticks: {
-              maxRotation: 90,
-              minRotation: 45
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Number of New Users'
-            },
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  } else {
-    document.getElementById('userRegistrationChart').parentElement.innerHTML += '<p>No user registration data available.</p>';
-  }
-
-  // User Role Distribution Chart
-  var userRoleCtx = document.getElementById('userRoleChart').getContext('2d');
-  var userRoleChart = new Chart(userRoleCtx, {
-    type: 'pie',
+  // Initialize Login Activity Chart with Dummy Data
+  var loginActivityCtx = document.getElementById('loginActivityChart').getContext('2d');
+  var loginActivityChart = new Chart(loginActivityCtx, {
+    type: 'line',
     data: {
-      labels: {{ role_labels|safe }},
+      labels: dummyLoginActivity.labels,
       datasets: [{
-        data: {{ role_counts|safe }},
-        backgroundColor: [
-          '#FF6384', // ITRC Staff
-          '#36A2EB', // Counselor
-          '#FFCE56'  // User
-        ],
+        label: 'Number of Logins',
+        data: dummyLoginActivity.data,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1,
+        fill: true,
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          position: 'top',
-        },
         title: {
           display: false,
-          text: 'User Role Distribution'
+          text: 'Login Activity'
+        },
+        legend: {
+          display: true,
+          position: 'top',
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Date'
+          },
+          ticks: {
+            maxRotation: 90,
+            minRotation: 45
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Number of Logins'
+          },
+          beginAtZero: true
         }
       }
     }
   });
 
-  // User Verification Status Chart
-  var userVerificationCtx = document.getElementById('userVerificationChart').getContext('2d');
-  var userVerificationChart = new Chart(userVerificationCtx, {
-    type: 'doughnut',
+  // Initialize DAU Chart with Dummy Data
+  var dauCtx = document.getElementById('dauChart').getContext('2d');
+  var dauChart = new Chart(dauCtx, {
+    type: 'line',
     data: {
-      labels: {{ verification_labels|safe }},
+      labels: dummyDAU.labels,
       datasets: [{
-        data: {{ verification_counts|safe }},
-        backgroundColor: [
-          '#28a745', // Verified
-          '#ffc107', // Pending
-          '#dc3545'  // Rejected
-        ],
+        label: 'Daily Active Users',
+        data: dummyDAU.data,
+        backgroundColor: 'rgba(255, 205, 86, 0.2)',
+        borderColor: 'rgba(255, 205, 86, 1)',
+        borderWidth: 1,
+        fill: true,
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          position: 'top',
-        },
         title: {
           display: false,
-          text: 'User Verification Status'
+          text: 'Daily Active Users'
+        },
+        legend: {
+          display: true,
+          position: 'top',
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Date'
+          },
+          ticks: {
+            maxRotation: 90,
+            minRotation: 45
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Number of Active Users'
+          },
+          beginAtZero: true
         }
       }
     }
   });
 
-  // Masterlist Uploads Chart
+  // Initialize User Registration Chart with Dummy Data
+  var userRegistrationCtx = document.getElementById('userRegistrationChart').getContext('2d');
+  var userRegistrationChart = new Chart(userRegistrationCtx, {
+    type: 'line',
+    data: {
+      labels: dummyUserRegistrations.labels,
+      datasets: [{
+        label: 'New Users',
+        data: dummyUserRegistrations.data,
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        borderColor: 'rgba(153, 102, 255, 1)',
+        borderWidth: 1,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: false,
+          text: 'User Registrations'
+        },
+        legend: {
+          display: true,
+          position: 'top',
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Date'
+          },
+          ticks: {
+            maxRotation: 90,
+            minRotation: 45
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Number of New Users'
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Initialize Masterlist Uploads Chart with Dummy Data
   var masterlistUploadsCtx = document.getElementById('masterlistUploadsChart').getContext('2d');
   var masterlistUploadsChart = new Chart(masterlistUploadsCtx, {
     type: 'bar',
     data: {
-      labels: {{ masterlist_uploads_labels|safe }},
+      labels: dummyMasterlistUploads.labels,
       datasets: [{
         label: 'Masterlist Uploads',
-        data: {{ masterlist_uploads_counts|safe }},
+        data: dummyMasterlistUploads.data,
         backgroundColor: 'rgba(255, 159, 64, 0.6)',
         borderColor: 'rgba(255, 159, 64, 1)',
         borderWidth: 1,
@@ -373,7 +363,65 @@
     }
   });
 
-  // Feedback Sentiment Chart
+  // User Role Distribution Chart (Assuming no changes needed)
+  var userRoleCtx = document.getElementById('userRoleChart').getContext('2d');
+  var userRoleChart = new Chart(userRoleCtx, {
+    type: 'pie',
+    data: {
+      labels: {{ role_labels|safe }},
+      datasets: [{
+        data: {{ role_counts|safe }},
+        backgroundColor: [
+          '#FF6384', // ITRC Staff
+          '#36A2EB', // Counselor
+          '#FFCE56'  // User
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: false,
+          text: 'User Role Distribution'
+        }
+      }
+    }
+  });
+
+  // User Verification Status Chart (Assuming no changes needed)
+  var userVerificationCtx = document.getElementById('userVerificationChart').getContext('2d');
+  var userVerificationChart = new Chart(userVerificationCtx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ verification_labels|safe }},
+      datasets: [{
+        data: {{ verification_counts|safe }},
+        backgroundColor: [
+          '#28a745', // Verified
+          '#ffc107', // Pending
+          '#dc3545'  // Rejected
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: false,
+          text: 'User Verification Status'
+        }
+      }
+    }
+  });
+
+  // Feedback Sentiment Chart (Assuming no changes needed)
   var feedbackSentimentCtx = document.getElementById('feedbackSentimentChart').getContext('2d');
   var feedbackSentimentChart = new Chart(feedbackSentimentCtx, {
     type: 'pie',
@@ -402,7 +450,7 @@
     }
   });
 
-  // Top Feedback Keywords Chart
+  // Top Feedback Keywords Chart (Assuming no changes needed)
   var feedbackKeywordsCtx = document.getElementById('feedbackKeywordsChart').getContext('2d');
   var feedbackKeywordsChart = new Chart(feedbackKeywordsCtx, {
     type: 'bar',

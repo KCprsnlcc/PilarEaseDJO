@@ -1,27 +1,50 @@
 <!-- itrc_tools/templates/itrc_tools/itrc_dashboard.html -->
 
-{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+{% extends "itrc_tools/base_itrc.html" %} {% block page_title %} ITRC Dashboard
+{% endblock %} {% block itrc_content %}
 <div
-  class="pilarease-itrc-dashboard-container animate__animated animate__fadeIn"
+  class="container-fluid pilarease-itrc-dashboard-container animate__animated animate__fadeIn"
 >
   <h1 class="pilarease-itrc-section-title">ITRC Dashboard</h1>
+  <p class="pilarease-itrc-section-info">
+    Welcome to the ITRC Dashboard. Here you can find an overview of system
+    activity and manage pending verification requests.
+  </p>
 
   <!-- Key Statistics -->
-  <div class="pilarease-itrc-statistics">
-    <div class="pilarease-itrc-stat">
-      <i class="bx bxs-user-account"></i>
-      <h3>{{ total_requests }}</h3>
-      <p>Total Requests</p>
+  <div class="row pilarease-itrc-statistics-grid">
+    <div class="col-md-4">
+      <div class="pilarease-itrc-stat-card animate__animated animate__fadeInUp">
+        <i class="bx bxs-user-account stat-icon"></i>
+        <div class="stat-info">
+          <h3>{{ total_requests }}</h3>
+          <p>Total Requests</p>
+        </div>
+      </div>
     </div>
-    <div class="pilarease-itrc-stat">
-      <i class="bx bxs-check-circle"></i>
-      <h3>{{ verified_requests }}</h3>
-      <p>Verified Users</p>
+    <div class="col-md-4">
+      <div
+        class="pilarease-itrc-stat-card animate__animated animate__fadeInUp"
+        style="animation-delay: 0.1s"
+      >
+        <i class="bx bxs-check-circle stat-icon"></i>
+        <div class="stat-info">
+          <h3>{{ verified_requests }}</h3>
+          <p>Verified Users</p>
+        </div>
+      </div>
     </div>
-    <div class="pilarease-itrc-stat">
-      <i class="bx bxs-x-circle"></i>
-      <h3>{{ rejected_requests }}</h3>
-      <p>Rejected Users</p>
+    <div class="col-md-4">
+      <div
+        class="pilarease-itrc-stat-card animate__animated animate__fadeInUp"
+        style="animation-delay: 0.2s"
+      >
+        <i class="bx bxs-x-circle stat-icon"></i>
+        <div class="stat-info">
+          <h3>{{ rejected_requests }}</h3>
+          <p>Rejected Users</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -30,6 +53,9 @@
     <h2 class="pilarease-itrc-subsection-title">
       Pending Verification Requests
     </h2>
+    <p class="pilarease-itrc-section-info">
+      Review and manage users awaiting verification.
+    </p>
 
     <form method="get" class="pilarease-itrc-search-form">
       <input
@@ -44,7 +70,7 @@
       </button>
     </form>
 
-    <table class="pilarease-itrc-table">
+    <table class="pilarease-itrc-table table table-striped">
       <thead>
         <tr>
           <th>User ID</th>
@@ -64,7 +90,7 @@
           <td>
             <a
               href="{% url 'verify_user' request.user.id %}"
-              class="pilarease-itrc-action-button review-button"
+              class="pilarease-itrc-action-button review-button btn btn-primary"
             >
               Review
             </a>

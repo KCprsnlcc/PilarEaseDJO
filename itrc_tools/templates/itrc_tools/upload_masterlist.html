@@ -1,36 +1,56 @@
 <!-- itrc_tools/templates/itrc_tools/upload_masterlist.html -->
 
-{% extends "itrc_tools/base_itrc.html" %} {% block itrc_content %}
+{% extends "itrc_tools/base_itrc.html" %} {% block page_title %} Upload
+Masterlist {% endblock %} {% block itrc_content %}
 <div
-  class="pilarease-itrc-upload-masterlist-container animate__animated animate__fadeIn"
+  class="container-fluid pilarease-itrc-upload-masterlist-container animate__animated animate__fadeIn"
 >
   <h1 class="pilarease-itrc-section-title">Upload Enrollment Masterlist</h1>
+  <p class="pilarease-itrc-section-info">
+    Upload and manage the enrollment masterlist. This allows the system to
+    verify student information during registration.
+  </p>
 
+  <!-- Upload form -->
   <form
     method="post"
     enctype="multipart/form-data"
-    class="pilarease-itrc-upload-form"
+    class="pilarease-itrc-upload-form mb-4"
   >
     {% csrf_token %}
-
     <div class="pilarease-itrc-form-group">
       <label for="csv_file">Select CSV File</label>
       <input type="file" name="csv_file" id="csv_file" accept=".csv" />
       <small class="pilarease-itrc-form-help">
         Upload a CSV file with headers: student_id, full_name,
-        academic_year_level
+        academic_year_level.
       </small>
     </div>
-
     <button type="submit" class="pilarease-itrc-action-button upload-button">
       <i class="bx bxs-cloud-upload"></i> Upload
     </button>
   </form>
 
+  <!-- Search and Filter -->
+  <div class="pilarease-itrc-search-filter">
+    <form method="get" class="pilarease-itrc-search-form">
+      <input
+        type="text"
+        name="search"
+        placeholder="Search students..."
+        class="pilarease-itrc-search-input"
+        value="{{ request.GET.search }}"
+      />
+      <button type="submit" class="pilarease-itrc-search-button">
+        <i class="bx bx-search"></i>
+      </button>
+    </form>
+  </div>
+
   <!-- Display Enrollment Masterlist Data -->
   <h2 class="pilarease-itrc-subsection-title">Enrollment Masterlist</h2>
   {% if masterlist_data %}
-  <table class="pilarease-itrc-table">
+  <table class="pilarease-itrc-table table table-striped">
     <thead>
       <tr>
         <th>Student ID</th>
@@ -39,7 +59,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for student in masterlist_data %}
+      {% for student in masterlist_page_obj %}
       <tr>
         <td>{{ student.student_id }}</td>
         <td>{{ student.full_name }}</td>
@@ -48,6 +68,38 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <!-- Pagination -->
+ <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
+    <ul class="pagination">
+        {% if masterlist_page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ masterlist_page_obj.previous_page_number }}&search={{ request.GET.search }}">&laquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        {% endif %}
+
+        {% for num in masterlist_page_range %}
+            {% if num == masterlist_page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&search={{ request.GET.search }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if masterlist_page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ masterlist_page_obj.next_page_number }}&search={{ request.GET.search }}">&raquo;</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+  </div>
   {% else %}
   <p class="pilarease-itrc-no-data">No enrollment data available.</p>
   {% endif %}
