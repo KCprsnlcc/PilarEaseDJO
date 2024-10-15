@@ -34,7 +34,7 @@ from .models import (
 from django.contrib.auth import get_user_model
 from django.db import models
 from .forms import SystemSettingForm
-from main.models import CustomUser  # Assuming main app contains CustomUser
+from main.models import CustomUser  
 from .resources import EnrollmentMasterlistResource
 from .forms import SystemSettingForm
 from django.db.models.functions import TruncDay
@@ -457,16 +457,15 @@ def generate_reports(request):
     )
     avg_session_duration_seconds = average_session_duration['avg_duration'].total_seconds() if average_session_duration['avg_duration'] else 0
 
-# Check if data exists
-    if not login_activity_counts:
+    # Check if data exists
+    if not any(login_activity_counts):
         messages.warning(request, "No login activity data available for the last 30 days.")
 
-    if not dau_counts:
+    if not any(dau_counts):
         messages.warning(request, "No Daily Active Users data available for the last 30 days.")
 
-    if not user_registration_counts:
+    if not any(user_registration_counts):
         messages.warning(request, "No user registration data available for the last 30 days.")
-
 
     # -----------------------------
     # 2. System Performance Metrics
@@ -475,16 +474,17 @@ def generate_reports(request):
     # API Response Time Analysis
     api_response_time = (
         APIPerformanceLog.objects.filter(timestamp__gte=thirty_days_ago, timestamp__isnull=False)
-        .values('timestamp__date')
+        .annotate(date=TruncDate('timestamp'))
+        .values('date')
         .annotate(avg_response_time=Avg('response_time'))
-        .order_by('timestamp__date')
+        .order_by('date')
     )
     api_response_time_labels = [
-        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        entry['date'].strftime('%Y-%m-%d') 
         for entry in api_response_time 
-        if entry['timestamp__date'] is not None
+        if entry['date'] is not None
     ]
-    api_response_time_avg = [round(entry['avg_response_time'], 2) for entry in api_response_time if entry['timestamp__date'] is not None]
+    api_response_time_avg = [round(entry['avg_response_time'], 2) for entry in api_response_time if entry['date'] is not None]
 
     # Error Rates
     error_rates = (
@@ -559,7 +559,8 @@ def generate_reports(request):
         'this', 'for', 'with', 'was', 'on', 'but', 'are', 'not', 'have',
         'as', 'be', 'you', 'at', 'or', 'so', 'we', 'if', 'an', 'my',
         'they', 'your', 'can', 'from', 'me', 'all', 'just', 'about',
-        'do', 'no', 'us', 'what', 'there', 'their', 'our', 'more', 'like'
+        'do', 'no', 'us', 'what', 'there', 'their', 'our', 'more', 'like',
+        'please', 'other', 'not', 'any', 'some', 'yourself',
     ])
 
     # Filter words
@@ -605,20 +606,20 @@ def generate_reports(request):
     # Masterlist Uploads Over Time
     masterlist_uploads = (
         AuditLog.objects.filter(action='upload_masterlist', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
-        .values('timestamp__date')
+        .annotate(date=TruncDate('timestamp'))
+        .values('date')
         .annotate(count=Count('id'))
-        .order_by('timestamp__date')
+        .order_by('date')
     )
     masterlist_uploads_labels = [
-        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        entry['date'].strftime('%Y-%m-%d') 
         for entry in masterlist_uploads 
-        if entry['timestamp__date'] is not None
+        if entry['date'] is not None
     ]
-    masterlist_uploads_counts = [entry['count'] for entry in masterlist_uploads if entry['timestamp__date'] is not None]
+    masterlist_uploads_counts = [entry['count'] for entry in masterlist_uploads if entry['date'] is not None]
 
     # Data Storage Usage (Assuming file uploads are stored in EnrollmentMasterlist)
-    # Replace 'csv_file__size' with the actual field that holds the file size in your EnrollmentMasterlist model
-    # If you don't have a size field, you'll need to calculate it based on the file path or use a different approach
+    # Replace 'file_size' with your actual field that holds the file size in the EnrollmentMasterlist model
     total_data_storage = EnrollmentMasterlist.objects.aggregate(
         total_size=Count('id') * 100  # Placeholder: replace with actual size calculation
     )['total_size'] or 0  # Size in bytes or adjusted as needed
@@ -631,19 +632,21 @@ def generate_reports(request):
     # Assuming you have a model to track notification deliveries, replace 'send_notification' with the actual action
     notification_deliveries = (
         AuditLog.objects.filter(action='send_notification', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
-        .values('timestamp__date')
+        .annotate(date=TruncDate('timestamp'))
+        .values('date')
         .annotate(successful=Count('id'))
-        .order_by('timestamp__date')
+        .order_by('date')
     )
     notification_delivery_labels = [
-        entry['timestamp__date'].strftime('%Y-%m-%d') 
+        entry['date'].strftime('%Y-%m-%d') 
         for entry in notification_deliveries 
-        if entry['timestamp__date'] is not None
+        if entry['date'] is not None
     ]
-    notification_delivery_success = [entry['successful'] for entry in notification_deliveries if entry['timestamp__date'] is not None]
+    notification_delivery_success = [entry['successful'] for entry in notification_deliveries if entry['date'] is not None]
 
     # Pending Notifications
     # Assuming you have a related name 'notification' in your CustomUser model pointing to notifications
+    # Adjust the related name as per your actual model
     pending_notifications = CustomUser.objects.filter(notification__is_read=False).distinct().count()
 
     # ----------------------------

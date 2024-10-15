@@ -16,6 +16,9 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .models import UserProfile
 import logging
+from .models import UserSession  
+from django.contrib.sessions.models import Session
+from itrc_tools.models import AuditLog
 from PIL import Image
 from io import BytesIO
 import os
@@ -265,6 +268,15 @@ def register_view(request):
             user.save()
             VerificationRequest.objects.create(user=user)
 
+            # Create an AuditLog entry for registration
+            AuditLog.objects.create(
+                user=user,
+                action='register',
+                details=f"User {user.username} registered at {user.date_joined}."
+            )
+
+            # Optionally, send a confirmation email or other post-registration actions
+
             # Return a JSON response indicating success
             return JsonResponse({
                 'success': True,
@@ -512,6 +524,34 @@ def login_view(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
+
+                    # Create an AuditLog entry for login
+                    AuditLog.objects.create(
+                        user=user,
+                        action='login',
+                        details=f"User {user.username} logged in at {timezone.now()}."
+                    )
+
+                    # Handle session tracking
+                    session_key = request.session.session_key
+                    if not session_key:
+                        request.session.create()
+                        session_key = request.session.session_key
+
+                    try:
+                        session = Session.objects.get(session_key=session_key)
+                        expire_date = session.expire_date
+                    except Session.DoesNotExist:
+                        expire_date = timezone.now() + timezone.timedelta(days=1)  # Default expiration
+
+                    # Create a UserSession entry
+                    UserSession.objects.create(
+                        user=user,
+                        session_key=session_key,
+                        created_at=timezone.now(),
+                        expire_date=expire_date
+                    )
+
                     return JsonResponse({'success': True, 'redirect_url': '/'})
                 else:
                     # User account is inactive (pending verification)
@@ -1359,6 +1399,25 @@ def submit_feedback(request):
 @login_required
 def logout_view(request):
     if request.method == 'POST':
+        user = request.user
+        session_key = request.session.session_key
+
+        # Create an AuditLog entry for logout
+        AuditLog.objects.create(
+            user=user,
+            action='logout',
+            details=f"User {user.username} logged out at {timezone.now()}."
+        )
+
+        # Update the UserSession entry with session_end
+        try:
+            user_session = UserSession.objects.get(user=user, session_key=session_key, session_end__isnull=True)
+            user_session.session_end = timezone.now()
+            user_session.save()
+        except UserSession.DoesNotExist:
+            # Handle cases where the session is not found or already ended
+            pass
+
         logout(request)
         return JsonResponse({'success': True, 'message': 'Logout successful!', 'redirect_url': '/'})
-    return redirect('home')
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
