@@ -3,6 +3,7 @@
 from django.apps import AppConfig
 
 class ItrcToolsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
     name = 'itrc_tools'
-    verbose_name = 'ITRC Tools'
+
+    def ready(self):
+        import itrc_tools.signals  # Import signals to register them

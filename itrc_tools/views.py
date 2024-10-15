@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models.functions import TruncDate
 from django.db.models import Q, Count, Avg, Case, When, Value, DurationField
 from django.views.decorators.http import require_POST
 import tablib
@@ -30,6 +31,7 @@ from .models import (
     FeatureUtilizationLog,
     Feedback
 )
+from django.contrib.auth import get_user_model
 from django.db import models
 from .forms import SystemSettingForm
 from main.models import CustomUser  # Assuming main app contains CustomUser
@@ -393,56 +395,55 @@ def generate_reports(request):
     audit_logs = AuditLog.objects.all().order_by('-timestamp')
 
     # Define the time range (last 30 days)
-    today = timezone.now()
+    today = timezone.now().date()
     thirty_days_ago = today - timedelta(days=30)
 
     # -------------------------
     # 1. User Activity Metrics
     # -------------------------
 
-    # Login Activity Analysis
-    login_activity = (
-        AuditLog.objects.filter(action='login', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
-        .values('timestamp__date')
-        .annotate(count=Count('id'))
-        .order_by('timestamp__date')
-    )
-    login_activity_labels = [
-        entry['timestamp__date'].strftime('%Y-%m-%d') 
-        for entry in login_activity 
-        if entry['timestamp__date'] is not None
-    ]
-    login_activity_counts = [entry['count'] for entry in login_activity if entry['timestamp__date'] is not None]
+    # Generate a list of the last 30 days
+    date_list = [thirty_days_ago + timedelta(days=x) for x in range(0, 31)]
 
-    # User Registration Trends
-    user_registrations = (
-        CustomUser.objects.filter(date_joined__gte=thirty_days_ago)
-        .values('date_joined__date')
-        .annotate(count=Count('id'))
-        .order_by('date_joined__date')
+    # Login Activity: Number of logins per day
+    login_activity_qs = (
+        SessionLog.objects.filter(session_start__date__gte=thirty_days_ago)
+        .annotate(date=TruncDate('session_start'))
+        .values('date')
+        .annotate(logins=Count('id'))
+        .order_by('date')
     )
-    user_registration_labels = [
-        entry['date_joined__date'].strftime('%Y-%m-%d') 
-        for entry in user_registrations 
-        if entry['date_joined__date'] is not None
-    ]
-    user_registration_counts = [entry['count'] for entry in user_registrations if entry['date_joined__date'] is not None]
+    login_activity_dict = {entry['date']: entry['logins'] for entry in login_activity_qs}
 
-    # User Retention Rate (DAU)
-    dau = (
-        AuditLog.objects.filter(action='login', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
-        .values('user', 'timestamp__date')
-        .distinct()
-        .values('timestamp__date')
-        .annotate(active_users=Count('user'))
-        .order_by('timestamp__date')
+    login_activity_labels = [date.strftime('%Y-%m-%d') for date in date_list]
+    login_activity_counts = [login_activity_dict.get(date, 0) for date in date_list]
+
+    # Daily Active Users (DAU): Number of unique users per day
+    dau_qs = (
+        SessionLog.objects.filter(session_start__date__gte=thirty_days_ago)
+        .annotate(date=TruncDate('session_start'))
+        .values('date')
+        .annotate(dau=Count('user', distinct=True))
+        .order_by('date')
     )
-    dau_labels = [
-        entry['timestamp__date'].strftime('%Y-%m-%d') 
-        for entry in dau 
-        if entry['timestamp__date'] is not None
-    ]
-    dau_counts = [entry['active_users'] for entry in dau if entry['timestamp__date'] is not None]
+    dau_dict = {entry['date']: entry['dau'] for entry in dau_qs}
+
+    dau_labels = [date.strftime('%Y-%m-%d') for date in date_list]
+    dau_counts = [dau_dict.get(date, 0) for date in date_list]
+
+    # User Registrations: Number of new users per day
+    CustomUser = get_user_model()
+    user_reg_qs = (
+        CustomUser.objects.filter(date_joined__date__gte=thirty_days_ago)
+        .annotate(date=TruncDate('date_joined'))
+        .values('date')
+        .annotate(registrations=Count('id'))
+        .order_by('date')
+    )
+    user_reg_dict = {entry['date']: entry['registrations'] for entry in user_reg_qs}
+
+    user_registration_labels = [date.strftime('%Y-%m-%d') for date in date_list]
+    user_registration_counts = [user_reg_dict.get(date, 0) for date in date_list]
 
     # Average Session Duration per User
     average_session_duration = (
@@ -455,6 +456,17 @@ def generate_reports(request):
         .aggregate(avg_duration=Avg('duration'))
     )
     avg_session_duration_seconds = average_session_duration['avg_duration'].total_seconds() if average_session_duration['avg_duration'] else 0
+
+# Check if data exists
+    if not login_activity_counts:
+        messages.warning(request, "No login activity data available for the last 30 days.")
+
+    if not dau_counts:
+        messages.warning(request, "No Daily Active Users data available for the last 30 days.")
+
+    if not user_registration_counts:
+        messages.warning(request, "No user registration data available for the last 30 days.")
+
 
     # -----------------------------
     # 2. System Performance Metrics

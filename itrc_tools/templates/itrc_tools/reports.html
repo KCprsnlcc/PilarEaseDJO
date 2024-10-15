@@ -98,152 +98,174 @@
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Login Activity Chart
-  var loginActivityCtx = document.getElementById('loginActivityChart').getContext('2d');
-  var loginActivityChart = new Chart(loginActivityCtx, {
-    type: 'line',
-    data: {
-      labels: {{ login_activity_labels|safe }},
-      datasets: [{
-        label: 'Number of Logins',
-        data: {{ login_activity_counts|safe }},
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: false,
-          text: 'Login Activity'
-        },
-        legend: {
-          display: true,
-          position: 'top',
-        }
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: 'Date'
-          },
-          ticks: {
-            maxRotation: 90,
-            minRotation: 45
-          }
-        },
-        y: {
-          title: {
-            display: true,
-            text: 'Number of Logins'
-          },
-          beginAtZero: true
-        }
-      }
-    }
-  });
+  // Ensure that the data is available
+  const loginActivityLabels = {{ login_activity_labels|safe }};
+  const loginActivityCounts = {{ login_activity_counts|safe }};
 
-  // Daily Active Users (DAU) Chart
-  var dauCtx = document.getElementById('dauChart').getContext('2d');
-  var dauChart = new Chart(dauCtx, {
-    type: 'line',
-    data: {
-      labels: {{ dau_labels|safe }},
-      datasets: [{
-        label: 'Daily Active Users',
-        data: {{ dau_counts|safe }},
-        backgroundColor: 'rgba(255, 205, 86, 0.2)',
-        borderColor: 'rgba(255, 205, 86, 1)',
-        borderWidth: 1,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: false,
-          text: 'Daily Active Users'
-        },
-        legend: {
-          display: true,
-          position: 'top',
-        }
+  if (loginActivityCounts.some(count => count > 0)) {
+    // Initialize Login Activity Chart
+    var loginActivityCtx = document.getElementById('loginActivityChart').getContext('2d');
+    var loginActivityChart = new Chart(loginActivityCtx, {
+      type: 'line',
+      data: {
+        labels: loginActivityLabels,
+        datasets: [{
+          label: 'Number of Logins',
+          data: loginActivityCounts,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1,
+          fill: true,
+        }]
       },
-      scales: {
-        x: {
+      options: {
+        responsive: true,
+        plugins: {
           title: {
-            display: true,
-            text: 'Date'
+            display: false,
+            text: 'Login Activity'
           },
-          ticks: {
-            maxRotation: 90,
-            minRotation: 45
+          legend: {
+            display: true,
+            position: 'top',
           }
         },
-        y: {
-          title: {
-            display: true,
-            text: 'Number of Active Users'
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            },
+            ticks: {
+              maxRotation: 90,
+              minRotation: 45
+            }
           },
-          beginAtZero: true
+          y: {
+            title: {
+              display: true,
+              text: 'Number of Logins'
+            },
+            beginAtZero: true
+          }
         }
       }
-    }
-  });
+    });
+  } else {
+    // Handle no data scenario
+    document.getElementById('loginActivityChart').parentElement.innerHTML += '<p>No login activity data available.</p>';
+  }
 
-  // User Registration Chart
-  var userRegistrationCtx = document.getElementById('userRegistrationChart').getContext('2d');
-  var userRegistrationChart = new Chart(userRegistrationCtx, {
-    type: 'line',
-    data: {
-      labels: {{ user_registration_labels|safe }},
-      datasets: [{
-        label: 'New Users',
-        data: {{ user_registration_counts|safe }},
-        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: false,
-          text: 'User Registrations'
-        },
-        legend: {
-          display: true,
-          position: 'top',
-        }
+  // Repeat similar checks and chart initializations for DAU and User Registrations
+  const dauLabels = {{ dau_labels|safe }};
+  const dauCounts = {{ dau_counts|safe }};
+
+  if (dauCounts.some(count => count > 0)) {
+    var dauCtx = document.getElementById('dauChart').getContext('2d');
+    var dauChart = new Chart(dauCtx, {
+      type: 'line',
+      data: {
+        labels: dauLabels,
+        datasets: [{
+          label: 'Daily Active Users',
+          data: dauCounts,
+          backgroundColor: 'rgba(255, 205, 86, 0.2)',
+          borderColor: 'rgba(255, 205, 86, 1)',
+          borderWidth: 1,
+          fill: true,
+        }]
       },
-      scales: {
-        x: {
+      options: {
+        responsive: true,
+        plugins: {
           title: {
-            display: true,
-            text: 'Date'
+            display: false,
+            text: 'Daily Active Users'
           },
-          ticks: {
-            maxRotation: 90,
-            minRotation: 45
+          legend: {
+            display: true,
+            position: 'top',
           }
         },
-        y: {
-          title: {
-            display: true,
-            text: 'Number of New Users'
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            },
+            ticks: {
+              maxRotation: 90,
+              minRotation: 45
+            }
           },
-          beginAtZero: true
+          y: {
+            title: {
+              display: true,
+              text: 'Number of Active Users'
+            },
+            beginAtZero: true
+          }
         }
       }
-    }
-  });
+    });
+  } else {
+    document.getElementById('dauChart').parentElement.innerHTML += '<p>No DAU data available.</p>';
+  }
+
+  const userRegistrationLabels = {{ user_registration_labels|safe }};
+  const userRegistrationCounts = {{ user_registration_counts|safe }};
+
+  if (userRegistrationCounts.some(count => count > 0)) {
+    var userRegistrationCtx = document.getElementById('userRegistrationChart').getContext('2d');
+    var userRegistrationChart = new Chart(userRegistrationCtx, {
+      type: 'line',
+      data: {
+        labels: userRegistrationLabels,
+        datasets: [{
+          label: 'New Users',
+          data: userRegistrationCounts,
+          backgroundColor: 'rgba(153, 102, 255, 0.2)',
+          borderColor: 'rgba(153, 102, 255, 1)',
+          borderWidth: 1,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: false,
+            text: 'User Registrations'
+          },
+          legend: {
+            display: true,
+            position: 'top',
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            },
+            ticks: {
+              maxRotation: 90,
+              minRotation: 45
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Number of New Users'
+            },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  } else {
+    document.getElementById('userRegistrationChart').parentElement.innerHTML += '<p>No user registration data available.</p>';
+  }
 
   // User Role Distribution Chart
   var userRoleCtx = document.getElementById('userRoleChart').getContext('2d');

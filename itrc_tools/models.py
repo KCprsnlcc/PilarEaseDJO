@@ -4,6 +4,8 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from main.models import CustomUser, Feedback
+from django.utils import timezone
+
 class VerificationRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -139,9 +141,21 @@ CustomUser = get_user_model()
 # itrc_tools/models.py
 
 class SessionLog(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='session_logs')
-    session_start = models.DateTimeField()
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='session_logs'
+    )
+    session_start = models.DateTimeField(default=timezone.now)
     session_end = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Session for {self.user.username} from {self.session_start} to {self.session_end}"
+        return f"Session for {self.user.username} started at {self.session_start}"
+
+class SessionLogMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
