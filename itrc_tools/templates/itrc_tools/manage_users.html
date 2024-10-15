@@ -1,5 +1,5 @@
-{% extends "itrc_tools/base_itrc.html" %} {% block page_title %} Manage Users
-{%endblock %} {% block itrc_content %}
+{% extends "itrc_tools/base_itrc.html" %} {% load static %} {%block page_title%}
+Manage Users {% endblock %} {% block itrc_content %}
 <div
   class="pilarease-itrc-manage-users-container animate__animated animate__fadeIn"
 >
@@ -8,6 +8,7 @@
     View, edit, and manage user accounts within the system.
   </p>
 
+  <!-- Search Form -->
   <form method="get" class="pilarease-itrc-search-form">
     <input
       type="text"
@@ -21,165 +22,206 @@
     </button>
   </form>
 
-  <table class="pilarease-itrc-table">
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>Student ID</th>
-        <th>Username</th>
-        <th>Full Name</th>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.student_id }}</td>
-        <td>{{ user.username }}</td>
-        <td>{{ user.full_name }}</td>
-        <td>{{ user.email }}</td>
-        <td>
-          {% if user.is_itrc_staff %} ITRC Staff {% elif user.is_counselor %}
-          Counselor {% else %} User {% endif %}
-        </td>
-        <td>
-          {% if user.is_verified %}
-          <span class="pilarease-itrc-status-label verified">Verified</span>
-          {% else %}
-          <span class="pilarease-itrc-status-label pending">Pending</span>
-          {% endif %}
-        </td>
-        <td>
-          <!-- Action buttons (Edit, Activate, Deactivate, Delete) -->
-          <button
-            class="pilarease-itrc-action-button edit-button"
-            data-user-id="{{ user.id }}"
-            title="Edit User"
-          >
-            <i class="bx bxs-edit"></i>
-          </button>
+  <!-- Bulk Actions Form -->
+  <form
+    id="bulk-action-form"
+    method="post"
+    action="{% url 'manage_users_bulk_action' %}"
+  >
+    {% csrf_token %}
 
-          <select
-            class="pilarease-itrc-role-dropdown"
-            data-user-id="{{ user.id }}"
-          >
-            <option
-              value="user"
-              {%
-              if
-              not
-              user.is_itrc_staff
-              and
-              not
-              user.is_counselor
-              %}selected{%
-              endif
-              %}
-            >
-              User
-            </option>
-            <option
-              value="counselor"
-              {%
-              if
-              user.is_counselor
-              %}selected{%
-              endif
-              %}
-            >
-              Counselor
-            </option>
-            <option
-              value="itrc_staff"
-              {%
-              if
-              user.is_itrc_staff
-              %}selected{%
-              endif
-              %}
-            >
-              ITRC Staff
-            </option>
-          </select>
+    <!-- Bulk Action Dropdown and Apply Button -->
+    <div class="pilarease-itrc-bulk-actions">
+      <select
+        name="bulk_action"
+        id="bulk-action-select"
+        class="pilarease-itrc-role-dropdown"
+      >
+        <option value="">Select Action</option>
+        <option value="verify">Verify Selected</option>
+        <option value="activate">Activate Selected</option>
+        <option value="deactivate">Deactivate Selected</option>
+        <option value="delete">Delete Selected</option>
+        <!-- Add more actions as needed -->
+      </select>
+      <button type="submit" class="pilarease-itrc-action-button save-button">
+        Apply
+      </button>
+    </div>
 
-          {% if not user.is_verified %}
-          <button
-            class="pilarease-itrc-action-button activate-button"
-            data-user-id="{{ user.id }}"
-            title="Activate User"
-          >
-            <i class="bx bxs-check-circle"></i>
-          </button>
-          {% else %}
-          <button
-            class="pilarease-itrc-action-button deactivate-button"
-            data-user-id="{{ user.id }}"
-            title="Deactivate User"
-          >
-            <i class="bx bxs-x-circle"></i>
-          </button>
-          {% endif %}
+    <!-- User Table with Checkboxes -->
+    <table class="pilarease-itrc-table">
+      <thead>
+        <tr>
+          <th>
+            <input
+              type="checkbox"
+              id="select-all"
+              class="pilarease-itrc-select-all"
+            />
+          </th>
+          <th>User ID</th>
+          <th>Student ID</th>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>
+            <input
+              type="checkbox"
+              name="selected_users"
+              value="{{ user.id }}"
+              class="pilarease-itrc-user-checkbox"
+            />
+          </td>
+          <td>{{ user.id }}</td>
+          <td>{{ user.student_id }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.full_name }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            {% if user.is_itrc_staff %} ITRC Staff {% elif user.is_counselor %}
+            Counselor {% else %} User {% endif %}
+          </td>
+          <td>
+            {% if user.is_verified %}
+            <span class="pilarease-itrc-status-label verified">Verified</span>
+            {% else %}
+            <span class="pilarease-itrc-status-label pending">Pending</span>
+            {% endif %}
+          </td>
+          <td>
+            <!-- Action buttons (Edit, Activate, Deactivate, Delete) -->
+            <button
+              type="button"
+              class="pilarease-itrc-action-button edit-button"
+              data-user-id="{{ user.id }}"
+              title="Edit User"
+            >
+              <i class="bx bxs-edit"></i>
+            </button>
 
-          <button
-            class="pilarease-itrc-action-button delete-button"
-            data-user-id="{{ user.id }}"
-            title="Delete User"
-          >
-            <i class="bx bxs-trash"></i>
-          </button>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="8" class="pilarease-itrc-no-data">No users found.</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            <select
+              class="pilarease-itrc-role-dropdown"
+              data-user-id="{{ user.id }}"
+            >
+              <option
+                value="user"
+                {%
+                if
+                not
+                user.is_itrc_staff
+                and
+                not
+                user.is_counselor
+                %}selected{%
+                endif
+                %}
+              >
+                User
+              </option>
+              <option
+                value="counselor"
+                {%
+                if
+                user.is_counselor
+                %}selected{%
+                endif
+                %}
+              >
+                Counselor
+              </option>
+              <option
+                value="itrc_staff"
+                {%
+                if
+                user.is_itrc_staff
+                %}selected{%
+                endif
+                %}
+              >
+                ITRC Staff
+              </option>
+            </select>
+
+            {% if not user.is_verified %}
+            <button
+              type="button"
+              class="pilarease-itrc-action-button activate-button"
+              data-user-id="{{ user.id }}"
+              title="Activate User"
+            >
+              <i class="bx bxs-check-circle"></i>
+            </button>
+            {% else %}
+            <button
+              type="button"
+              class="pilarease-itrc-action-button deactivate-button"
+              data-user-id="{{ user.id }}"
+              title="Deactivate User"
+            >
+              <i class="bx bxs-x-circle"></i>
+            </button>
+            {% endif %}
+
+            <button
+              type="button"
+              class="pilarease-itrc-action-button delete-button"
+              data-user-id="{{ user.id }}"
+              title="Delete User"
+            >
+              <i class="bx bxs-trash"></i>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="pilarease-itrc-no-data">No users found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
 
   <!-- Pagination -->
   <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
-    <ul class="pagination justify-content-center">
-      <!-- Previous Page Link -->
-      {% if logs.has_previous %}
+    <ul class="pagination">
+      {% if users.has_previous %}
       <li class="page-item">
         <a
           class="page-link"
-          href="?page={{ logs.previous_page_number }}&search={{ search_query }}"
+          href="?page={{ users.previous_page_number }}&search={{ search_query }}"
+          >&laquo;</a
         >
-          &laquo;
-        </a>
       </li>
       {% else %}
       <li class="page-item disabled">
         <span class="page-link">&laquo;</span>
       </li>
-      {% endif %}
-
-      <!-- Page Number Links -->
-      {% for num in logs_page_range %} {% if num == logs.number %}
-      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% endif %} {% for num in users_page_range %} {% if num == users.number %}
+      <li class="page-item active">
+        <span class="page-link">{{ num }}</span>
+      </li>
       {% else %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ num }}&search={{ search_query }}">
-          {{ num }}
-        </a>
+        <a class="page-link" href="?page={{ num }}&search={{ search_query }}"
+          >{{ num }}</a
+        >
       </li>
-      {% endif %} {% endfor %}
-
-      <!-- Next Page Link -->
-      {% if logs.has_next %}
+      {% endif %} {% endfor %} {% if users.has_next %}
       <li class="page-item">
         <a
           class="page-link"
-          href="?page={{ logs.next_page_number }}&search={{ search_query }}"
+          href="?page={{ users.next_page_number }}&search={{ search_query }}"
+          >&raquo;</a
         >
-          &raquo;
-        </a>
       </li>
       {% else %}
       <li class="page-item disabled">
@@ -189,4 +231,145 @@
     </ul>
   </nav>
 </div>
+
+<!-- Confirmation Modal for Bulk Actions -->
+<div
+  class="pilarease-itrc-modal-overlay"
+  id="bulkActionModalOverlay"
+  style="display: none"
+>
+  <div class="pilarease-itrc-modal">
+    <div class="pilarease-itrc-modal-header">
+      <h2>Confirm Bulk Action</h2>
+      <span class="pilarease-itrc-close-modal" id="closeBulkActionModal"
+        >&times;</span
+      >
+    </div>
+    <div class="pilarease-itrc-modal-body">
+      <p>Are you sure you want to perform this action on the selected users?</p>
+    </div>
+    <div class="pilarease-itrc-modal-footer">
+      <button
+        type="button"
+        class="pilarease-itrc-action-button reject-button"
+        id="cancelBulkAction"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="pilarease-itrc-action-button approve-button"
+        id="confirmBulkAction"
+      >
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  // JavaScript for Bulk Actions and Toastr Notifications
+  document.addEventListener("DOMContentLoaded", function () {
+    // Select/Deselect All Checkboxes
+    const selectAllCheckbox = document.getElementById("select-all");
+    const userCheckboxes = document.querySelectorAll(
+      ".pilarease-itrc-user-checkbox"
+    );
+
+    selectAllCheckbox.addEventListener("change", function () {
+      userCheckboxes.forEach((cb) => (cb.checked = this.checked));
+    });
+
+    // Handle Bulk Action Form Submission
+    const bulkActionForm = document.getElementById("bulk-action-form");
+    const bulkActionSelect = document.getElementById("bulk-action-select");
+    const bulkActionModalOverlay = document.getElementById(
+      "bulkActionModalOverlay"
+    );
+    const closeBulkActionModal = document.getElementById(
+      "closeBulkActionModal"
+    );
+    const cancelBulkAction = document.getElementById("cancelBulkAction");
+    const confirmBulkAction = document.getElementById("confirmBulkAction");
+
+    bulkActionForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const selectedAction = bulkActionSelect.value;
+      const selectedUsers = Array.from(
+        document.querySelectorAll(".pilarease-itrc-user-checkbox:checked")
+      ).map((cb) => cb.value);
+
+      if (!selectedAction) {
+        toastr.error("Please select a bulk action to perform.");
+        return;
+      }
+
+      if (selectedUsers.length === 0) {
+        toastr.error("Please select at least one user to perform this action.");
+        return;
+      }
+
+      // Show the confirmation modal
+      bulkActionModalOverlay.style.display = "flex";
+    });
+
+    // Confirm Bulk Action
+    confirmBulkAction.onclick = function () {
+      const selectedAction = bulkActionSelect.value;
+      const selectedUsers = Array.from(
+        document.querySelectorAll(".pilarease-itrc-user-checkbox:checked")
+      ).map((cb) => cb.value);
+
+      // Create a hidden form dynamically to submit the selected action and users
+      const form = document.createElement("form");
+      form.method = "post";
+      form.action = "{% url 'manage_users_bulk_action' %}";
+
+      // CSRF Token
+      const csrfToken = document.querySelector(
+        'input[name="csrfmiddlewaretoken"]'
+      ).value;
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfmiddlewaretoken";
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      // Bulk Action
+      const actionInput = document.createElement("input");
+      actionInput.type = "hidden";
+      actionInput.name = "bulk_action";
+      actionInput.value = selectedAction;
+      form.appendChild(actionInput);
+
+      // Selected Users
+      selectedUsers.forEach((userId) => {
+        const userInput = document.createElement("input");
+        userInput.type = "hidden";
+        userInput.name = "selected_users";
+        userInput.value = userId;
+        form.appendChild(userInput);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    };
+
+    // Close Modal on Cancel or Close Button
+    closeBulkActionModal.onclick = function () {
+      bulkActionModalOverlay.style.display = "none";
+    };
+
+    cancelBulkAction.onclick = function () {
+      bulkActionModalOverlay.style.display = "none";
+    };
+
+    // Close Modal when clicking outside the modal content
+    window.onclick = function (event) {
+      if (event.target == bulkActionModalOverlay) {
+        bulkActionModalOverlay.style.display = "none";
+      }
+    };
+  });
+</script>
 {% endblock %}

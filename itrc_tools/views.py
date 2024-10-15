@@ -242,14 +242,16 @@ def upload_masterlist(request):
             'masterlist_page_obj': masterlist_page_obj,
         }
         return render(request, 'itrc_tools/upload_masterlist.html', context)
+
 @user_passes_test(is_itrc_staff)
 @login_required
 def manage_users(request):
     """
     Display and manage user accounts, including ITRC staff, counselors, and regular users.
+    Handles GET requests for displaying users.
     """
     search_query = request.GET.get('search', '').strip()
-    
+
     # Search functionality
     if search_query:
         users = CustomUser.objects.filter(
@@ -271,14 +273,15 @@ def manage_users(request):
     page_obj = paginator.get_page(page_number)
 
     # Generate the page range for pagination (similar to logs_page_range)
-    users_page_range = paginator.get_elided_page_range(page_number, on_each_side=2, on_ends=1)
+    users_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
 
     context = {
         'users': page_obj,
         'search_query': search_query,
-        'users_page_range': users_page_range,  # Add this to use in pagination
+        'users_page_range': users_page_range,
     }
     return render(request, 'itrc_tools/manage_users.html', context)
+
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
@@ -396,6 +399,7 @@ def system_settings(request):
         'form': form,
     }
     return render(request, 'itrc_tools/system_settings.html', context)
+
 @user_passes_test(is_itrc_staff)
 @login_required
 def generate_reports(request):
@@ -755,6 +759,7 @@ def generate_reports(request):
     }
 
     return render(request, 'itrc_tools/reports.html', context)
+
 @user_passes_test(is_itrc_staff)
 @login_required
 def audit_logs_view(request):
@@ -783,3 +788,81 @@ def audit_logs_view(request):
         'logs_page_range': paginator.get_elided_page_range(logs_page_obj.number, on_each_side=2, on_ends=1)
     }
     return render(request, 'itrc_tools/auditlog.html', context)
+
+# New View for Bulk Actions
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def manage_users_bulk_action(request):
+    """
+    Handle bulk actions for managing users.
+    """
+    bulk_action = request.POST.get('bulk_action')
+    selected_users = request.POST.getlist('selected_users')
+
+    if not bulk_action:
+        messages.error(request, 'No bulk action selected.')
+        return redirect('manage_users')
+
+    if not selected_users:
+        messages.error(request, 'No users selected for the bulk action.')
+        return redirect('manage_users')
+
+    # Convert selected_users to integers
+    try:
+        selected_users = list(map(int, selected_users))
+    except ValueError:
+        messages.error(request, 'Invalid user selection.')
+        return redirect('manage_users')
+
+    # Fetch users excluding ITRC staff and counselors
+    users_qs = CustomUser.objects.filter(id__in=selected_users).exclude(Q(is_itrc_staff=True) | Q(is_counselor=True))
+
+    if bulk_action == 'verify':
+        updated_count = users_qs.update(is_verified=True, verification_status='verified')
+        AuditLog.objects.create(
+            user=request.user,
+            action='bulk_verify',
+            details=f"Bulk verified {updated_count} users."
+        )
+        messages.success(request, f'Successfully verified {updated_count} users.')
+
+    elif bulk_action == 'activate':
+        updated_count = users_qs.update(is_active=True, is_verified=True, verification_status='verified')
+        AuditLog.objects.create(
+            user=request.user,
+            action='bulk_activate',
+            details=f"Bulk activated and verified {updated_count} users."
+        )
+        messages.success(request, f'Successfully activated and verified {updated_count} users.')
+
+    elif bulk_action == 'deactivate':
+        updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='rejected')
+        AuditLog.objects.create(
+            user=request.user,
+            action='bulk_deactivate',
+            details=f"Bulk deactivated and rejected {updated_count} users."
+        )
+        messages.success(request, f'Successfully deactivated and rejected {updated_count} users.')
+
+    elif bulk_action == 'delete':
+        # Prevent deletion of ITRC staff and counselors
+        non_deletable_users = CustomUser.objects.filter(
+            Q(id__in=selected_users) & (Q(is_itrc_staff=True) | Q(is_counselor=True))
+        )
+        if non_deletable_users.exists():
+            messages.error(request, 'Cannot delete ITRC staff or counselors.')
+            return redirect('manage_users')
+
+        deleted_count, _ = users_qs.delete()
+        AuditLog.objects.create(
+            user=request.user,
+            action='bulk_delete',
+            details=f"Bulk deleted {deleted_count} users."
+        )
+        messages.success(request, f'Successfully deleted {deleted_count} users.')
+
+    else:
+        messages.error(request, 'Invalid bulk action selected.')
+
+    return redirect('manage_users')

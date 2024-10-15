@@ -689,3 +689,60 @@ body {
   padding: 20px;
   background-color: var(--background-color);
 }
+/* itrc_tools/static/css/itrc.css */
+
+/* Modal Overlay */
+.pilarease-itrc-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Modal Content */
+.pilarease-itrc-modal {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+
+/* Modal Header */
+.pilarease-itrc-modal-header {
+  padding: 15px 20px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Close Button */
+.pilarease-itrc-close-modal {
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+/* Modal Body */
+.pilarease-itrc-modal-body {
+  padding: 20px;
+  font-size: 1em;
+  color: var(--text-color);
+}
+
+/* Modal Footer */
+.pilarease-itrc-modal-footer {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e0e0e0;
+}
