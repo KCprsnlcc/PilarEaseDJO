@@ -230,8 +230,19 @@ def upload_masterlist(request):
             messages.error(request, f'An error occurred while processing the file: {e}')
             return redirect('upload_masterlist')
     else:
-        # Fetch data from EnrollmentMasterlist and paginate it
-        masterlist_data = EnrollmentMasterlist.objects.all().order_by('student_id')
+        search_query = request.GET.get('search', '').strip()
+
+        # Fetch and filter data from EnrollmentMasterlist
+        if search_query:
+            masterlist_data = EnrollmentMasterlist.objects.filter(
+                Q(student_id__icontains=search_query) |
+                Q(full_name__icontains=search_query) |
+                Q(academic_year_level__icontains=search_query)
+            ).order_by('student_id')
+        else:
+            masterlist_data = EnrollmentMasterlist.objects.all().order_by('student_id')
+
+        # Paginate the results
         paginator = Paginator(masterlist_data, 10)  # Show 10 records per page
         page_number = request.GET.get('page')
         masterlist_page_obj = paginator.get_page(page_number)
@@ -240,6 +251,7 @@ def upload_masterlist(request):
             'masterlist_data': masterlist_page_obj,
             'masterlist_page_range': paginator.get_elided_page_range(masterlist_page_obj.number, on_each_side=2, on_ends=1),
             'masterlist_page_obj': masterlist_page_obj,
+            'search_query': search_query,  # Pass search query back to the template
         }
         return render(request, 'itrc_tools/upload_masterlist.html', context)
 
