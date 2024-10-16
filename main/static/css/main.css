@@ -1419,6 +1419,52 @@ button[type="submit"]:hover {
 .user-message {
   margin-right: 10px;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.error-message {
+  background-color: #ffcccc;
+  color: #cc0000;
+  padding: 10px;
+  border-radius: 10px;
+  display: inline-block;
+  max-width: 70%;
+  text-align: left;
+  margin: 10px;
+  clear: both;
+  animation: poptotheleft 0.5s ease-out;
+}
+
+#scrollToLatestButton {
+  position: absolute;
+  bottom: 90px;
+  right: 145px;
+  background-color: #0e2326;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: popUp 0.3s ease-out;
+}
+
+#scrollToLatestButton i {
+  font-size: 24px;
+}
 
 #contactCSSOverlay {
   position: fixed;

@@ -147,21 +147,33 @@ class Feedback(models.Model):
         normalized_score = blob.sentiment.polarity * 100
         self.sentiment_score = int(round(normalized_score))
         super().save(*args, **kwargs)
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class ChatMessage(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        null=True,  # Allow null for older messages where user was not recorded
+        blank=True  # Allow blank fields if user is not specified
     )
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_bot_message = models.BooleanField(default=False)
+    message_type = models.CharField(max_length=50, blank=True, null=True)
+    question_index = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return f"{'Bot' if self.is_bot_message else self.user.username}: {self.message}"
+        sender = "Bot" if self.is_bot_message else self.user.username
+        return f"{sender}: {self.message[:50]}"
 
+class QuestionnaireProgress(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    last_question_index = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.username}'s Progress - Last Question Index: {self.last_question_index}"
 class NLTKResource(models.Model):
     name = models.CharField(
         default='No nltk downloaded',

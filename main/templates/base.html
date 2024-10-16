@@ -945,20 +945,28 @@
 
     {% if user.is_authenticated %}
     <!-- Floating Chat -->
-    <button class="floating-button" id="floatingButton">
-      <i class="bx bxs-message"></i>
-    </button>
+<button class="floating-button" id="floatingButton" aria-label="Open chat">
+  <i class="bx bxs-message" aria-hidden="true"></i>
+</button>
 
-    <div class="chat-popup" id="chatPopup">
-      <header>Piracle</header>
-      <div class="chat-body" id="chatBody">
-        <!-- Chat messages will appear here -->
-      </div>
-      <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="Enter a message..." />
-        <button onclick="sendMessage()"><i class="bx bxs-send"></i></button>
-      </div>
-    </div>
+<div class="chat-popup" id="chatPopup" role="dialog" aria-modal="true" aria-label="Chat window">
+  <header>Piracle</header>
+  <div class="chat-body" id="chatBody" tabindex="0">
+    <!-- Chat messages will appear here -->
+  </div>
+  <div class="chat-input">
+    <label for="chatInput" class="sr-only">Type your message</label>
+    <input
+      type="text"
+      id="chatInput"
+      placeholder="Enter a message..."
+      aria-label="Chat input"
+    />
+    <button onclick="sendMessage()" aria-label="Send message">
+      <i class="bx bxs-send" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>
     {% else %} {% endif %}
 
     <!-- Avatar Modal -->

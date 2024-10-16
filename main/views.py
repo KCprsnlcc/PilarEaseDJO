@@ -22,7 +22,7 @@ from itrc_tools.models import AuditLog
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -80,6 +80,286 @@ def about_view(request):
     return render(request, 'about.html', {'feedbacks': approved_feedbacks})
 # Check if username already exists
 
+# Predefined questions and answers
+QUESTIONS = [
+    "What aspects of your academic life cause you the most stress?",
+    "How would you describe your overall emotional state in the past month?",
+    "How comfortable do you feel talking to friends or family about your mental health?",
+    "How frequently do you experience feelings of anxiety or worry related to school?",
+    "How many hours of sleep do you usually get on a school night?",
+    "How confident do you feel in your academic abilities?",
+    "How do you usually feel about changes in your academic or personal life?",
+    "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+    "How motivated do you feel to complete your academic tasks?",
+    "Are you aware of the mental health resources available at your school?",
+]
+
+ANSWERS = [
+    [
+      "Managing multiple assignments and deadlines.",
+      "Understanding difficult subjects or topics.",
+      "Balancing academics with extracurricular activities.",
+    ],
+    [
+      "Generally positive, with only occasional low moods.",
+      "Mixed, with frequent ups and downs.",
+      "Often stressed or anxious.",
+    ],
+    [
+      "Very comfortable, I often share how I’m feeling.",
+      "Somewhat comfortable, I share occasionally.",
+      "Not comfortable, I usually keep things to myself.",
+    ],
+    [
+      "Almost daily, it’s a constant presence.",
+      "Occasionally, but only around stressful times like exams.",
+      "Rarely, I don’t get anxious easily.",
+    ],
+    [
+      "Less than 6 hours, I often stay up late.",
+      "Between 6 and 8 hours, it varies.",
+      "More than 8 hours, I prioritize my sleep.",
+    ],
+    [
+      "Very confident, I believe in my abilities.",
+      "Somewhat confident, but I have doubts sometimes.",
+      "Not very confident, I often worry about my performance.",
+    ],
+    [
+      "Excited and ready to adapt.",
+      "Nervous but willing to adjust.",
+      "Stressed and resistant to change.",
+    ],
+    [
+      "I create a schedule and stick to it as much as possible.",
+      "I try to balance things, but it’s a challenge.",
+      "I often struggle to manage my time effectively.",
+    ],
+    [
+      "Highly motivated, I’m eager to succeed.",
+      "Moderately motivated, but it depends on the task.",
+      "Often unmotivated, I struggle to find the drive.",
+    ],
+    [
+      "Yes, I know where to find help if I need it.",
+      "Somewhat, I’ve heard of some resources but haven’t explored them.",
+      "No, I’m not aware of the available resources.",
+    ],
+]
+
+RESPONSES = [
+    [
+      "Managing multiple assignments can lead to significant stress, which can impact your mental health. It's important to develop strategies to manage this workload to protect your well-being.",
+      "Struggling with difficult subjects can cause stress and anxiety. Seeking help or using different study methods can reduce these feelings and improve your mental health.",
+      "Balancing academics and extracurriculars can be stressful and may overwhelm your mental health. Finding a healthy balance is key to maintaining your mental well-being.",
+    ],
+    [
+      "It's great to hear that you've been feeling generally positive. Maintaining a positive emotional state is important for good mental health, so keep focusing on what keeps you feeling well.",
+      "Experiencing frequent ups and downs can be challenging for your mental health. It might be helpful to explore techniques to stabilize your emotions and support your well-being.",
+      "Feeling stressed or anxious often can take a toll on your mental health. It's important to address these feelings and find ways to manage them to protect your mental and emotional well-being.",
+    ],
+    [
+      "It’s excellent that you feel comfortable discussing your mental health with others. Having a support system is crucial for maintaining good mental health.",
+      "It’s good that you share your feelings sometimes. Being open about your mental health can provide relief and support, which are important for emotional well-being.",
+      "Keeping your feelings to yourself can lead to increased stress and affect your mental health. Consider finding a trusted person to talk to, as sharing can be very beneficial.",
+    ],
+    [
+      "Experiencing daily anxiety can significantly impact your mental health. It's important to seek ways to reduce this anxiety, as prolonged stress can have serious effects on your well-being.",
+      "Feeling anxious during stressful times like exams is common, but managing this anxiety is key to protecting your mental health during these periods.",
+      "It's great that you rarely experience anxiety. Maintaining this level of calm is beneficial for your mental health, and it’s important to continue practicing whatever keeps you feeling this way.",
+    ],
+    [
+      "Getting less than 6 hours of sleep can negatively affect your mental health, leading to increased stress and reduced emotional resilience. Prioritizing sleep is crucial for your well-being.",
+      "Getting between 6 and 8 hours of sleep is important, but inconsistency can impact your mental health. A regular sleep routine can improve your emotional stability and reduce stress.",
+      "Prioritizing sleep is one of the best things you can do for your mental health. It helps maintain emotional balance and resilience, which are key to handling stress.",
+    ],
+    [
+      "Feeling confident in your abilities is excellent for your mental health. It can reduce anxiety and stress, contributing to a more positive and balanced state of mind.",
+      "Having some doubts is normal, but too much self-doubt can negatively impact your mental health. Building confidence through small successes can help improve your overall well-being.",
+      "Constant worry about your performance can lead to anxiety and stress, affecting your mental health. It's important to address these worries and work on building self-confidence.",
+    ],
+    [
+      "Being excited about change is a positive sign for your mental health. Adaptability and a positive outlook can help you manage stress and maintain emotional well-being.",
+      "It’s normal to feel nervous about change, but being willing to adjust is important for your mental health. Embracing change gradually can help reduce stress and anxiety.",
+      "Resistance to change can cause stress, which may impact your mental health. Finding ways to cope with change is crucial for maintaining emotional stability.",
+    ],
+    [
+      "Having a schedule and sticking to it is excellent for your mental health. It helps reduce stress and ensures you have time for relaxation, which is crucial for emotional well-being.",
+      "Balancing your responsibilities can be challenging and impact your mental health. Developing better time management skills can reduce stress and improve your overall well-being.",
+      "Struggling with time management can lead to stress and affect your mental health. Working on these skills can help you feel more in control and reduce anxiety.",
+    ],
+    [
+      "High motivation is a great indicator of good mental health. Staying motivated helps you manage stress and keep a positive outlook.",
+      "It's normal for motivation to vary, but staying engaged in your tasks can support your mental health by providing a sense of accomplishment.",
+      "Struggling with motivation can be a sign of mental fatigue or stress. It’s important to address these feelings to prevent them from negatively impacting your mental health.",
+    ],
+    [
+      "It’s great that you’re aware of the mental health resources available. Knowing where to get help is crucial for maintaining your mental well-being.",
+      "It’s good that you’re somewhat aware, but exploring these resources further can ensure you have the support you need when challenges arise.",
+      "It’s important to be informed about mental health resources, as they can provide crucial support when needed. Taking the time to learn about them can make a big difference.",
+    ],
+]
+
+@login_required
+def get_chat_history(request):
+    # Only retrieve the last 20 messages
+    chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')[:20]
+    chat_messages = reversed(chat_messages)  # Reverse to maintain chronological order
+    chat_history = []
+    awaiting_answer = False
+    current_question_index = None
+
+    for message in chat_messages:
+        if message.message_type in ['greeting', 'bot_message', 'user_message']:
+            chat_history.append({
+                'message': message.message,
+                'sender': 'bot' if message.is_bot_message else 'user',
+            })
+        if message.message_type == 'question':
+            chat_history.append({
+                'message': message.message,
+                'sender': 'bot',
+            })
+            awaiting_answer = True
+            current_question_index = message.question_index
+
+    return JsonResponse({
+        'chat_history': chat_history,
+        'awaiting_answer': awaiting_answer,
+        'current_question_index': current_question_index
+    })
+@login_required
+def start_chat(request):
+    # Clear previous chat history if needed
+    ChatMessage.objects.filter(user=request.user).delete()
+    # Initialize chat session
+    greeting = "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
+    options = ["Start", "Not Yet"]
+
+    # Save bot message
+    ChatMessage.objects.create(
+        user=request.user,
+        message=greeting,
+        is_bot_message=True,
+        message_type='greeting'
+    )
+
+    return JsonResponse({'success': True, 'message': greeting, 'options': options})
+
+@login_required
+@csrf_exempt
+def chat_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_message = data.get('message')
+
+        # Save user message
+        ChatMessage.objects.create(
+            user=request.user,
+            message=user_message,
+            is_bot_message=False,
+            message_type='user_message'
+        )
+
+        if user_message.lower() == 'start':
+            # Start questionnaire from question index 0
+            return JsonResponse({'success': True, 'question_index': 0})
+        elif user_message.lower() == 'not yet':
+            bot_message = "No worries, take your time."
+            # Save bot message
+            ChatMessage.objects.create(
+                user=request.user,
+                message=bot_message,
+                is_bot_message=True,
+                message_type='bot_message'
+            )
+            return JsonResponse({'success': True, 'message': bot_message})
+        else:
+            # Handle other messages or commands
+            bot_message = "I'm here to help whenever you're ready."
+            # Save bot message
+            ChatMessage.objects.create(
+                user=request.user,
+                message=bot_message,
+                is_bot_message=True,
+                message_type='bot_message'
+            )
+            return JsonResponse({'success': True, 'message': bot_message})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+@login_required
+def get_question(request, question_index):
+    try:
+        question_text = QUESTIONS[question_index]
+        # Save bot message
+        ChatMessage.objects.create(
+            user=request.user,
+            message=question_text,
+            is_bot_message=True,
+            message_type='question',
+            question_index=question_index
+        )
+        return JsonResponse({'success': True, 'question': question_text})
+    except IndexError:
+        return JsonResponse({'success': False, 'error': 'Invalid question index.'})
+
+@login_required
+def get_answer_options(request, question_index):
+    try:
+        answer_options = ANSWERS[question_index]
+        return JsonResponse({'success': True, 'answer_options': answer_options})
+    except IndexError:
+        return JsonResponse({'success': False, 'error': 'Invalid question index.'})
+
+@login_required
+@csrf_exempt
+def submit_answer(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        question_index = data.get('question_index')
+        answer_text = data.get('answer_text')
+
+        if question_index is None or answer_text is None:
+            return JsonResponse({'success': False, 'error': 'Missing data.'})
+
+        # Save user's answer
+        ChatMessage.objects.create(
+            user=request.user,
+            message=answer_text,
+            is_bot_message=False,
+            message_type='user_message'
+        )
+
+        # Get bot's response
+        try:
+            answer_idx = ANSWERS[question_index].index(answer_text)
+            response_text = RESPONSES[question_index][answer_idx]
+        except (IndexError, ValueError):
+            response_text = "Thank you for your response."
+
+        # Save bot's response
+        ChatMessage.objects.create(
+            user=request.user,
+            message=response_text,
+            is_bot_message=True,
+            message_type='bot_message'
+        )
+
+        # Save progress
+        progress, created = QuestionnaireProgress.objects.get_or_create(
+            user=request.user
+        )
+        progress.last_question_index = question_index
+        progress.save()
+
+        # Determine next question
+        next_question_index = question_index + 1
+        if next_question_index < len(QUESTIONS):
+            return JsonResponse({'success': True, 'response': response_text, 'next_question_index': next_question_index})
+        else:
+            return JsonResponse({'success': True, 'response': response_text, 'end_of_questions': True})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 @csrf_exempt
 def send_message(request):
     if request.method == 'POST':
