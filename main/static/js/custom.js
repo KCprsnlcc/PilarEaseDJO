@@ -133,7 +133,11 @@ function loadChatHistory(scrollToBottom = true) {
         }
       } else {
         hasMoreHistory = false;
-        startChatSession(); // Start the chat session if no chat history
+      }
+
+      // Check if chat is empty and start session
+      if (data.is_chat_empty) {
+        startChatSession();
       }
 
       if (data.awaiting_answer) {
@@ -172,12 +176,12 @@ function startChatSession() {
   fetch("/start_chat/")
     .then((response) => response.json())
     .then((data) => {
-      if (data.success) {
+      if (data.success && data.message) {
         simulateTyping(data.message, "bot", () => {
-          displayOptions(data.options);
+          if (data.options && data.options.length > 0) {
+            displayOptions(data.options);
+          }
         });
-      } else {
-        showErrorMessage(data.error);
       }
     })
     .catch((error) => {

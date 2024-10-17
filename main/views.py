@@ -212,7 +212,8 @@ def get_chat_history(request):
         return JsonResponse({
             'chat_history': [],
             'awaiting_answer': False,
-            'current_question_index': None
+            'current_question_index': None,
+            'is_chat_empty': True  # Indicate that chat history is empty
         })
 
     chat_history = []
@@ -234,17 +235,24 @@ def get_chat_history(request):
                 awaiting_answer = True
                 current_question_index = message.question_index
 
+    # Check if chat history is empty
+    is_chat_empty = not ChatMessage.objects.filter(user=request.user).exists()
+
     return JsonResponse({
         'chat_history': chat_history,
         'awaiting_answer': awaiting_answer,
-        'current_question_index': current_question_index
+        'current_question_index': current_question_index,
+        'is_chat_empty': is_chat_empty
     })
 @login_required
 def start_chat(request):
-    # Clear previous chat history if needed
-    ChatMessage.objects.filter(user=request.user).delete()
-    # Initialize chat session
-    greeting = "Hello! Welcome to Piracle, your emotional support companion. How can I assist you today? Should we start?"
+    # Check if chat history is empty
+    if ChatMessage.objects.filter(user=request.user).exists():
+        # If chat history exists, do not send the greeting again
+        return JsonResponse({'success': True, 'message': '', 'options': []})
+
+    # Initialize chat session with greeting
+    greeting = "Hello! Welcome to PilarEase, your emotional support companion. How can I assist you today? Should we start?"
     options = ["Start", "Not Yet"]
 
     # Save bot message
@@ -341,6 +349,12 @@ def submit_answer(request):
             message_type='user_message'
         )
 
+        # Get the question text
+        try:
+            question_text = QUESTIONS[question_index]
+        except IndexError:
+            question_text = "Unknown question"
+
         # Get bot's response
         try:
             answer_idx = ANSWERS[question_index].index(answer_text)
@@ -362,6 +376,14 @@ def submit_answer(request):
         )
         progress.last_question_index = question_index
         progress.save()
+
+        # Save to Questionnaire model
+        Questionnaire.objects.create(
+            user=request.user,
+            question=question_text,
+            answer=answer_text,
+            response=response_text
+        )
 
         # Determine next question
         next_question_index = question_index + 1

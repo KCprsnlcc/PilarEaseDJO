@@ -198,7 +198,6 @@ class Questionnaire(models.Model):
 
     def __str__(self):
         return f"Question: {self.question[:50]}... - User: {self.user.username}"
-
 class Status(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
