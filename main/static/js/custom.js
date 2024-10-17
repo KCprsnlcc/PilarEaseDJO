@@ -121,10 +121,10 @@ function loadChatHistory(scrollToBottom = true) {
     .then((data) => {
       loadingHistory = false;
       if (data.chat_history && data.chat_history.length > 0) {
-        const messages = data.chat_history.reverse(); // Reverse to display correctly
+        const messages = data.chat_history.reverse(); // Now ascending order
         messages.forEach((message) => {
           if (message.sender === "user" || message.sender === "bot") {
-            prependMessage(message.message, message.sender);
+            generateMessage(message.message, message.sender); // Use append logic
           }
         });
         chatHistoryPage++;

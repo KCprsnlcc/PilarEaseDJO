@@ -204,7 +204,12 @@ RESPONSES = [
 @login_required
 def get_chat_history(request):
     page = int(request.GET.get('page', 1))
-    chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')
+    
+    # Include both user messages and bot messages
+    chat_messages = ChatMessage.objects.filter(
+        Q(user=request.user) | Q(is_bot_message=True)
+    ).order_by('-timestamp')
+    
     total_messages = chat_messages.count()
     paginator = Paginator(chat_messages, 10)  # 10 messages per page
 
@@ -252,8 +257,8 @@ def get_chat_history(request):
     })
 @login_required
 def start_chat(request):
-    # Check if chat history is empty
-    if ChatMessage.objects.filter(user=request.user).exists():
+    # Check if chat history exists (including bot messages)
+    if ChatMessage.objects.filter(Q(user=request.user) | Q(is_bot_message=True)).exists():
         # If chat history exists, do not send the greeting again
         return JsonResponse({'success': True, 'message': '', 'options': []})
 
@@ -261,9 +266,9 @@ def start_chat(request):
     greeting = "Hello! Welcome to PilarEase, your emotional support companion. How can I assist you today? Should we start?"
     options = ["Start", "Not Yet"]
 
-    # Save bot message
+    # Save bot message with user=None
     ChatMessage.objects.create(
-        user=request.user,
+        user=None,  # Bot messages should not be linked to a user
         message=greeting,
         is_bot_message=True,
         message_type='greeting'
@@ -291,9 +296,9 @@ def chat_view(request):
             return JsonResponse({'success': True, 'question_index': 0})
         elif user_message.lower() == 'not yet':
             bot_message = "No worries, take your time."
-            # Save bot message
+            # Save bot message with user=None
             ChatMessage.objects.create(
-                user=request.user,
+                user=None,  # Bot messages should not be linked to a user
                 message=bot_message,
                 is_bot_message=True,
                 message_type='bot_message'
@@ -302,9 +307,9 @@ def chat_view(request):
         else:
             # Handle other messages or commands
             bot_message = "I'm here to help whenever you're ready."
-            # Save bot message
+            # Save bot message with user=None
             ChatMessage.objects.create(
-                user=request.user,
+                user=None,  # Bot messages should not be linked to a user
                 message=bot_message,
                 is_bot_message=True,
                 message_type='bot_message'
