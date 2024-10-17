@@ -50,6 +50,7 @@ urlpatterns = [
     path('send_message/', views.send_chat_message, name='send_chat_message'),
     path('get_messages/', views.get_chat_messages, name='get_chat_messages'),
     path('get_chat_history/', views.get_chat_history, name='get_chat_history'),
+    path('final_option_selection/', views.final_option_selection, name='final_option_selection'),
     path('start_chat/', views.start_chat, name='start_chat'),
     path('chat/', views.chat_view, name='chat'),
     path('get_question/<int:question_index>/', views.get_question, name='get_question'),

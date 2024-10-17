@@ -25,6 +25,11 @@ let isOpen = false;
 let startX, startY, initialX, initialY;
 let lastScrollTop = 0;
 
+// For lazy loading chat history
+let chatHistoryPage = 1;
+let loadingHistory = false;
+let hasMoreHistory = true;
+
 // Scroll to Latest button
 const scrollToLatestButton = document.createElement("button");
 scrollToLatestButton.id = "scrollToLatestButton";
@@ -103,30 +108,65 @@ floatingButton.addEventListener("click", function () {
 // Initialize chat session
 function initializeChat() {
   chatBody.innerHTML = ""; // Clear chat body
+  chatHistoryPage = 1;
+  hasMoreHistory = true;
+  loadChatHistory();
+}
 
-  // Fetch chat history from the server
-  fetch("/get_chat_history/")
+// Load chat history in batches
+function loadChatHistory(scrollToBottom = true) {
+  if (loadingHistory || !hasMoreHistory) return;
+  loadingHistory = true;
+
+  fetch(`/get_chat_history/?page=${chatHistoryPage}`)
     .then((response) => response.json())
     .then((data) => {
+      loadingHistory = false;
       if (data.chat_history && data.chat_history.length > 0) {
-        data.chat_history.forEach((message) => {
+        const messages = data.chat_history.reverse(); // Reverse to display correctly
+        messages.forEach((message) => {
           if (message.sender === "user" || message.sender === "bot") {
-            generateMessage(message.message, message.sender);
+            prependMessage(message.message, message.sender);
           }
         });
-        // Check if last message was a question awaiting an answer
-        if (data.awaiting_answer) {
-          displayAnswerOptions(data.current_question_index);
+        chatHistoryPage++;
+        if (data.chat_history.length < 10) {
+          hasMoreHistory = false;
         }
       } else {
-        startChatSession();
+        hasMoreHistory = false;
+      }
+
+      if (data.awaiting_answer) {
+        displayAnswerOptions(data.current_question_index);
+      }
+
+      if (scrollToBottom) {
+        chatBody.scrollTop = chatBody.scrollHeight;
       }
     })
     .catch((error) => {
+      loadingHistory = false;
       console.error("Error fetching chat history:", error);
       // Show error message to the user
       showErrorMessage("Failed to load chat history. Please try again.");
     });
+}
+
+// Prepend message to chat body
+function prependMessage(text, sender) {
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
+
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
+
+  messageWrapper.appendChild(messageElement);
+  chatBody.insertBefore(messageWrapper, chatBody.firstChild);
 }
 
 // Start chat session
@@ -222,13 +262,21 @@ function sendMessage() {
 // Handle bot response
 function handleBotResponse(data) {
   if (data.message) {
-    generateMessage(data.message, "bot");
+    simulateTyping(data.message, "bot");
   }
   if (data.question_index !== undefined) {
-    displayQuestion(data.question_index);
+    setTimeout(() => {
+      displayQuestion(data.question_index);
+    }, 1000); // Delay before displaying the question
   }
   if (data.end_of_questions) {
-    generateMessage("Thank you for completing the questionnaire!", "bot");
+    simulateTyping(
+      "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
+      "bot",
+      () => {
+        displayFinalOptions();
+      }
+    );
   }
 }
 
@@ -248,6 +296,18 @@ function generateMessage(text, sender) {
   chatBody.appendChild(messageWrapper);
 
   chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Simulate typing with delay
+function simulateTyping(text, sender, callback = null) {
+  showLoader(chatBody);
+  const typingDelay = Math.max(1000, text.length * 50); // At least 1 second, plus 50ms per character
+
+  setTimeout(() => {
+    removeLoader(chatBody);
+    generateMessage(text, sender);
+    if (callback) callback();
+  }, typingDelay);
 }
 
 // Show loader animation
@@ -270,23 +330,22 @@ function removeLoader(chatBody) {
 
 // Display question
 function displayQuestion(questionIndex) {
-  showLoader(chatBody);
-  fetch(`/get_question/${questionIndex}/`)
-    .then((response) => response.json())
-    .then((data) => {
-      removeLoader(chatBody);
-      if (data.success) {
-        generateMessage(data.question, "bot");
-        displayAnswerOptions(questionIndex);
-      } else {
-        showErrorMessage(data.error);
-      }
-    })
-    .catch((error) => {
-      removeLoader(chatBody);
-      console.error("Error fetching question:", error);
-      showErrorMessage("Failed to load question. Please try again.");
-    });
+  simulateTyping("Fetching question...", "bot", () => {
+    fetch(`/get_question/${questionIndex}/`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          generateMessage(data.question, "bot");
+          displayAnswerOptions(questionIndex);
+        } else {
+          showErrorMessage(data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching question:", error);
+        showErrorMessage("Failed to load question. Please try again.");
+      });
+  });
 }
 
 // Display answer options
@@ -333,41 +392,100 @@ function handleAnswerSelection(questionIndex, answerText) {
 
   generateMessage(answerText, "user");
 
-  showLoader(chatBody);
-
-  fetch("/submit_answer/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      question_index: questionIndex,
-      answer_text: answerText,
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      removeLoader(chatBody);
-      if (data.success) {
-        generateMessage(data.response, "bot");
-
-        if (data.next_question_index !== null) {
-          setTimeout(() => {
-            displayQuestion(data.next_question_index);
-          }, 1000);
-        } else {
-          generateMessage("Thank you for completing the questionnaire!", "bot");
-        }
-      } else {
-        showErrorMessage(data.error);
-      }
+  simulateTyping("Processing your answer...", "bot", () => {
+    fetch("/submit_answer/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        question_index: questionIndex,
+        answer_text: answerText,
+      }),
     })
-    .catch((error) => {
-      removeLoader(chatBody);
-      console.error("Error submitting answer:", error);
-      showErrorMessage("Failed to submit answer. Please try again.");
-    });
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          simulateTyping(data.response, "bot", () => {
+            if (data.next_question_index !== null) {
+              setTimeout(() => {
+                displayQuestion(data.next_question_index);
+              }, 1000);
+            } else {
+              simulateTyping(
+                "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
+                "bot",
+                () => {
+                  displayFinalOptions();
+                }
+              );
+            }
+          });
+        } else {
+          showErrorMessage(data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error submitting answer:", error);
+        showErrorMessage("Failed to submit answer. Please try again.");
+      });
+  });
+}
+
+// Display final options after questionnaire
+function displayFinalOptions() {
+  const optionsWrapper = document.createElement("div");
+  optionsWrapper.className = "message-wrapper options-wrapper pop-up";
+  optionsWrapper.id = "finalOptions";
+
+  const options = ["Yes", "No"];
+  options.forEach((option) => {
+    const button = document.createElement("button");
+    button.className = "option-button";
+    button.textContent = option;
+    button.onclick = function () {
+      handleFinalOptionSelection(option, optionsWrapper);
+    };
+    optionsWrapper.appendChild(button);
+  });
+
+  chatBody.appendChild(optionsWrapper);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Handle final option selection
+function handleFinalOptionSelection(selection, optionsWrapper) {
+  optionsWrapper.classList.remove("pop-up");
+  optionsWrapper.classList.add("pop-down");
+
+  setTimeout(() => {
+    optionsWrapper.remove();
+    generateMessage(selection, "user");
+
+    fetch("/final_option_selection/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        selection: selection,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          simulateTyping(data.message, "bot");
+        } else {
+          showErrorMessage(data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Error submitting final selection:", error);
+        showErrorMessage("Failed to submit your choice. Please try again.");
+      });
+  }, 300);
 }
 
 // Show error message
@@ -413,11 +531,16 @@ document.getElementById("chatInput").addEventListener("keydown", function (e) {
   }
 });
 
-// Scroll detection for "Scroll to Latest" button
+// Scroll detection for "Scroll to Latest" button and lazy loading
 chatBody.addEventListener("scroll", function () {
   const scrollTop = chatBody.scrollTop;
   const scrollHeight = chatBody.scrollHeight;
   const clientHeight = chatBody.clientHeight;
+
+  if (scrollTop < 100 && !loadingHistory && hasMoreHistory) {
+    // Load more messages when scrolled to top
+    loadChatHistory(false);
+  }
 
   if (scrollTop < scrollHeight - clientHeight - 100) {
     // User scrolled up more than 100px
@@ -426,9 +549,6 @@ chatBody.addEventListener("scroll", function () {
     scrollToLatestButton.style.display = "none";
   }
 });
-
-// Other existing code remains unchanged...
-
 if (statusComposerButton) {
   // Show the modal with pop-in animation
   statusComposerButton.addEventListener("click", function () {

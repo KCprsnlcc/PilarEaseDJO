@@ -202,14 +202,24 @@ RESPONSES = [
 
 @login_required
 def get_chat_history(request):
-    # Only retrieve the last 20 messages
-    chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')[:20]
-    chat_messages = reversed(chat_messages)  # Reverse to maintain chronological order
+    page = int(request.GET.get('page', 1))
+    chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')
+    paginator = Paginator(chat_messages, 10)  # 10 messages per page
+
+    try:
+        chat_page = paginator.page(page)
+    except:
+        return JsonResponse({
+            'chat_history': [],
+            'awaiting_answer': False,
+            'current_question_index': None
+        })
+
     chat_history = []
     awaiting_answer = False
     current_question_index = None
 
-    for message in chat_messages:
+    for message in chat_page.object_list:
         if message.message_type in ['greeting', 'bot_message', 'user_message']:
             chat_history.append({
                 'message': message.message,
@@ -220,8 +230,9 @@ def get_chat_history(request):
                 'message': message.message,
                 'sender': 'bot',
             })
-            awaiting_answer = True
-            current_question_index = message.question_index
+            if page == 1:  # Only set awaiting_answer for the most recent messages
+                awaiting_answer = True
+                current_question_index = message.question_index
 
     return JsonResponse({
         'chat_history': chat_history,
@@ -357,9 +368,39 @@ def submit_answer(request):
         if next_question_index < len(QUESTIONS):
             return JsonResponse({'success': True, 'response': response_text, 'next_question_index': next_question_index})
         else:
-            return JsonResponse({'success': True, 'response': response_text, 'end_of_questions': True})
+            # End of questionnaire
+            return JsonResponse({
+                'success': True,
+                'response': response_text,
+                'end_of_questions': True
+            })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+@login_required
+@csrf_exempt
+def final_option_selection(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        selection = data.get('selection')
+
+        if selection == "Yes":
+            bot_message = "Great! Please contact our counselor at counselor@example.com."
+        else:
+            bot_message = "No problem. I'm here if you need anything else."
+
+        # Save bot message
+        ChatMessage.objects.create(
+            user=request.user,
+            message=bot_message,
+            is_bot_message=True,
+            message_type='bot_message'
+        )
+
+        return JsonResponse({'success': True, 'message': bot_message})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
 @csrf_exempt
 def send_message(request):
     if request.method == 'POST':
