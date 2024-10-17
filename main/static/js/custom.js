@@ -62,7 +62,6 @@ floatingButton.addEventListener("mousedown", function (e) {
   document.addEventListener("mouseup", onMouseUp);
   floatingButton.style.animation = "drag 0.5s infinite";
 });
-
 function onMouseMove(e) {
   if (isDragging) {
     const dx = e.clientX - startX;
@@ -112,7 +111,6 @@ function initializeChat() {
   hasMoreHistory = true;
   loadChatHistory();
 }
-
 // Load chat history in batches
 function loadChatHistory(scrollToBottom = true) {
   if (loadingHistory || !hasMoreHistory) return;
@@ -135,6 +133,7 @@ function loadChatHistory(scrollToBottom = true) {
         }
       } else {
         hasMoreHistory = false;
+        startChatSession(); // Start the chat session if no chat history
       }
 
       if (data.awaiting_answer) {
@@ -152,7 +151,6 @@ function loadChatHistory(scrollToBottom = true) {
       showErrorMessage("Failed to load chat history. Please try again.");
     });
 }
-
 // Prepend message to chat body
 function prependMessage(text, sender) {
   const messageWrapper = document.createElement("div");
@@ -171,26 +169,22 @@ function prependMessage(text, sender) {
 
 // Start chat session
 function startChatSession() {
-  showLoader(chatBody);
-
   fetch("/start_chat/")
     .then((response) => response.json())
     .then((data) => {
-      removeLoader(chatBody);
       if (data.success) {
-        generateMessage(data.message, "bot");
-        displayOptions(data.options);
+        simulateTyping(data.message, "bot", () => {
+          displayOptions(data.options);
+        });
       } else {
         showErrorMessage(data.error);
       }
     })
     .catch((error) => {
-      removeLoader(chatBody);
       console.error("Error starting chat session:", error);
       showErrorMessage("Failed to start chat session. Please try again.");
     });
 }
-
 // Display options (e.g., Start, Not Yet)
 function displayOptions(options) {
   const optionsWrapper = document.createElement("div");
@@ -297,11 +291,10 @@ function generateMessage(text, sender) {
 
   chatBody.scrollTop = chatBody.scrollHeight;
 }
-
 // Simulate typing with delay
 function simulateTyping(text, sender, callback = null) {
   showLoader(chatBody);
-  const typingDelay = Math.max(1000, text.length * 50); // At least 1 second, plus 50ms per character
+  const typingDelay = Math.max(500, text.length * 30); // Reduced delay
 
   setTimeout(() => {
     removeLoader(chatBody);
@@ -330,22 +323,21 @@ function removeLoader(chatBody) {
 
 // Display question
 function displayQuestion(questionIndex) {
-  simulateTyping("Fetching question...", "bot", () => {
-    fetch(`/get_question/${questionIndex}/`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          generateMessage(data.question, "bot");
+  fetch(`/get_question/${questionIndex}/`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        simulateTyping(data.question, "bot", () => {
           displayAnswerOptions(questionIndex);
-        } else {
-          showErrorMessage(data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching question:", error);
-        showErrorMessage("Failed to load question. Please try again.");
-      });
-  });
+        });
+      } else {
+        showErrorMessage(data.error);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching question:", error);
+      showErrorMessage("Failed to load question. Please try again.");
+    });
 }
 
 // Display answer options
@@ -392,45 +384,46 @@ function handleAnswerSelection(questionIndex, answerText) {
 
   generateMessage(answerText, "user");
 
-  simulateTyping("Processing your answer...", "bot", () => {
-    fetch("/submit_answer/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        question_index: questionIndex,
-        answer_text: answerText,
-      }),
+  fetch("/submit_answer/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      question_index: questionIndex,
+      answer_text: answerText,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        simulateTyping(data.response, "bot", () => {
+          if (
+            data.next_question_index !== undefined &&
+            data.next_question_index !== null
+          ) {
+            setTimeout(() => {
+              displayQuestion(data.next_question_index);
+            }, 1000);
+          } else if (data.end_of_questions) {
+            simulateTyping(
+              "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
+              "bot",
+              () => {
+                displayFinalOptions();
+              }
+            );
+          }
+        });
+      } else {
+        showErrorMessage(data.error);
+      }
     })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          simulateTyping(data.response, "bot", () => {
-            if (data.next_question_index !== null) {
-              setTimeout(() => {
-                displayQuestion(data.next_question_index);
-              }, 1000);
-            } else {
-              simulateTyping(
-                "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
-                "bot",
-                () => {
-                  displayFinalOptions();
-                }
-              );
-            }
-          });
-        } else {
-          showErrorMessage(data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error submitting answer:", error);
-        showErrorMessage("Failed to submit answer. Please try again.");
-      });
-  });
+    .catch((error) => {
+      console.error("Error submitting answer:", error);
+      showErrorMessage("Failed to submit answer. Please try again.");
+    });
 }
 
 // Display final options after questionnaire
@@ -549,6 +542,7 @@ chatBody.addEventListener("scroll", function () {
     scrollToLatestButton.style.display = "none";
   }
 });
+
 if (statusComposerButton) {
   // Show the modal with pop-in animation
   statusComposerButton.addEventListener("click", function () {
