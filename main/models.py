@@ -194,7 +194,10 @@ class Questionnaire(models.Model):
     question = models.TextField()
     answer = models.TextField(default='No answer provided')
     response = models.TextField(default='No response provided')
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now=True)  # Updated to auto_now to capture updates
+
+    class Meta:
+        unique_together = ('user', 'question')  # Enforce uniqueness per user-question pair
 
     def __str__(self):
         return f"Question: {self.question[:50]}... - User: {self.user.username}"

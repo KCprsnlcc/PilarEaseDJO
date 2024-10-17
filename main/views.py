@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
+from django.db import IntegrityError
 import pytz
 import json
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
@@ -224,16 +225,15 @@ def get_chat_history(request):
     current_question_index = None
 
     for message in chat_page.object_list:
-        if message.message_type in ['greeting', 'bot_message', 'user_message', 'question']:
-            chat_history.append({
-                'message': message.message,
-                'sender': 'bot' if message.is_bot_message else 'user',
-                'message_type': message.message_type,
-            })
-        if message.message_type == 'question':
-            if page == 1:  # Only set awaiting_answer for the most recent messages
-                awaiting_answer = True
-                current_question_index = message.question_index
+        chat_history.append({
+            'message': message.message,
+            'sender': 'bot' if message.is_bot_message else 'user',
+            'message_type': message.message_type,
+        })
+        if message.message_type == 'question' and not awaiting_answer:
+            # Set awaiting_answer to True only if we haven't already set it
+            awaiting_answer = True
+            current_question_index = message.question_index
 
     # Determine the last message type
     last_message = chat_messages.first() if chat_messages.exists() else None
@@ -347,14 +347,6 @@ def submit_answer(request):
         if question_index is None or answer_text is None:
             return JsonResponse({'success': False, 'error': 'Missing data.'})
 
-        # Save user's answer
-        ChatMessage.objects.create(
-            user=request.user,
-            message=answer_text,
-            is_bot_message=False,
-            message_type='user_message'
-        )
-
         # Get the question text
         try:
             question_text = QUESTIONS[question_index]
@@ -368,7 +360,18 @@ def submit_answer(request):
         except (IndexError, ValueError):
             response_text = "Thank you for your response."
 
-        # Save bot's response
+        # Update or create the Questionnaire entry
+        questionnaire_entry, created = Questionnaire.objects.update_or_create(
+            user=request.user,
+            question=question_text,
+            defaults={
+                'answer': answer_text,
+                'response': response_text,
+                'timestamp': timezone.now()
+            }
+        )
+
+        # Save bot's response in ChatMessage
         ChatMessage.objects.create(
             user=request.user,
             message=response_text,
@@ -377,19 +380,9 @@ def submit_answer(request):
         )
 
         # Save progress
-        progress, created = QuestionnaireProgress.objects.get_or_create(
-            user=request.user
-        )
+        progress, _ = QuestionnaireProgress.objects.get_or_create(user=request.user)
         progress.last_question_index = question_index
         progress.save()
-
-        # Save to Questionnaire model
-        Questionnaire.objects.create(
-            user=request.user,
-            question=question_text,
-            answer=answer_text,
-            response=response_text
-        )
 
         # Determine next question
         next_question_index = question_index + 1
