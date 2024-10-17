@@ -204,16 +204,19 @@ RESPONSES = [
 def get_chat_history(request):
     page = int(request.GET.get('page', 1))
     chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')
+    total_messages = chat_messages.count()
     paginator = Paginator(chat_messages, 10)  # 10 messages per page
 
     try:
         chat_page = paginator.page(page)
-    except:
+    except (PageNotAnInteger, EmptyPage):
         return JsonResponse({
             'chat_history': [],
             'awaiting_answer': False,
             'current_question_index': None,
-            'is_chat_empty': True  # Indicate that chat history is empty
+            'is_chat_empty': True,
+            'last_message_type': None,
+            'total_messages': 0
         })
 
     chat_history = []
@@ -221,28 +224,31 @@ def get_chat_history(request):
     current_question_index = None
 
     for message in chat_page.object_list:
-        if message.message_type in ['greeting', 'bot_message', 'user_message']:
+        if message.message_type in ['greeting', 'bot_message', 'user_message', 'question']:
             chat_history.append({
                 'message': message.message,
                 'sender': 'bot' if message.is_bot_message else 'user',
+                'message_type': message.message_type,
             })
         if message.message_type == 'question':
-            chat_history.append({
-                'message': message.message,
-                'sender': 'bot',
-            })
             if page == 1:  # Only set awaiting_answer for the most recent messages
                 awaiting_answer = True
                 current_question_index = message.question_index
 
+    # Determine the last message type
+    last_message = chat_messages.first() if chat_messages.exists() else None
+    last_message_type = last_message.message_type if last_message else None
+
     # Check if chat history is empty
-    is_chat_empty = not ChatMessage.objects.filter(user=request.user).exists()
+    is_chat_empty = not chat_messages.exists()
 
     return JsonResponse({
         'chat_history': chat_history,
         'awaiting_answer': awaiting_answer,
         'current_question_index': current_question_index,
-        'is_chat_empty': is_chat_empty
+        'is_chat_empty': is_chat_empty,
+        'last_message_type': last_message_type,
+        'total_messages': total_messages
     })
 @login_required
 def start_chat(request):

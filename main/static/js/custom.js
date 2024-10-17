@@ -138,6 +138,12 @@ function loadChatHistory(scrollToBottom = true) {
       // Check if chat is empty and start session
       if (data.is_chat_empty) {
         startChatSession();
+      } else if (
+        data.last_message_type === "greeting" &&
+        data.total_messages === 1
+      ) {
+        // If the last message is a greeting and it's the only message, display options
+        displayOptions(["Start", "Not Yet"]);
       }
 
       if (data.awaiting_answer) {
@@ -343,7 +349,6 @@ function displayQuestion(questionIndex) {
       showErrorMessage("Failed to load question. Please try again.");
     });
 }
-
 // Display answer options
 function displayAnswerOptions(questionIndex) {
   fetch(`/get_answer_options/${questionIndex}/`)
@@ -429,7 +434,6 @@ function handleAnswerSelection(questionIndex, answerText) {
       showErrorMessage("Failed to submit answer. Please try again.");
     });
 }
-
 // Display final options after questionnaire
 function displayFinalOptions() {
   const optionsWrapper = document.createElement("div");
