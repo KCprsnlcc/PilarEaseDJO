@@ -1,8 +1,7 @@
-<!-- admin_tools/templates/admin_tools/performance_dashboard.html -->
 {% extends "admin_tools/base_admin.html" %} {% load static %} {%block content%}
 <div class="pilarease-admin-performance-dashboard-container">
   <h2 class="pilarease-admin-section-title">
-    Performance Matrix
+    Performance Metrics
     <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
     <div class="pilarease-admin-tooltip">
       Upload your dataset in CSV format to calculate performance metrics.
@@ -29,8 +28,23 @@
       {% endfor %}
     </ul>
   </div>
-  {% endif %} {% if dataset_id %}
-  <!-- Progress Bar Section -->
+  {% endif %}
+
+  <!-- Upload Form (Always Visible) -->
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="pilarease-admin-performance-form"
+    id="performance-form"
+  >
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit" class="pilarease-admin-filter-button">
+      Upload & Calculate
+    </button>
+  </form>
+
+  {% if dataset_id %}
+  <!-- Progress Bar Section (Visible only when dataset_id is present) -->
   <div class="pilarease-admin-progress-section">
     <h3>Processing Dataset</h3>
     <p id="current-task">Current Task: <span>Initializing...</span></p>
@@ -43,62 +57,207 @@
     </div>
     <p id="progress-percentage">0%</p>
   </div>
+  {% endif %} {% if performance_result %}
+  <!-- Performance Results Section -->
+  <div class="pilarease-admin-metrics-section">
+    <h3>Overall Metrics</h3>
+    <ul class="pilarease-admin-metrics-list">
+      <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
+      <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
+      <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
+      <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
+    </ul>
+  </div>
 
-  <!-- JavaScript for Polling Progress -->
-  <script>
-    const datasetId = "{{ dataset_id }}";
-    const progressBar = document.getElementById("progress-bar");
-    const progressPercentage = document.getElementById("progress-percentage");
-    const currentTask = document
-      .getElementById("current-task")
-      .querySelector("span");
+  <div class="pilarease-admin-confusion-matrix-section">
+    <h3>Confusion Matrix</h3>
+    <img
+      src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
+      alt="Confusion Matrix"
+      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
+    />
+  </div>
 
-    function updateProgress() {
-      fetch("{% url 'get_progress' dataset_id=dataset_id %}")
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            alert(data.error);
-            return;
-          }
-          const progress = data.progress;
-          currentTask.textContent = progress.current_task;
-          progressBar.style.width = progress.percentage + "%";
-          progressPercentage.textContent = progress.percentage + "%";
+  <div class="pilarease-admin-classification-report-section">
+    <h3>Classification Report</h3>
+    <div
+      class="pilarease-admin-classification-report-table-container animate__animated animate__fadeIn"
+    >
+      {{ performance_result.classification_report_html|safe }}
+    </div>
+    <!-- Download Button -->
+    <a
+      href="data:text/csv;base64,{{ performance_result.classification_report_csv }}"
+      download="classification_report.csv"
+      class="pilarease-admin-action-button download-report-button"
+    >
+      <i class="bx bxs-download"></i> Download Report
+    </a>
+  </div>
 
-          if (progress.percentage < 100) {
-            setTimeout(updateProgress, 1000); // Poll every second
-          } else {
-            // Redirect to result page after completion
-            window.location.href =
-              "{% url 'performance_dashboard_result' %}?dataset_id=" +
-              datasetId;
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching progress:", error);
-          setTimeout(updateProgress, 1000); // Retry after a second
-        });
-    }
+  <!-- Processed Dataset Section -->
+  <div class="pilarease-admin-processed-dataset-section">
+    <h3>Processed Dataset</h3>
 
-    // Start polling when the page loads
-    document.addEventListener("DOMContentLoaded", function () {
-      updateProgress();
-    });
-  </script>
-  {% else %}
-  <!-- Upload Form -->
-  <form
-    method="post"
-    enctype="multipart/form-data"
-    class="pilarease-admin-performance-form"
-    id="performance-form"
-  >
-    {% csrf_token %} {{ form.as_p }}
-    <button type="submit" class="pilarease-admin-filter-button">
-      Upload & Calculate
-    </button>
-  </form>
+    <!-- Search Form -->
+    <form method="get" class="pilarease-admin-filter-form">
+      <input
+        type="hidden"
+        name="dataset_id"
+        value="{{ performance_result.dataset.id }}"
+      />
+      <div class="pilarease-admin-filter-group">
+        <label for="search" class="pilarease-admin-filter-label">Search:</label>
+        <input
+          type="text"
+          name="search"
+          id="search"
+          class="pilarease-admin-filter-input"
+          placeholder="Search..."
+          value="{{ search_query }}"
+        />
+      </div>
+      <button type="submit" class="pilarease-admin-filter-button">
+        Search
+      </button>
+      <a
+        href="{% url 'performance_dashboard' %}?dataset_id={{ performance_result.dataset.id }}"
+        class="pilarease-admin-action-button pilarease-admin-reset-button"
+      >
+        Reset
+      </a>
+    </form>
+
+    <!-- Data Table -->
+    {% if page_obj and page_obj.object_list %}
+    <table class="pilarease-admin-feedback-table">
+      <thead>
+        <tr>
+          <th>Text</th>
+          <th>Actual Label</th>
+          <th>Predicted Label</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in page_obj.object_list %}
+        <tr>
+          <td>{{ row.text }}</td>
+          <td>{{ row.actual_label }}</td>
+          <td>{{ row.predicted_label }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No data available for the current search criteria.</p>
+    {% endif %}
+
+    <!-- Pagination Controls -->
+    <div class="pilarease-admin-pagination">
+      <div class="pilarease-admin-step-links">
+        {% if page_obj.has_previous %}
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page=1"
+        >
+          &laquo; First
+        </a>
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.previous_page_number }}"
+        >
+          &lsaquo; Previous
+        </a>
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.next_page_number }}"
+        >
+          Next &rsaquo;
+        </a>
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.paginator.num_pages }}"
+        >
+          Last &raquo;
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Download Processed Dataset -->
+    {% if performance_result.processed_csv_file %}
+    <a
+      href="{{ performance_result.processed_csv_file.url }}"
+      download="processed_dataset_{{ performance_result.dataset.id }}.csv"
+      class="pilarease-admin-action-button download-report-button"
+    >
+      <i class="bx bxs-download"></i> Download Processed Dataset
+    </a>
+    {% endif %}
+  </div>
   {% endif %}
 </div>
-{% endblock %}
+
+<!-- JavaScript for Polling Progress -->
+{% if dataset_id %}
+<script>
+  const datasetId = "{{ dataset_id }}";
+  const progressBarContainer = document.querySelector(
+    ".pilarease-admin-progress-bar-container"
+  );
+  const progressSection = document.querySelector(
+    ".pilarease-admin-progress-section"
+  );
+  const progressBar = document.getElementById("progress-bar");
+  const progressPercentage = document.getElementById("progress-percentage");
+  const currentTask = document
+    .getElementById("current-task")
+    .querySelector("span");
+
+  // Use localStorage to track if the page has already been refreshed
+  const hasRefreshed = localStorage.getItem(`refreshedForDataset_${datasetId}`);
+
+  function updateProgress() {
+    fetch("{% url 'get_progress' dataset_id=dataset_id %}")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+        const progress = data.progress;
+        currentTask.textContent = progress.current_task;
+        progressBar.style.width = progress.percentage + "%";
+        progressPercentage.textContent = progress.percentage + "%";
+
+        // Only refresh the page once and hide the progress section after 100%
+        if (progress.percentage < 100) {
+          setTimeout(updateProgress, 1000); // Poll every second
+        } else if (progress.percentage === 100) {
+          // Hide the progress section after completion
+          progressSection.style.display = "none";
+
+          // Refresh the page only once if not already refreshed for this dataset
+          if (!hasRefreshed) {
+            localStorage.setItem(`refreshedForDataset_${datasetId}`, true);
+            setTimeout(() => {
+              location.reload(); // Reload the page
+            }, 1000); // Wait for 1 second before refreshing the page
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching progress:", error);
+        setTimeout(updateProgress, 1000); // Retry after a second
+      });
+  }
+
+  // Start polling when the page loads
+  document.addEventListener("DOMContentLoaded", function () {
+    updateProgress();
+  });
+</script>
+{% endif %} {% endblock %}

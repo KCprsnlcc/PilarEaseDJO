@@ -29,6 +29,7 @@ from main.models import (
     Referral,
     ProfanityWord,
     Questionnaire,
+    TextAnalysis,
 )
 import torch
 from django.contrib import messages
@@ -106,34 +107,63 @@ def performance_dashboard(request):
             thread = threading.Thread(target=process_dataset, args=(dataset.id,))
             thread.start()
 
-            # Build the redirect URL with query parameters
-            redirect_url = f"{reverse('performance_dashboard')}?dataset_id={dataset.id}"
-            return redirect(redirect_url)
+            # Redirect to the same page with dataset_id
+            return redirect(f"{reverse('performance_dashboard')}?dataset_id={dataset.id}")
     else:
-        # GET request handling
+        form = DatasetUploadForm()
         dataset_id = request.GET.get('dataset_id')
-        if dataset_id:
-            # Show progress bar for the specified dataset
-            context = {'dataset_id': dataset_id, 'form': DatasetUploadForm()}
-            return render(request, 'admin_tools/performance_dashboard.html', context)
-        else:
-            # Check for the latest PerformanceResult for the user
-            try:
-                latest_performance = PerformanceResult.objects.filter(
-                    dataset__user=request.user
-                ).latest('dataset__uploaded_at')
-                # Redirect to the result view with dataset_id
-                redirect_url = f"{reverse('performance_dashboard_result')}?dataset_id={latest_performance.dataset.id}"
-                return redirect(redirect_url)
-            except PerformanceResult.DoesNotExist:
-                # No existing results, show the upload form
-                form = DatasetUploadForm()
-                context = {'form': form}
-                return render(request, 'admin_tools/performance_dashboard.html', context)
+        performance_result = None
 
-    # For non-POST and non-GET requests (optional)
-    form = DatasetUploadForm()
-    context = {'form': form}
+        if dataset_id:
+            dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+            # Check if processing is complete
+            if dataset.progress.get('percentage') == 100:
+                try:
+                    performance_result = PerformanceResult.objects.get(dataset=dataset)
+                except PerformanceResult.DoesNotExist:
+                    messages.error(request, "Performance results not found.")
+            else:
+                # Processing is still in progress
+                pass  # The template will handle displaying the progress bar
+        else:
+            # Optionally, check for the latest performance result
+            try:
+                latest_dataset = Dataset.objects.filter(user=request.user).latest('uploaded_at')
+                if latest_dataset.progress.get('percentage') == 100:
+                    performance_result = PerformanceResult.objects.get(dataset=latest_dataset)
+            except (Dataset.DoesNotExist, PerformanceResult.DoesNotExist):
+                pass
+
+    # Handle search and pagination if performance_result is available
+    page_obj = None
+    search_query = ''
+    if performance_result and performance_result.processed_csv_file:
+        # Read the processed dataset and its TextAnalysis records
+        text_analyses = TextAnalysis.objects.filter(dataset=dataset)
+
+        # Apply search filter if provided
+        search_query = request.GET.get('search', '')
+        if search_query:
+            text_analyses = text_analyses.filter(
+                Q(text__icontains=search_query) |
+                Q(actual_label__icontains=search_query) |
+                Q(predicted_label__icontains(search_query))
+            )
+
+        # Paginate the data
+        paginator = Paginator(text_analyses, 10)  # Show 10 entries per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    elif performance_result:
+        messages.error(request, "Processed dataset not available.")
+
+    context = {
+        'form': form,
+        'dataset_id': dataset_id,
+        'performance_result': performance_result,
+        'page_obj': page_obj,
+        'search_query': search_query,
+    }
     return render(request, 'admin_tools/performance_dashboard.html', context)
 
 def process_dataset(dataset_id):
@@ -179,7 +209,7 @@ def process_dataset(dataset_id):
         dataset.progress = {'current_task': 'Making Predictions', 'percentage': 40}
         dataset.save()
 
-        # Make predictions with progress updates
+        # Make predictions and update progress
         y_pred = []
         total = len(X_test)
         for idx, text in X_test.items():
@@ -188,8 +218,21 @@ def process_dataset(dataset_id):
                 with torch.no_grad():
                     outputs = model(**inputs)
                     logits = outputs.logits
-                    predicted_class_id = logits.argmax().item()
-                    predicted_label = model.config.id2label[predicted_class_id]
+                    scores = logits.squeeze().tolist()
+
+                    # Use the emotion mapping provided to get the dominant emotion
+                    emotions = {
+                        'anger': scores[0],
+                        'disgust': scores[1],
+                        'fear': scores[2],
+                        'happiness': scores[3],
+                        'neutral': scores[4],
+                        'sadness': scores[5],
+                        'surprise': scores[6]
+                    }
+
+                    # Get the emotion with the highest score
+                    predicted_label = max(emotions, key=emotions.get)
                 y_pred.append(predicted_label)
             else:
                 y_pred.append(None)
@@ -213,7 +256,13 @@ def process_dataset(dataset_id):
         recall = recall_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
         f1 = f1_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
         cm = confusion_matrix(y_test_clean, y_pred_clean)
+
+        # Generate classification report as HTML and CSV
         class_report = classification_report(y_test_clean, y_pred_clean, output_dict=True)
+        report_df = pd.DataFrame(class_report).transpose().round(2)
+        report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
+        report_csv = report_df.to_csv(index=True)
+        report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
 
         # Plot confusion matrix
         plt.figure(figsize=(8,6))
@@ -229,15 +278,20 @@ def process_dataset(dataset_id):
         plot_url = base64.b64encode(image_png).decode('utf-8')
         plt.close()
 
-        # Generate classification report as HTML and CSV
-        report_df = pd.DataFrame(class_report).transpose().round(2)
-        report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
-        report_csv = report_df.to_csv(index=True)
-        report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
-
         # Add 'Predicted Label' to the original DataFrame
         df['Predicted Label'] = pd.NA  # Initialize with NA
         df.loc[y_test_clean.index, 'Predicted Label'] = y_pred_clean
+
+        # Save individual analyses to the database
+        for idx, actual_label, predicted_label in zip(y_test_clean.index, y_test_clean, y_pred_clean):
+            text = df.loc[idx, 'Text']
+            analysis = TextAnalysis(
+                dataset=dataset,
+                text=text,
+                actual_label=actual_label,
+                predicted_label=predicted_label
+            )
+            analysis.save()
 
         # Save the processed CSV to a new file in memory
         processed_buffer = io.StringIO()
@@ -289,45 +343,22 @@ def performance_dashboard_result(request):
         return redirect('performance_dashboard')
 
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+
     try:
-        performance_result = PerformanceResult.objects.get(dataset=dataset)
-    except PerformanceResult.DoesNotExist:
+        # Get all the text analyses for the dataset
+        text_analyses = TextAnalysis.objects.filter(dataset=dataset)
+
+        # Pagination
+        paginator = Paginator(text_analyses, 10)  # Show 10 entries per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+    except TextAnalysis.DoesNotExist:
         messages.error(request, "Performance results not found.")
         return redirect('performance_dashboard')
 
-    # Initialize variables for data display
-    table_data = []
-    search_query = request.GET.get('search', '')
-
-    if performance_result.processed_csv_file:
-        # Read the processed CSV into a DataFrame
-        df_processed = pd.read_csv(performance_result.processed_csv_file.path)
-
-        # Apply search filter if provided
-        if search_query:
-            df_filtered = df_processed[
-                df_processed['Text'].str.contains(search_query, case=False, na=False) |
-                df_processed['Label'].str.contains(search_query, case=False, na=False) |
-                df_processed['Predicted Label'].str.contains(search_query, case=False, na=False)
-            ]
-        else:
-            df_filtered = df_processed
-
-        # Convert DataFrame to list of dictionaries
-        table_data = df_filtered.to_dict(orient='records')
-
-        # Paginate the data
-        paginator = Paginator(table_data, 10)  # Show 10 entries per page
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-    else:
-        messages.error(request, "Processed dataset not available.")
-        page_obj = None
-
     context = {
-        'performance_result': performance_result,
-        'page_obj': page_obj,
-        'search_query': search_query,
+        'page_obj': page_obj,  # Pass paginated results to the template
     }
     return render(request, 'admin_tools/performance_dashboard_result.html', context)
 

@@ -249,6 +249,19 @@ class PerformanceResult(models.Model):
     def __str__(self):
         return f"Performance Result for Dataset {self.dataset.id}"
 
+class TextAnalysis(models.Model):
+    dataset = models.ForeignKey(
+        Dataset,
+        on_delete=models.CASCADE,
+        related_name='text_analyses'
+    )
+    text = models.TextField()
+    actual_label = models.CharField(max_length=50)
+    predicted_label = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"Text Analysis {self.id} for Dataset {self.dataset.id}"
+
 class Notification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     status = models.ForeignKey(
