@@ -141,9 +141,9 @@
       <tbody>
         {% for row in page_obj.object_list %}
         <tr>
-          <td>{{ row.text }}</td>
-          <td>{{ row.actual_label }}</td>
-          <td>{{ row.predicted_label }}</td>
+          <td>{{ row.analysis_data.text }}</td>
+          <td>{{ row.analysis_data.actual_label }}</td>
+          <td>{{ row.analysis_data.predicted_label }}</td>
         </tr>
         {% endfor %}
       </tbody>
