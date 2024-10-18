@@ -48,13 +48,6 @@ urlpatterns = [
     path('api/referrals/<int:referral_id>/', views.get_referral_details, name='api_get_referral_details'),
     path('api/profanities/add/', views.add_profanity_api, name='api_add_profanity'),
     path('api/profanities/delete/<int:profanity_id>/', views.delete_profanity_api, name='api_delete_profanity'),
-
-    # User Management
-    path('manage-users/', views.manage_users_view, name='manage_users'),
-    path('block-user/', views.block_user, name='block_user'),
-    path('block-user/<int:user_id>/', views.block_user, name='block_user'),  # Added user_id for blocking specific users
-    path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
-    
     # Performance Matrix
     path('performance_dashboard/', views.performance_dashboard, name='performance_dashboard'),
     path('get_progress/<int:dataset_id>/', views.get_progress, name='get_progress'),

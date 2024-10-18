@@ -1402,58 +1402,6 @@ def reports(request):
 
 
 @login_required
-def manage_users_view(request):
-    search_query = request.GET.get('search', '')
-    if search_query:
-        users = CustomUser.objects.filter(
-            Q(username__icontains=search_query) |
-            Q(student_id__icontains=search_query) |
-            Q(full_name__icontains=search_query) |
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(academic_year_level__icontains=search_query) |
-            Q(contact_number__icontains=search_query) |
-            Q(email__icontains=search_query)
-        )
-    else:
-        users = CustomUser.objects.all()
-
-    # Optional: Order by date joined descending
-    users = users.order_by('-date_joined')
-
-    paginator = Paginator(users, 10)  # Show 10 users per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'users': page_obj,
-        'search_query': search_query,
-        'page_obj': page_obj,
-    }
-    return render(request, 'admin_tools/manage_users.html', context)
-
-
-@login_required
-@csrf_exempt
-def block_user(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        user_id = data.get('user_id')
-        reason = data.get('reason')
-        duration = data.get('duration')
-
-        try:
-            user = CustomUser.objects.get(id=user_id)
-            user.is_active = False
-            user.block_reason = reason
-            user.block_duration = duration
-            user.save()
-            return JsonResponse({'success': True})
-        except CustomUser.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'User not found'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-@login_required
 def contact_us_reply(request, contact_id):
     if request.method == 'POST':
         reply_text = request.POST.get('reply_text')
@@ -1483,13 +1431,6 @@ def delete_contact_us(request, contact_id):
     contact = get_object_or_404(ContactUs, id=contact_id)
     contact.delete()
     return redirect('dashboard')
-
-@login_required
-def delete_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    user.delete()
-    return redirect('manage_users')
-
 
 @login_required
 def settings(request):
