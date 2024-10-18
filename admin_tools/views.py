@@ -282,14 +282,17 @@ def process_dataset(dataset_id):
         df['Predicted Label'] = pd.NA  # Initialize with NA
         df.loc[y_test_clean.index, 'Predicted Label'] = y_pred_clean
 
-        # Save individual analyses to the database
+        # Save individual analyses to the database using JSONB
         for idx, actual_label, predicted_label in zip(y_test_clean.index, y_test_clean, y_pred_clean):
             text = df.loc[idx, 'Text']
+            analysis_data = {
+                "text": text,
+                "actual_label": actual_label,
+                "predicted_label": predicted_label
+            }
             analysis = TextAnalysis(
                 dataset=dataset,
-                text=text,
-                actual_label=actual_label,
-                predicted_label=predicted_label
+                analysis_data=analysis_data  # Save all data in JSONB
             )
             analysis.save()
 
@@ -321,8 +324,6 @@ def process_dataset(dataset_id):
         # Final progress update
         dataset.progress = {'current_task': 'Completed', 'percentage': 100, 'result_id': performance_result.id}
         dataset.save()
-
-        logger.info(f"Dataset {dataset_id} processed successfully.")
 
     except Exception as e:
         logger.exception(f"Error processing dataset {dataset_id}: {e}")

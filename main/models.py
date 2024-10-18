@@ -255,9 +255,7 @@ class TextAnalysis(models.Model):
         on_delete=models.CASCADE,
         related_name='text_analyses'
     )
-    text = models.TextField()
-    actual_label = models.CharField(max_length=50)
-    predicted_label = models.CharField(max_length=50)
+    analysis_data = models.JSONField(blank=True, null=True)  # Using Django's built-in JSONField for JSONB storage
 
     def __str__(self):
         return f"Text Analysis {self.id} for Dataset {self.dataset.id}"
