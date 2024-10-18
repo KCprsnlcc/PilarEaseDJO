@@ -1,0 +1,68 @@
+<!-- admin_tools/templates/admin_tools/performance_dashboard_result.html -->
+{% extends "admin_tools/base_admin.html" %} {% load static %} {%block content%}
+<div class="pilarease-admin-performance-dashboard-container">
+  <h2 class="pilarease-admin-section-title">
+    Performance Metrics
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <div class="pilarease-admin-tooltip">
+      Here are the calculated performance metrics based on your uploaded
+      dataset.
+    </div>
+  </h2>
+
+  <!-- Display Messages -->
+  {% if messages %}
+  <ul class="pilarease-admin-messages">
+    {% for message in messages %}
+    <li class="pilarease-admin-message {{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <div class="pilarease-admin-metrics-section">
+    <h3>Overall Metrics</h3>
+    <ul class="pilarease-admin-metrics-list">
+      <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
+      <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
+      <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
+      <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
+    </ul>
+  </div>
+
+  <div class="pilarease-admin-confusion-matrix-section">
+    <h3>Confusion Matrix</h3>
+    <img
+      src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
+      alt="Confusion Matrix"
+      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
+    />
+  </div>
+
+  <div class="pilarease-admin-classification-report-section">
+    <h3>Classification Report</h3>
+    <div
+      class="pilarease-admin-classification-report-table-container animate__animated animate__fadeIn"
+    >
+      {{ performance_result.classification_report_html|safe }}
+    </div>
+    <!-- Download Button -->
+    <a
+      href="data:text/csv;base64,{{ performance_result.classification_report_csv }}"
+      download="classification_report.csv"
+      class="pilarease-admin-action-button download-report-button"
+    >
+      <i class="bx bxs-download"></i> Download Report
+    </a>
+  </div>
+
+  <!-- Link to Upload Another Dataset -->
+  <div class="pilarease-admin-upload-another">
+    <a
+      href="{% url 'performance_dashboard' %}"
+      class="pilarease-admin-action-button upload-another-button"
+    >
+      <i class="bx bx-upload"></i> Upload Another Dataset
+    </a>
+  </div>
+</div>
+{% endblock %}

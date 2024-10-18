@@ -1444,9 +1444,6 @@ body {
   font-size: 12px;
   margin: 2px;
 }
-
-/* admin_tools/static/css/admin.css */
-
 /* =========================================================
    Performance Dashboard Styles
    ========================================================= */
@@ -1457,10 +1454,71 @@ body {
   border-radius: 8px;
   box-shadow: var(--box-shadow);
   animation: fadeInUp 0.5s ease-in-out;
+  margin: 20px;
 }
 
-.pilarease-admin-performance-form {
-  margin-bottom: 30px;
+.pilarease-admin-section-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.pilarease-admin-section-title .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 20px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+}
+
+.pilarease-admin-section-title .pilarease-admin-tooltip {
+  position: absolute;
+  top: 30px; /* Adjust as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.pilarease-admin-section-title
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pilarease-admin-messages {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.pilarease-admin-message {
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.pilarease-admin-message.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.pilarease-admin-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .pilarease-admin-performance-form input[type="file"] {
@@ -1477,8 +1535,61 @@ body {
   outline: none;
 }
 
+.pilarease-admin-filter-button {
+  padding: 10px 20px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px;
+  text-align: center;
+}
+
+.pilarease-admin-filter-button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+/* Loading Spinner Styles */
+.pilarease-admin-loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.spinner {
+  border: 8px solid #f3f3f3; /* Light grey */
+  border-top: 8px solid var(--accent-color); /* Accent color */
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   Metrics Section Styles
+   ========================================================= */
+
 .pilarease-admin-metrics-section {
   margin-bottom: 30px;
+}
+
+.pilarease-admin-metrics-section h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--accent-color);
 }
 
 .pilarease-admin-metrics-list {
@@ -1491,8 +1602,18 @@ body {
   margin-bottom: 10px;
 }
 
+/* =========================================================
+   Confusion Matrix Styles
+   ========================================================= */
+
 .pilarease-admin-confusion-matrix-section {
-  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pilarease-admin-confusion-matrix-section h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--accent-color);
 }
 
 .pilarease-admin-confusion-matrix-image {
@@ -1508,19 +1629,134 @@ body {
   transform: scale(1.05);
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .pilarease-admin-performance-dashboard-container {
-    padding: 15px;
-  }
+/* =========================================================
+   Classification Report Styles
+   ========================================================= */
 
-  .pilarease-admin-performance-form input[type="file"] {
-    max-width: 100%;
-  }
+.pilarease-admin-classification-report-section {
+  margin-top: 30px;
+}
 
-  .pilarease-admin-metrics-list {
-    font-size: 14px;
-  }
+.pilarease-admin-classification-report-section h3 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.pilarease-admin-classification-report-section .pilarease-admin-info-icon {
+  margin-left: 10px;
+  font-size: 16px;
+  color: var(--accent-light);
+  cursor: pointer;
+  position: relative;
+}
+
+.pilarease-admin-classification-report-section .pilarease-admin-tooltip {
+  position: absolute;
+  top: 30px; /* Adjust as needed */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(14, 35, 38, 0.9);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.pilarease-admin-classification-report-section
+  .pilarease-admin-info-icon:hover
+  + .pilarease-admin-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pilarease-admin-classification-report-table-container {
+  overflow-x: auto;
+}
+
+.pilarease-admin-classification-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.pilarease-admin-classification-report-table th,
+.pilarease-admin-classification-report-table td {
+  border: 1px solid var(--border-color);
+  padding: 10px 15px;
+  text-align: center;
+}
+
+.pilarease-admin-classification-report-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.pilarease-admin-classification-report-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.pilarease-admin-classification-report-table tr:hover {
+  background-color: rgba(14, 35, 38, 0.05);
+}
+
+/* Download Button Styles */
+.download-report-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.download-report-button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.download-report-button i {
+  font-size: 16px;
+}
+
+/* Upload Another Dataset Button Styles */
+.upload-another-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.upload-another-button:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.upload-another-button i {
+  font-size: 16px;
 }
 
 /* =========================================================

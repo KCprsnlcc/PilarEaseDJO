@@ -16,21 +16,28 @@ from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # settings.py
 
+# settings.py
+# settings.py
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console':{
-            'class':'logging.StreamHandler',
+        'file_performance_dashboard': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'performance_dashboard.log'),
         },
     },
     'loggers': {
-        'itrc_tools': {  # Replace 'itrc_tools' with your app name
-            'handlers': ['console'],
+        'admin_tools': {
+            'handlers': ['file_performance_dashboard'],
             'level': 'DEBUG',
+            'propagate': True,
         },
     },
 }
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/

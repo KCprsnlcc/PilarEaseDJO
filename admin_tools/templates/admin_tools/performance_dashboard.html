@@ -1,7 +1,5 @@
 <!-- admin_tools/templates/admin_tools/performance_dashboard.html -->
-
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% block content
-%}
+{% extends "admin_tools/base_admin.html" %} {% load static %} {%block content%}
 <div class="pilarease-admin-performance-dashboard-container">
   <h2 class="pilarease-admin-section-title">
     Performance Matrix
@@ -11,10 +9,33 @@
     </div>
   </h2>
 
+  <!-- Display Messages -->
+  {% if messages %}
+  <ul class="pilarease-admin-messages">
+    {% for message in messages %}
+    <li class="pilarease-admin-message {{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <!-- Display Form Errors -->
+  {% if form.errors %}
+  <div class="pilarease-admin-form-errors">
+    <ul>
+      {% for field in form %} {% for error in field.errors %}
+      <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+      {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
   <form
     method="post"
     enctype="multipart/form-data"
     class="pilarease-admin-performance-form"
+    id="performance-form"
   >
     {% csrf_token %} {{ form.as_p }}
     <button type="submit" class="pilarease-admin-filter-button">
@@ -22,25 +43,23 @@
     </button>
   </form>
 
-  {% if metrics %}
-  <div class="pilarease-admin-metrics-section">
-    <h3>Performance Metrics</h3>
-    <ul class="pilarease-admin-metrics-list">
-      <li><strong>Accuracy:</strong> {{ metrics.accuracy }}%</li>
-      <li><strong>Precision:</strong> {{ metrics.precision }}%</li>
-      <li><strong>Recall:</strong> {{ metrics.recall }}%</li>
-      <li><strong>F1 Score:</strong> {{ metrics.f1_score }}%</li>
-    </ul>
+  <!-- Loading Spinner -->
+  <div
+    id="loading-spinner"
+    class="pilarease-admin-loading-spinner animate__animated animate__fadeIn"
+    style="display: none"
+  >
+    <div class="spinner"></div>
   </div>
-
-  <div class="pilarease-admin-confusion-matrix-section">
-    <h3>Confusion Matrix</h3>
-    <img
-      src="data:image/png;base64,{{ confusion_matrix }}"
-      alt="Confusion Matrix"
-      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
-    />
-  </div>
-  {% endif %}
 </div>
+
+<script>
+  const performanceForm = document.getElementById("performance-form");
+  const loadingSpinner = document.getElementById("loading-spinner");
+
+  performanceForm.addEventListener("submit", function () {
+    // Show loading spinner
+    loadingSpinner.style.display = "flex";
+  });
+</script>
 {% endblock %}

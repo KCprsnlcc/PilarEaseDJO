@@ -227,15 +227,25 @@ class Status(models.Model):
         return f"{self.title} by {self.user.username}"
     
 class Dataset(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='datasets')
-    csv_file = models.FileField(
-        upload_to='datasets/',
-        validators=[FileExtensionValidator(allowed_extensions=['csv'])]
-    )
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    csv_file = models.FileField(upload_to='datasets/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Dataset {self.id} uploaded by {self.user.username}"
+
+class PerformanceResult(models.Model):
+    dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name='performance_result')
+    accuracy = models.FloatField()
+    precision = models.FloatField()
+    recall = models.FloatField()
+    f1_score = models.FloatField()
+    confusion_matrix_image = models.TextField()  # Base64 encoded image
+    classification_report_html = models.TextField()  # HTML table
+    classification_report_csv = models.TextField()  # Base64 encoded CSV
+
+    def __str__(self):
+        return f"Performance Result for Dataset {self.dataset.id}"
 
 class Notification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

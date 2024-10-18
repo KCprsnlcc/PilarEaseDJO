@@ -9,9 +9,13 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.views.decorators.http import require_http_methods, require_POST
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+import matplotlib
+matplotlib.use('Agg')  # Must be set before importing pyplot
 import matplotlib.pyplot as plt
+import io
 import seaborn as sns
+from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
 from main.models import (
     ContactUs,
     Status,
@@ -22,6 +26,7 @@ from main.models import (
     ProfanityWord,
     Questionnaire,
 )
+import torch
 from django.contrib import messages
 import pandas as pd
 import plotly.express as px
@@ -43,12 +48,17 @@ import nltk
 import re
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from main.models import Dataset, PerformanceResult
 from datetime import timedelta
 from datetime import datetime
 import os
 from django.conf import settings
 from main.models import NLTKResource
 import logging
+# admin_tools/views.py
+
+# After other imports
+logger = logging.getLogger(__name__)
 
 # Define the directory for NLTK data inside the project
 nltk_data_path = os.path.join(settings.BASE_DIR, 'nltk_data')
@@ -74,26 +84,46 @@ def performance_dashboard(request):
         form = DatasetUploadForm(request.POST, request.FILES)
         if form.is_valid():
             csv_file = form.cleaned_data['csv_file']
+            dataset = form.save(commit=False)
+            dataset.user = request.user
+            dataset.save()
+            
+            # Check if the Dataset instance has been assigned an ID
+            if dataset.id is None:
+                messages.error(request, "Failed to save the dataset. Please try again.")
+                logger.error(f"Dataset save failed for user {request.user.username}. Dataset ID is None.")
+                return redirect('performance_dashboard')
+            
+            logger.info(f"Dataset {dataset.id} uploaded by user {request.user.username}")
+            
             try:
-                # Read CSV file into DataFrame
+                # Read CSV file content into DataFrame
                 df = pd.read_csv(csv_file)
+                logger.info(f"CSV file read successfully with shape {df.shape}")
                 
-                # Assuming the last column is the target variable
-                X = df.iloc[:, :-1]
-                y = df.iloc[:, -1]
+                # Assuming 'Text' and 'Label' columns are present and correctly cased
+                X = df['Text']
+                y = df['Label']
+                
+                # Check for null values
+                if X.isnull().any() or y.isnull().any():
+                    messages.error(request, "CSV contains null values. Please clean the data and try again.")
+                    dataset.delete()
+                    logger.warning(f"Dataset {dataset.id} contains null values.")
+                    return redirect('performance_dashboard')
                 
                 # Split the data
-                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=0.2, random_state=42
+                )
+                logger.info(f"Data split into train and test sets.")
                 
-                # Load your model (ensure it's trained and saved)
-                # For demonstration, we'll assume you have a function to load your model
-                from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
-                import torch
-                
-                model_name = 'jhartman/english-distillrobera-base-model'  # Replace with your actual model name
+                # Load your model and tokenizer
+                model_name = 'jhartman/english-distillroberta-base-model'  # Ensure this is correct
                 tokenizer = DistilBertTokenizer.from_pretrained(model_name)
                 model = DistilBertForSequenceClassification.from_pretrained(model_name)
                 model.eval()
+                logger.info(f"Model and tokenizer loaded from '{model_name}'")
                 
                 # Function to preprocess and predict
                 def predict(text):
@@ -105,14 +135,30 @@ def performance_dashboard(request):
                     return predicted_class_id
                 
                 # Make predictions
-                y_pred = [predict(text) for text in X_test.iloc[:,0]]  # Assuming the first column is text
+                y_pred = []
+                for idx, text in X_test.iteritems():  # X_test is a Series
+                    if isinstance(text, str):
+                        prediction = predict(text)
+                        y_pred.append(prediction)
+                    else:
+                        # Handle non-string data
+                        y_pred.append(None)
+                logger.info(f"Predictions made on test set.")
+                
+                # Remove any predictions that couldn't be made
+                valid_indices = [i for i, pred in enumerate(y_pred) if pred is not None]
+                y_test_clean = y_test.iloc[valid_indices]
+                y_pred_clean = [y_pred[i] for i in valid_indices]
+                logger.info(f"Filtered out {len(y_pred) - len(valid_indices)} invalid predictions.")
                 
                 # Calculate metrics
-                accuracy = accuracy_score(y_test, y_pred)
-                precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
-                recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
-                f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
-                cm = confusion_matrix(y_test, y_pred)
+                accuracy = accuracy_score(y_test_clean, y_pred_clean)
+                precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                recall = recall_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                f1 = f1_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                cm = confusion_matrix(y_test_clean, y_pred_clean)
+                class_report = classification_report(y_test_clean, y_pred_clean, output_dict=True)
+                logger.info(f"Performance metrics calculated: Accuracy={accuracy}, Precision={precision}, Recall={recall}, F1 Score={f1}")
                 
                 # Plot confusion matrix
                 plt.figure(figsize=(8,6))
@@ -126,21 +172,53 @@ def performance_dashboard(request):
                 image_png = buffer.getvalue()
                 buffer.close()
                 plot_url = base64.b64encode(image_png).decode('utf-8')
+                logger.info("Confusion matrix plotted and encoded.")
+                plt.close()  # Close the figure to free memory
                 
+                # Generate classification report as HTML table
+                report_df = pd.DataFrame(class_report).transpose().round(2)
+                report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
+                
+                # Generate classification report as CSV
+                report_csv = report_df.to_csv(index=True)
+                report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
+                logger.info("Classification report generated in HTML and CSV formats.")
+                
+                # Save PerformanceResult
+                performance_result = PerformanceResult.objects.create(
+                    dataset=dataset,
+                    accuracy=round(accuracy * 100, 2),
+                    precision=round(precision * 100, 2),
+                    recall=round(recall * 100, 2),
+                    f1_score=round(f1 * 100, 2),
+                    confusion_matrix_image=plot_url,
+                    classification_report_html=report_html,
+                    classification_report_csv=report_csv_base64,
+                )
+                logger.info(f"PerformanceResult {performance_result.id} saved for Dataset {dataset.id}")
+                
+                messages.success(request, "Dataset processed successfully!")
                 context = {
-                    'metrics': {
-                        'accuracy': round(accuracy * 100, 2),
-                        'precision': round(precision * 100, 2),
-                        'recall': round(recall * 100, 2),
-                        'f1_score': round(f1 * 100, 2),
-                    },
-                    'confusion_matrix': plot_url,
+                    'performance_result': performance_result,
                 }
-                return render(request, 'admin_tools/performance_dashboard.html', context)
+                return render(request, 'admin_tools/performance_dashboard_result.html', context)
+            except pd.errors.EmptyDataError:
+                messages.error(request, "Uploaded CSV file is empty or has no columns.")
+                dataset.delete()
+                logger.exception(f"Error processing Dataset {dataset.id}: No columns to parse from file")
+                return redirect('performance_dashboard')
+            except pd.errors.ParserError:
+                messages.error(request, "Error parsing CSV file. Please ensure it's a valid CSV.")
+                dataset.delete()
+                logger.exception(f"ParserError: Dataset {dataset.id}")
+                return redirect('performance_dashboard')
             except Exception as e:
-                messages.error(request, f"Error processing file: {e}")
+                messages.error(request, f"An unexpected error occurred: {str(e)}")
+                dataset.delete()  # Delete dataset entry if processing fails
+                logger.exception(f"Unexpected error processing Dataset {dataset.id}: {str(e)}")
                 return redirect('performance_dashboard')
     else:
+        # Define 'form' for GET requests
         form = DatasetUploadForm()
     
     return render(request, 'admin_tools/performance_dashboard.html', {'form': form})
