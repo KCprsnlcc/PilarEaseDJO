@@ -10,7 +10,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import BaseUserManager
 import re
-
+from django.core.validators import FileExtensionValidator
 class CustomUserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         """
@@ -225,6 +225,17 @@ class Status(models.Model):
 
     def __str__(self):
         return f"{self.title} by {self.user.username}"
+    
+class Dataset(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='datasets')
+    csv_file = models.FileField(
+        upload_to='datasets/',
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])]
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dataset {self.id} uploaded by {self.user.username}"
 
 class Notification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

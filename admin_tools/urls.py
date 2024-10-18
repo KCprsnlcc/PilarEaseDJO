@@ -54,6 +54,9 @@ urlpatterns = [
     path('block-user/', views.block_user, name='block_user'),
     path('block-user/<int:user_id>/', views.block_user, name='block_user'),  # Added user_id for blocking specific users
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+    
+    # Performance Matrix
+    path('performance-dashboard/', views.performance_dashboard, name='performance_dashboard'),
 
     # Chat
     path('chat/', views.chat_view, name='chat'),

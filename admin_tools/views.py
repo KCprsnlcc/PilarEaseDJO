@@ -8,6 +8,10 @@ from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q, Avg
 from django.views.decorators.http import require_http_methods, require_POST
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 from main.models import (
     ContactUs,
     Status,
@@ -24,6 +28,7 @@ import plotly.express as px
 import plotly.io as pio
 from wordcloud import WordCloud
 from io import BytesIO
+from .forms import DatasetUploadForm
 import base64
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -61,6 +66,84 @@ nltk_logger.setLevel(logging.CRITICAL)
 
 def is_counselor(user):
     return user.is_authenticated and user.is_counselor
+
+@login_required
+@user_passes_test(is_counselor)
+def performance_dashboard(request):
+    if request.method == 'POST':
+        form = DatasetUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            try:
+                # Read CSV file into DataFrame
+                df = pd.read_csv(csv_file)
+                
+                # Assuming the last column is the target variable
+                X = df.iloc[:, :-1]
+                y = df.iloc[:, -1]
+                
+                # Split the data
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                
+                # Load your model (ensure it's trained and saved)
+                # For demonstration, we'll assume you have a function to load your model
+                from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+                import torch
+                
+                model_name = 'jhartman/english-distillrobera-base-model'  # Replace with your actual model name
+                tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+                model = DistilBertForSequenceClassification.from_pretrained(model_name)
+                model.eval()
+                
+                # Function to preprocess and predict
+                def predict(text):
+                    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True)
+                    with torch.no_grad():
+                        outputs = model(**inputs)
+                        logits = outputs.logits
+                        predicted_class_id = logits.argmax().item()
+                    return predicted_class_id
+                
+                # Make predictions
+                y_pred = [predict(text) for text in X_test.iloc[:,0]]  # Assuming the first column is text
+                
+                # Calculate metrics
+                accuracy = accuracy_score(y_test, y_pred)
+                precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
+                recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
+                f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
+                cm = confusion_matrix(y_test, y_pred)
+                
+                # Plot confusion matrix
+                plt.figure(figsize=(8,6))
+                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+                plt.title('Confusion Matrix')
+                plt.ylabel('Actual Labels')
+                plt.xlabel('Predicted Labels')
+                buffer = BytesIO()
+                plt.savefig(buffer, format='png')
+                buffer.seek(0)
+                image_png = buffer.getvalue()
+                buffer.close()
+                plot_url = base64.b64encode(image_png).decode('utf-8')
+                
+                context = {
+                    'metrics': {
+                        'accuracy': round(accuracy * 100, 2),
+                        'precision': round(precision * 100, 2),
+                        'recall': round(recall * 100, 2),
+                        'f1_score': round(f1 * 100, 2),
+                    },
+                    'confusion_matrix': plot_url,
+                }
+                return render(request, 'admin_tools/performance_dashboard.html', context)
+            except Exception as e:
+                messages.error(request, f"Error processing file: {e}")
+                return redirect('performance_dashboard')
+    else:
+        form = DatasetUploadForm()
+    
+    return render(request, 'admin_tools/performance_dashboard.html', {'form': form})
 
 @user_passes_test(is_counselor)
 @login_required

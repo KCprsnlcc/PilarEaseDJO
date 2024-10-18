@@ -1444,6 +1444,85 @@ body {
   font-size: 12px;
   margin: 2px;
 }
+
+/* admin_tools/static/css/admin.css */
+
+/* =========================================================
+   Performance Dashboard Styles
+   ========================================================= */
+
+.pilarease-admin-performance-dashboard-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  animation: fadeInUp 0.5s ease-in-out;
+}
+
+.pilarease-admin-performance-form {
+  margin-bottom: 30px;
+}
+
+.pilarease-admin-performance-form input[type="file"] {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  max-width: 400px;
+  transition: border-color 0.3s ease;
+}
+
+.pilarease-admin-performance-form input[type="file"]:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-metrics-section {
+  margin-bottom: 30px;
+}
+
+.pilarease-admin-metrics-list {
+  list-style: none;
+  padding: 0;
+  font-size: 16px;
+}
+
+.pilarease-admin-metrics-list li {
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-confusion-matrix-section {
+  text-align: center;
+}
+
+.pilarease-admin-confusion-matrix-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: var(--box-shadow);
+  transition: transform 0.3s ease;
+}
+
+.pilarease-admin-confusion-matrix-image:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-performance-dashboard-container {
+    padding: 15px;
+  }
+
+  .pilarease-admin-performance-form input[type="file"] {
+    max-width: 100%;
+  }
+
+  .pilarease-admin-metrics-list {
+    font-size: 14px;
+  }
+}
+
 /* =========================================================
    Replies Page Specific Styles
    ========================================================= */

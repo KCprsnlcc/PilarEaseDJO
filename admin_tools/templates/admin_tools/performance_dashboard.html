@@ -1,0 +1,46 @@
+<!-- admin_tools/templates/admin_tools/performance_dashboard.html -->
+
+{% extends "admin_tools/base_admin.html" %} {% load static %} {% block content
+%}
+<div class="pilarease-admin-performance-dashboard-container">
+  <h2 class="pilarease-admin-section-title">
+    Performance Matrix
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <div class="pilarease-admin-tooltip">
+      Upload your dataset in CSV format to calculate performance metrics.
+    </div>
+  </h2>
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="pilarease-admin-performance-form"
+  >
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit" class="pilarease-admin-filter-button">
+      Upload & Calculate
+    </button>
+  </form>
+
+  {% if metrics %}
+  <div class="pilarease-admin-metrics-section">
+    <h3>Performance Metrics</h3>
+    <ul class="pilarease-admin-metrics-list">
+      <li><strong>Accuracy:</strong> {{ metrics.accuracy }}%</li>
+      <li><strong>Precision:</strong> {{ metrics.precision }}%</li>
+      <li><strong>Recall:</strong> {{ metrics.recall }}%</li>
+      <li><strong>F1 Score:</strong> {{ metrics.f1_score }}%</li>
+    </ul>
+  </div>
+
+  <div class="pilarease-admin-confusion-matrix-section">
+    <h3>Confusion Matrix</h3>
+    <img
+      src="data:image/png;base64,{{ confusion_matrix }}"
+      alt="Confusion Matrix"
+      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
+    />
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
