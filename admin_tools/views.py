@@ -12,8 +12,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
 import matplotlib
 matplotlib.use('Agg')  # Must be set before importing pyplot
+import base64 
 import matplotlib.pyplot as plt
 import io
+from django.core.files.base import ContentFile
 from django.urls import reverse
 import threading
 import seaborn as sns
@@ -108,13 +110,30 @@ def performance_dashboard(request):
             redirect_url = f"{reverse('performance_dashboard')}?dataset_id={dataset.id}"
             return redirect(redirect_url)
     else:
-        form = DatasetUploadForm()
+        # GET request handling
+        dataset_id = request.GET.get('dataset_id')
+        if dataset_id:
+            # Show progress bar for the specified dataset
+            context = {'dataset_id': dataset_id, 'form': DatasetUploadForm()}
+            return render(request, 'admin_tools/performance_dashboard.html', context)
+        else:
+            # Check for the latest PerformanceResult for the user
+            try:
+                latest_performance = PerformanceResult.objects.filter(
+                    dataset__user=request.user
+                ).latest('dataset__uploaded_at')
+                # Redirect to the result view with dataset_id
+                redirect_url = f"{reverse('performance_dashboard_result')}?dataset_id={latest_performance.dataset.id}"
+                return redirect(redirect_url)
+            except PerformanceResult.DoesNotExist:
+                # No existing results, show the upload form
+                form = DatasetUploadForm()
+                context = {'form': form}
+                return render(request, 'admin_tools/performance_dashboard.html', context)
 
-    # Check if dataset_id is in GET parameters
-    dataset_id = request.GET.get('dataset_id')
+    # For non-POST and non-GET requests (optional)
+    form = DatasetUploadForm()
     context = {'form': form}
-    if dataset_id:
-        context['dataset_id'] = dataset_id
     return render(request, 'admin_tools/performance_dashboard.html', context)
 
 def process_dataset(dataset_id):
@@ -131,6 +150,9 @@ def process_dataset(dataset_id):
         df = pd.read_csv(dataset.csv_file)
         dataset.progress = {'current_task': 'Splitting Data', 'percentage': 20}
         dataset.save()
+
+        # Ensure 'Label' column is treated as string
+        df['Label'] = df['Label'].astype(str)
 
         X = df['Text']
         y = df['Label']
@@ -167,7 +189,8 @@ def process_dataset(dataset_id):
                     outputs = model(**inputs)
                     logits = outputs.logits
                     predicted_class_id = logits.argmax().item()
-                y_pred.append(predicted_class_id)
+                    predicted_label = model.config.id2label[predicted_class_id]
+                y_pred.append(predicted_label)
             else:
                 y_pred.append(None)
 
@@ -212,7 +235,17 @@ def process_dataset(dataset_id):
         report_csv = report_df.to_csv(index=True)
         report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
 
-        # Save PerformanceResult
+        # Add 'Predicted Label' to the original DataFrame
+        df['Predicted Label'] = pd.NA  # Initialize with NA
+        df.loc[y_test_clean.index, 'Predicted Label'] = y_pred_clean
+
+        # Save the processed CSV to a new file in memory
+        processed_buffer = io.StringIO()
+        df.to_csv(processed_buffer, index=False)
+        processed_csv_content = processed_buffer.getvalue()
+        processed_buffer.close()
+
+        # Save the processed CSV file to PerformanceResult
         performance_result = PerformanceResult.objects.create(
             dataset=dataset,
             accuracy=round(accuracy * 100, 2),
@@ -222,6 +255,13 @@ def process_dataset(dataset_id):
             confusion_matrix_image=plot_url,
             classification_report_html=report_html,
             classification_report_csv=report_csv_base64,
+        )
+
+        # Save the processed CSV file
+        performance_result.processed_csv_file.save(
+            f"processed_dataset_{dataset_id}.csv",
+            ContentFile(processed_csv_content.encode('utf-8')),
+            save=True
         )
 
         # Final progress update
@@ -241,9 +281,13 @@ def process_dataset(dataset_id):
 
 def performance_dashboard_result(request):
     """
-    View to display the performance results.
+    View to display the performance results and the processed dataset.
     """
     dataset_id = request.GET.get('dataset_id')
+    if not dataset_id:
+        messages.error(request, "No dataset specified.")
+        return redirect('performance_dashboard')
+
     dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
     try:
         performance_result = PerformanceResult.objects.get(dataset=dataset)
@@ -251,8 +295,39 @@ def performance_dashboard_result(request):
         messages.error(request, "Performance results not found.")
         return redirect('performance_dashboard')
 
+    # Initialize variables for data display
+    table_data = []
+    search_query = request.GET.get('search', '')
+
+    if performance_result.processed_csv_file:
+        # Read the processed CSV into a DataFrame
+        df_processed = pd.read_csv(performance_result.processed_csv_file.path)
+
+        # Apply search filter if provided
+        if search_query:
+            df_filtered = df_processed[
+                df_processed['Text'].str.contains(search_query, case=False, na=False) |
+                df_processed['Label'].str.contains(search_query, case=False, na=False) |
+                df_processed['Predicted Label'].str.contains(search_query, case=False, na=False)
+            ]
+        else:
+            df_filtered = df_processed
+
+        # Convert DataFrame to list of dictionaries
+        table_data = df_filtered.to_dict(orient='records')
+
+        # Paginate the data
+        paginator = Paginator(table_data, 10)  # Show 10 entries per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+    else:
+        messages.error(request, "Processed dataset not available.")
+        page_obj = None
+
     context = {
         'performance_result': performance_result,
+        'page_obj': page_obj,
+        'search_query': search_query,
     }
     return render(request, 'admin_tools/performance_dashboard_result.html', context)
 

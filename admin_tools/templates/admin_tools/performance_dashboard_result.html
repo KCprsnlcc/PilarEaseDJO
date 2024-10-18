@@ -1,6 +1,5 @@
 <!-- admin_tools/templates/admin_tools/performance_dashboard_result.html -->
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% block content
-%}
+{% extends "admin_tools/base_admin.html" %} {% load static %} {%block content%}
 <div class="pilarease-admin-performance-dashboard-container">
   <h2 class="pilarease-admin-section-title">
     Performance Metrics
@@ -54,6 +53,109 @@
     >
       <i class="bx bxs-download"></i> Download Report
     </a>
+  </div>
+
+  <!-- Processed Dataset Section -->
+  <div class="pilarease-admin-processed-dataset-section">
+    <h3>Processed Dataset</h3>
+
+    <!-- Search Form -->
+    <form method="get" class="pilarease-admin-filter-form">
+      <input
+        type="hidden"
+        name="dataset_id"
+        value="{{ performance_result.dataset.id }}"
+      />
+      <div class="pilarease-admin-filter-group">
+        <label for="search" class="pilarease-admin-filter-label">Search:</label>
+        <input
+          type="text"
+          name="search"
+          id="search"
+          class="pilarease-admin-filter-input"
+          placeholder="Search..."
+          value="{{ search_query }}"
+        />
+      </div>
+      <button type="submit" class="pilarease-admin-filter-button">
+        Search
+      </button>
+      <a
+        href="{% url 'performance_dashboard_result' %}?dataset_id={{ performance_result.dataset.id }}"
+        class="pilarease-admin-action-button pilarease-admin-reset-button"
+        >Reset</a
+      >
+    </form>
+
+    <!-- Data Table -->
+    {% if page_obj and page_obj.object_list %}
+    <table class="pilarease-admin-feedback-table">
+      <thead>
+        <tr>
+          <th>Text</th>
+          <th>Label</th>
+          <th>Predicted Label</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in page_obj.object_list %}
+        <tr>
+          <td>{{ row.Text }}</td>
+          <td>{{ row.Label }}</td>
+          <td>{{ row.Predicted_Label }}</td>
+          <!-- or adjust according to your model -->
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <div class="pilarease-admin-pagination">
+      <div class="pilarease-admin-step-links">
+        {% if page_obj.has_previous %}
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page=1"
+          >&laquo; First</a
+        >
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.previous_page_number }}"
+          >&lsaquo; Previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current"
+          >Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages
+          }}</span
+        >
+
+        {% if page_obj.has_next %}
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.next_page_number }}"
+          >Next &rsaquo;</a
+        >
+        <a
+          href="?dataset_id={{ performance_result.dataset.id }}&search={{ search_query }}&page={{ page_obj.paginator.num_pages }}"
+          >Last &raquo;</a
+        >
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <p class="pilarease-admin-no-feedback">
+      No data available for the current search criteria.
+    </p>
+    {% endif %}
+
+    <!-- Download Processed Dataset -->
+    {% if performance_result.processed_csv_file %}
+    <a
+      href="{{ performance_result.processed_csv_file.url }}"
+      download="processed_dataset_{{ performance_result.dataset.id }}.csv"
+      class="pilarease-admin-action-button download-report-button"
+    >
+      <i class="bx bxs-download"></i> Download Processed Dataset
+    </a>
+    {% endif %}
   </div>
 
   <!-- Link to Upload Another Dataset -->

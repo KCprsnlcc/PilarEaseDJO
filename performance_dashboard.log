@@ -328,3 +328,225 @@ Dataset 21 uploaded by user bheng
 CSV file read successfully with shape (38765, 2)
 Data split into train and test sets.
 Model and tokenizer loaded from 'j-hartmann/emotion-english-distilroberta-base'
+Error processing dataset 24: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Error processing dataset 25: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Error processing dataset 26: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Error processing dataset 27: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 28: {'current_task': 'Uploading', 'percentage': 0}
+PerformanceResult created with ID 1 for Dataset 28.
+Dataset 28 processed successfully.
+Fetching progress for Dataset ID 28: {'current_task': 'Completed', 'percentage': 100, 'result_id': 1}
+Error processing dataset 29: 'Text'
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\pandas\core\indexes\base.py", line 3805, in get_loc
+    return self._engine.get_loc(casted_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "index.pyx", line 167, in pandas._libs.index.IndexEngine.get_loc
+  File "index.pyx", line 196, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas\\_libs\\hashtable_class_helper.pxi", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'Text'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 138, in process_dataset
+    X = df['Text']
+        ~~^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\pandas\core\frame.py", line 4102, in __getitem__
+    indexer = self.columns.get_loc(key)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\pandas\core\indexes\base.py", line 3812, in get_loc
+    raise KeyError(key) from err
+KeyError: 'Text'
+Fetching progress for Dataset ID 29: {'current_task': "Error: 'Text'", 'percentage': 100}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 30: {'current_task': 'Uploading', 'percentage': 0}
+PerformanceResult created with ID 2 for Dataset 30.
+Dataset 30 processed successfully.
+Fetching progress for Dataset ID 30: {'current_task': 'Completed', 'percentage': 100, 'result_id': 2}
+Fetching progress for Dataset ID 31: {'current_task': 'Error: Null values found', 'percentage': 100}
+Fetching progress for Dataset ID 32: {'current_task': 'Error: Null values found', 'percentage': 100}
+Fetching progress for Dataset ID 33: {'current_task': 'Error: Null values found', 'percentage': 100}
+Fetching progress for Dataset ID 34: {'current_task': 'Error: Null values found', 'percentage': 100}
+Fetching progress for Dataset ID 35: {'current_task': 'Error: Null values found', 'percentage': 100}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+Fetching progress for Dataset ID 36: {'current_task': 'Uploading', 'percentage': 0}
+PerformanceResult created with ID 3 for Dataset 36.
+Dataset 36 processed successfully.
+Fetching progress for Dataset ID 36: {'current_task': 'Completed', 'percentage': 100, 'result_id': 3}
+Error processing dataset 37: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Error processing dataset 39: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
+Error processing dataset 40: Mix of label input types (string and number)
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\PilarEaseDJO\admin_tools\views.py", line 189, in process_dataset
+    precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 213, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 2190, in precision_score
+    p, _, _, _ = precision_recall_fscore_support(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\_param_validation.py", line 186, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1775, in precision_recall_fscore_support
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\metrics\_classification.py", line 1550, in _check_set_wise_labels
+    present_labels = unique_labels(y_true, y_pred).tolist()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\PilarEaseDJO\.venv\Lib\site-packages\sklearn\utils\multiclass.py", line 116, in unique_labels
+    raise ValueError("Mix of label input types (string and number)")
+ValueError: Mix of label input types (string and number)
