@@ -1650,16 +1650,6 @@ body {
 /* =========================================================
    Performance Dashboard Styles
    ========================================================= */
-
-.pilarease-admin-performance-dashboard-container {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: var(--box-shadow);
-  animation: fadeInUp 0.5s ease-in-out;
-  margin: 20px;
-}
-
 .pilarease-admin-section-title {
   font-size: 24px;
   margin-bottom: 20px;

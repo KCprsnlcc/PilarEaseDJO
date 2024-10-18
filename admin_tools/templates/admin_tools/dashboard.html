@@ -280,27 +280,28 @@
     <div class="pilarease-admin-pagination">
       <span class="pilarease-admin-step-links">
         {% if testimonials.has_previous %}
-        <a href="?testimonial_search={{ testimonial_search_query }}&page=1"
+        <a
+          href="?testimonial_search={{ testimonial_search_query }}&page_testimonial=1"
           >&laquo; first</a
         >
         <a
-          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.previous_page_number }}"
+          href="?testimonial_search={{ testimonial_search_query }}&page_testimonial={{ testimonials.previous_page_number }}"
           >previous</a
         >
         {% endif %}
 
-        <span class="pilarease-admin-current">
-          Page {{ testimonials.number }} of {{ testimonials.paginator.num_pages
-          }}.
-        </span>
+        <span class="pilarease-admin-current"
+          >Page {{ testimonials.number }} of
+          {{testimonials.paginator.num_pages}}.</span
+        >
 
         {% if testimonials.has_next %}
         <a
-          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.next_page_number }}"
+          href="?testimonial_search={{ testimonial_search_query }}&page_testimonial={{ testimonials.next_page_number }}"
           >next</a
         >
         <a
-          href="?testimonial_search={{ testimonial_search_query }}&page={{ testimonials.paginator.num_pages }}"
+          href="?testimonial_search={{ testimonial_search_query }}&page_testimonial={{ testimonials.paginator.num_pages }}"
           >last &raquo;</a
         >
         {% endif %}
