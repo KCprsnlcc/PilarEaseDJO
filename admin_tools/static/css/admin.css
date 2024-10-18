@@ -2751,11 +2751,20 @@ body {
 }
 
 .pilarease-admin-reset-button {
-  background-color: #6c757d; /* Gray color for reset button */
+  padding: 8px 16px; /* Match the search button padding */
+  background-color: #9e9e9e; /* Keep the original color */
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 14px; /* Ensure the font size matches the search button */
+  text-align: center;
 }
 
 .pilarease-admin-reset-button:hover {
-  background-color: #5a6268;
+  background-color: #757575;
+  transform: translateY(-2px);
 }
 
 /* Statuses Table */

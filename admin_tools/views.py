@@ -94,6 +94,11 @@ def get_progress(request, dataset_id):
 @login_required
 @user_passes_test(is_counselor)
 def performance_dashboard(request):
+    form = DatasetUploadForm()
+    dataset_id = request.GET.get('dataset_id')
+    performance_result = None
+    dataset = None  # Ensure dataset is initialized
+
     if request.method == 'POST':
         form = DatasetUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -109,35 +114,31 @@ def performance_dashboard(request):
 
             # Redirect to the same page with dataset_id
             return redirect(f"{reverse('performance_dashboard')}?dataset_id={dataset.id}")
-    else:
-        form = DatasetUploadForm()
-        dataset_id = request.GET.get('dataset_id')
-        performance_result = None
 
-        if dataset_id:
-            dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
-            # Check if processing is complete
-            if dataset.progress.get('percentage') == 100:
-                try:
-                    performance_result = PerformanceResult.objects.get(dataset=dataset)
-                except PerformanceResult.DoesNotExist:
-                    messages.error(request, "Performance results not found.")
-            else:
-                # Processing is still in progress
-                pass  # The template will handle displaying the progress bar
-        else:
-            # Optionally, check for the latest performance result
+    elif dataset_id:
+        dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+        # Check if processing is complete
+        if dataset.progress.get('percentage') == 100:
             try:
-                latest_dataset = Dataset.objects.filter(user=request.user).latest('uploaded_at')
-                if latest_dataset.progress.get('percentage') == 100:
-                    performance_result = PerformanceResult.objects.get(dataset=latest_dataset)
-            except (Dataset.DoesNotExist, PerformanceResult.DoesNotExist):
-                pass
+                performance_result = PerformanceResult.objects.get(dataset=dataset)
+            except PerformanceResult.DoesNotExist:
+                messages.error(request, "Performance results not found.")
+        # Processing is still in progress; the template will handle displaying the progress bar
 
-    # Handle search and pagination if performance_result is available
+    else:
+        # Optionally, check for the latest performance result
+        try:
+            latest_dataset = Dataset.objects.filter(user=request.user).latest('uploaded_at')
+            if latest_dataset.progress.get('percentage') == 100:
+                dataset = latest_dataset
+                performance_result = PerformanceResult.objects.get(dataset=latest_dataset)
+        except (Dataset.DoesNotExist, PerformanceResult.DoesNotExist):
+            pass
+
+    # Handle search and pagination if performance_result and dataset are available
     page_obj = None
     search_query = ''
-    if performance_result and performance_result.processed_csv_file:
+    if performance_result and dataset:
         # Read the processed dataset and its TextAnalysis records
         text_analyses = TextAnalysis.objects.filter(dataset=dataset)
 
@@ -145,17 +146,15 @@ def performance_dashboard(request):
         search_query = request.GET.get('search', '')
         if search_query:
             text_analyses = text_analyses.filter(
-                Q(text__icontains=search_query) |
-                Q(actual_label__icontains=search_query) |
-                Q(predicted_label__icontains(search_query))
+                Q(analysis_data__text__icontains=search_query) |
+                Q(analysis_data__actual_label__icontains=search_query) |
+                Q(analysis_data__predicted_label__icontains=(search_query))
             )
 
         # Paginate the data
         paginator = Paginator(text_analyses, 10)  # Show 10 entries per page
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-    elif performance_result:
-        messages.error(request, "Processed dataset not available.")
 
     context = {
         'form': form,
