@@ -29,8 +29,65 @@
       {% endfor %}
     </ul>
   </div>
-  {% endif %}
+  {% endif %} {% if dataset_id %}
+  <!-- Progress Bar Section -->
+  <div class="pilarease-admin-progress-section">
+    <h3>Processing Dataset</h3>
+    <p id="current-task">Current Task: <span>Initializing...</span></p>
+    <div class="pilarease-admin-progress-bar-container">
+      <div
+        id="progress-bar"
+        class="pilarease-admin-progress-bar"
+        style="width: 0%"
+      ></div>
+    </div>
+    <p id="progress-percentage">0%</p>
+  </div>
 
+  <!-- JavaScript for Polling Progress -->
+  <script>
+    const datasetId = "{{ dataset_id }}";
+    const progressBar = document.getElementById("progress-bar");
+    const progressPercentage = document.getElementById("progress-percentage");
+    const currentTask = document
+      .getElementById("current-task")
+      .querySelector("span");
+
+    function updateProgress() {
+      fetch("{% url 'get_progress' dataset_id=dataset_id %}")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          const progress = data.progress;
+          currentTask.textContent = progress.current_task;
+          progressBar.style.width = progress.percentage + "%";
+          progressPercentage.textContent = progress.percentage + "%";
+
+          if (progress.percentage < 100) {
+            setTimeout(updateProgress, 1000); // Poll every second
+          } else {
+            // Redirect to result page after completion
+            window.location.href =
+              "{% url 'performance_dashboard_result' %}?dataset_id=" +
+              datasetId;
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching progress:", error);
+          setTimeout(updateProgress, 1000); // Retry after a second
+        });
+    }
+
+    // Start polling when the page loads
+    document.addEventListener("DOMContentLoaded", function () {
+      updateProgress();
+    });
+  </script>
+  {% else %}
+  <!-- Upload Form -->
   <form
     method="post"
     enctype="multipart/form-data"
@@ -42,24 +99,6 @@
       Upload & Calculate
     </button>
   </form>
-
-  <!-- Loading Spinner -->
-  <div
-    id="loading-spinner"
-    class="pilarease-admin-loading-spinner animate__animated animate__fadeIn"
-    style="display: none"
-  >
-    <div class="spinner"></div>
-  </div>
+  {% endif %}
 </div>
-
-<script>
-  const performanceForm = document.getElementById("performance-form");
-  const loadingSpinner = document.getElementById("loading-spinner");
-
-  performanceForm.addEventListener("submit", function () {
-    // Show loading spinner
-    loadingSpinner.style.display = "flex";
-  });
-</script>
 {% endblock %}

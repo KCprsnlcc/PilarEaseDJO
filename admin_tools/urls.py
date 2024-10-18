@@ -56,7 +56,9 @@ urlpatterns = [
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
     
     # Performance Matrix
-    path('performance-dashboard/', views.performance_dashboard, name='performance_dashboard'),
+    path('performance_dashboard/', views.performance_dashboard, name='performance_dashboard'),
+    path('performance_dashboard_result/', views.performance_dashboard_result, name='performance_dashboard_result'),
+    path('get_progress/<int:dataset_id>/', views.get_progress, name='get_progress'),
 
     # Chat
     path('chat/', views.chat_view, name='chat'),

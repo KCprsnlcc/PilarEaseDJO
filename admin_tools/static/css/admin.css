@@ -1578,6 +1578,43 @@ body {
   }
 }
 
+/* Performance Dashboard Progress Bar Styles */
+.pilarease-admin-progress-section {
+  margin-top: 20px;
+}
+
+.pilarease-admin-progress-section h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: var(--accent-color);
+}
+
+.pilarease-admin-progress-bar-container {
+  width: 100%;
+  background-color: rgba(14, 35, 38, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 25px;
+  margin-bottom: 10px;
+}
+
+.pilarease-admin-progress-bar {
+  height: 100%;
+  background-color: var(--accent-color);
+  width: 0%;
+  transition: width 1s ease;
+}
+
+.pilarease-admin-progress-section p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--accent-color);
+}
+
+.pilarease-admin-progress-section #current-task span {
+  font-weight: bold;
+}
+
 /* =========================================================
    Metrics Section Styles
    ========================================================= */

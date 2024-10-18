@@ -14,8 +14,10 @@ import matplotlib
 matplotlib.use('Agg')  # Must be set before importing pyplot
 import matplotlib.pyplot as plt
 import io
+from django.urls import reverse
+import threading
 import seaborn as sns
-from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from main.models import (
     ContactUs,
     Status,
@@ -78,6 +80,15 @@ def is_counselor(user):
     return user.is_authenticated and user.is_counselor
 
 @login_required
+@require_GET
+def get_progress(request, dataset_id):
+    """
+    API endpoint to retrieve the progress of a dataset.
+    """
+    dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+    return JsonResponse({'progress': dataset.progress})
+
+@login_required
 @user_passes_test(is_counselor)
 def performance_dashboard(request):
     if request.method == 'POST':
@@ -86,142 +97,164 @@ def performance_dashboard(request):
             csv_file = form.cleaned_data['csv_file']
             dataset = form.save(commit=False)
             dataset.user = request.user
+            dataset.progress = {'current_task': 'Uploading', 'percentage': 0}
             dataset.save()
-            
-            # Check if the Dataset instance has been assigned an ID
-            if dataset.id is None:
-                messages.error(request, "Failed to save the dataset. Please try again.")
-                logger.error(f"Dataset save failed for user {request.user.username}. Dataset ID is None.")
-                return redirect('performance_dashboard')
-            
-            logger.info(f"Dataset {dataset.id} uploaded by user {request.user.username}")
-            
-            try:
-                # Read CSV file content into DataFrame
-                df = pd.read_csv(csv_file)
-                logger.info(f"CSV file read successfully with shape {df.shape}")
-                
-                # Assuming 'Text' and 'Label' columns are present and correctly cased
-                X = df['Text']
-                y = df['Label']
-                
-                # Check for null values
-                if X.isnull().any() or y.isnull().any():
-                    messages.error(request, "CSV contains null values. Please clean the data and try again.")
-                    dataset.delete()
-                    logger.warning(f"Dataset {dataset.id} contains null values.")
-                    return redirect('performance_dashboard')
-                
-                # Split the data
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=0.2, random_state=42
-                )
-                logger.info(f"Data split into train and test sets.")
-                
-                # Load your model and tokenizer
-                model_name = 'jhartman/english-distillroberta-base-model'  # Ensure this is correct
-                tokenizer = DistilBertTokenizer.from_pretrained(model_name)
-                model = DistilBertForSequenceClassification.from_pretrained(model_name)
-                model.eval()
-                logger.info(f"Model and tokenizer loaded from '{model_name}'")
-                
-                # Function to preprocess and predict
-                def predict(text):
-                    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True)
-                    with torch.no_grad():
-                        outputs = model(**inputs)
-                        logits = outputs.logits
-                        predicted_class_id = logits.argmax().item()
-                    return predicted_class_id
-                
-                # Make predictions
-                y_pred = []
-                for idx, text in X_test.iteritems():  # X_test is a Series
-                    if isinstance(text, str):
-                        prediction = predict(text)
-                        y_pred.append(prediction)
-                    else:
-                        # Handle non-string data
-                        y_pred.append(None)
-                logger.info(f"Predictions made on test set.")
-                
-                # Remove any predictions that couldn't be made
-                valid_indices = [i for i, pred in enumerate(y_pred) if pred is not None]
-                y_test_clean = y_test.iloc[valid_indices]
-                y_pred_clean = [y_pred[i] for i in valid_indices]
-                logger.info(f"Filtered out {len(y_pred) - len(valid_indices)} invalid predictions.")
-                
-                # Calculate metrics
-                accuracy = accuracy_score(y_test_clean, y_pred_clean)
-                precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
-                recall = recall_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
-                f1 = f1_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
-                cm = confusion_matrix(y_test_clean, y_pred_clean)
-                class_report = classification_report(y_test_clean, y_pred_clean, output_dict=True)
-                logger.info(f"Performance metrics calculated: Accuracy={accuracy}, Precision={precision}, Recall={recall}, F1 Score={f1}")
-                
-                # Plot confusion matrix
-                plt.figure(figsize=(8,6))
-                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-                plt.title('Confusion Matrix')
-                plt.ylabel('Actual Labels')
-                plt.xlabel('Predicted Labels')
-                buffer = BytesIO()
-                plt.savefig(buffer, format='png')
-                buffer.seek(0)
-                image_png = buffer.getvalue()
-                buffer.close()
-                plot_url = base64.b64encode(image_png).decode('utf-8')
-                logger.info("Confusion matrix plotted and encoded.")
-                plt.close()  # Close the figure to free memory
-                
-                # Generate classification report as HTML table
-                report_df = pd.DataFrame(class_report).transpose().round(2)
-                report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
-                
-                # Generate classification report as CSV
-                report_csv = report_df.to_csv(index=True)
-                report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
-                logger.info("Classification report generated in HTML and CSV formats.")
-                
-                # Save PerformanceResult
-                performance_result = PerformanceResult.objects.create(
-                    dataset=dataset,
-                    accuracy=round(accuracy * 100, 2),
-                    precision=round(precision * 100, 2),
-                    recall=round(recall * 100, 2),
-                    f1_score=round(f1 * 100, 2),
-                    confusion_matrix_image=plot_url,
-                    classification_report_html=report_html,
-                    classification_report_csv=report_csv_base64,
-                )
-                logger.info(f"PerformanceResult {performance_result.id} saved for Dataset {dataset.id}")
-                
-                messages.success(request, "Dataset processed successfully!")
-                context = {
-                    'performance_result': performance_result,
-                }
-                return render(request, 'admin_tools/performance_dashboard_result.html', context)
-            except pd.errors.EmptyDataError:
-                messages.error(request, "Uploaded CSV file is empty or has no columns.")
-                dataset.delete()
-                logger.exception(f"Error processing Dataset {dataset.id}: No columns to parse from file")
-                return redirect('performance_dashboard')
-            except pd.errors.ParserError:
-                messages.error(request, "Error parsing CSV file. Please ensure it's a valid CSV.")
-                dataset.delete()
-                logger.exception(f"ParserError: Dataset {dataset.id}")
-                return redirect('performance_dashboard')
-            except Exception as e:
-                messages.error(request, f"An unexpected error occurred: {str(e)}")
-                dataset.delete()  # Delete dataset entry if processing fails
-                logger.exception(f"Unexpected error processing Dataset {dataset.id}: {str(e)}")
-                return redirect('performance_dashboard')
+
+            # Start background thread for processing
+            thread = threading.Thread(target=process_dataset, args=(dataset.id,))
+            thread.start()
+
+            # Build the redirect URL with query parameters
+            redirect_url = f"{reverse('performance_dashboard')}?dataset_id={dataset.id}"
+            return redirect(redirect_url)
     else:
-        # Define 'form' for GET requests
         form = DatasetUploadForm()
-    
-    return render(request, 'admin_tools/performance_dashboard.html', {'form': form})
+
+    # Check if dataset_id is in GET parameters
+    dataset_id = request.GET.get('dataset_id')
+    context = {'form': form}
+    if dataset_id:
+        context['dataset_id'] = dataset_id
+    return render(request, 'admin_tools/performance_dashboard.html', context)
+
+def process_dataset(dataset_id):
+    """
+    Function to process the dataset and update progress.
+    Runs in a separate thread.
+    """
+    try:
+        dataset = Dataset.objects.get(id=dataset_id)
+        dataset.progress = {'current_task': 'Reading CSV', 'percentage': 10}
+        dataset.save()
+
+        # Read CSV
+        df = pd.read_csv(dataset.csv_file)
+        dataset.progress = {'current_task': 'Splitting Data', 'percentage': 20}
+        dataset.save()
+
+        X = df['Text']
+        y = df['Label']
+
+        # Check for null values
+        if X.isnull().any() or y.isnull().any():
+            dataset.progress = {'current_task': 'Error: Null values found', 'percentage': 100}
+            dataset.save()
+            return
+
+        # Split the data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42
+        )
+        dataset.progress = {'current_task': 'Loading Model', 'percentage': 30}
+        dataset.save()
+
+        # Load model and tokenizer
+        model_name = 'j-hartmann/emotion-english-distilroberta-base'
+        token = os.getenv('HUGGINGFACE_HUB_TOKEN')  # Ensure this is set if the model is private
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=token)
+        model = AutoModelForSequenceClassification.from_pretrained(model_name, use_auth_token=token)
+        model.eval()
+        dataset.progress = {'current_task': 'Making Predictions', 'percentage': 40}
+        dataset.save()
+
+        # Make predictions with progress updates
+        y_pred = []
+        total = len(X_test)
+        for idx, text in X_test.items():
+            if isinstance(text, str):
+                inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True)
+                with torch.no_grad():
+                    outputs = model(**inputs)
+                    logits = outputs.logits
+                    predicted_class_id = logits.argmax().item()
+                y_pred.append(predicted_class_id)
+            else:
+                y_pred.append(None)
+
+            # Update progress every 10%
+            current_percentage = 40 + int((len(y_pred) / total) * 60)
+            dataset.progress = {'current_task': 'Making Predictions', 'percentage': current_percentage}
+            dataset.save()
+
+        # Clean predictions
+        valid_indices = [i for i, pred in enumerate(y_pred) if pred is not None]
+        y_test_clean = y_test.iloc[valid_indices]
+        y_pred_clean = [y_pred[i] for i in valid_indices]
+
+        dataset.progress = {'current_task': 'Calculating Metrics', 'percentage': 90}
+        dataset.save()
+
+        # Calculate metrics
+        accuracy = accuracy_score(y_test_clean, y_pred_clean)
+        precision = precision_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+        recall = recall_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+        f1 = f1_score(y_test_clean, y_pred_clean, average='weighted', zero_division=0)
+        cm = confusion_matrix(y_test_clean, y_pred_clean)
+        class_report = classification_report(y_test_clean, y_pred_clean, output_dict=True)
+
+        # Plot confusion matrix
+        plt.figure(figsize=(8,6))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+        plt.title('Confusion Matrix')
+        plt.ylabel('Actual Labels')
+        plt.xlabel('Predicted Labels')
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plot_url = base64.b64encode(image_png).decode('utf-8')
+        plt.close()
+
+        # Generate classification report as HTML and CSV
+        report_df = pd.DataFrame(class_report).transpose().round(2)
+        report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
+        report_csv = report_df.to_csv(index=True)
+        report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
+
+        # Save PerformanceResult
+        performance_result = PerformanceResult.objects.create(
+            dataset=dataset,
+            accuracy=round(accuracy * 100, 2),
+            precision=round(precision * 100, 2),
+            recall=round(recall * 100, 2),
+            f1_score=round(f1 * 100, 2),
+            confusion_matrix_image=plot_url,
+            classification_report_html=report_html,
+            classification_report_csv=report_csv_base64,
+        )
+
+        # Final progress update
+        dataset.progress = {'current_task': 'Completed', 'percentage': 100, 'result_id': performance_result.id}
+        dataset.save()
+
+        logger.info(f"Dataset {dataset_id} processed successfully.")
+
+    except Exception as e:
+        logger.exception(f"Error processing dataset {dataset_id}: {e}")
+        try:
+            dataset = Dataset.objects.get(id=dataset_id)
+            dataset.progress = {'current_task': f'Error: {str(e)}', 'percentage': 100}
+            dataset.save()
+        except Dataset.DoesNotExist:
+            logger.error(f"Dataset {dataset_id} does not exist.")
+
+def performance_dashboard_result(request):
+    """
+    View to display the performance results.
+    """
+    dataset_id = request.GET.get('dataset_id')
+    dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+    try:
+        performance_result = PerformanceResult.objects.get(dataset=dataset)
+    except PerformanceResult.DoesNotExist:
+        messages.error(request, "Performance results not found.")
+        return redirect('performance_dashboard')
+
+    context = {
+        'performance_result': performance_result,
+    }
+    return render(request, 'admin_tools/performance_dashboard_result.html', context)
 
 @user_passes_test(is_counselor)
 @login_required

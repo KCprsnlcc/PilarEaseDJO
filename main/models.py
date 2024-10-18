@@ -230,6 +230,7 @@ class Dataset(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     csv_file = models.FileField(upload_to='datasets/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    progress = models.JSONField(default=dict)  # New field to track progress
 
     def __str__(self):
         return f"Dataset {self.id} uploaded by {self.user.username}"
