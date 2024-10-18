@@ -16,8 +16,8 @@ class DatasetUploadForm(forms.ModelForm):
         csv_file = self.cleaned_data.get('csv_file')
         if csv_file:
             # Validate file size (e.g., max 5MB)
-            if csv_file.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("CSV file size must be under 5MB.")
+            if csv_file.size > 15 * 1024 * 1024:
+                raise forms.ValidationError("CSV file size must be under 15MB.")
             
             # Validate file extension
             if not csv_file.name.endswith('.csv'):
