@@ -351,18 +351,31 @@ def submit_answer(request):
         if question_index is None or answer_text is None:
             return JsonResponse({'success': False, 'error': 'Missing data.'})
 
+        # Save the user's answer as a ChatMessage
+        ChatMessage.objects.create(
+            user=request.user,
+            message=answer_text,
+            is_bot_message=False,
+            message_type='user_message',
+            question_index=question_index
+        )
+
         # Get the question text
         try:
             question_text = QUESTIONS[question_index]
-        except IndexError:
-            question_text = "Unknown question"
-
-        # Get bot's response
-        try:
             answer_idx = ANSWERS[question_index].index(answer_text)
             response_text = RESPONSES[question_index][answer_idx]
         except (IndexError, ValueError):
             response_text = "Thank you for your response."
+
+        # Save the bot's response as a ChatMessage
+        ChatMessage.objects.create(
+            user=request.user,
+            message=response_text,
+            is_bot_message=True,
+            message_type='bot_message',
+            question_index=question_index
+        )
 
         # Update or create the Questionnaire entry
         questionnaire_entry, created = Questionnaire.objects.update_or_create(
@@ -373,14 +386,6 @@ def submit_answer(request):
                 'response': response_text,
                 'timestamp': timezone.now()
             }
-        )
-
-        # Save bot's response in ChatMessage associated with the user
-        ChatMessage.objects.create(
-            user=request.user,
-            message=response_text,
-            is_bot_message=True,
-            message_type='bot_message'
         )
 
         # Save progress
