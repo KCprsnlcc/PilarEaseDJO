@@ -121,7 +121,8 @@ function loadChatHistory(scrollToBottom = true) {
     .then((data) => {
       loadingHistory = false;
       if (data.chat_history && data.chat_history.length > 0) {
-        const messages = data.chat_history.reverse(); // Reverse to ascending order
+        const messages = data.chat_history; // No reverse needed
+
         if (chatHistoryPage === 1) {
           // Initial load: append messages normally
           messages.forEach((message) => {
