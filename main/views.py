@@ -205,10 +205,8 @@ RESPONSES = [
 def get_chat_history(request):
     page = int(request.GET.get('page', 1))
     
-    # Include both user messages and bot messages
-    chat_messages = ChatMessage.objects.filter(
-        Q(user=request.user) | Q(is_bot_message=True)
-    ).order_by('-timestamp')
+    # Fetch chat messages associated with the user, ordered descending
+    chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')
     
     total_messages = chat_messages.count()
     paginator = Paginator(chat_messages, 10)  # 10 messages per page
@@ -234,6 +232,7 @@ def get_chat_history(request):
             'message': message.message,
             'sender': 'bot' if message.is_bot_message else 'user',
             'message_type': message.message_type,
+            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
         })
         if message.message_type == 'question' and not awaiting_answer:
             # Set awaiting_answer to True only if we haven't already set it
@@ -248,7 +247,7 @@ def get_chat_history(request):
     is_chat_empty = not chat_messages.exists()
 
     return JsonResponse({
-        'chat_history': chat_history,
+        'chat_history': chat_history,  # Ordered descending
         'awaiting_answer': awaiting_answer,
         'current_question_index': current_question_index,
         'is_chat_empty': is_chat_empty,
@@ -258,7 +257,7 @@ def get_chat_history(request):
 @login_required
 def start_chat(request):
     # Check if chat history exists (including bot messages)
-    if ChatMessage.objects.filter(Q(user=request.user) | Q(is_bot_message=True)).exists():
+    if ChatMessage.objects.filter(user=request.user).exists():
         # If chat history exists, do not send the greeting again
         return JsonResponse({'success': True, 'message': '', 'options': []})
 
@@ -266,9 +265,9 @@ def start_chat(request):
     greeting = "Hello! Welcome to PilarEase, your emotional support companion. How can I assist you today? Should we start?"
     options = ["Start", "Not Yet"]
 
-    # Save bot message with user=None
+    # Save bot message associated with the user
     ChatMessage.objects.create(
-        user=None,  # Bot messages should not be linked to a user
+        user=request.user,
         message=greeting,
         is_bot_message=True,
         message_type='greeting'
@@ -296,9 +295,9 @@ def chat_view(request):
             return JsonResponse({'success': True, 'question_index': 0})
         elif user_message.lower() == 'not yet':
             bot_message = "No worries, take your time."
-            # Save bot message with user=None
+            # Save bot message associated with the user
             ChatMessage.objects.create(
-                user=None,  # Bot messages should not be linked to a user
+                user=request.user,
                 message=bot_message,
                 is_bot_message=True,
                 message_type='bot_message'
@@ -307,9 +306,9 @@ def chat_view(request):
         else:
             # Handle other messages or commands
             bot_message = "I'm here to help whenever you're ready."
-            # Save bot message with user=None
+            # Save bot message associated with the user
             ChatMessage.objects.create(
-                user=None,  # Bot messages should not be linked to a user
+                user=request.user,
                 message=bot_message,
                 is_bot_message=True,
                 message_type='bot_message'
@@ -376,7 +375,7 @@ def submit_answer(request):
             }
         )
 
-        # Save bot's response in ChatMessage
+        # Save bot's response in ChatMessage associated with the user
         ChatMessage.objects.create(
             user=request.user,
             message=response_text,
@@ -415,7 +414,7 @@ def final_option_selection(request):
         else:
             bot_message = "No problem. I'm here if you need anything else."
 
-        # Save bot message
+        # Save bot message associated with the user
         ChatMessage.objects.create(
             user=request.user,
             message=bot_message,
@@ -435,9 +434,9 @@ def send_message(request):
         is_bot_message = data.get('is_bot_message')
 
         if message:
-            # Save the message to the database
+            # Save the message to the database, associating with the user
             ChatMessage.objects.create(
-                user=request.user if not is_bot_message else None,
+                user=request.user if not is_bot_message else request.user,  # Associate with user
                 message=message,
                 is_bot_message=is_bot_message,
                 created_at=timezone.now()
@@ -445,7 +444,7 @@ def send_message(request):
             return JsonResponse({'success': True})
         else:
             return JsonResponse({'success': False, 'error': 'No message provided'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 @csrf_exempt
 def send_chat_message(request):

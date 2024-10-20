@@ -121,16 +121,25 @@ function loadChatHistory(scrollToBottom = true) {
     .then((data) => {
       loadingHistory = false;
       if (data.chat_history && data.chat_history.length > 0) {
-        const messages = data.chat_history.reverse(); // Now ascending order
-        messages.forEach((message) => {
-          if (message.sender === "user" || message.sender === "bot") {
-            generateMessage(message.message, message.sender); // Use append logic
+        const messages = data.chat_history.reverse(); // Reverse to ascending order
+        if (chatHistoryPage === 1) {
+          // Initial load: append messages normally
+          messages.forEach((message) => {
+            if (message.sender === "user" || message.sender === "bot") {
+              generateMessage(message.message, message.sender);
+            }
+          });
+          if (data.chat_history.length < 10) {
+            hasMoreHistory = false;
           }
-        });
-        chatHistoryPage++;
-        if (data.chat_history.length < 10) {
-          hasMoreHistory = false;
+        } else {
+          // Prepend older messages
+          prependMessages(messages);
+          if (data.chat_history.length < 10) {
+            hasMoreHistory = false;
+          }
         }
+        chatHistoryPage++;
       } else {
         hasMoreHistory = false;
       }
@@ -162,19 +171,24 @@ function loadChatHistory(scrollToBottom = true) {
     });
 }
 // Prepend message to chat body
-function prependMessage(text, sender) {
-  const messageWrapper = document.createElement("div");
-  messageWrapper.className = "message-wrapper";
+function prependMessages(messages) {
+  messages.forEach((message) => {
+    const messageWrapper = document.createElement("div");
+    messageWrapper.className = "message-wrapper";
 
-  const messageElement = document.createElement("div");
-  messageElement.className =
-    sender === "user"
-      ? "user-message chat-message"
-      : "chatbot-message chat-message";
-  messageElement.textContent = text;
+    const messageElement = document.createElement("div");
+    messageElement.className =
+      message.sender === "user"
+        ? "user-message chat-message"
+        : "chatbot-message chat-message";
+    messageElement.textContent = message.message;
 
-  messageWrapper.appendChild(messageElement);
-  chatBody.insertBefore(messageWrapper, chatBody.firstChild);
+    messageWrapper.appendChild(messageElement);
+    chatBody.insertBefore(messageWrapper, chatBody.firstChild);
+  });
+
+  // Adjust scroll position to maintain view after prepending
+  // (Optional: Implement smooth scrolling if desired)
 }
 
 // Start chat session
