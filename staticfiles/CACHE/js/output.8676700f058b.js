@@ -1,3 +1,0 @@
-document.addEventListener("DOMContentLoaded",function(){const loginForm=document.getElementById("adminLoginForm");const errorElement=document.querySelector(".error");loginForm.addEventListener("submit",function(event){const username=document.getElementById("username").value.trim();const password=document.getElementById("password").value.trim();if(errorElement){errorElement.textContent="";errorElement.style.display="none";}
-let hasError=false;let errorMessage="";if(username===""){hasError=true;errorMessage="Username is required.";}else if(password===""){hasError=true;errorMessage="Password is required.";}
-if(hasError){event.preventDefault();if(errorElement){errorElement.textContent=errorMessage;errorElement.style.display="block";}}});});;
