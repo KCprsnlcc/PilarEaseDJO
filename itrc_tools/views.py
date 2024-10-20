@@ -313,7 +313,7 @@ def activate_user(request, user_id):
     # Log the action
     AuditLog.objects.create(
         user=request.user,
-        action='verify',
+        action='activate',
         details=f"Activated and verified user {user.username}."
     )
 
@@ -324,7 +324,7 @@ def activate_user(request, user_id):
 @require_POST
 def deactivate_user(request, user_id):
     """
-    Deactivate and reject a user account via AJAX.
+    Deactivate a user account via AJAX.
     """
     user = get_object_or_404(CustomUser, id=user_id)
     if user.is_itrc_staff or user.is_counselor:
@@ -332,17 +332,17 @@ def deactivate_user(request, user_id):
 
     user.is_active = False
     user.is_verified = False
-    user.verification_status = 'rejected'
+    user.verification_status = 'deactivated'  # Updated status
     user.save()
 
     # Log the action
     AuditLog.objects.create(
         user=request.user,
-        action='reject',
-        details=f"Deactivated and rejected user {user.username}."
+        action='deactivate',
+        details=f"Deactivated user {user.username}."
     )
 
-    return JsonResponse({'success': True, 'message': f'User {user.username} has been deactivated and rejected.'})
+    return JsonResponse({'success': True, 'message': f'User {user.username} has been deactivated.'})
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -849,7 +849,7 @@ def manage_users_bulk_action(request):
         messages.success(request, f'Successfully activated and verified {updated_count} users.')
 
     elif bulk_action == 'deactivate':
-        updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='rejected')
+        updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='deactivated')  # Updated status
         AuditLog.objects.create(
             user=request.user,
             action='bulk_deactivate',

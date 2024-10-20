@@ -29,8 +29,6 @@ Manage Users {% endblock %} {% block itrc_content %}
     action="{% url 'manage_users_bulk_action' %}"
   >
     {% csrf_token %}
-
-    <!-- Bulk Action Dropdown and Apply Button -->
     <div class="pilarease-itrc-bulk-actions">
       <select
         name="bulk_action"
@@ -42,7 +40,6 @@ Manage Users {% endblock %} {% block itrc_content %}
         <option value="activate">Activate Selected</option>
         <option value="deactivate">Deactivate Selected</option>
         <option value="delete">Delete Selected</option>
-        <!-- Add more actions as needed -->
       </select>
       <button type="submit" class="pilarease-itrc-action-button save-button">
         Apply
@@ -91,10 +88,16 @@ Manage Users {% endblock %} {% block itrc_content %}
             Counselor {% else %} User {% endif %}
           </td>
           <td>
-            {% if user.is_verified %}
+            {% if user.verification_status == 'verified' %}
             <span class="pilarease-itrc-status-label verified">Verified</span>
-            {% else %}
+            {% elif user.verification_status == 'pending' %}
             <span class="pilarease-itrc-status-label pending">Pending</span>
+            {% elif user.verification_status == 'deactivated' %}
+            <span class="pilarease-itrc-status-label deactivated"
+              >Deactivated</span
+            >
+            {% else %}
+            <span class="pilarease-itrc-status-label rejected">Rejected</span>
             {% endif %}
           </td>
           <td>
@@ -151,7 +154,7 @@ Manage Users {% endblock %} {% block itrc_content %}
               </option>
             </select>
 
-            {% if not user.is_verified %}
+            {% if user.verification_status != 'verified' %}
             <button
               type="button"
               class="pilarease-itrc-action-button activate-button"
@@ -268,7 +271,6 @@ Manage Users {% endblock %} {% block itrc_content %}
 </div>
 {% endblock %} {% block extra_js %}
 <script>
-  // JavaScript for Bulk Actions and Toastr Notifications
   document.addEventListener("DOMContentLoaded", function () {
     // Select/Deselect All Checkboxes
     const selectAllCheckbox = document.getElementById("select-all");
@@ -370,6 +372,66 @@ Manage Users {% endblock %} {% block itrc_content %}
         bulkActionModalOverlay.style.display = "none";
       }
     };
+
+    // Activate Button Click Handler
+    document.querySelectorAll(".activate-button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        if (confirm("Are you sure you want to activate this user?")) {
+          fetch(`/itrc/activate-user/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message);
+                location.reload();
+              } else {
+                toastr.error(data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An error occurred while activating the user.");
+            });
+        }
+      });
+    });
+
+    // Deactivate Button Click Handler
+    document.querySelectorAll(".deactivate-button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        if (confirm("Are you sure you want to deactivate this user?")) {
+          fetch(`/itrc/deactivate-user/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message);
+                location.reload();
+              } else {
+                toastr.error(data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An error occurred while deactivating the user.");
+            });
+        }
+      });
+    });
   });
 </script>
 {% endblock %}

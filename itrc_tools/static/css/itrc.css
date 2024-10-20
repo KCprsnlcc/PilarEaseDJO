@@ -260,7 +260,10 @@ body {
 }
 
 .pilarease-itrc-status-label.rejected {
-  background-color: #dc3545;
+  background-color: #ff9307; /* Changed to yellow to differentiate from deactivated */
+}
+.pilarease-itrc-status-label.deactivated {
+  background-color: #dc3545; /* Red color for deactivated status */
 }
 
 /* Forms */

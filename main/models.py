@@ -69,9 +69,10 @@ class CustomUser(AbstractUser):
         ('pending', 'Pending'),
         ('verified', 'Verified'),
         ('rejected', 'Rejected'),
+        ('deactivated', 'Deactivated'),
     ]
     verification_status = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=VERIFICATION_STATUS_CHOICES,
         default='pending'
     )
