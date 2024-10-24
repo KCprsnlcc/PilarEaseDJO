@@ -7,6 +7,7 @@ from .models import (
     SystemSetting,
     AuditLog,
     AuditLogEntry,
+    Notification_System,
 )
 
 @admin.register(VerificationRequest)
@@ -37,3 +38,9 @@ class AuditLogEntryAdmin(admin.ModelAdmin):
     list_display = ('audit_log', 'description', 'timestamp')
     list_filter = ('timestamp',)
     search_fields = ('audit_log__user__username', 'description')
+
+@admin.register(Notification_System)
+class NotificationSystemAdmin(admin.ModelAdmin):
+    list_display = ('user', 'notification_type', 'message', 'is_read', 'timestamp')
+    list_filter = ('notification_type', 'is_read', 'timestamp')
+    search_fields = ('user__username', 'message')

@@ -165,3 +165,30 @@ class SessionLogMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         return response
+
+
+class Notification_System(models.Model):
+    NOTIFICATION_TYPES = [
+        ('info', 'Information'),
+        ('warning', 'Warning'),
+        ('success', 'Success'),
+        ('error', 'Error'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    notification_type = models.CharField(
+        max_length=10,
+        choices=NOTIFICATION_TYPES,
+        default='info'
+    )
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    link = models.URLField(blank=True, null=True)  # Optional link to related content
+
+    def __str__(self):
+        return f"Notification({self.notification_type}) for {self.user.username} at {self.timestamp}"

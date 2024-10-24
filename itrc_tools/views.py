@@ -22,14 +22,14 @@ from .models import (
     EnrollmentMasterlist,
     SystemSetting,
     AuditLog,
-    CustomUser,
     SessionLog,
     APIPerformanceLog,
     ErrorLog,
     SystemDowntime,
     PageViewLog,
     FeatureUtilizationLog,
-    Feedback
+    Feedback,
+    Notification_System
 )
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -93,9 +93,6 @@ class ItrcLogoutView(LogoutView):
 @user_passes_test(is_itrc_staff)
 @login_required
 def itrc_dashboard(request):
-    """
-    Display key statistics and pending verification requests.
-    """
     pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
     total_requests = VerificationRequest.objects.count()
     verified_requests = VerificationRequest.objects.filter(status='verified').count()
@@ -108,13 +105,9 @@ def itrc_dashboard(request):
         'rejected_requests': rejected_requests,
     }
     return render(request, 'itrc_tools/itrc_dashboard.html', context)
-
 @user_passes_test(is_itrc_staff)
 @login_required
 def verify_user(request, user_id):
-    """
-    Approve or reject a user's verification request.
-    """
     user = get_object_or_404(CustomUser, id=user_id)
     verification_request = get_object_or_404(VerificationRequest, user=user)
 
@@ -139,6 +132,14 @@ def verify_user(request, user_id):
                 details=f"Approved user {user.username}. Remarks: {remarks}"
             )
 
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been verified by the ITRC staff.',
+                link=reverse('dashboard')  # Adjust as needed
+            )
+
             messages.success(request, f'User {user.username} has been verified.')
         elif action == 'reject':
             user.is_active = False
@@ -157,6 +158,14 @@ def verify_user(request, user_id):
                 details=f"Rejected user {user.username}. Remarks: {remarks}"
             )
 
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='warning',
+                message='Your account verification request has been rejected by the ITRC staff.',
+                link=reverse('contact_support')  # Adjust as needed
+            )
+
             messages.info(request, f'User {user.username} has been rejected.')
         else:
             messages.error(request, 'Invalid action.')
@@ -168,6 +177,80 @@ def verify_user(request, user_id):
         'verification_request': verification_request,
     }
     return render(request, 'itrc_tools/verify_user.html', context)
+
+@user_passes_test(is_itrc_staff)
+@login_required
+def upload_masterlist(request):
+    if request.method == 'POST':
+        if 'csv_file' not in request.FILES:
+            messages.error(request, 'No file was uploaded.')
+            return redirect('upload_masterlist')
+
+        csv_file = request.FILES['csv_file']
+
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'Please upload a valid CSV file with a .csv extension.')
+            return redirect('upload_masterlist')
+
+        try:
+            dataset = tablib.Dataset().load(csv_file.read().decode('utf-8'), format='csv', headers=True)
+            resource = EnrollmentMasterlistResource()
+
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=True)
+
+                if result.has_errors():
+                    error_messages = []
+                    for row in result.invalid_rows:
+                        error = row.error
+                        row_index = row.number
+                        error_messages.append(f"Row {row_index}: {error}")
+
+                    messages.error(request, 'There were errors in the uploaded file:')
+                    for error_message in error_messages:
+                        messages.error(request, error_message)
+                    return redirect('upload_masterlist')
+
+                resource.import_data(dataset, dry_run=False)
+
+            records_processed = len(dataset)
+            messages.success(request, f'Successfully imported {records_processed} records.')
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='upload_masterlist',
+                details=f"Uploaded masterlist with {records_processed} records."
+            )
+            return redirect('upload_masterlist')
+
+        except Exception as e:
+            messages.error(request, f'An error occurred while processing the file: {e}')
+            return redirect('upload_masterlist')
+    else:
+        search_query = request.GET.get('search', '').strip()
+
+        if search_query:
+            masterlist_data = EnrollmentMasterlist.objects.filter(
+                Q(student_id__icontains=search_query) |
+                Q(full_name__icontains=search_query) |
+                Q(academic_year_level__icontains=search_query)
+            ).order_by('student_id')
+        else:
+            masterlist_data = EnrollmentMasterlist.objects.all().order_by('student_id')
+
+        paginator = Paginator(masterlist_data, 10)
+        page_number = request.GET.get('page')
+        masterlist_page_obj = paginator.get_page(page_number)
+
+        context = {
+            'masterlist_data': masterlist_page_obj,
+            'masterlist_page_range': paginator.get_elided_page_range(
+                masterlist_page_obj.number, on_each_side=2, on_ends=1
+            ),
+            'search_query': search_query,
+        }
+        return render(request, 'itrc_tools/upload_masterlist.html', context)
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -258,13 +341,8 @@ def upload_masterlist(request):
 @user_passes_test(is_itrc_staff)
 @login_required
 def manage_users(request):
-    """
-    Display and manage user accounts, including ITRC staff, counselors, and regular users.
-    Handles GET requests for displaying users.
-    """
     search_query = request.GET.get('search', '').strip()
 
-    # Search functionality
     if search_query:
         users = CustomUser.objects.filter(
             Q(username__icontains=search_query) |
@@ -273,18 +351,12 @@ def manage_users(request):
             Q(email__icontains=search_query)
         )
     else:
-        # Fetch all users including verified and not verified
         users = CustomUser.objects.all()
 
-    # Order the users (newest first)
     users = users.order_by('-id')
-
-    # Pagination: Show 10 users per page
     paginator = Paginator(users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    # Generate the page range for pagination (similar to logs_page_range)
     users_page_range = paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1)
 
     context = {
@@ -298,9 +370,6 @@ def manage_users(request):
 @login_required
 @require_POST
 def activate_user(request, user_id):
-    """
-    Activate and verify a user account via AJAX.
-    """
     user = get_object_or_404(CustomUser, id=user_id)
     if user.is_itrc_staff or user.is_counselor:
         return JsonResponse({'success': False, 'message': 'Cannot activate ITRC staff or counselors.'}, status=400)
@@ -317,22 +386,27 @@ def activate_user(request, user_id):
         details=f"Activated and verified user {user.username}."
     )
 
+    # Send notification to the user
+    Notification_System.objects.create(
+        user=user,
+        notification_type='success',
+        message='Your account has been activated and verified by the ITRC staff.',
+        link=reverse('itrc_dashboard')  # Adjust as needed
+    )
+
     return JsonResponse({'success': True, 'message': f'User {user.username} has been activated and verified.'})
 
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
 def deactivate_user(request, user_id):
-    """
-    Deactivate a user account via AJAX.
-    """
     user = get_object_or_404(CustomUser, id=user_id)
     if user.is_itrc_staff or user.is_counselor:
         return JsonResponse({'success': False, 'message': 'Cannot deactivate ITRC staff or counselors.'}, status=400)
 
     user.is_active = False
     user.is_verified = False
-    user.verification_status = 'deactivated'  # Updated status
+    user.verification_status = 'deactivated'
     user.save()
 
     # Log the action
@@ -342,19 +416,23 @@ def deactivate_user(request, user_id):
         details=f"Deactivated user {user.username}."
     )
 
+    # Send notification to the user
+    Notification_System.objects.create(
+        user=user,
+        notification_type='warning',
+        message='Your account has been deactivated by the ITRC staff.',
+        link=reverse('contact_support')  # Adjust as needed
+    )
+
     return JsonResponse({'success': True, 'message': f'User {user.username} has been deactivated.'})
 
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
 def delete_user(request, user_id):
-    """
-    Delete a user account via AJAX.
-    """
     user = get_object_or_404(CustomUser, id=user_id)
     username = user.username
 
-    # Prevent deletion of ITRC staff and counselors
     if user.is_itrc_staff or user.is_counselor:
         return JsonResponse({'success': False, 'message': 'Cannot delete ITRC staff or counselors.'}, status=400)
 
@@ -367,14 +445,13 @@ def delete_user(request, user_id):
         details=f"Deleted user {username}."
     )
 
+    # Cannot send notification since the user is deleted
+
     return JsonResponse({'success': True, 'message': f'User {username} has been deleted.'})
 
 @user_passes_test(is_itrc_staff)
 @login_required
 def system_settings(request):
-    """
-    View and update system settings.
-    """
     settings_qs = SystemSetting.objects.all()
 
     if request.method == 'POST':
@@ -655,25 +732,24 @@ def generate_reports(request):
     # ----------------------------
 
     # Notification Delivery Metrics
-    # Assuming you have a model to track notification deliveries, replace 'send_notification' with the actual action
     notification_deliveries = (
-        AuditLog.objects.filter(action='send_notification', timestamp__gte=thirty_days_ago, timestamp__isnull=False)
+        AuditLog.objects.filter(action='send_notification', timestamp__gte=thirty_days_ago)
         .annotate(date=TruncDate('timestamp'))
         .values('date')
         .annotate(successful=Count('id'))
         .order_by('date')
     )
     notification_delivery_labels = [
-        entry['date'].strftime('%Y-%m-%d') 
-        for entry in notification_deliveries 
+        entry['date'].strftime('%Y-%m-%d')
+        for entry in notification_deliveries
         if entry['date'] is not None
     ]
-    notification_delivery_success = [entry['successful'] for entry in notification_deliveries if entry['date'] is not None]
+    notification_delivery_success = [
+        entry['successful'] for entry in notification_deliveries if entry['date'] is not None
+    ]
 
     # Pending Notifications
-    # Assuming you have a related name 'notification' in your CustomUser model pointing to notifications
-    # Adjust the related name as per your actual model
-    pending_notifications = CustomUser.objects.filter(notification__is_read=False).distinct().count()
+    pending_notifications = Notification_System.objects.filter(is_read=False).count()
 
     # ----------------------------
     # 7. User Demographic Insights
@@ -768,6 +844,10 @@ def generate_reports(request):
         # User Retention Rate
         'retention_labels': json.dumps(retention_labels),
         'retention_counts': json.dumps(retention_counts),
+        
+         'notification_delivery_labels': json.dumps(notification_delivery_labels),
+        'notification_delivery_success': json.dumps(notification_delivery_success),
+        'pending_notifications': pending_notifications,
     }
 
     return render(request, 'itrc_tools/reports.html', context)
@@ -775,9 +855,6 @@ def generate_reports(request):
 @user_passes_test(is_itrc_staff)
 @login_required
 def audit_logs_view(request):
-    """
-    Display paginated audit logs with search filtering.
-    """
     search_query = request.GET.get('search', '').strip()
 
     if search_query:
@@ -789,7 +866,6 @@ def audit_logs_view(request):
     else:
         logs = AuditLog.objects.all().order_by('-timestamp')
 
-    # Pagination: 10 logs per page
     paginator = Paginator(logs, 10)
     page_number = request.GET.get('page')
     logs_page_obj = paginator.get_page(page_number)
@@ -797,18 +873,15 @@ def audit_logs_view(request):
     context = {
         'logs': logs_page_obj,
         'search_query': search_query,
-        'logs_page_range': paginator.get_elided_page_range(logs_page_obj.number, on_each_side=2, on_ends=1)
+        'logs_page_range': paginator.get_elided_page_range(
+            logs_page_obj.number, on_each_side=2, on_ends=1
+        )
     }
     return render(request, 'itrc_tools/auditlog.html', context)
-
-# New View for Bulk Actions
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_POST
 def manage_users_bulk_action(request):
-    """
-    Handle bulk actions for managing users.
-    """
     bulk_action = request.POST.get('bulk_action')
     selected_users = request.POST.getlist('selected_users')
 
@@ -820,15 +893,15 @@ def manage_users_bulk_action(request):
         messages.error(request, 'No users selected for the bulk action.')
         return redirect('manage_users')
 
-    # Convert selected_users to integers
     try:
         selected_users = list(map(int, selected_users))
     except ValueError:
         messages.error(request, 'Invalid user selection.')
         return redirect('manage_users')
 
-    # Fetch users excluding ITRC staff and counselors
-    users_qs = CustomUser.objects.filter(id__in=selected_users).exclude(Q(is_itrc_staff=True) | Q(is_counselor=True))
+    users_qs = CustomUser.objects.filter(id__in=selected_users).exclude(
+        Q(is_itrc_staff=True) | Q(is_counselor=True)
+    )
 
     if bulk_action == 'verify':
         updated_count = users_qs.update(is_verified=True, verification_status='verified')
@@ -837,6 +910,14 @@ def manage_users_bulk_action(request):
             action='bulk_verify',
             details=f"Bulk verified {updated_count} users."
         )
+        # Send notifications to users
+        for user in users_qs:
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been verified by the ITRC staff.',
+                link=reverse('itrc_dashboard')
+            )
         messages.success(request, f'Successfully verified {updated_count} users.')
 
     elif bulk_action == 'activate':
@@ -846,19 +927,34 @@ def manage_users_bulk_action(request):
             action='bulk_activate',
             details=f"Bulk activated and verified {updated_count} users."
         )
+        # Send notifications to users
+        for user in users_qs:
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been activated and verified by the ITRC staff.',
+                link=reverse('itrc_dashboard')
+            )
         messages.success(request, f'Successfully activated and verified {updated_count} users.')
 
     elif bulk_action == 'deactivate':
-        updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='deactivated')  # Updated status
+        updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='deactivated')
         AuditLog.objects.create(
             user=request.user,
             action='bulk_deactivate',
-            details=f"Bulk deactivated and rejected {updated_count} users."
+            details=f"Bulk deactivated {updated_count} users."
         )
-        messages.success(request, f'Successfully deactivated and rejected {updated_count} users.')
+        # Send notifications to users
+        for user in users_qs:
+            Notification_System.objects.create(
+                user=user,
+                notification_type='warning',
+                message='Your account has been deactivated by the ITRC staff.',
+                link=reverse('contact_support')
+            )
+        messages.success(request, f'Successfully deactivated {updated_count} users.')
 
     elif bulk_action == 'delete':
-        # Prevent deletion of ITRC staff and counselors
         non_deletable_users = CustomUser.objects.filter(
             Q(id__in=selected_users) & (Q(is_itrc_staff=True) | Q(is_counselor=True))
         )
@@ -872,9 +968,26 @@ def manage_users_bulk_action(request):
             action='bulk_delete',
             details=f"Bulk deleted {deleted_count} users."
         )
+        # Cannot send notifications since users are deleted
         messages.success(request, f'Successfully deleted {deleted_count} users.')
 
     else:
         messages.error(request, 'Invalid bulk action selected.')
 
     return redirect('manage_users')
+
+@login_required
+def notifications_view(request):
+    user_notifications = request.user.notifications.all().order_by('-timestamp')
+    context = {
+        'notifications': user_notifications
+    }
+    return render(request, 'itrc_tools/notifications.html', context)
+
+@login_required
+@require_POST
+def mark_notification_as_read(request, notification_id):
+    notification = get_object_or_404(Notification_System, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return JsonResponse({'success': True})
