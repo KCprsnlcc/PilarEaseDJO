@@ -19,5 +19,6 @@ urlpatterns = [
     path('generate-reports/', views.generate_reports, name='generate_reports'),
     path('notifications/', views.notifications_view, name='notifications'),
     path('notifications/mark-as-read/<int:notification_id>/', views.mark_notification_as_read, name='mark_notification_as_read'),
+    path('contact-support/', views.contact_support, name='contact_support'),
     path('logout/', LogoutView.as_view(next_page='/itrc/'), name='itrc_logout'),
 ]

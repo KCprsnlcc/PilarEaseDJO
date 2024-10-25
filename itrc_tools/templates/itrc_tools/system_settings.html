@@ -26,11 +26,14 @@ Settings{% endblock %} {% block itrc_content %}
   </form>
 
   <h2 class="pilarease-itrc-subsection-title">Current Settings</h2>
+  <h2 class="pilarease-itrc-subsection-title">Current Settings</h2>
   <table class="pilarease-itrc-table">
     <thead>
       <tr>
         <th>Key</th>
         <th>Value</th>
+        <th>Status</th>
+        <!-- Add Status Column -->
       </tr>
     </thead>
     <tbody>
@@ -38,10 +41,17 @@ Settings{% endblock %} {% block itrc_content %}
       <tr>
         <td>{{ setting.key }}</td>
         <td>{{ setting.value }}</td>
+        <td>
+          <span class="status {% if setting.is_active %}active{% else %}inactive{% endif %}"></span>
+
+            {% if setting.is_active %}Active{% else %}Inactive{% endif %}
+          </span>
+        </td>
+        <!-- Display Active/Inactive Status -->
       </tr>
       {% empty %}
       <tr>
-        <td colspan="2" class="pilarease-itrc-no-data">
+        <td colspan="3" class="pilarease-itrc-no-data">
           No system settings found.
         </td>
       </tr>

@@ -1,5 +1,5 @@
 <!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
-{% load static %} {% load i18n %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -24,17 +24,71 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
 
-    <!-- Custom CSS for Notifications -->
+    <!-- Custom CSS for Toastr Notifications (Optional) -->
     <style>
-      /* Integrating the provided CSS here */
+      /* Customize Toastr Notifications */
+      #toast-container > .toast-success {
+        background-color: #28a745;
+      }
 
+      #toast-container > .toast-error {
+        background-color: #dc3545;
+      }
+
+      #toast-container > .toast-warning {
+        background-color: #ffc107;
+      }
+
+      #toast-container > .toast-info {
+        background-color: #17a2b8;
+      }
+
+      /* Style the Logout Button to look like a menu item */
+      .pilarease-itrc-logout-form {
+        display: block; /* Changed from inline to block for full-width */
+      }
+
+      .pilarease-itrc-logout-button {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
+        font: inherit;
+        text-align: left;
+        width: 100%;
+        height: 100%;
+      }
+
+      .pilarease-itrc-logout-button:hover {
+        background-color: #f0f0f0; /* Matches hover for other menu items */
+      }
+
+      /* Ensure the logout button spans the entire menu item area */
+      .pilarease-itrc-menu-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        text-decoration: none;
+        color: #333;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width */
+      }
+
+      .pilarease-itrc-menu-item i {
+        margin-right: 10px;
+      }
+
+      .pilarease-itrc-menu-item:hover {
+        background-color: #f0f0f0;
+      }
       #notificationButton {
         position: relative;
         font-size: 24px;
         color: #fff;
         background-color: #0e2326;
-        left: 1280px;
-        top: -2px;
+        padding: 10px;
+        border-radius: 50%;
         cursor: pointer;
       }
 
@@ -45,8 +99,8 @@
         background-color: #e74c3c;
         border-radius: 50%;
         position: absolute;
-        top: 12px;
-        right: 12px;
+        top: 8px;
+        right: 8px;
         display: none;
       }
 
@@ -56,6 +110,7 @@
         background-color: #689e4b;
         border-radius: 50%;
         display: inline-block;
+        flex-shrink: 0; /* Prevents dot from shrinking */
         margin-left: 10px;
         vertical-align: middle;
       }
@@ -64,10 +119,7 @@
         color: #689e4b;
       }
 
-      .notification-dot.blink {
-        animation: blinkDot 1s infinite;
-      }
-
+      /* Blinking red animation for the dot */
       @keyframes blinkDot {
         0% {
           opacity: 1;
@@ -83,14 +135,18 @@
         }
       }
 
+      .notification-dot.blink {
+        animation: blinkDot 1s infinite;
+      }
+
+      /* Notification List Styles */
       #notificationList {
-        position: fixed;
-        top: 40px;
-        right: 0;
-        left: 1120px;
+        position: absolute;
+        top: 50px;
+        right: 20px;
         background: #fff;
         color: #000;
-        width: 300px;
+        width: 350px;
         border: 1px solid #ccc;
         border-radius: 5px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -101,7 +157,8 @@
         overflow-y: auto;
       }
 
-      #notificationList.animated {
+      #notificationList.active {
+        display: block;
         animation: popDownNotification 0.3s ease-out forwards;
       }
 
@@ -122,19 +179,21 @@
         padding: 10px;
         font-size: 14px;
         font-weight: bold;
+        border-bottom: 1px solid #ccc;
       }
 
       .notification-item {
         display: flex;
         align-items: center;
         padding: 10px;
-        width: 270px;
-        height: 80px;
         background-color: #fff;
-        border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid #eee;
         cursor: pointer;
-        margin: 5px 10px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        transition: background-color 0.2s;
+      }
+
+      .notification-item:hover {
+        background-color: #f9f9f9;
       }
 
       .notification-item.unread {
@@ -164,12 +223,87 @@
         color: #9095a0;
         margin-top: 3px;
       }
+
+      .notification-content .timestamp-green {
+        color: #689e4b;
+      }
     </style>
   </head>
   <body>
     <!-- Sidebar -->
     <div class="pilarease-itrc-sidebar animate__animated animate__fadeInLeft">
-      <!-- Sidebar content remains unchanged -->
+      <div class="pilarease-itrc-sidebar-header">
+        <img
+          src="{% static 'images/PilarLogo.png' %}"
+          alt="Logo"
+          class="pilarease-itrc-sidebar-logo"
+        />
+        <span class="pilarease-itrc-sidebar-title">PilarEase</span>
+      </div>
+      <ul class="pilarease-itrc-sidebar-menu">
+        <li>
+          <a href="{% url 'itrc_dashboard' %}" class="pilarease-itrc-menu-item">
+            <i class="bx bxs-dashboard"></i>
+            <span class="pilarease-itrc-menu-text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a
+            href="{% url 'upload_masterlist' %}"
+            class="pilarease-itrc-menu-item"
+          >
+            <i class="bx bxs-cloud-upload"></i>
+            <span class="pilarease-itrc-menu-text">Upload Masterlist</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'manage_users' %}" class="pilarease-itrc-menu-item">
+            <i class="bx bxs-user-detail"></i>
+            <span class="pilarease-itrc-menu-text">Manage Users</span>
+          </a>
+        </li>
+        <li>
+          <a
+            href="{% url 'system_settings' %}"
+            class="pilarease-itrc-menu-item"
+          >
+            <i class="bx bxs-cog"></i>
+            <span class="pilarease-itrc-menu-text">System Settings</span>
+          </a>
+        </li>
+        <li>
+          <a
+            href="{% url 'generate_reports' %}"
+            class="pilarease-itrc-menu-item"
+          >
+            <i class="bx bxs-report"></i>
+            <span class="pilarease-itrc-menu-text">Reports</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'audit_logs' %}" class="pilarease-itrc-menu-item">
+            <i class="bx bx-book"></i>
+            <span class="pilarease-itrc-menu-text">Audit Logs</span>
+          </a>
+        </li>
+        <li>
+          <!-- Logout Button as a Form -->
+          <form
+            action="{% url 'itrc_logout' %}"
+            method="post"
+            class="pilarease-itrc-logout-form"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="pilarease-itrc-menu-item pilarease-itrc-logout-button"
+            >
+              <i class="bx bxs-log-out"></i>
+              <span class="pilarease-itrc-menu-text">Logout</span>
+            </button>
+          </form>
+        </li>
+      </ul>
     </div>
 
     <!-- Main Content -->
@@ -181,30 +315,33 @@
             {% block page_title %}{% endblock %}
           </h2>
         </div>
-        <div class="pilarease-itrc-header-right">
-          <!-- Notification Button with Dot -->
-          <div id="notificationButton">
+        <div class="pilarease-itrc-header-right" style="position: relative">
+          <!-- Notification Button -->
+          <button id="notificationButton" class="notification-button">
             <i class="bx bxs-bell"></i>
-            <span class="notification-dot blink"></span>
-            <!-- Blinking Red Dot -->
-          </div>
+            <span id="notificationDot" class="notification-dot"></span>
+          </button>
+
           <!-- Notification List -->
-          <div id="notificationList" class="animated">
+          <div id="notificationList" class="notification-list">
             <div class="notification-header">
-              <span>Notifications</span>
+              <span class="earlier">Earlier</span>
               <span class="see-all">
                 <a href="{% url 'notifications' %}">See All</a>
               </span>
             </div>
+
+            <!-- Notification Items -->
             {% for notification in request.user.notifications.all %}
             <div
               class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}"
+              onclick="window.location.href='{{ notification.link }}'"
             >
               <div class="notification-avatar"></div>
               <div class="notification-content">
                 <span class="message">{{ notification.message }}</span>
                 <div
-                  class="timestamp {{ 'timestamp-green' if not notification.is_read else '' }}"
+                  class="timestamp {% if not notification.is_read %}timestamp-green{% endif %}"
                 >
                   {{ notification.timestamp|date:"Y-m-d H:i" }}
                 </div>
@@ -213,6 +350,14 @@
             {% empty %}
             <div class="notification-item">No notifications.</div>
             {% endfor %}
+          </div>
+
+          <!-- Profile Icon -->
+          <div
+            class="pilarease-itrc-profile-icon"
+            title="{{ request.user.username }}"
+          >
+            {{ request.user.username|slice:":1"|upper }}
           </div>
         </div>
       </div>
@@ -257,30 +402,32 @@
     <!-- Notification Dropdown Script -->
     <script>
       $(document).ready(function () {
-        // Show or hide the notification list when clicking the notification button
+        // Toggle Notification List
         $('#notificationButton').on('click', function (e) {
           e.stopPropagation();
           $('#notificationList').toggleClass('active');
         });
 
-        // Hide the dropdown if clicked outside
+        // Hide Notification List when clicking outside
         $(document).on('click', function (e) {
           if (!$(e.target).closest('#notificationButton').length) {
             $('#notificationList').removeClass('active');
           }
         });
 
-        // Optional: Highlight unread notifications and update dot
+        // Update Notification Dot based on unread count
         function updateNotifications() {
-          var unreadCount = {{ request.user.notifications.filter(is_read=False).count }};
+          var unreadCount = {{ unread_notifications_count|default:"0" }};
           if (unreadCount > 0) {
-            $('.notification-dot').show();
+            $('#notificationDot').show();
             if (unreadCount > 5) {
-              $('.notification-dot').addClass('blink');
+              $('#notificationDot').addClass('blink');
+            } else {
+              $('#notificationDot').removeClass('blink');
             }
           } else {
-            $('.notification-dot').hide();
-            $('.notification-dot').removeClass('blink');
+            $('#notificationDot').hide();
+            $('#notificationDot').removeClass('blink');
           }
         }
 
@@ -292,3 +439,38 @@
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
+c. Key Integration Points Explained: Notification Button and Dot: html Copy code
+<button id="notificationButton" class="notification-button">
+  <i class="bx bxs-bell"></i>
+  <span id="notificationDot" class="notification-dot"></span>
+</button>
+Positioned within the header-right section. The notification-dot indicates
+unread notifications. Notification List: html Copy code
+<div id="notificationList" class="notification-list">
+  <div class="notification-header">
+    <span class="earlier">Earlier</span>
+    <span class="see-all">
+      <a href="{% url 'notifications' %}">See All</a>
+    </span>
+  </div>
+
+  <!-- Notification Items -->
+  {% for notification in request.user.notifications.all %}
+  <div
+    class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}"
+    onclick="window.location.href='{{ notification.link }}'"
+  >
+    <div class="notification-avatar"></div>
+    <div class="notification-content">
+      <span class="message">{{ notification.message }}</span>
+      <div
+        class="timestamp {% if not notification.is_read %}timestamp-green{% endif %}"
+      >
+        {{ notification.timestamp|date:"Y-m-d H:i" }}
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="notification-item">No notifications.</div>
+  {% endfor %}
+</div>

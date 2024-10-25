@@ -129,7 +129,8 @@ def verify_user(request, user_id):
             AuditLog.objects.create(
                 user=request.user,
                 action='verify',
-                details=f"Approved user {user.username}. Remarks: {remarks}"
+                details=f"Approved user {user.username}. Remarks: {remarks}",
+                timestamp=timezone.now()
             )
 
             # Send notification to the user
@@ -137,7 +138,7 @@ def verify_user(request, user_id):
                 user=user,
                 notification_type='success',
                 message='Your account has been verified by the ITRC staff.',
-                link=reverse('dashboard')  # Adjust as needed
+                link=reverse('itrc_dashboard')  # Adjust as needed
             )
 
             messages.success(request, f'User {user.username} has been verified.')
@@ -155,7 +156,8 @@ def verify_user(request, user_id):
             AuditLog.objects.create(
                 user=request.user,
                 action='reject',
-                details=f"Rejected user {user.username}. Remarks: {remarks}"
+                details=f"Rejected user {user.username}. Remarks: {remarks}",
+                timestamp=timezone.now()
             )
 
             # Send notification to the user
@@ -425,6 +427,25 @@ def deactivate_user(request, user_id):
     )
 
     return JsonResponse({'success': True, 'message': f'User {user.username} has been deactivated.'})
+
+def contact_support(request):
+    if request.method == 'POST':
+        # Handle the support form submission
+        subject = request.POST.get('subject', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        if not subject or not message:
+            messages.error(request, 'Both subject and message are required.')
+            return redirect('contact_support')
+
+        # Implement your support message handling logic here
+        # For example, send an email to the support team
+        # ...
+
+        messages.success(request, 'Your message has been sent to support.')
+        return redirect('itrc_dashboard')
+
+    return render(request, 'itrc_tools/contact_support.html')
 
 @user_passes_test(is_itrc_staff)
 @login_required
