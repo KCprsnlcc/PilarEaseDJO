@@ -30,5 +30,10 @@ urlpatterns = [
     # Contact Support
     path('contact-support/', views.contact_support, name='contact_support'),
 
+    # New User Management URLs
+    path('add-user/', views.add_user, name='add_user'),
+    path('edit-user/<int:user_id>/', views.edit_user, name='edit_user'),  # Optional: Implement this view
+    path('change-role/<int:user_id>/', views.change_role, name='change_role'),  # Optional: Implement this view
+
     # ... other URL patterns ...
 ]

@@ -8,6 +8,17 @@ Manage Users {% endblock %} {% block itrc_content %}
     View, edit, and manage user accounts within the system.
   </p>
 
+  <!-- Add User Button -->
+  <div class="pilarease-itrc-add-user">
+    <button
+      type="button"
+      class="pilarease-itrc-action-button upload-button"
+      id="addUserButton"
+    >
+      <i class="bx bx-user-plus"></i> Add User
+    </button>
+  </div>
+
   <!-- Search Form -->
   <form method="get" class="pilarease-itrc-search-form">
     <input
@@ -46,7 +57,7 @@ Manage Users {% endblock %} {% block itrc_content %}
       </button>
     </div>
 
-    <!-- User Table with Checkboxes -->
+    <!-- User Table with Checkboxes and Avatars -->
     <table class="pilarease-itrc-table">
       <thead>
         <tr>
@@ -57,6 +68,8 @@ Manage Users {% endblock %} {% block itrc_content %}
               class="pilarease-itrc-select-all"
             />
           </th>
+          <th>Avatar</th>
+          <!-- New Avatar Column -->
           <th>User ID</th>
           <th>Student ID</th>
           <th>Username</th>
@@ -78,6 +91,21 @@ Manage Users {% endblock %} {% block itrc_content %}
               class="pilarease-itrc-user-checkbox"
             />
           </td>
+          <td>
+            {% if user.profile.avatar %}
+            <img
+              src="{{ user.profile.avatar.url }}"
+              alt="{{ user.username }}'s Avatar"
+              class="pilarease-itrc-avatar"
+            />
+            {% else %}
+            <img
+              src="{% static 'images/avatars/placeholder.png' %}"
+              alt="Default Avatar"
+              class="pilarease-itrc-avatar"
+            />
+            {% endif %}
+          </td>
           <td>{{ user.id }}</td>
           <td>{{ user.student_id }}</td>
           <td>{{ user.username }}</td>
@@ -93,9 +121,9 @@ Manage Users {% endblock %} {% block itrc_content %}
             {% elif user.verification_status == 'pending' %}
             <span class="pilarease-itrc-status-label pending">Pending</span>
             {% elif user.verification_status == 'deactivated' %}
-            <span class="pilarease-itrc-status-label deactivated"
-              >Deactivated</span
-            >
+            <span class="pilarease-itrc-status-label deactivated">
+              Deactivated
+            </span>
             {% else %}
             <span class="pilarease-itrc-status-label rejected">Rejected</span>
             {% endif %}
@@ -186,7 +214,7 @@ Manage Users {% endblock %} {% block itrc_content %}
         </tr>
         {% empty %}
         <tr>
-          <td colspan="9" class="pilarease-itrc-no-data">No users found.</td>
+          <td colspan="10" class="pilarease-itrc-no-data">No users found.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -233,6 +261,159 @@ Manage Users {% endblock %} {% block itrc_content %}
       {% endif %}
     </ul>
   </nav>
+</div>
+
+<!-- Add User Modal -->
+<div
+  class="pilarease-itrc-modal-overlay"
+  id="addUserModalOverlay"
+  style="display: none"
+>
+  <div class="pilarease-itrc-modal">
+    <div class="pilarease-itrc-modal-header">
+      <h2>Add New User</h2>
+      <span class="pilarease-itrc-close-modal" id="closeAddUserModal"
+        >&times;</span
+      >
+    </div>
+    <div class="pilarease-itrc-modal-body">
+      <form
+        id="addUserForm"
+        method="post"
+        enctype="multipart/form-data"
+        action="{% url 'add_user' %}"
+      >
+        {% csrf_token %}
+        <div class="pilarease-itrc-form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            name="username"
+            id="username"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="student_id">Student ID</label>
+          <input
+            type="text"
+            name="student_id"
+            id="student_id"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="full_name">Full Name</label>
+          <input
+            type="text"
+            name="full_name"
+            id="full_name"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="academic_year_level">Academic Year Level</label>
+          <input
+            type="text"
+            name="academic_year_level"
+            id="academic_year_level"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="contact_number">Contact Number</label>
+          <input
+            type="text"
+            name="contact_number"
+            id="contact_number"
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="is_counselor">Is Counselor</label>
+          <select
+            name="is_counselor"
+            id="is_counselor"
+            class="pilarease-itrc-role-dropdown"
+          >
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="is_itrc_staff">Is ITRC Staff</label>
+          <select
+            name="is_itrc_staff"
+            id="is_itrc_staff"
+            class="pilarease-itrc-role-dropdown"
+          >
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            required
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="avatar">Avatar</label>
+          <input
+            type="file"
+            name="avatar"
+            id="avatar"
+            accept="image/*"
+            class="pilarease-itrc-form-input"
+          />
+        </div>
+        <div class="pilarease-itrc-form-group">
+          <label for="is_active">Is Active</label>
+          <select
+            name="is_active"
+            id="is_active"
+            class="pilarease-itrc-role-dropdown"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+        <div class="pilarease-itrc-modal-footer">
+          <button
+            type="button"
+            class="pilarease-itrc-action-button reject-button"
+            id="cancelAddUser"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="pilarease-itrc-action-button approve-button"
+          >
+            Add User
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- Confirmation Modal for Bulk Actions -->
@@ -373,6 +554,31 @@ Manage Users {% endblock %} {% block itrc_content %}
       }
     };
 
+    // Add User Modal Handling
+    const addUserButton = document.getElementById("addUserButton");
+    const addUserModalOverlay = document.getElementById("addUserModalOverlay");
+    const closeAddUserModal = document.getElementById("closeAddUserModal");
+    const cancelAddUser = document.getElementById("cancelAddUser");
+
+    addUserButton.onclick = function () {
+      addUserModalOverlay.style.display = "flex";
+    };
+
+    closeAddUserModal.onclick = function () {
+      addUserModalOverlay.style.display = "none";
+    };
+
+    cancelAddUser.onclick = function () {
+      addUserModalOverlay.style.display = "none";
+    };
+
+    // Close Add User Modal when clicking outside the modal content
+    window.onclick = function (event) {
+      if (event.target == addUserModalOverlay) {
+        addUserModalOverlay.style.display = "none";
+      }
+    };
+
     // Activate Button Click Handler
     document.querySelectorAll(".activate-button").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -432,6 +638,46 @@ Manage Users {% endblock %} {% block itrc_content %}
         }
       });
     });
+
+    // Edit Button Click Handler (Optional Enhancement)
+    document.querySelectorAll(".edit-button").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        window.location.href = `/itrc/edit-user/${userId}/`; // Ensure this URL is defined
+      });
+    });
+
+    // Role Dropdown Change Handler
+    document
+      .querySelectorAll(".pilarease-itrc-role-dropdown")
+      .forEach(function (dropdown) {
+        dropdown.addEventListener("change", function () {
+          const userId = this.getAttribute("data-user-id");
+          const newRole = this.value;
+
+          fetch(`/itrc/change-role/${userId}/`, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": "{{ csrf_token }}",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ role: newRole }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                toastr.success(data.message);
+                location.reload();
+              } else {
+                toastr.error(data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              toastr.error("An error occurred while changing the user's role.");
+            });
+        });
+      });
   });
 </script>
 {% endblock %}

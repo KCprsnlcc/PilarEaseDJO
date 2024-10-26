@@ -1,0 +1,70 @@
+<!-- itrc_tools/templates/itrc_tools/add_user.html -->
+
+{% extends "itrc_tools/base_itrc.html" %} {% load static %} {%block page_title%}
+Add New User {% endblock %} {% block itrc_content %}
+<div
+  class="pilarease-itrc-add-user-container animate__animated animate__fadeIn"
+>
+  <h1 class="pilarease-itrc-section-title">Add New User</h1>
+  <p class="pilarease-itrc-section-info">
+    Fill in the details below to add a new user to the system.
+  </p>
+
+  <form method="post" enctype="multipart/form-data" class="pilarease-itrc-form">
+    {% csrf_token %} {{ form.non_field_errors }}
+    <div class="pilarease-itrc-form-group">
+      {{ form.username.label_tag }} {{ form.username }} {{ form.username.errors
+      }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.student_id.label_tag }} {{ form.student_id }} {{
+      form.student_id.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.full_name.label_tag }} {{ form.full_name }} {{
+      form.full_name.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.academic_year_level.label_tag }} {{ form.academic_year_level }} {{
+      form.academic_year_level.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.contact_number.label_tag }} {{ form.contact_number }} {{
+      form.contact_number.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.is_counselor.label_tag }} {{ form.is_counselor }} {{
+      form.is_counselor.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.is_itrc_staff.label_tag }} {{ form.is_itrc_staff }} {{
+      form.is_itrc_staff.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.is_active.label_tag }} {{ form.is_active }} {{
+      form.is_active.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.password.label_tag }} {{ form.password }} {{ form.password.errors
+      }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      {{ form.avatar.label_tag }} {{ form.avatar }} {{ form.avatar.errors }}
+    </div>
+    <div class="pilarease-itrc-form-group">
+      <button type="submit" class="pilarease-itrc-action-button approve-button">
+        Add User
+      </button>
+      <a
+        href="{% url 'manage_users' %}"
+        class="pilarease-itrc-action-button reject-button"
+      >
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

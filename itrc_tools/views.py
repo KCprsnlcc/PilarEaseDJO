@@ -14,10 +14,13 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models.functions import TruncDate
 from django.db.models import Q, Count, Avg, Case, When, Value, DurationField
+from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_POST
 import tablib
 from import_export.formats.base_formats import CSV
+from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_GET
+from .forms import AddUserForm, EditUserForm 
 from .models import (
     VerificationRequest,
     EnrollmentMasterlist,
@@ -1088,3 +1091,108 @@ def notify_itrc_staff(notification_type, message, link=None):
             message=message,
             link=link
         )
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_http_methods(["GET", "POST"])
+def add_user(request):
+    if request.method == 'POST':
+        form = AddUserForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save()
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='register',  # Assuming 'register' is appropriate
+                details=f"Added new user {user.username}.",
+                timestamp=timezone.now()
+            )
+            # Send notification to ITRC staff
+            message = f"{request.user.username} added a new user: {user.username}."
+            link = reverse('manage_users')
+            notify_itrc_staff('info', message, link)
+
+            messages.success(request, f'User {user.username} has been added successfully.')
+            return redirect('manage_users')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = AddUserForm()
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'itrc_tools/add_user.html', context)
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == 'POST':
+        form = EditUserForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            form.save()
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='update_user',
+                details=f"Edited user {user.username}.",
+                timestamp=timezone.now()
+            )
+            # Send notification to ITRC staff
+            message = f"{request.user.username} edited user: {user.username}."
+            link = reverse('manage_users')
+            notify_itrc_staff('info', message, link)
+
+            messages.success(request, f'User {user.username} has been updated successfully.')
+            return redirect('manage_users')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = EditUserForm(instance=user)
+
+    context = {
+        'form': form,
+        'user_obj': user,
+    }
+    return render(request, 'itrc_tools/edit_user.html', context)
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def change_role(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    data = json.loads(request.body)
+    new_role = data.get('role')
+
+    if new_role not in ['user', 'counselor', 'itrc_staff']:
+        return JsonResponse({'success': False, 'message': 'Invalid role selected.'}, status=400)
+
+    # Update role flags
+    user.is_itrc_staff = new_role == 'itrc_staff'
+    user.is_counselor = new_role == 'counselor'
+    user.save()
+
+    # Optionally, manage user groups based on role
+    if new_role == 'itrc_staff':
+        itrc_group, created = Group.objects.get_or_create(name='ITRC Staff')
+        user.groups.add(itrc_group)
+    elif new_role == 'counselor':
+        counselor_group, created = Group.objects.get_or_create(name='Counselors')
+        user.groups.add(counselor_group)
+    else:
+        # Remove from all groups if the role is 'user'
+        user.groups.clear()
+
+    # Log the action
+    AuditLog.objects.create(
+        user=request.user,
+        action='change_role',
+        details=f"Changed role of user {user.username} to {new_role}.",
+        timestamp=timezone.now()
+    )
+    # Send notification to ITRC staff
+    message = f"{request.user.username} changed role of user: {user.username} to {new_role}."
+    link = reverse('manage_users')
+    notify_itrc_staff('info', message, link)
+
+    return JsonResponse({'success': True, 'message': f"User role updated to {new_role}."})

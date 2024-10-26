@@ -749,3 +749,23 @@ body {
   gap: 10px;
   border-top: 1px solid #e0e0e0;
 }
+/* Avatar Styles */
+.pilarease-itrc-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Add User Button Styles */
+.pilarease-itrc-add-user {
+  margin-bottom: 15px;
+}
+
+.pilarease-itrc-add-user .pilarease-itrc-action-button.upload-button {
+  background-color: var(--accent-color);
+}
+
+.pilarease-itrc-add-user .pilarease-itrc-action-button.upload-button:hover {
+  background-color: #e89e1c;
+}
