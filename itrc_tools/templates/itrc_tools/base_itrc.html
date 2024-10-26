@@ -104,19 +104,8 @@
         display: none;
       }
 
-      .notification-dot-green {
-        width: 10px;
-        height: 10px;
-        background-color: #689e4b;
-        border-radius: 50%;
-        display: inline-block;
-        flex-shrink: 0; /* Prevents dot from shrinking */
-        margin-left: 10px;
-        vertical-align: middle;
-      }
-
-      .timestamp-green {
-        color: #689e4b;
+      .notification-dot.blink {
+        animation: blinkDot 1s infinite;
       }
 
       /* Blinking red animation for the dot */
@@ -133,10 +122,6 @@
           opacity: 1;
           background-color: #e74c3c;
         }
-      }
-
-      .notification-dot.blink {
-        animation: blinkDot 1s infinite;
       }
 
       /* Notification List Styles */
@@ -182,6 +167,15 @@
         border-bottom: 1px solid #ccc;
       }
 
+      .notification-header .see-all a {
+        color: #689e4b;
+        text-decoration: none;
+      }
+
+      .notification-header .see-all a:hover {
+        text-decoration: underline;
+      }
+
       .notification-item {
         display: flex;
         align-items: center;
@@ -206,6 +200,7 @@
         border-radius: 50%;
         background-color: #f0f0f0;
         margin-right: 10px;
+        flex-shrink: 0;
       }
 
       .notification-content {
@@ -226,6 +221,14 @@
 
       .notification-content .timestamp-green {
         color: #689e4b;
+      }
+
+      /* Loader Styles */
+      .loader {
+        text-align: center;
+        padding: 20px;
+        font-size: 14px;
+        color: #555;
       }
     </style>
   </head>
@@ -317,7 +320,11 @@
         </div>
         <div class="pilarease-itrc-header-right" style="position: relative">
           <!-- Notification Button -->
-          <button id="notificationButton" class="notification-button">
+          <button
+            id="notificationButton"
+            class="notification-button"
+            aria-label="Notifications"
+          >
             <i class="bx bxs-bell"></i>
             <span id="notificationDot" class="notification-dot"></span>
           </button>
@@ -331,25 +338,19 @@
               </span>
             </div>
 
-            <!-- Notification Items -->
-            {% for notification in request.user.notifications.all %}
-            <div
-              class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}"
-              onclick="window.location.href='{{ notification.link }}'"
-            >
-              <div class="notification-avatar"></div>
-              <div class="notification-content">
-                <span class="message">{{ notification.message }}</span>
-                <div
-                  class="timestamp {% if not notification.is_read %}timestamp-green{% endif %}"
-                >
-                  {{ notification.timestamp|date:"Y-m-d H:i" }}
-                </div>
-              </div>
+            <!-- Notification Items will be dynamically loaded here -->
+            <div id="notificationItems">
+              <div class="loader">Loading notifications...</div>
             </div>
-            {% empty %}
-            <div class="notification-item">No notifications.</div>
-            {% endfor %}
+
+            <!-- Load More Button -->
+            <div
+              id="notificationLoadMore"
+              class="notification-load-more"
+              style="display: none"
+            >
+              Load More
+            </div>
           </div>
 
           <!-- Profile Icon -->
@@ -406,6 +407,9 @@
         $('#notificationButton').on('click', function (e) {
           e.stopPropagation();
           $('#notificationList').toggleClass('active');
+          if ($('#notificationList').hasClass('active')) {
+            loadNotifications(1); // Load the first page when opened
+          }
         });
 
         // Hide Notification List when clicking outside
@@ -416,7 +420,7 @@
         });
 
         // Update Notification Dot based on unread count
-        function updateNotifications() {
+        function updateNotificationsDot() {
           var unreadCount = {{ unread_notifications_count|default:"0" }};
           if (unreadCount > 0) {
             $('#notificationDot').show();
@@ -431,7 +435,94 @@
           }
         }
 
-        updateNotifications();
+        updateNotificationsDot();
+
+        // Function to load notifications via AJAX
+        function loadNotifications(page) {
+          $.ajax({
+            url: "{% url 'fetch_notifications' %}",
+            type: 'GET',
+            data: {
+              'page': page
+            },
+            beforeSend: function () {
+              $('#notificationItems').html('<div class="loader">Loading notifications...</div>');
+              $('#notificationLoadMore').hide();
+            },
+            success: function (data) {
+              var notifications = data.notifications;
+              var total_pages = data.total_pages;
+              var html = '';
+
+              if (notifications.length > 0) {
+                notifications.forEach(function (notification) {
+                  var itemClass = notification.is_read ? 'read' : 'unread';
+                  var timestampClass = notification.is_read ? '' : 'timestamp-green';
+                  html += `
+                    <div class="notification-item ${itemClass}" data-id="${notification.id}">
+                      <div class="notification-avatar">
+                        <img src="${notification.avatar}" alt="Avatar" style="width:40px; height:40px; border-radius:50%;">
+                      </div>
+                      <div class="notification-content">
+                        <span class="message">${notification.message}</span>
+                        <div class="timestamp ${timestampClass}">${notification.timestamp}</div>
+                      </div>
+                    </div>
+                  `;
+                });
+
+                $('#notificationItems').html(html);
+
+                if (page < total_pages) {
+                  $('#notificationLoadMore').show().data('page', page + 1);
+                } else {
+                  $('#notificationLoadMore').hide();
+                }
+              } else {
+                $('#notificationItems').html('<div class="notification-item">No notifications.</div>');
+              }
+
+              // Attach click event to mark as read and redirect
+              $('.notification-item').on('click', function () {
+                var notificationId = $(this).data('id');
+                var link = notifications.find(n => n.id === notificationId).link;
+
+                // Mark as read via AJAX
+                $.ajax({
+                  url: "{% url 'mark_notification_as_read' 0 %}".replace('/0/', '/' + notificationId + '/'),
+                  type: 'POST',
+                  data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                  },
+                  success: function (response) {
+                    if(response.success) {
+                      // Update the notification item class
+                      $('.notification-item[data-id="' + notificationId + '"]').removeClass('unread').addClass('read');
+                      // Optionally, update the notification dot count
+                      updateNotificationsDot();
+                    }
+                  },
+                  error: function(xhr, errmsg, err) {
+                    console.error("Error marking notification as read:", errmsg);
+                  }
+                });
+
+                // Redirect to the notification link
+                window.location.href = link;
+              });
+            },
+            error: function (xhr, errmsg, err) {
+              $('#notificationItems').html('<div class="notification-item">Failed to load notifications.</div>');
+              console.error("Error fetching notifications:", errmsg);
+            }
+          });
+        }
+
+        // Load more notifications when clicking 'Load More'
+        $('#notificationLoadMore').on('click', function () {
+          var nextPage = $(this).data('page');
+          loadNotifications(nextPage);
+        });
       });
     </script>
 
@@ -439,38 +530,3 @@
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
-c. Key Integration Points Explained: Notification Button and Dot: html Copy code
-<button id="notificationButton" class="notification-button">
-  <i class="bx bxs-bell"></i>
-  <span id="notificationDot" class="notification-dot"></span>
-</button>
-Positioned within the header-right section. The notification-dot indicates
-unread notifications. Notification List: html Copy code
-<div id="notificationList" class="notification-list">
-  <div class="notification-header">
-    <span class="earlier">Earlier</span>
-    <span class="see-all">
-      <a href="{% url 'notifications' %}">See All</a>
-    </span>
-  </div>
-
-  <!-- Notification Items -->
-  {% for notification in request.user.notifications.all %}
-  <div
-    class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}"
-    onclick="window.location.href='{{ notification.link }}'"
-  >
-    <div class="notification-avatar"></div>
-    <div class="notification-content">
-      <span class="message">{{ notification.message }}</span>
-      <div
-        class="timestamp {% if not notification.is_read %}timestamp-green{% endif %}"
-      >
-        {{ notification.timestamp|date:"Y-m-d H:i" }}
-      </div>
-    </div>
-  </div>
-  {% empty %}
-  <div class="notification-item">No notifications.</div>
-  {% endfor %}
-</div>
