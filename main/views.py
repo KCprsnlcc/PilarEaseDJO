@@ -226,6 +226,7 @@ def get_chat_history(request):
     chat_history = []
     awaiting_answer = False
     current_question_index = None
+    end_of_questions = False
 
     for message in chat_page.object_list:
         chat_history.append({
@@ -235,9 +236,12 @@ def get_chat_history(request):
             'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
         })
         if message.message_type == 'question' and not awaiting_answer:
-            # Set awaiting_answer to True only if we haven't already set it
             awaiting_answer = True
             current_question_index = message.question_index
+
+        # Detect if this is the final bot message
+        if message.message_type == 'bot_message' and "Would you like to talk to a counselor?" in message.message:
+            end_of_questions = True
 
     # Determine the last message type
     last_message = chat_messages.first() if chat_messages.exists() else None
@@ -252,6 +256,7 @@ def get_chat_history(request):
         'current_question_index': current_question_index,
         'is_chat_empty': is_chat_empty,
         'last_message_type': last_message_type,
+        'end_of_questions': end_of_questions,
         'total_messages': total_messages
     })
 @login_required
@@ -414,17 +419,27 @@ def final_option_selection(request):
         data = json.loads(request.body)
         selection = data.get('selection')
 
+        # Save user's selection as a ChatMessage
+        ChatMessage.objects.create(
+            user=request.user,
+            message=selection,
+            is_bot_message=False,
+            message_type='user_message',
+            timestamp=timezone.now()
+        )
+
         if selection == "Yes":
             bot_message = "Great! Please contact our counselor at counselor@example.com."
         else:
             bot_message = "No problem. I'm here if you need anything else."
 
-        # Save bot message associated with the user
+        # Save bot's response as a ChatMessage
         ChatMessage.objects.create(
             user=request.user,
             message=bot_message,
             is_bot_message=True,
-            message_type='bot_message'
+            message_type='bot_message',
+            timestamp=timezone.now()
         )
 
         return JsonResponse({'success': True, 'message': bot_message})

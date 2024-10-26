@@ -124,7 +124,8 @@ function loadChatHistory(scrollToBottom = true) {
         const messages = data.chat_history; // No reverse needed
 
         if (chatHistoryPage === 1) {
-          // Initial load: append messages normally
+          // Reverse messages to display in chronological order
+          messages.reverse();
           messages.forEach((message) => {
             if (message.sender === "user" || message.sender === "bot") {
               generateMessage(message.message, message.sender);
@@ -132,6 +133,11 @@ function loadChatHistory(scrollToBottom = true) {
           });
           if (data.chat_history.length < 10) {
             hasMoreHistory = false;
+          }
+
+          // After loading the latest messages, check if we need to display final options
+          if (data.end_of_questions) {
+            displayFinalOptions();
           }
         } else {
           // Prepend older messages
@@ -280,22 +286,19 @@ function sendMessage() {
 
 // Handle bot response
 function handleBotResponse(data) {
-  if (data.message) {
+  if (data.message && !data.end_of_questions) {
     simulateTyping(data.message, "bot");
   }
-  if (data.question_index !== undefined) {
+
+  if (data.question_index !== undefined && data.question_index !== null) {
     setTimeout(() => {
       displayQuestion(data.question_index);
     }, 1000); // Delay before displaying the question
   }
+
   if (data.end_of_questions) {
-    simulateTyping(
-      "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
-      "bot",
-      () => {
-        displayFinalOptions();
-      }
-    );
+    // Directly display the final options without simulating the message again
+    displayFinalOptions();
   }
 }
 
@@ -565,7 +568,6 @@ chatBody.addEventListener("scroll", function () {
     scrollToLatestButton.style.display = "none";
   }
 });
-
 if (statusComposerButton) {
   // Show the modal with pop-in animation
   statusComposerButton.addEventListener("click", function () {
