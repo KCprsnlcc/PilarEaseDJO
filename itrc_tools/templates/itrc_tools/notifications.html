@@ -1,11 +1,16 @@
 <!-- itrc_tools/templates/itrc_tools/notifications.html -->
-{% extends "itrc_tools/base_itrc.html" %} {% load static %} {% load i18n %} {%
-block page_title %}Notifications{% endblock %} {% block itrc_content %}
-<div class="notifications-container">
-  <h1>All Notifications</h1>
-  <button id="markAllAsRead" style="margin-bottom: 10px">
+{% extends "itrc_tools/base_itrc.html" %} {% load static %} {% load i18n %}
+{%block page_title%}Notifications{% endblock %} {% block itrc_content %}
+<div class="pilarease-itrc-content notifications-container">
+  <h1 class="pilarease-itrc-section-title">All Notifications</h1>
+  <button
+    id="markAllAsRead"
+    class="pilarease-itrc-action-button"
+    style="margin-bottom: 10px"
+  >
     Mark All as Read
   </button>
+
   <div class="notifications-list">
     {% for notification in notifications %}
     <div
@@ -27,6 +32,7 @@ block page_title %}Notifications{% endblock %} {% block itrc_content %}
         />
         {% endif %}
       </div>
+
       <div class="notification-content">
         <span class="message">{{ notification.message }}</span>
         <div
@@ -37,7 +43,9 @@ block page_title %}Notifications{% endblock %} {% block itrc_content %}
       </div>
     </div>
     {% empty %}
-    <div class="notification-item">No notifications.</div>
+    <div class="notification-item pilarease-itrc-no-data">
+      No notifications.
+    </div>
     {% endfor %}
   </div>
 </div>
@@ -65,8 +73,6 @@ block page_title %}Notifications{% endblock %} {% block itrc_content %}
             $('.notification-item[data-id="' + notificationId + '"]')
               .removeClass("unread")
               .addClass("read");
-            // Optionally, update the notification dot count
-            // This requires additional logic to decrement the count
           }
         },
         error: function (xhr, errmsg, err) {
@@ -92,8 +98,6 @@ block page_title %}Notifications{% endblock %} {% block itrc_content %}
           if (response.success) {
             // Update all notification items
             $(".notification-item").removeClass("unread").addClass("read");
-            // Update the notification dot count
-            // This requires additional logic
           }
         },
         error: function (xhr, errmsg, err) {
