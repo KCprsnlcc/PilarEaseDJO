@@ -115,6 +115,10 @@ function openChat() {
   chatPopup.classList.remove("chatPopOut");
   chatPopup.classList.add("chatPopIn");
   floatingButton.firstElementChild.classList.add("icon-pop-out");
+
+  // Scroll to the bottom to show the latest message
+  chatBody.scrollTop = chatBody.scrollHeight;
+
   setTimeout(() => {
     floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
   }, 300);
@@ -154,6 +158,10 @@ function loadChatHistory(scrollToBottom = true) {
   // Show the loading placeholder at the top
   showLoadingPlaceholder();
 
+  // Capture the current scroll position and the current height of the chatBody
+  const currentScrollTop = chatBody.scrollTop;
+  const previousHeight = chatBody.scrollHeight;
+
   fetch(`/get_chat_history/?page=${chatHistoryPage}`)
     .then((response) => response.json())
     .then((data) => {
@@ -174,6 +182,12 @@ function loadChatHistory(scrollToBottom = true) {
       } else {
         hasMoreHistory = false;
       }
+
+      // Calculate the new height after loading messages
+      const newHeight = chatBody.scrollHeight;
+
+      // Maintain the scroll position after loading older messages
+      chatBody.scrollTop = currentScrollTop + (newHeight - previousHeight);
 
       // Check if chat is empty and start session
       if (data.is_chat_empty) {
@@ -197,6 +211,8 @@ function loadChatHistory(scrollToBottom = true) {
     .catch((error) => {
       loadingHistory = false;
       removeLoadingPlaceholder();
+      console.error("Error fetching chat history:", error);
+      // Show error message to the user
       showErrorMessage("Failed to load chat history. Please try again.");
     });
 }
