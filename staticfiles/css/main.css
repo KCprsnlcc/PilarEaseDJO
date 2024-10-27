@@ -979,6 +979,36 @@ button[type="submit"]:hover {
     margin-top: 0;
   }
 }
+.loading-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.loader {
+  display: flex;
+  gap: 5px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
 
 #floatingButton {
   position: fixed;
@@ -1183,11 +1213,17 @@ button[type="submit"]:hover {
   animation: fadeInTimestamp 0.5s ease-out;
 }
 
-/* Existing styles remain the same */
 .message-wrapper {
   position: relative;
   margin-bottom: 20px; /* Space between each message */
   clear: both; /* Ensure that each message wrapper starts on a new line */
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes poptotheleft {
@@ -1442,28 +1478,54 @@ button[type="submit"]:hover {
   clear: both;
   animation: poptotheleft 0.5s ease-out;
 }
+#chatBody {
+  scroll-behavior: smooth;
+}
+/* Unified Scrollbar Styling */
+
+/* WebKit Browsers */
+#chatBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+#chatBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#chatBody::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+  border: 2px solid #f1f1f1;
+}
+
+#chatBody::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Firefox */
+#chatBody {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
 
 #scrollToLatestButton {
   position: absolute;
-  bottom: 90px;
-  right: 145px;
-  background-color: #0e2326;
-  color: #ffffff;
+  bottom: 20px;
+  right: 20px;
+  background-color: #007bff; /* Blue background */
   border: none;
+  color: white;
+  padding: 10px;
   border-radius: 50%;
-  width: 50px;
-  height: px;
-  font-size: 20px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
-  animation: popUp 0.3s ease-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s;
 }
 
-#scrollToLatestButton i {
-  font-size: 24px;
+#scrollToLatestButton:hover {
+  background-color: #0056b3; /* Darker blue on hover */
 }
 
 #contactCSSOverlay {

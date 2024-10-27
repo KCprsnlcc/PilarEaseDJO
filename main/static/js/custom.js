@@ -296,7 +296,8 @@ function startChatSession() {
 // Function to display options (e.g., Start, Not Yet)
 function displayOptions(options) {
   const optionsWrapper = document.createElement("div");
-  optionsWrapper.className = "message-wrapper options-wrapper pop-up";
+  optionsWrapper.className =
+    "message-wrapper options-wrapper pop-up poptotheright"; // Added 'poptotheright'
   optionsWrapper.id = "dialogOptions";
 
   options.forEach((option) => {
@@ -333,7 +334,9 @@ function handleOptionClick(option, optionsWrapper) {
   // Display user message
   generateMessage(option, "user");
 
-  optionsWrapper.classList.add("poptotheright"); // Apply animation class
+  // Apply the 'poptotheright' animation class
+  optionsWrapper.classList.add("poptotheright");
+  // Disable buttons to prevent multiple clicks
   optionsWrapper
     .querySelectorAll("button")
     .forEach((btn) => (btn.disabled = true));
@@ -348,19 +351,27 @@ function handleOptionClick(option, optionsWrapper) {
       question_index: currentQuestionIndex,
       answer_text: option,
     }),
-  }).then((data) => {
-    if (data.success) {
-      sessionStorage.removeItem("chatError"); // Clear error if successful
-      optionsWrapper.remove();
-      simulateTyping(data.response, "bot", () => {
-        if (data.next_question_index !== undefined) {
-          currentQuestionIndex = data.next_question_index;
-          displayAnswerOptions(currentQuestionIndex);
+  })
+    .then((data) => {
+      if (data.success) {
+        sessionStorage.removeItem("chatError"); // Clear error if successful
+        optionsWrapper.remove();
+
+        if (data.end_of_questions) {
+          // Display the final message with typing simulation
+          simulateTyping(data.final_bot_message, "bot", () => {
+            displayFinalOptions(); // Display "Yes" and "No" options with animation
+          });
+        } else if (data.question_index !== undefined) {
+          // Display the next question
+          currentQuestionIndex = data.question_index;
+          displayQuestion(currentQuestionIndex);
         }
-        if (data.end_of_questions) displayFinalOptions();
-      });
-    }
-  });
+      }
+    })
+    .catch((error) => {
+      showErrorMessage("Failed to submit your choice. Please try again.");
+    });
 }
 // Function to display a question based on question index
 function displayQuestion(questionIndex) {
@@ -493,7 +504,7 @@ function handleFinalOptionSelection(selection, optionsWrapper) {
   const buttons = optionsWrapper.querySelectorAll("button");
   buttons.forEach((btn) => (btn.disabled = true));
 
-  fetch("/final_option_selection/", {
+  fetchWithRetry("/final_option_selection/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -503,7 +514,6 @@ function handleFinalOptionSelection(selection, optionsWrapper) {
       selection: selection,
     }),
   })
-    .then((response) => response.json())
     .then((data) => {
       if (data.success) {
         setTimeout(() => {

@@ -20,36 +20,57 @@ const statusComposerButton = document.getElementById("statuscomposer");
 const floatingButton = document.getElementById("floatingButton");
 const chatPopup = document.getElementById("chatPopup");
 const chatBody = document.getElementById("chatBody");
+const chatInput = document.getElementById("chatInput");
+const sendButton = chatPopup.querySelector(".chat-input button");
+const scrollToLatestButton = document.getElementById("scrollToLatestButton");
+
+// Chat state variables
 let isDragging = false;
 let isOpen = false;
 let startX, startY, initialX, initialY;
 let lastScrollTop = 0;
 
 // For lazy loading chat history
-let chatHistoryPage = 1;
+let chatHistoryPage = 1; // Start with the first page
 let loadingHistory = false;
 let hasMoreHistory = true;
 
-// Scroll to Latest button
-const scrollToLatestButton = document.createElement("button");
-scrollToLatestButton.id = "scrollToLatestButton";
-scrollToLatestButton.innerHTML = '<i class="bx bx-down-arrow-alt"></i>';
-scrollToLatestButton.style.display = "none"; // Initially hidden
-chatPopup.appendChild(scrollToLatestButton);
+// Additional chat state variables
+let questionnaireStarted = false;
+let currentQuestionIndex = null;
 
-scrollToLatestButton.addEventListener("click", () => {
-  chatBody.scrollTop = chatBody.scrollHeight;
-  scrollToLatestButton.style.display = "none";
+// Initialize chat on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+  initializeChat();
+  updateChatPosition();
+
+  // Check and display stored error messages
+  const chatError = sessionStorage.getItem("chatError");
+  if (chatError) {
+    showErrorMessage(chatError);
+  }
 });
 
-// Update chat position
+// Scroll to Latest button creation and event listener
+if (!scrollToLatestButton) {
+  const newScrollToLatestButton = document.createElement("button");
+  newScrollToLatestButton.id = "scrollToLatestButton";
+  newScrollToLatestButton.innerHTML = '<i class="bx bx-down-arrow-alt"></i>';
+  newScrollToLatestButton.style.display = "none"; // Initially hidden
+  chatPopup.appendChild(newScrollToLatestButton);
+
+  newScrollToLatestButton.addEventListener("click", () => {
+    chatBody.scrollTop = chatBody.scrollHeight;
+    newScrollToLatestButton.style.display = "none";
+  });
+}
+
+// Update chat position based on window size
 function updateChatPosition() {
   const buttonRect = floatingButton.getBoundingClientRect();
   chatPopup.style.bottom = window.innerHeight - buttonRect.bottom + 70 + "px";
   chatPopup.style.right = window.innerWidth - buttonRect.right + 20 + "px";
 }
-
-window.addEventListener("resize", updateChatPosition);
 
 // Floating button drag functionality
 floatingButton.addEventListener("mousedown", function (e) {
@@ -78,72 +99,95 @@ function onMouseUp() {
   document.removeEventListener("mouseup", onMouseUp);
   floatingButton.style.animation = "float 3s ease-in-out infinite";
 }
-
-// Toggle chat popup
+// Toggle chat popup on floating button click
 floatingButton.addEventListener("click", function () {
   updateChatPosition();
   if (!isOpen) {
-    chatPopup.style.display = "block";
-    chatPopup.classList.remove("chatPopOut");
-    chatPopup.classList.add("chatPopIn");
-    floatingButton.firstElementChild.classList.add("icon-pop-out");
-    setTimeout(() => {
-      floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
-    }, 300);
-    isOpen = true;
-    initializeChat();
+    openChat();
   } else {
-    chatPopup.classList.remove("chatPopIn");
-    chatPopup.classList.add("chatPopOut");
-    floatingButton.firstElementChild.classList.add("icon-pop-out");
-    setTimeout(function () {
-      chatPopup.style.display = "none";
-      floatingButton.firstElementChild.className = "bx bxs-message icon-pop-in";
-    }, 300);
-    isOpen = false;
+    closeChat();
   }
 });
 
-// Initialize chat session
+// Function to open chat popup
+function openChat() {
+  chatPopup.style.display = "block";
+  chatPopup.classList.remove("chatPopOut");
+  chatPopup.classList.add("chatPopIn");
+  floatingButton.firstElementChild.classList.add("icon-pop-out");
+
+  // Scroll to the bottom to show the latest message
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  setTimeout(() => {
+    floatingButton.firstElementChild.className = "bx bx-x icon-pop-in";
+  }, 300);
+  isOpen = true;
+
+  if (!questionnaireStarted) {
+    fetchStartChat();
+  }
+}
+
+// Function to close chat popup
+function closeChat() {
+  chatPopup.classList.remove("chatPopIn");
+  chatPopup.classList.add("chatPopOut");
+  floatingButton.firstElementChild.classList.add("icon-pop-out");
+  setTimeout(function () {
+    chatPopup.style.display = "none";
+    floatingButton.firstElementChild.className = "bx bxs-message icon-pop-in";
+  }, 300);
+  isOpen = false;
+}
+
+// Function to initialize chat session
 function initializeChat() {
   chatBody.innerHTML = ""; // Clear chat body
-  chatHistoryPage = 1;
+  chatHistoryPage = 1; // Reset to first page
   hasMoreHistory = true;
-  loadChatHistory();
+  questionnaireStarted = false;
+  currentQuestionIndex = null;
+  loadChatHistory(true);
 }
-// Load chat history in batches
+// Function to load chat history
 function loadChatHistory(scrollToBottom = true) {
-  if (loadingHistory || !hasMoreHistory) return;
+  if (loadingHistory || !hasMoreHistory || chatHistoryPage < 1) return;
   loadingHistory = true;
+
+  // Show the loading placeholder at the top
+  showLoadingPlaceholder();
+
+  // Capture the current scroll position and the current height of the chatBody
+  const currentScrollTop = chatBody.scrollTop;
+  const previousHeight = chatBody.scrollHeight;
 
   fetch(`/get_chat_history/?page=${chatHistoryPage}`)
     .then((response) => response.json())
     .then((data) => {
       loadingHistory = false;
-      if (data.chat_history && data.chat_history.length > 0) {
-        const messages = data.chat_history; // No reverse needed
+      removeLoadingPlaceholder();
 
-        if (chatHistoryPage === 1) {
-          // Initial load: append messages normally
-          messages.forEach((message) => {
-            if (message.sender === "user" || message.sender === "bot") {
-              generateMessage(message.message, message.sender);
-            }
-          });
-          if (data.chat_history.length < 10) {
-            hasMoreHistory = false;
-          }
+      if (data.chat_history && data.chat_history.length > 0) {
+        const messages = data.chat_history;
+
+        // Prepend older messages
+        prependMessages(messages);
+
+        if (chatHistoryPage >= data.total_pages) {
+          hasMoreHistory = false;
         } else {
-          // Prepend older messages
-          prependMessages(messages);
-          if (data.chat_history.length < 10) {
-            hasMoreHistory = false;
-          }
+          chatHistoryPage++; // Increment to fetch the next page on future scrolls
         }
-        chatHistoryPage++;
       } else {
         hasMoreHistory = false;
       }
+
+      // Calculate the new height after loading messages
+      const newHeight = chatBody.scrollHeight;
+
+      // Maintain the scroll position after loading older messages
+      chatBody.scrollTop = currentScrollTop + (newHeight - previousHeight);
 
       // Check if chat is empty and start session
       if (data.is_chat_empty) {
@@ -166,13 +210,18 @@ function loadChatHistory(scrollToBottom = true) {
     })
     .catch((error) => {
       loadingHistory = false;
+      removeLoadingPlaceholder();
       console.error("Error fetching chat history:", error);
       // Show error message to the user
       showErrorMessage("Failed to load chat history. Please try again.");
     });
 }
-// Prepend message to chat body
+
+// Function to prepend messages to chat body
 function prependMessages(messages) {
+  // Record the current scroll position
+  const previousScrollHeight = chatBody.scrollHeight;
+
   messages.forEach((message) => {
     const messageWrapper = document.createElement("div");
     messageWrapper.className = "message-wrapper";
@@ -188,29 +237,63 @@ function prependMessages(messages) {
     chatBody.insertBefore(messageWrapper, chatBody.firstChild);
   });
 
-  // Adjust scroll position to maintain view after prepending
-  // (Optional: Implement smooth scrolling if desired)
+  // Calculate the new scroll position to maintain view
+  const newScrollHeight = chatBody.scrollHeight;
+  chatBody.scrollTop = newScrollHeight - previousScrollHeight;
+}
+// Function to show loading placeholder
+function showLoadingPlaceholder() {
+  const loaderWrapper = document.createElement("div");
+  loaderWrapper.id = "loadingPlaceholder";
+  loaderWrapper.className = "loading-placeholder";
+
+  const loader = document.createElement("div");
+  loader.className = "loader";
+  loader.innerHTML =
+    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+  loaderWrapper.appendChild(loader);
+  chatBody.insertBefore(loaderWrapper, chatBody.firstChild);
 }
 
-// Start chat session
+// Function to remove loading placeholder
+function removeLoadingPlaceholder() {
+  const loaderWrapper = document.getElementById("loadingPlaceholder");
+  if (loaderWrapper) {
+    chatBody.removeChild(loaderWrapper);
+  }
+}
+
+// Function to start chat session
 function startChatSession() {
-  fetch("/start_chat/")
+  fetch("/start_chat/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({}),
+  })
     .then((response) => response.json())
     .then((data) => {
       if (data.success && data.message) {
         simulateTyping(data.message, "bot", () => {
           if (data.options && data.options.length > 0) {
             displayOptions(data.options);
+            questionnaireStarted = true;
           }
         });
+      } else if (data.success && !data.message) {
+        // Chat is not empty; no action needed
+      } else {
+        showErrorMessage(data.error || "Failed to start chat session.");
       }
     })
     .catch((error) => {
-      console.error("Error starting chat session:", error);
       showErrorMessage("Failed to start chat session. Please try again.");
     });
 }
-// Display options (e.g., Start, Not Yet)
+// Function to display options (e.g., Start, Not Yet)
 function displayOptions(options) {
   const optionsWrapper = document.createElement("div");
   optionsWrapper.className = "message-wrapper options-wrapper pop-up";
@@ -221,7 +304,7 @@ function displayOptions(options) {
     button.className = "option-button";
     button.textContent = option;
     button.onclick = function () {
-      autoSendMessage(option, optionsWrapper);
+      handleOptionClick(option, optionsWrapper);
     };
     optionsWrapper.appendChild(button);
   });
@@ -230,123 +313,56 @@ function displayOptions(options) {
   chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// Auto-send message (for options)
-function autoSendMessage(message, optionsWrapper) {
-  optionsWrapper.classList.remove("pop-up");
-  optionsWrapper.classList.add("pop-down");
-
-  setTimeout(() => {
-    optionsWrapper.remove();
-    const chatInput = document.getElementById("chatInput");
-    chatInput.value = message;
-    sendMessage();
-  }, 300);
+async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error(`HTTP status ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delay * (i + 1)));
+      } else {
+        showErrorMessage("Network error. Please try again.");
+        throw error;
+      }
+    }
+  }
 }
+function handleOptionClick(option, optionsWrapper) {
+  // Display user message
+  generateMessage(option, "user");
 
-// Send message function
-function sendMessage() {
-  const chatInput = document.getElementById("chatInput");
-  const messageText = chatInput.value.trim();
+  optionsWrapper.classList.add("poptotheright"); // Apply animation class
+  optionsWrapper
+    .querySelectorAll("button")
+    .forEach((btn) => (btn.disabled = true));
 
-  if (messageText === "") return;
-
-  generateMessage(messageText, "user");
-  chatInput.value = ""; // Clear input field
-
-  // Send message to the server
-  fetch("/chat/", {
+  fetchWithRetry("/submit_answer/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
     body: JSON.stringify({
-      message: messageText,
+      question_index: currentQuestionIndex,
+      answer_text: option,
     }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        handleBotResponse(data);
-      } else {
-        showErrorMessage(data.error);
-      }
-    })
-    .catch((error) => {
-      console.error("Error sending message:", error);
-      showErrorMessage("Failed to send message. Please try again.");
-    });
+  }).then((data) => {
+    if (data.success) {
+      sessionStorage.removeItem("chatError"); // Clear error if successful
+      optionsWrapper.remove();
+      simulateTyping(data.response, "bot", () => {
+        if (data.next_question_index !== undefined) {
+          currentQuestionIndex = data.next_question_index;
+          displayAnswerOptions(currentQuestionIndex);
+        }
+        if (data.end_of_questions) displayFinalOptions();
+      });
+    }
+  });
 }
-
-// Handle bot response
-function handleBotResponse(data) {
-  if (data.message) {
-    simulateTyping(data.message, "bot");
-  }
-  if (data.question_index !== undefined) {
-    setTimeout(() => {
-      displayQuestion(data.question_index);
-    }, 1000); // Delay before displaying the question
-  }
-  if (data.end_of_questions) {
-    simulateTyping(
-      "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
-      "bot",
-      () => {
-        displayFinalOptions();
-      }
-    );
-  }
-}
-
-// Generate chat message
-function generateMessage(text, sender) {
-  const messageWrapper = document.createElement("div");
-  messageWrapper.className = "message-wrapper";
-
-  const messageElement = document.createElement("div");
-  messageElement.className =
-    sender === "user"
-      ? "user-message chat-message"
-      : "chatbot-message chat-message";
-  messageElement.textContent = text;
-
-  messageWrapper.appendChild(messageElement);
-  chatBody.appendChild(messageWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-// Simulate typing with delay
-function simulateTyping(text, sender, callback = null) {
-  showLoader(chatBody);
-  const typingDelay = Math.max(500, text.length * 30); // Reduced delay
-
-  setTimeout(() => {
-    removeLoader(chatBody);
-    generateMessage(text, sender);
-    if (callback) callback();
-  }, typingDelay);
-}
-
-// Show loader animation
-function showLoader(chatBody) {
-  const loaderElement = document.createElement("div");
-  loaderElement.className = "loader";
-  loaderElement.innerHTML =
-    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Remove loader animation
-function removeLoader(chatBody) {
-  const loaderElement = chatBody.querySelector(".loader");
-  if (loaderElement) {
-    chatBody.removeChild(loaderElement);
-  }
-}
-
-// Display question
+// Function to display a question based on question index
 function displayQuestion(questionIndex) {
   fetch(`/get_question/${questionIndex}/`)
     .then((response) => response.json())
@@ -364,7 +380,8 @@ function displayQuestion(questionIndex) {
       showErrorMessage("Failed to load question. Please try again.");
     });
 }
-// Display answer options
+
+// Function to display answer options for a question
 function displayAnswerOptions(questionIndex) {
   fetch(`/get_answer_options/${questionIndex}/`)
     .then((response) => response.json())
@@ -396,7 +413,7 @@ function displayAnswerOptions(questionIndex) {
     });
 }
 
-// Handle answer selection
+// Function to handle answer selection
 function handleAnswerSelection(questionIndex, answerText) {
   const answersWrapper = document.getElementById("answersWrapper");
 
@@ -423,25 +440,18 @@ function handleAnswerSelection(questionIndex, answerText) {
     .then((data) => {
       if (data.success) {
         simulateTyping(data.response, "bot", () => {
-          if (
-            data.next_question_index !== undefined &&
-            data.next_question_index !== null
-          ) {
-            setTimeout(() => {
-              displayQuestion(data.next_question_index);
-            }, 1000);
-          } else if (data.end_of_questions) {
-            simulateTyping(
-              "Thank you for completing the questionnaire! Would you like to talk to a counselor?",
-              "bot",
-              () => {
-                displayFinalOptions();
-              }
-            );
+          if (data.next_question_index !== undefined) {
+            currentQuestionIndex = data.next_question_index;
+            displayQuestion(data.next_question_index);
+          }
+
+          if (data.end_of_questions) {
+            displayFinalOptions();
           }
         });
       } else {
-        showErrorMessage(data.error);
+        console.error("Error:", data.error);
+        showErrorMessage("Failed to submit answer. Please try again.");
       }
     })
     .catch((error) => {
@@ -449,7 +459,8 @@ function handleAnswerSelection(questionIndex, answerText) {
       showErrorMessage("Failed to submit answer. Please try again.");
     });
 }
-// Display final options after questionnaire
+
+// Function to display final options (e.g., Yes/No)
 function displayFinalOptions() {
   const optionsWrapper = document.createElement("div");
   optionsWrapper.className = "message-wrapper options-wrapper pop-up";
@@ -470,41 +481,100 @@ function displayFinalOptions() {
   chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// Handle final option selection
+// Function to handle final option selection
 function handleFinalOptionSelection(selection, optionsWrapper) {
-  optionsWrapper.classList.remove("pop-up");
-  optionsWrapper.classList.add("pop-down");
+  // Display user selection
+  generateMessage(selection, "user");
 
-  setTimeout(() => {
-    optionsWrapper.remove();
-    generateMessage(selection, "user");
+  // Apply the 'poptotheright' animation class
+  optionsWrapper.classList.add("poptotheright");
 
-    fetch("/final_option_selection/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        selection: selection,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          simulateTyping(data.message, "bot");
-        } else {
-          showErrorMessage(data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error submitting final selection:", error);
+  // Disable buttons to prevent multiple clicks
+  const buttons = optionsWrapper.querySelectorAll("button");
+  buttons.forEach((btn) => (btn.disabled = true));
+
+  fetch("/final_option_selection/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      selection: selection,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        setTimeout(() => {
+          optionsWrapper.remove();
+        }, 500); // Match the animation duration
+
+        // Append bot response with simulated typing
+        simulateTyping(data.message, "bot");
+      } else {
         showErrorMessage("Failed to submit your choice. Please try again.");
-      });
-  }, 300);
+      }
+    })
+    .catch((error) => {
+      showErrorMessage("Failed to submit your choice. Please try again.");
+    });
+}
+function simulateFinalMessage() {
+  const finalBotMessage =
+    "Thank you for completing the questionnaire! Would you like to talk to a counselor?";
+  simulateTyping(finalBotMessage, "bot", displayFinalOptions);
 }
 
-// Show error message
+// Function to generate chat message
+function generateMessage(text, sender) {
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
+
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
+
+  messageWrapper.appendChild(messageElement);
+  chatBody.appendChild(messageWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to simulate typing with delay
+function simulateTyping(text, sender, callback = null) {
+  showLoader(chatBody);
+  const typingDelay = Math.max(500, text.length * 30); // Adjusted delay
+
+  setTimeout(() => {
+    removeLoader(chatBody);
+    generateMessage(text, sender);
+    if (callback) callback();
+  }, typingDelay);
+}
+
+// Function to show loader animation
+function showLoader(chatBody) {
+  const loaderElement = document.createElement("div");
+  loaderElement.className = "loader";
+  loaderElement.innerHTML =
+    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  chatBody.appendChild(loaderElement);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to remove loader animation
+function removeLoader(chatBody) {
+  const loaderElement = chatBody.querySelector(".loader");
+  if (loaderElement) {
+    chatBody.removeChild(loaderElement);
+  }
+}
+
+// Function to show error message
 function showErrorMessage(errorText) {
   const errorWrapper = document.createElement("div");
   errorWrapper.className = "message-wrapper";
@@ -519,13 +589,12 @@ function showErrorMessage(errorText) {
   chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// Get CSRF token
+// Utility Function to Get CSRF Token
 function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== "") {
     const cookies = document.cookie.split(";");
     for (let i = 0; i < cookies.length; i++) {
-      // Fixed the loop condition
       const cookie = cookies[i].trim();
       if (cookie.substring(0, name.length + 1) === name + "=") {
         cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
@@ -536,11 +605,8 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// Initialize chat position
-document.addEventListener("DOMContentLoaded", updateChatPosition);
-
 // Accessibility: Keyboard navigation for chat input
-document.getElementById("chatInput").addEventListener("keydown", function (e) {
+chatInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
@@ -553,19 +619,66 @@ chatBody.addEventListener("scroll", function () {
   const scrollHeight = chatBody.scrollHeight;
   const clientHeight = chatBody.clientHeight;
 
-  if (scrollTop < 100 && !loadingHistory && hasMoreHistory) {
+  if (scrollTop === 0 && !loadingHistory && hasMoreHistory) {
     // Load more messages when scrolled to top
     loadChatHistory(false);
   }
 
   if (scrollTop < scrollHeight - clientHeight - 100) {
-    // User scrolled up more than 100px
+    // User scrolled up more than 100px from the bottom
     scrollToLatestButton.style.display = "block";
   } else {
     scrollToLatestButton.style.display = "none";
   }
 });
 
+// Profile Modal Handling
+profileLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  profileModal.style.display = "block";
+  profileModal.classList.add("slide-downSolid");
+  profileModal.classList.remove("slide-upSolid");
+  fetchUserProfile(); // Fetch and populate user data when the modal is opened
+});
+
+// Close Profile Modal
+closeProfileModal.addEventListener("click", () => {
+  profileModal.classList.add("slide-upSolid");
+  profileModal.classList.remove("slide-downSolid");
+});
+
+// Avatar Modal Handling
+avatarLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  avatarModal.style.display = "block";
+  avatarModal.classList.add("slide-downSolid");
+  avatarModal.classList.remove("slide-upSolid");
+});
+
+// Close Avatar Modal
+closeAvatarModal.addEventListener("click", () => {
+  avatarModal.classList.add("slide-upSolid");
+  avatarModal.classList.remove("slide-downSolid");
+});
+
+// Password Modal Handling
+passwordLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  closeCurrentModal();
+  passwordModal.style.display = "block";
+  passwordModal.classList.add("slide-downSolid");
+  passwordModal.classList.remove("slide-upSolid");
+});
+
+// Close Password Modal
+closePasswordModal.addEventListener("click", () => {
+  passwordModal.classList.add("slide-upSolid");
+  passwordModal.classList.remove("slide-downSolid");
+});
+
+// Status Modal Handling
 if (statusComposerButton) {
   // Show the modal with pop-in animation
   statusComposerButton.addEventListener("click", function () {
@@ -578,15 +691,17 @@ if (statusComposerButton) {
   });
 }
 
-// Close the modal with pop-out animation
+// Close Status Modal
 closeStatusModal.addEventListener("click", function () {
   closeModal();
 });
 
+// Close modal when clicking outside the modal content
 statusModalOverlay.addEventListener("click", function () {
   closeModal();
 });
 
+// Function to close any open modal with animation
 function closeModal() {
   statusModal.classList.remove("pop-in");
   statusModal.classList.add("pop-out");
@@ -600,7 +715,48 @@ function closeModal() {
   }, 300);
 }
 
-// Placeholder functionality
+// Function to close currently open modal
+function closeCurrentModal() {
+  const modals = document.querySelectorAll(".modal-content");
+  modals.forEach((modal) => {
+    if (modal.style.display === "block") {
+      modal.classList.add("slide-upSolid");
+      modal.classList.remove("slide-downSolid");
+    }
+  });
+}
+
+// Listen for the end of the slide-up animation to hide the modal
+document.querySelectorAll(".modal-content").forEach((modal) => {
+  modal.addEventListener("animationend", (event) => {
+    if (event.animationName === "slideUpSolid") {
+      modal.style.display = "none";
+    }
+  });
+});
+
+// Burger Menu Handling
+burger.addEventListener("change", () => {
+  if (burger.checked) {
+    dropdown.classList.add("slide-down");
+    dropdown.classList.remove("slide-up");
+    dropdown.style.display = "block";
+  } else {
+    dropdown.classList.add("slide-up");
+    dropdown.classList.remove("slide-down");
+  }
+});
+
+// Close dropdown menu when any link is clicked
+document.querySelectorAll(".dropdown a").forEach((link) => {
+  link.addEventListener("click", () => {
+    burger.checked = false;
+    dropdown.classList.add("slide-up");
+    dropdown.classList.remove("slide-down");
+  });
+});
+
+// Placeholder functionality for description div
 function showPlaceholder() {
   if (!descriptionDiv.textContent.trim().length) {
     descriptionDiv.classList.add("placeholder");
@@ -635,101 +791,38 @@ window.formatText = function (command, value = null) {
   document.execCommand(command, false, value);
 };
 
-// Function to close currently open modal
-function closeCurrentModal() {
-  const modals = document.querySelectorAll(".modal-content");
-  modals.forEach((modal) => {
-    if (modal.style.display === "block") {
-      modal.classList.add("slide-upSolid");
-      modal.classList.remove("slide-downSolid");
-    }
-  });
+// Additional accessibility: Keyboard navigation for chat input
+chatInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Accessibility: Close modal with Escape key
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    closeModal();
+  }
+});
+
+// Function to fetch user profile data (Assuming an endpoint exists)
+function fetchUserProfile() {
+  fetch("/get_user_profile/")
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        // Populate profile modal with user data
+        document.getElementById("profileUsername").textContent = data.username;
+        document.getElementById("profileFullName").textContent = data.full_name;
+        document.getElementById("profileEmail").textContent = data.email;
+        // Add more fields as necessary
+      } else {
+        showErrorMessage("Failed to load profile data.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching user profile:", error);
+      showErrorMessage("Failed to load profile data.");
+    });
 }
-
-// Listen for the end of the slide-up animation to hide the modal
-document.querySelectorAll(".modal-content").forEach((modal) => {
-  modal.addEventListener("animationend", (event) => {
-    if (event.animationName === "slideUpSolid") {
-      modal.style.display = "none";
-    }
-  });
-});
-// Show profile modal when profile link is clicked
-profileLink.addEventListener("click", (e) => {
-  e.preventDefault();
-  closeCurrentModal();
-  profileModal.style.display = "block";
-  profileModal.classList.add("slide-downSolid");
-  profileModal.classList.remove("slide-upSolid");
-  fetchUserProfile(); // Fetch and populate user data when the modal is opened
-});
-burger.addEventListener("change", () => {
-  if (burger.checked) {
-    dropdown.classList.add("slide-down");
-    dropdown.classList.remove("slide-up");
-    dropdown.style.display = "block";
-  } else {
-    dropdown.classList.add("slide-up");
-    dropdown.classList.remove("slide-down");
-  }
-});
-
-dropdown.addEventListener("animationend", (event) => {
-  if (event.animationName === "slideUp") {
-    dropdown.style.display = "none";
-  }
-});
-
-// Close dropdown menu when any link is clicked
-document.querySelectorAll(".dropdown a").forEach((link) => {
-  link.addEventListener("click", () => {
-    burger.checked = false;
-    dropdown.classList.add("slide-up");
-    dropdown.classList.remove("slide-down");
-  });
-});
-
-// Show profile modal when profile link is clicked
-profileLink.addEventListener("click", (e) => {
-  e.preventDefault();
-  closeCurrentModal();
-  profileModal.style.display = "block";
-  profileModal.classList.add("slide-downSolid");
-  profileModal.classList.remove("slide-upSolid");
-});
-
-// Close profile modal when the close button is clicked
-closeProfileModal.addEventListener("click", () => {
-  profileModal.classList.add("slide-upSolid");
-  profileModal.classList.remove("slide-downSolid");
-});
-
-// Show avatar modal when avatar link is clicked
-avatarLink.addEventListener("click", (e) => {
-  e.preventDefault();
-  closeCurrentModal();
-  avatarModal.style.display = "block";
-  avatarModal.classList.add("slide-downSolid");
-  avatarModal.classList.remove("slide-upSolid");
-});
-
-// Close avatar modal when the close button is clicked
-closeAvatarModal.addEventListener("click", () => {
-  avatarModal.classList.add("slide-upSolid");
-  avatarModal.classList.remove("slide-downSolid");
-});
-
-// Show password modal when password link is clicked
-passwordLink.addEventListener("click", (e) => {
-  e.preventDefault();
-  closeCurrentModal();
-  passwordModal.style.display = "block";
-  passwordModal.classList.add("slide-downSolid");
-  passwordModal.classList.remove("slide-upSolid");
-});
-
-// Close password modal when the close button is clicked
-closePasswordModal.addEventListener("click", () => {
-  passwordModal.classList.add("slide-upSolid");
-  passwordModal.classList.remove("slide-downSolid");
-});

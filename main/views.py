@@ -208,7 +208,7 @@ def get_chat_history(request):
         page = int(request.GET.get('page', 1))
         page_size = 10  # Define how many messages per page
 
-        # Fetch chat messages in ascending order (oldest first)
+        # Fetch chat messages in descending order (newest first)
         chat_messages = ChatMessage.objects.filter(user=request.user).order_by('-timestamp')
 
         paginator = Paginator(chat_messages, page_size)
@@ -248,14 +248,14 @@ def get_chat_history(request):
                 end_of_questions = True
 
         # Determine the last message type
-        last_message = chat_messages.last() if chat_messages.exists() else None
+        last_message = chat_messages.first() if chat_messages.exists() else None
         last_message_type = last_message.message_type if last_message else None
 
         # Check if chat history is empty
         is_chat_empty = not chat_messages.exists()
 
         return JsonResponse({
-            'chat_history': chat_history,  # Ordered ascendingly
+            'chat_history': chat_history,  # Ordered descendingly
             'awaiting_answer': awaiting_answer,
             'current_question_index': current_question_index,
             'is_chat_empty': is_chat_empty,
@@ -457,32 +457,45 @@ def submit_answer(request):
         if answer_text is None:
             return JsonResponse({'success': False, 'error': 'Missing data.'})
 
+        # Handle initial 'Start' or 'Not Yet' responses
         if question_index is None:
-            # Handle initial 'Start' or 'Not Yet' responses
             if answer_text.lower() == 'start':
                 # Begin the questionnaire
-                question_index = 0
-                # Save the user's "Start" message
+                progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
+                if progress.completed:
+                    return JsonResponse({'success': False, 'error': 'You have already completed the questionnaire.'}, status=400)
+                
+                next_question_index = 0
+                question_text = QUESTIONS[next_question_index]
+
+                # Save user message
                 ChatMessage.objects.create(
                     user=request.user,
                     message=answer_text,
                     is_bot_message=False,
                     message_type='user_message'
                 )
-                # Save the first question as a ChatMessage
+
+                # Save bot message (first question)
                 ChatMessage.objects.create(
                     user=request.user,
-                    message=QUESTIONS[question_index],
+                    message=question_text,
                     is_bot_message=True,
                     message_type='question',
-                    question_index=question_index
+                    question_index=next_question_index
                 )
+
                 # Update progress
-                progress, _ = QuestionnaireProgress.objects.get_or_create(user=request.user)
-                progress.last_question_index = question_index
+                progress.last_question_index = next_question_index
                 progress.save()
-                # Return response without the question in 'response'
-                return JsonResponse({'success': True, 'next_question_index': question_index})
+
+                return JsonResponse({
+                    'success': True,
+                    'message': "",  # No greeting message
+                    'question_index': next_question_index,
+                    'simulate_typing': True
+                })
+
             elif answer_text.lower() == 'not yet':
                 bot_message = "No worries, take your time."
                 # Save user message
@@ -499,87 +512,107 @@ def submit_answer(request):
                     is_bot_message=True,
                     message_type='bot_message'
                 )
-                return JsonResponse({'success': True, 'response': bot_message})
+                return JsonResponse({'success': True, 'message': bot_message})
+
             else:
                 return JsonResponse({'success': False, 'error': 'Unexpected input.'})
+
+        # Proceed with existing questions
         else:
-            # Proceed with existing code for when question_index is provided
-            # Save the user's answer as a ChatMessage
-            ChatMessage.objects.create(
-                user=request.user,
-                message=answer_text,
-                is_bot_message=False,
-                message_type='user_message',
-                question_index=question_index
-            )
-
-            # Get the question text and response
             try:
+                progress = QuestionnaireProgress.objects.get(user=request.user)
+                if progress.completed:
+                    return JsonResponse({'success': False, 'error': 'You have already completed the questionnaire.'}, status=400)
+
+                # Validate question index
+                if question_index != progress.last_question_index:
+                    return JsonResponse({'success': False, 'error': 'Invalid question index.'}, status=400)
+
+                # Save the user's answer
                 question_text = QUESTIONS[question_index]
-                answer_idx = ANSWERS[question_index].index(answer_text)
-                response_text = RESPONSES[question_index][answer_idx]
-            except (IndexError, ValueError):
-                response_text = "Thank you for your response."
+                try:
+                    answer_idx = ANSWERS[question_index].index(answer_text)
+                    response_text = RESPONSES[question_index][answer_idx]
+                except (IndexError, ValueError):
+                    response_text = "Thank you for your response."
 
-            # Save the bot's response as a ChatMessage
-            ChatMessage.objects.create(
-                user=request.user,
-                message=response_text,
-                is_bot_message=True,
-                message_type='bot_message',
-                question_index=question_index
-            )
-
-            # Update or create the Questionnaire entry
-            Questionnaire.objects.update_or_create(
-                user=request.user,
-                question=question_text,
-                defaults={
-                    'answer': answer_text,
-                    'response': response_text,
-                    'timestamp': timezone.now()
-                }
-            )
-
-            # Save progress
-            progress, _ = QuestionnaireProgress.objects.get_or_create(user=request.user)
-            progress.last_question_index = question_index
-            progress.save()
-
-            # Determine next question
-            next_question_index = question_index + 1
-            if next_question_index < len(QUESTIONS):
-                # Send the next question
                 ChatMessage.objects.create(
                     user=request.user,
-                    message=QUESTIONS[next_question_index],
-                    is_bot_message=True,
-                    message_type='question',
-                    question_index=next_question_index
+                    message=answer_text,
+                    is_bot_message=False,
+                    message_type='user_message',
+                    question_index=question_index
                 )
-                # Update progress
-                progress.last_question_index = next_question_index
-                progress.save()
 
-                return JsonResponse({'success': True, 'response': response_text, 'next_question_index': next_question_index})
-            else:
-                # End of questionnaire
-                final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
                 ChatMessage.objects.create(
                     user=request.user,
-                    message=final_bot_message,
+                    message=response_text,
                     is_bot_message=True,
                     message_type='bot_message',
-                    timestamp=timezone.now()
+                    question_index=question_index
                 )
-                return JsonResponse({
-                    'success': True,
-                    'response': response_text,
-                    'end_of_questions': True,
-                    'final_bot_message': final_bot_message
-                })
 
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+                # Save or update the Questionnaire entry
+                Questionnaire.objects.update_or_create(
+                    user=request.user,
+                    question=question_text,
+                    defaults={
+                        'answer': answer_text,
+                        'response': response_text,
+                        'timestamp': timezone.now()
+                    }
+                )
+
+                # Determine next question
+                next_question_index = question_index + 1
+                if next_question_index < len(QUESTIONS):
+                    next_question_text = QUESTIONS[next_question_index]
+                    ChatMessage.objects.create(
+                        user=request.user,
+                        message=next_question_text,
+                        is_bot_message=True,
+                        message_type='question',
+                        question_index=next_question_index
+                    )
+                    # Update progress
+                    progress.last_question_index = next_question_index
+                    progress.save()
+
+                    return JsonResponse({
+                        'success': True,
+                        'response': response_text,
+                        'next_question_index': next_question_index,
+                        'simulate_typing': True
+                    })
+                else:
+                    # End of questionnaire
+                    final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
+                    ChatMessage.objects.create(
+                        user=request.user,
+                        message=final_bot_message,
+                        is_bot_message=True,
+                        message_type='bot_message',
+                        question_index=question_index
+                    )
+                    # Update progress
+                    progress.completed = True
+                    progress.save()
+
+                    return JsonResponse({
+                        'success': True,
+                        'response': response_text,
+                        'end_of_questions': True,
+                        'final_bot_message': final_bot_message,
+                        'simulate_typing': True
+                    })
+
+            except QuestionnaireProgress.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Questionnaire progress not found.'}, status=400)
+            except Exception as e:
+                logger.error(f"Error processing answer for user '{request.user.username}': {str(e)}")
+                return JsonResponse({'success': False, 'error': 'Failed to process your answer. Please try again.'}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
 @login_required
 @csrf_exempt
 def final_option_selection(request):

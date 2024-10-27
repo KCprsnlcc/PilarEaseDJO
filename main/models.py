@@ -170,11 +170,12 @@ class ChatMessage(models.Model):
         return f"{sender}: {self.message[:50]}"
 
 class QuestionnaireProgress(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='questionnaire_progress')
-    last_question_index = models.IntegerField(default=-1)  # Indicates questionnaire hasn't started
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    last_question_index = models.IntegerField(default=-1)  # -1 indicates questionnaire hasn't started
+    completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"QuestionnaireProgress for {self.user.username}"
+        return f"{self.user.username} - Progress: {self.last_question_index}"
 class NLTKResource(models.Model):
     name = models.CharField(
         default='No nltk downloaded',
