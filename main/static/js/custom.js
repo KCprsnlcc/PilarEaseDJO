@@ -333,7 +333,7 @@ function handleOptionClick(option, optionsWrapper) {
   // Display user message
   generateMessage(option, "user");
 
-  optionsWrapper.classList.add("poptotheright");
+  optionsWrapper.classList.add("poptotheright"); // Apply animation class
   optionsWrapper
     .querySelectorAll("button")
     .forEach((btn) => (btn.disabled = true));
@@ -360,9 +360,7 @@ function handleOptionClick(option, optionsWrapper) {
         if (data.end_of_questions) displayFinalOptions();
       });
     }
-    // Removed else block as per instruction
   });
-  // Removed catch block as per instruction
 }
 // Function to display a question based on question index
 function displayQuestion(questionIndex) {
@@ -489,13 +487,12 @@ function handleFinalOptionSelection(selection, optionsWrapper) {
   generateMessage(selection, "user");
 
   // Apply the 'poptotheright' animation class
-  optionsWrapper.classList.add("poptotherright");
+  optionsWrapper.classList.add("poptotheright");
 
   // Disable buttons to prevent multiple clicks
   const buttons = optionsWrapper.querySelectorAll("button");
   buttons.forEach((btn) => (btn.disabled = true));
 
-  // Send the selected final option to the server
   fetch("/final_option_selection/", {
     method: "POST",
     headers: {
@@ -509,23 +506,26 @@ function handleFinalOptionSelection(selection, optionsWrapper) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        // Remove the options after animation completes
         setTimeout(() => {
           optionsWrapper.remove();
         }, 500); // Match the animation duration
 
-        // Append bot response
+        // Append bot response with simulated typing
         simulateTyping(data.message, "bot");
       } else {
-        console.error("Error:", data.error);
         showErrorMessage("Failed to submit your choice. Please try again.");
       }
     })
     .catch((error) => {
-      console.error("Error submitting final option:", error);
       showErrorMessage("Failed to submit your choice. Please try again.");
     });
 }
+function simulateFinalMessage() {
+  const finalBotMessage =
+    "Thank you for completing the questionnaire! Would you like to talk to a counselor?";
+  simulateTyping(finalBotMessage, "bot", displayFinalOptions);
+}
+
 // Function to generate chat message
 function generateMessage(text, sender) {
   const messageWrapper = document.createElement("div");
