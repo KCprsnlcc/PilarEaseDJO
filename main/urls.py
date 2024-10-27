@@ -55,6 +55,7 @@ urlpatterns = [
     path('chat/', views.chat_view, name='chat'),
     path('get_question/<int:question_index>/', views.get_question, name='get_question'),
     path('get_answer_options/<int:question_index>/', views.get_answer_options, name='get_answer_options'),
+    path('start_questionnaire/', views.start_questionnaire, name='start_questionnaire'),
     path('submit_answer/', views.submit_answer, name='submit_answer'),
     path('status/<int:status_id>/', views.status_detail, name='status_detail'),
     path('add_reply/<int:status_id>/', views.add_reply, name='add_reply'),  # For top-level replies

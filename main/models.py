@@ -11,6 +11,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import BaseUserManager
 import re
 from django.core.validators import FileExtensionValidator
+import uuid  # 
 class CustomUserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         """
@@ -153,6 +154,12 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class ChatMessage(models.Model):
+    MESSAGE_TYPES = [
+        ('greeting', 'Greeting'),
+        ('question', 'Question'),
+        ('bot_message', 'Bot Message'),
+        ('user_message', 'User Message'),  # Add this
+    ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -197,6 +204,7 @@ class Questionnaire(models.Model):
     answer = models.TextField(default='No answer provided')
     response = models.TextField(default='No response provided')
     timestamp = models.DateTimeField(auto_now=True)  # Updated to auto_now to capture updates
+    answer_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Changed to UUIDField
 
     class Meta:
         unique_together = ('user', 'question')  # Enforce uniqueness per user-question pair

@@ -1414,7 +1414,11 @@ button[type="submit"]:hover {
   margin-right: 10px;
   margin-top: 10px;
 }
-
+/* Optional: Smooth transition for removing elements */
+.options-wrapper,
+.final-options-wrapper {
+  transition: opacity 0.3s, transform 0.3s;
+}
 /* Animation for pop-up and pop-down */
 @keyframes popUp {
   from {

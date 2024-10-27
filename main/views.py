@@ -11,6 +11,7 @@ from datetime import datetime
 from django.db import IntegrityError
 import pytz
 import json
+import uuid
 from django.db import transaction, IntegrityError
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
 from django.contrib.auth.hashers import check_password
@@ -270,49 +271,67 @@ def get_chat_history(request):
         return JsonResponse({'success': False, 'error': 'Failed to fetch chat history.'}, status=500)
 @login_required
 def start_chat(request):
-    user = request.user
-    logger.info(f"User '{user.username}' is attempting to start a chat.")
-    
+    """
+    Handles the initiation of the chat session.
+    Saves the user's 'Start' message and sends a greeting from the bot.
+    """
     try:
-        # Check if the chat is empty by verifying if any ChatMessage exists for the user
-        if ChatMessage.objects.filter(user=user).exists():
-            logger.info(f"Chat history exists for user '{user.username}'. No greeting sent.")
-            return JsonResponse({'success': True, 'message': '', 'options': []})
+        data = json.loads(request.body)
+        logger.debug(f"Received data for start_chat: {data}")
+
+        # Optionally, retrieve additional data if needed
+        answer_id = data.get('answer_id', str(uuid.uuid4()))
+
+        # Save user message ("Start") to ChatMessage
+        user_message = ChatMessage.objects.create(
+            user=request.user,
+            message="Start",
+            is_bot_message=False,
+            message_type='user_message',
+            question_index=None  # Not tied to a specific question
+        )
+        logger.debug(f"Saved user message: {user_message}")
+
+        # Initialize or reset QuestionnaireProgress
+        progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
+        if progress.completed:
+            error_message = 'You have already completed the questionnaire.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
         
-        # Initialize chat session with greeting
-        greeting = "Hello! Welcome to PilarEase, your emotional support companion. How can I assist you today? Should we start?"
-        options = ["Start", "Not Yet"]
-        
-        with transaction.atomic():
-            # Save bot message associated with the user
-            ChatMessage.objects.create(
-                user=user,
-                message=greeting,
-                is_bot_message=True,
-                message_type='greeting'
-            )
-            logger.info(f"Greeting sent to user '{user.username}'.")
-            
-            # Initialize or retrieve QuestionnaireProgress
-            progress, created = QuestionnaireProgress.objects.get_or_create(
-                user=user,
-                defaults={'last_question_index': -1}  # Indicates that the questionnaire hasn't started yet
-            )
-            
-            if created:
-                logger.info(f"QuestionnaireProgress created for user '{user.username}'.")
-            else:
-                logger.info(f"QuestionnaireProgress already exists for user '{user.username}'.")
-        
-        return JsonResponse({'success': True, 'message': greeting, 'options': options})
-    
-    except IntegrityError as ie:
-        logger.error(f"IntegrityError in start_chat view for user '{user.username}': {str(ie)}")
-        return JsonResponse({'success': False, 'error': 'An integrity error occurred. Please try again.'}, status=500)
-    
+        # Reset progress to start the questionnaire anew
+        progress.last_question_index = 0
+        progress.completed = False
+        progress.save()
+        logger.info(f"Initialized questionnaire for user {request.user.username} with answer_id {answer_id}.")
+
+        # Fetch the first question
+        question_index = progress.last_question_index
+        question_text = QUESTIONS[question_index]
+
+        # Save the first question as a bot message
+        bot_message = ChatMessage.objects.create(
+            user=request.user,
+            message=question_text,
+            is_bot_message=True,
+            message_type='question',
+            question_index=question_index
+        )
+        logger.debug(f"Sent first question (index {question_index}): {question_text}")
+
+        return JsonResponse({
+            'success': True,
+            'question_index': question_index,
+            'question': question_text,
+            'simulate_typing': True
+        })
+
+    except json.JSONDecodeError:
+        logger.error(f"JSON decoding error in start_chat view for user '{request.user.username}'.")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'}, status=400)
     except Exception as e:
-        logger.error(f"Error in start_chat view for user '{user.username}': {str(e)}")
-        return JsonResponse({'success': False, 'error': 'An unexpected error occurred. Please try again later.'}, status=500)
+        logger.error(f"Unexpected error in start_chat view for user '{request.user.username}': {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to start chat session. Please try again.'}, status=500)
 @login_required
 @csrf_exempt
 def chat_view(request):
@@ -446,210 +465,301 @@ def get_answer_options(request, question_index):
     except IndexError:
         return JsonResponse({'success': False, 'error': 'Invalid question index.'})
 
+@require_POST
 @login_required
-@csrf_exempt
 def submit_answer(request):
-    if request.method == 'POST':
+    """
+    Handles the submission of answers in the questionnaire.
+    Saves both user and bot messages.
+    """
+    try:
         data = json.loads(request.body)
+        logger.debug(f"Received data for submit_answer: {data}")
+        
         question_index = data.get('question_index')
         answer_text = data.get('answer_text')
+        answer_id = data.get('answer_id')  # UUID expected
 
-        if answer_text is None:
-            return JsonResponse({'success': False, 'error': 'Missing data.'})
-
-        # Handle initial 'Start' or 'Not Yet' responses
+        # Validate required fields
+        missing_fields = []
         if question_index is None:
-            if answer_text.lower() == 'start':
-                # Begin the questionnaire
-                progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
-                if progress.completed:
-                    return JsonResponse({'success': False, 'error': 'You have already completed the questionnaire.'}, status=400)
-                
-                next_question_index = 0
-                question_text = QUESTIONS[next_question_index]
+            missing_fields.append('question_index')
+        if answer_text is None:
+            missing_fields.append('answer_text')
+        if answer_id is None:
+            missing_fields.append('answer_id')
+        
+        if missing_fields:
+            error_message = f"Missing required fields: {', '.join(missing_fields)}."
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Save user message
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=answer_text,
-                    is_bot_message=False,
-                    message_type='user_message'
-                )
+        # Validate that question_index is an integer
+        if not isinstance(question_index, int):
+            error_message = 'Invalid question_index. It must be an integer.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Save bot message (first question)
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=question_text,
-                    is_bot_message=True,
-                    message_type='question',
-                    question_index=next_question_index
-                )
+        # Validate that answer_id is a valid UUID
+        try:
+            uuid_obj = uuid.UUID(answer_id, version=4)
+        except ValueError:
+            error_message = 'Invalid answer_id. It must be a valid UUID.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Update progress
-                progress.last_question_index = next_question_index
-                progress.save()
-
-                return JsonResponse({
-                    'success': True,
-                    'message': "",  # No greeting message
-                    'question_index': next_question_index,
-                    'simulate_typing': True
-                })
-
-            elif answer_text.lower() == 'not yet':
-                bot_message = "No worries, take your time."
-                # Save user message
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=answer_text,
-                    is_bot_message=False,
-                    message_type='user_message'
-                )
-                # Save bot message
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=bot_message,
-                    is_bot_message=True,
-                    message_type='bot_message'
-                )
-                return JsonResponse({'success': True, 'message': bot_message})
-
-            else:
-                return JsonResponse({'success': False, 'error': 'Unexpected input.'})
-
-        # Proceed with existing questions
+        # Fetch the corresponding question text
+        if 0 <= question_index < len(QUESTIONS):
+            question_text = QUESTIONS[question_index]
         else:
-            try:
-                progress = QuestionnaireProgress.objects.get(user=request.user)
-                if progress.completed:
-                    return JsonResponse({'success': False, 'error': 'You have already completed the questionnaire.'}, status=400)
+            error_message = 'Invalid question index.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Validate question index
-                if question_index != progress.last_question_index:
-                    return JsonResponse({'success': False, 'error': 'Invalid question index.'}, status=400)
+        # Prevent duplicate submissions using answer_id
+        try:
+            # Attempt to create the Questionnaire entry
+            questionnaire_entry = Questionnaire.objects.create(
+                user=request.user,
+                question=question_text,
+                answer=answer_text,
+                response=RESPONSES[question_index][ANSWERS[question_index].index(answer_text)],
+                answer_id=answer_id  # Assign the unique answer_id
+            )
+            logger.info(f"Saved answer_id {answer_id} for user {request.user.username}.")
+        except IntegrityError:
+            # If a duplicate answer_id exists, respond accordingly
+            error_message = 'This answer has already been submitted.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+        except (IndexError, ValueError) as e:
+            # Handle cases where answer_text does not match any predefined option
+            error_message = 'Invalid answer_text provided.'
+            logger.error(f"Error fetching response text: {e}")
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Save the user's answer
-                question_text = QUESTIONS[question_index]
-                try:
-                    answer_idx = ANSWERS[question_index].index(answer_text)
-                    response_text = RESPONSES[question_index][answer_idx]
-                except (IndexError, ValueError):
-                    response_text = "Thank you for your response."
+        # Save user message to ChatMessage
+        user_message = ChatMessage.objects.create(
+            user=request.user,
+            message=answer_text,
+            is_bot_message=False,
+            message_type='user_message',
+            question_index=question_index
+        )
+        logger.debug(f"Saved user message: {user_message}")
 
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=answer_text,
-                    is_bot_message=False,
-                    message_type='user_message',
-                    question_index=question_index
-                )
+        # Update the QuestionnaireProgress
+        try:
+            progress = QuestionnaireProgress.objects.get(user=request.user)
+            logger.debug(f"User progress before update: {progress.last_question_index}, Completed: {progress.completed}")
+        except QuestionnaireProgress.DoesNotExist:
+            # If no progress exists, initialize it
+            progress = QuestionnaireProgress.objects.create(user=request.user, last_question_index=-1)
+            logger.debug("Initialized new QuestionnaireProgress.")
 
-                ChatMessage.objects.create(
-                    user=request.user,
-                    message=response_text,
-                    is_bot_message=True,
-                    message_type='bot_message',
-                    question_index=question_index
-                )
+        # Check if the questionnaire is already completed
+        if progress.completed:
+            error_message = 'You have already completed the questionnaire.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-                # Save or update the Questionnaire entry
-                Questionnaire.objects.update_or_create(
-                    user=request.user,
-                    question=question_text,
-                    defaults={
-                        'answer': answer_text,
-                        'response': response_text,
-                        'timestamp': timezone.now()
-                    }
-                )
+        # Determine the next question index
+        next_question_index = question_index + 1
 
-                # Determine next question
-                next_question_index = question_index + 1
-                if next_question_index < len(QUESTIONS):
-                    next_question_text = QUESTIONS[next_question_index]
-                    ChatMessage.objects.create(
-                        user=request.user,
-                        message=next_question_text,
-                        is_bot_message=True,
-                        message_type='question',
-                        question_index=next_question_index
-                    )
-                    # Update progress
-                    progress.last_question_index = next_question_index
-                    progress.save()
+        if next_question_index < len(QUESTIONS):
+            # Fetch the next question
+            next_question_text = QUESTIONS[next_question_index]
+            # Save the next question as a bot message
+            bot_message = ChatMessage.objects.create(
+                user=request.user,
+                message=next_question_text,
+                is_bot_message=True,
+                message_type='question',
+                question_index=next_question_index
+            )
+            logger.debug(f"Sent next question (index {next_question_index}): {next_question_text}")
 
-                    return JsonResponse({
-                        'success': True,
-                        'response': response_text,
-                        'next_question_index': next_question_index,
-                        'simulate_typing': True
-                    })
-                else:
-                    # End of questionnaire
-                    final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
-                    ChatMessage.objects.create(
-                        user=request.user,
-                        message=final_bot_message,
-                        is_bot_message=True,
-                        message_type='bot_message',
-                        question_index=question_index
-                    )
-                    # Update progress
-                    progress.completed = True
-                    progress.save()
+            # Update progress
+            progress.last_question_index = next_question_index
+            progress.save()
+            logger.debug(f"Updated progress to question_index {next_question_index}.")
 
-                    return JsonResponse({
-                        'success': True,
-                        'response': response_text,
-                        'end_of_questions': True,
-                        'final_bot_message': final_bot_message,
-                        'simulate_typing': True
-                    })
+            return JsonResponse({
+                'success': True,
+                'response': questionnaire_entry.response,
+                'next_question_index': next_question_index,
+                'simulate_typing': True
+            })
+        else:
+            # No more questions; mark the questionnaire as completed
+            progress.completed = True
+            progress.save()
+            logger.debug("Questionnaire completed.")
 
-            except QuestionnaireProgress.DoesNotExist:
-                return JsonResponse({'success': False, 'error': 'Questionnaire progress not found.'}, status=400)
-            except Exception as e:
-                logger.error(f"Error processing answer for user '{request.user.username}': {str(e)}")
-                return JsonResponse({'success': False, 'error': 'Failed to process your answer. Please try again.'}, status=500)
+            # Final bot message
+            final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
+            final_bot = ChatMessage.objects.create(
+                user=request.user,
+                message=final_bot_message,
+                is_bot_message=True,
+                message_type='bot_message',
+                question_index=question_index
+            )
+            logger.debug(f"Sent final message: {final_bot_message}")
 
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
+            return JsonResponse({
+                'success': True,
+                'response': questionnaire_entry.response,
+                'end_of_questions': True,
+                'final_bot_message': final_bot_message,
+                'simulate_typing': True
+            })
+
+    except json.JSONDecodeError:
+        logger.error(f"JSON decoding error in submit_answer view for user '{request.user.username}'.")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in submit_answer view for user '{request.user.username}': {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to process your answer. Please try again.'}, status=500)
+    
+@login_required
+@require_POST
+def start_questionnaire(request):
+    """
+    Handles the initiation of the questionnaire.
+    Saves the user message and sends the first question.
+    """
+    try:
+        data = json.loads(request.body)
+        logger.debug(f"Received data for start_questionnaire: {data}")
+
+        answer_id = data.get('answer_id')
+
+        if not answer_id:
+            error_message = "Missing required field: answer_id."
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Validate that answer_id is a valid UUID
+        try:
+            uuid_obj = uuid.UUID(answer_id, version=4)
+        except ValueError:
+            error_message = 'Invalid answer_id. It must be a valid UUID.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Save user message
+        user_message = ChatMessage.objects.create(
+            user=request.user,
+            message="Start",
+            is_bot_message=False,
+            message_type='user_message',
+            question_index=None  # Not tied to a specific question
+        )
+        logger.debug(f"Saved user message: {user_message}")
+
+        # Initialize the questionnaire progress
+        progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
+        if progress.completed:
+            error_message = 'You have already completed the questionnaire.'
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+        # Reset progress if starting anew
+        progress.last_question_index = 0
+        progress.completed = False
+        progress.save()
+        logger.info(f"Initialized questionnaire for user {request.user.username} with answer_id {answer_id}.")
+
+        # Fetch the first question
+        question_index = progress.last_question_index
+        question_text = QUESTIONS[question_index]
+        # Save the first question as a bot message
+        bot_message = ChatMessage.objects.create(
+            user=request.user,
+            message=question_text,
+            is_bot_message=True,
+            message_type='question',
+            question_index=question_index
+        )
+        logger.debug(f"Sent first question (index {question_index}): {question_text}")
+
+        return JsonResponse({
+            'success': True,
+            'question_index': question_index,
+            'question': question_text,
+            'simulate_typing': True
+        })
+
+    except json.JSONDecodeError:
+        logger.error(f"JSON decoding error in start_questionnaire view for user '{request.user.username}'.")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in start_questionnaire view for user '{request.user.username}': {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to start questionnaire. Please try again.'}, status=500)
 @login_required
 @csrf_exempt
 def final_option_selection(request):
-    if request.method == 'POST':
+    """
+    Handles the final option selections after completing the questionnaire.
+    For example, asking if the user wants to talk to a counselor.
+    """
+    try:
         data = json.loads(request.body)
+        logger.debug(f"Received data for final_option_selection: {data}")
+
         selection = data.get('selection')
 
-        # Validate selection
-        if selection not in ["Yes", "No"]:
-            return JsonResponse({'success': False, 'error': 'Invalid selection.'}, status=400)
+        if not selection:
+            error_message = "Missing required field: selection."
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
 
-        # Save user's selection as a ChatMessage
-        ChatMessage.objects.create(
+        if selection not in ["Yes", "No"]:
+            error_message = "Invalid selection. Must be 'Yes' or 'No'."
+            logger.warning(error_message)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Save user message to ChatMessage
+        user_message = ChatMessage.objects.create(
             user=request.user,
             message=selection,
             is_bot_message=False,
             message_type='user_message',
-            timestamp=timezone.now()
+            question_index=None  # Not tied to a specific question
         )
+        logger.debug(f"Saved user message: {user_message}")
 
         if selection == "Yes":
-            bot_message = "Great! Please contact our counselor at counselor@example.com."
+            # Handle the case where user wants to talk to a counselor
+            message = "A counselor will reach out to you shortly."
+            logger.info(f"User {request.user.username} opted to talk to a counselor.")
         else:
-            bot_message = "No problem. I'm here if you need anything else."
+            # Handle the case where user does not want to talk to a counselor
+            message = "Alright, feel free to reach out if you change your mind."
+            logger.info(f"User {request.user.username} chose not to talk to a counselor.")
 
-        # Save bot's response as a ChatMessage
-        ChatMessage.objects.create(
+        # Save bot response
+        bot_message = ChatMessage.objects.create(
             user=request.user,
-            message=bot_message,
+            message=message,
             is_bot_message=True,
             message_type='bot_message',
-            timestamp=timezone.now()
+            question_index=None
         )
+        logger.debug(f"Sent bot message: {bot_message}")
 
-        return JsonResponse({'success': True, 'message': bot_message})
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'simulate_typing': True
+        })
 
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
+    except json.JSONDecodeError:
+        logger.error(f"JSON decoding error in final_option_selection view for user '{request.user.username}'.")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in final_option_selection view for user '{request.user.username}': {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to process your selection. Please try again.'}, status=500)
 
 @csrf_exempt
 def send_message(request):
