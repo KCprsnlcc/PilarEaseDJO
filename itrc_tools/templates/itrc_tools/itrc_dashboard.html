@@ -1,7 +1,11 @@
-<!-- itrc_tools/templates/itrc_tools/itrc_dashboard.html -->
+{% extends "itrc_tools/base_itrc.html" %}
+{% load static %}
 
-{% extends "itrc_tools/base_itrc.html" %} {% block page_title %} ITRC Dashboard
-{% endblock %} {% block itrc_content %}
+{% block page_title %}
+ITRC Dashboard
+{% endblock %}
+
+{% block itrc_content %}
 <div
   class="container-fluid pilarease-itrc-dashboard-container animate__animated animate__fadeIn"
 >
@@ -48,6 +52,107 @@
     </div>
   </div>
 
+  <!-- Auto Verification Settings -->
+  <div class="pilarease-itrc-settings-container my-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2 class="pilarease-itrc-subsection-title mb-0">Auto Verification Settings</h2>
+      </div>
+      <div class="card-body">
+        <p class="pilarease-itrc-section-info">
+          Enable or disable automatic acceptance or rejection of user verification requests.
+        </p>
+        <div class="row">
+          <!-- Auto Accept All -->
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bx bxs-check-circle fs-3 me-3 text-auto-accept"></i>
+              <div>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="autoAcceptSwitch"
+                    data-action="accept"
+                    {% if auto_accept_enabled == 'true' %}checked{% endif %}
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Automatically accept all pending verification requests without manual review."
+                  >
+                  <label class="form-check-label" for="autoAcceptSwitch">Auto Accept All</label>
+                </div>
+                <small class="text-muted">Automatically accept all pending verification requests.</small>
+              </div>
+            </div>
+          </div>
+          <!-- Auto Reject All -->
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bx bxs-x-circle fs-3 me-3 text-auto-reject"></i>
+              <div>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="autoRejectSwitch"
+                    data-action="reject"
+                    {% if auto_reject_enabled == 'true' %}checked{% endif %}
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Automatically reject all pending verification requests without manual review."
+                  >
+                  <label class="form-check-label" for="autoRejectSwitch">Auto Reject All</label>
+                </div>
+                <small class="text-muted">Automatically reject all pending verification requests.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- New Statistics Grid -->
+        <div class="row pilarease-itrc-statistics-grid mt-4">
+          <!-- Auto Accepted Requests -->
+          <div class="col-md-4">
+            <div class="pilarease-itrc-stat-card animate__animated animate__fadeInUp">
+              <i class="bx bxs-check-shield stat-icon text-auto-accept"></i>
+              <div class="stat-info">
+                <h3>{{ auto_accepted_requests }}</h3>
+                <p>Auto Accepted Requests</p>
+              </div>
+            </div>
+          </div>
+          <!-- Auto Rejected Requests -->
+          <div class="col-md-4">
+            <div
+              class="pilarease-itrc-stat-card animate__animated animate__fadeInUp"
+              style="animation-delay: 0.1s"
+            >
+              <i class="bx bxs-x-square stat-icon text-auto-reject"></i>
+              <div class="stat-info">
+                <h3>{{ auto_rejected_requests }}</h3>
+                <p>Auto Rejected Requests</p>
+              </div>
+            </div>
+          </div>
+          <!-- Pending Auto Actions -->
+          <div class="col-md-4">
+            <div
+              class="pilarease-itrc-stat-card animate__animated animate__fadeInUp"
+              style="animation-delay: 0.2s"
+            >
+              <i class="bx bxs-hourglass stat-icon text-secondary"></i>
+              <div class="stat-info">
+                <h3>{{ pending_auto_actions }}</h3>
+                <p>Pending Auto Actions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- End of Statistics Grid -->
+      </div>
+    </div>
+  </div>
+
   <!-- Pending Verification Requests -->
   <div class="pilarease-itrc-pending-requests-container">
     <h2 class="pilarease-itrc-subsection-title">
@@ -57,19 +162,21 @@
       Review and manage users awaiting verification.
     </p>
 
-    <form method="get" class="pilarease-itrc-search-form">
+    <!-- Search Form -->
+    <form method="get" class="pilarease-itrc-search-form mb-3">
       <input
         type="text"
         name="search"
         placeholder="Search users..."
         class="pilarease-itrc-search-input"
-        value="{{ request.GET.search }}"
+        value="{{ search_query }}"
       />
       <button type="submit" class="pilarease-itrc-search-button">
         <i class="bx bx-search"></i>
       </button>
     </form>
 
+    <!-- Pending Requests Table -->
     <table class="pilarease-itrc-table table table-striped">
       <thead>
         <tr>
@@ -88,12 +195,18 @@
           <td>{{ request.user.username }}</td>
           <td>{{ request.submitted_at|date:"Y-m-d H:i" }}</td>
           <td>
-            <a
-              href="{% url 'verify_user' request.user.id %}"
-              class="pilarease-itrc-action-button review-button btn btn-primary"
+            <button
+              class="accept-user-button btn btn-success btn-sm"
+              data-user-id="{{ request.user.id }}"
             >
-              Review
-            </a>
+              Accept
+            </button>
+            <button
+              class="reject-user-button btn btn-danger btn-sm"
+              data-user-id="{{ request.user.id }}"
+            >
+              Reject
+            </button>
           </td>
         </tr>
         {% empty %}
@@ -105,6 +218,356 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
+      <ul class="pagination">
+        {% if pending_requests.has_previous %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="?page={{ pending_requests.previous_page_number }}&search={{ search_query }}"
+            >&laquo;</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">&laquo;</span>
+        </li>
+        {% endif %}
+
+        {% for num in elided_page_range %}
+          {% if num == pending_requests.number %}
+            <li class="page-item active">
+              <span class="page-link">{{ num }}</span>
+            </li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if pending_requests.has_next %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="?page={{ pending_requests.next_page_number }}&search={{ search_query }}"
+            >&raquo;</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">&raquo;</span>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
   </div>
+
+  <!-- Confirmation Modal -->
+  <div class="pilarease-itrc-modal-overlay" id="confirmationModal">
+    <div class="pilarease-itrc-modal">
+      <div class="pilarease-itrc-modal-header">
+        <h5 class="modal-title" id="modalTitle">Confirm Action</h5>
+        <span class="pilarease-itrc-close-modal" id="closeModal">&times;</span>
+      </div>
+      <div class="pilarease-itrc-modal-body" id="modalBody">
+        <!-- Dynamic Content -->
+      </div>
+      <div class="pilarease-itrc-modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmModal">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AJAX Scripts for Auto Accept/Reject and Manual Review -->
+  <script>
+  $(document).ready(function(){
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Modal Elements
+    const confirmationModal = $('#confirmationModal');
+    const modalTitle = $('#modalTitle');
+    const modalBody = $('#modalBody');
+    const confirmModal = $('#confirmModal');
+    const cancelModal = $('#cancelModal');
+    const closeModal = $('#closeModal');
+
+    let currentAction = null; // To store whether it's 'accept' or 'reject'
+    let currentSwitch = null; // To store the jQuery object of the toggle switch
+
+    // Function to open modal with dynamic content
+    function openModal(action) {
+      currentAction = action;
+      if(action === 'accept') {
+        modalTitle.text('Confirm Auto Accept All');
+        modalBody.html(`
+          <p>Are you sure you want to <strong>enable Auto Accept All</strong>? This will automatically accept all pending verification requests without manual review.</p>
+          <p>Enabling this will <strong>disable Auto Reject All</strong> if it is currently enabled.</p>
+        `);
+      } else if(action === 'reject') {
+        modalTitle.text('Confirm Auto Reject All');
+        modalBody.html(`
+          <p>Are you sure you want to <strong>enable Auto Reject All</strong>? This will automatically reject all pending verification requests without manual review.</p>
+          <p>Enabling this will <strong>disable Auto Accept All</strong> if it is currently enabled.</p>
+        `);
+      }
+      confirmationModal.show();
+    }
+
+    // Function to close modal
+    function closeModalFunc() {
+      confirmationModal.hide();
+      currentAction = null;
+      currentSwitch = null;
+    }
+
+    // Event listener for closing modal
+    closeModal.on('click', closeModalFunc);
+    cancelModal.on('click', closeModalFunc);
+
+    // Event listener for confirming action
+    confirmModal.on('click', function(){
+      if(currentAction && currentSwitch){
+        const isChecked = currentSwitch.is(':checked');
+        if(currentAction === 'accept') {
+          // Proceed to enable Auto Accept All
+          enableAutoAccept(currentSwitch, isChecked);
+        } else if(currentAction === 'reject') {
+          // Proceed to enable Auto Reject All
+          enableAutoReject(currentSwitch, isChecked);
+        }
+      }
+      closeModalFunc();
+    });
+
+    // Function to handle enabling Auto Accept All
+    function enableAutoAccept(switchElem, isChecked) {
+      $.ajax({
+        url: "{% url 'toggle_auto_accept' %}",
+        type: 'POST',
+        data: {
+          'enabled': isChecked,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response){
+          if(response.success){
+            toastr.success('Auto Accept All has been enabled.');
+            // Disable Auto Reject All toggle if it was enabled
+            if(isChecked){
+              $('#autoRejectSwitch').prop('checked', false);
+              $.ajax({
+                url: "{% url 'toggle_auto_reject' %}",
+                type: 'POST',
+                data: {
+                  'enabled': false,
+                  'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(res){
+                  if(res.success){
+                    toastr.info('Auto Reject All has been disabled.');
+                  }
+                },
+                error: function(){
+                  toastr.error('Failed to disable Auto Reject All.');
+                  $('#autoRejectSwitch').prop('checked', true);
+                }
+              });
+            }
+          } else {
+            toastr.error('Failed to update Auto Accept All.');
+            // Revert the toggle switch
+            switchElem.prop('checked', !isChecked);
+          }
+        },
+        error: function(){
+          toastr.error('An error occurred while updating Auto Accept All.');
+          // Revert the toggle switch
+          switchElem.prop('checked', !isChecked);
+        }
+      });
+    }
+
+    // Function to handle enabling Auto Reject All
+    function enableAutoReject(switchElem, isChecked) {
+      $.ajax({
+        url: "{% url 'toggle_auto_reject' %}",
+        type: 'POST',
+        data: {
+          'enabled': isChecked,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response){
+          if(response.success){
+            toastr.success('Auto Reject All has been enabled.');
+            // Disable Auto Accept All toggle if it was enabled
+            if(isChecked){
+              $('#autoAcceptSwitch').prop('checked', false);
+              $.ajax({
+                url: "{% url 'toggle_auto_accept' %}",
+                type: 'POST',
+                data: {
+                  'enabled': false,
+                  'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(res){
+                  if(res.success){
+                    toastr.info('Auto Accept All has been disabled.');
+                  }
+                },
+                error: function(){
+                  toastr.error('Failed to disable Auto Accept All.');
+                  $('#autoAcceptSwitch').prop('checked', true);
+                }
+              });
+            }
+          } else {
+            toastr.error('Failed to update Auto Reject All.');
+            // Revert the toggle switch
+            switchElem.prop('checked', !isChecked);
+          }
+        },
+        error: function(){
+          toastr.error('An error occurred while updating Auto Reject All.');
+          // Revert the toggle switch
+          switchElem.prop('checked', !isChecked);
+        }
+      });
+    }
+
+    // Event listener for toggle switches
+    $('.form-check-input').change(function(e){
+      const switchElem = $(this);
+      const action = switchElem.data('action');
+      const isChecked = switchElem.is(':checked');
+
+      if(isChecked){
+        // Prevent the toggle from changing until confirmation
+        switchElem.prop('checked', false);
+        currentSwitch = switchElem;
+        openModal(action);
+      } else {
+        // If disabling, proceed without confirmation
+        if(action === 'accept'){
+          disableAutoAccept(switchElem, isChecked);
+        } else if(action === 'reject'){
+          disableAutoReject(switchElem, isChecked);
+        }
+      }
+    });
+
+    // Function to handle disabling Auto Accept All
+    function disableAutoAccept(switchElem, isChecked){
+      $.ajax({
+        url: "{% url 'toggle_auto_accept' %}",
+        type: 'POST',
+        data: {
+          'enabled': isChecked,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response){
+          if(response.success){
+            toastr.success('Auto Accept All has been disabled.');
+          } else {
+            toastr.error('Failed to disable Auto Accept All.');
+            // Revert the toggle switch
+            switchElem.prop('checked', !isChecked);
+          }
+        },
+        error: function(){
+          toastr.error('An error occurred while disabling Auto Accept All.');
+          // Revert the toggle switch
+          switchElem.prop('checked', !isChecked);
+        }
+      });
+    }
+
+    // Function to handle disabling Auto Reject All
+    function disableAutoReject(switchElem, isChecked){
+      $.ajax({
+        url: "{% url 'toggle_auto_reject' %}",
+        type: 'POST',
+        data: {
+          'enabled': isChecked,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function(response){
+          if(response.success){
+            toastr.success('Auto Reject All has been disabled.');
+          } else {
+            toastr.error('Failed to disable Auto Reject All.');
+            // Revert the toggle switch
+            switchElem.prop('checked', !isChecked);
+          }
+        },
+        error: function(){
+          toastr.error('An error occurred while disabling Auto Reject All.');
+          // Revert the toggle switch
+          switchElem.prop('checked', !isChecked);
+        }
+      });
+    }
+
+    // Manual Accept User
+    $(document).on('click', '.accept-user-button', function(){
+      const userId = $(this).data('user-id');
+      if(confirm('Are you sure you want to accept this user?')){
+        $.ajax({
+          url: "{% url 'manual_accept_user' 0 %}".replace('/0/', '/' + userId + '/'),
+          type: 'POST',
+          data: {
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+          },
+          success: function(response){
+            if(response.success){
+              toastr.success(response.message);
+              // Remove the user row or update it to reflect the new status
+              $('button.accept-user-button[data-user-id="'+userId+'"]').closest('tr').fadeOut();
+            } else {
+              toastr.error(response.message);
+            }
+          },
+          error: function(){
+            toastr.error('An error occurred while accepting the user.');
+          }
+        });
+      }
+    });
+
+    // Manual Reject User
+    $(document).on('click', '.reject-user-button', function(){
+      const userId = $(this).data('user-id');
+      const remarks = prompt('Enter remarks for rejection:');
+      if(remarks !== null){
+        $.ajax({
+          url: "{% url 'manual_reject_user' 0 %}".replace('/0/', '/' + userId + '/'),
+          type: 'POST',
+          data: {
+            'remarks': remarks,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+          },
+          success: function(response){
+            if(response.success){
+              toastr.success(response.message);
+              // Remove the user row or update it to reflect the new status
+              $('button.reject-user-button[data-user-id="'+userId+'"]').closest('tr').fadeOut();
+            } else {
+              toastr.error(response.message);
+            }
+          },
+          error: function(){
+            toastr.error('An error occurred while rejecting the user.');
+          }
+        });
+      }
+    });
+  });
+  </script>
 </div>
 {% endblock %}

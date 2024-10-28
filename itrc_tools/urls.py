@@ -34,6 +34,19 @@ urlpatterns = [
     path('add-user/', views.add_user, name='add_user'),
     path('edit-user/<int:user_id>/', views.edit_user, name='edit_user'),  # Optional: Implement this view
     path('change-role/<int:user_id>/', views.change_role, name='change_role'),  # Optional: Implement this view
+    
+    # Bulk Verification Actions
+    path('auto-accept-all/', views.auto_accept_all, name='auto_accept_all'),
+    path('auto-reject-all/', views.auto_reject_all, name='auto_reject_all'),
 
-    # ... other URL patterns ...
+    # AJAX Endpoints for Toggling Settings
+    path('toggle-auto-accept/', views.toggle_auto_accept, name='toggle_auto_accept'),
+    path('toggle-auto-reject/', views.toggle_auto_reject, name='toggle_auto_reject'),
+
+    # AJAX Endpoints for Manual Review
+    path('manual-accept-user/<int:user_id>/', views.manual_accept_user, name='manual_accept_user'),
+    path('manual-reject-user/<int:user_id>/', views.manual_reject_user, name='manual_reject_user'),
+    path('fetch-pending-requests/', views.fetch_pending_requests, name='fetch_pending_requests'),
 ]
+    # ... other URL patterns ...
+

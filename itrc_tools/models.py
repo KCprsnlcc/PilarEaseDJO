@@ -103,6 +103,18 @@ class SystemSetting(models.Model):
     def __str__(self):
         return f"{self.key}: {self.value}"
 
+    @classmethod
+    def get_setting(cls, key, default=None):
+        try:
+            return cls.objects.get(key=key).value
+        except cls.DoesNotExist:
+            return default
+
+    @classmethod
+    def set_setting(cls, key, value):
+        setting, created = cls.objects.update_or_create(key=key, defaults={'value': value})
+        return setting
+
 class AuditLog(models.Model):
     ACTION_CHOICES = [
         ('verify', 'Verify User'),

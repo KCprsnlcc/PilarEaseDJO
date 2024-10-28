@@ -15,6 +15,14 @@
   --font-family: "Roboto", sans-serif;
   --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+/* Custom Text Colors for Auto Verification Settings */
+.text-auto-accept {
+  color: var(--secondary-color) !important; /* Teal color */
+}
+
+.text-auto-reject {
+  color: var(--accent-color) !important; /* Orange color */
+}
 
 /* Global Styles */
 body {
@@ -716,6 +724,7 @@ body {
   max-width: 500px;
   box-shadow: var(--box-shadow);
   overflow: hidden;
+  animation: fadeIn 0.3s;
 }
 
 /* Modal Header */
@@ -768,4 +777,14 @@ body {
 
 .pilarease-itrc-add-user .pilarease-itrc-action-button.upload-button:hover {
   background-color: #e89e1c;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

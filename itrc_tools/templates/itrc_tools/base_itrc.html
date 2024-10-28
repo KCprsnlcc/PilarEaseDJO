@@ -1,5 +1,5 @@
 <!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
-{% load static %}
+{% load static %} {% load compress %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -21,8 +21,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
     />
-    <!-- Custom CSS -->
+    {% compress css %}
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
+    {% endcompress %}
 
     <!-- Custom CSS for Toastr Notifications (Optional) -->
     <style>

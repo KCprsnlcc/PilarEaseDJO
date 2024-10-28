@@ -65,16 +65,108 @@ class ItrcLoginView(LoginView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        user = self.request.user
         messages.success(self.request, "Successfully logged in.")
+
         # Log the login event
         AuditLog.objects.create(
-            user=self.request.user,
+            user=user,
             action='login',
-            details=f"User {self.request.user.username} logged in.",
+            details=f"User {user.username} logged in.",
             timestamp=timezone.now()
         )
+
+        # Check for auto accept/reject settings
+        auto_accept_enabled = SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
+        auto_reject_enabled = SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true'
+
+        if auto_accept_enabled and user.verification_status == 'pending':
+            self.auto_accept_user(user)
+        elif auto_reject_enabled and user.verification_status == 'pending':
+            self.auto_reject_user(user)
+
         return response
 
+    def auto_accept_user(self, user):
+        user.is_active = True
+        user.is_verified = True
+        user.verification_status = 'verified'
+        user.save()
+
+        verification_request = get_object_or_404(VerificationRequest, user=user)
+        verification_request.status = 'verified'
+        verification_request.remarks = 'Auto-verified by system.'
+        verification_request.save()
+
+        # Log the action
+        AuditLog.objects.create(
+            user=self.request.user,
+            action='verify',
+            details=f"Auto-approved user {user.username}.",
+            timestamp=timezone.now()
+        )
+
+        # Send notification to the user
+        Notification_System.objects.create(
+            user=user,
+            notification_type='success',
+            message='Your account has been automatically verified by the ITRC staff.',
+            link=reverse('itrc_dashboard')  # Adjust as needed
+        )
+
+        messages.success(self.request, f'User {user.username} has been automatically verified.')
+
+    def auto_reject_user(self, user):
+        user.is_active = False
+        user.is_verified = False
+        user.verification_status = 'rejected'
+        user.save()
+
+        verification_request = get_object_or_404(VerificationRequest, user=user)
+        verification_request.status = 'rejected'
+        verification_request.remarks = 'Auto-rejected by system.'
+        verification_request.save()
+
+        # Log the action
+        AuditLog.objects.create(
+            user=self.request.user,
+            action='reject',
+            details=f"Auto-rejected user {user.username}.",
+            timestamp=timezone.now()
+        )
+
+        # Send notification to the user
+        Notification_System.objects.create(
+            user=user,
+            notification_type='warning',
+            message='Your account verification request has been automatically rejected by the ITRC staff.',
+            link=reverse('contact_support')  # Adjust as needed
+        )
+
+        messages.info(self.request, f'User {user.username} has been automatically rejected.')
+
+@user_passes_test(is_itrc_staff)
+@login_required
+def fetch_pending_requests(request):
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        pending_requests = VerificationRequest.objects.filter(
+            status='pending',
+            user__student_id__icontains=search_query
+        ).select_related('user').order_by('user__id')
+    else:
+        pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user').order_by('user__id')
+    
+    pending_list = []
+    for req in pending_requests:
+        pending_list.append({
+            'user_id': req.user.id,
+            'student_id': req.user.student_id,
+            'username': req.user.username,
+            'submitted_at': req.submitted_at.strftime('%Y-%m-%d %H:%M'),
+        })
+    
+    return JsonResponse({'pending_requests': pending_list})
 class ItrcLogoutView(LogoutView):
     """
     Custom Logout View for ITRC Tools
@@ -97,18 +189,268 @@ class ItrcLogoutView(LogoutView):
 @user_passes_test(is_itrc_staff)
 @login_required
 def itrc_dashboard(request):
-    pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+    search_query = request.GET.get('search', '').strip()
+    
+    if search_query:
+        pending_requests = VerificationRequest.objects.filter(
+            status='pending',
+            user__student_id__icontains=search_query
+        ).select_related('user').order_by('user__id')
+    else:
+        pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user').order_by('user__id')
+    
+    # Pagination setup
+    paginator = Paginator(pending_requests, 10)  # Show 10 requests per page
+    page_number = request.GET.get('page')
+    pending_requests_page = paginator.get_page(page_number)
+    
     total_requests = VerificationRequest.objects.count()
     verified_requests = VerificationRequest.objects.filter(status='verified').count()
     rejected_requests = VerificationRequest.objects.filter(status='rejected').count()
-
+    
+    # Additional Statistics
+    auto_accepted_requests = VerificationRequest.objects.filter(status='auto_accepted').count()
+    auto_rejected_requests = VerificationRequest.objects.filter(status='auto_rejected').count()
+    pending_auto_actions = VerificationRequest.objects.filter(status='pending_auto').count()
+    
+    # Fetch auto settings
+    auto_accept_enabled = SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
+    auto_reject_enabled = SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true'
+    elided_page_range = paginator.get_elided_page_range(pending_requests_page.number, on_each_side=2, on_ends=1)
     context = {
-        'pending_requests': pending_requests,
+        'pending_requests': pending_requests_page,  # Pass the Page object
         'total_requests': total_requests,
         'verified_requests': verified_requests,
         'rejected_requests': rejected_requests,
+        'auto_accepted_requests': auto_accepted_requests,
+        'auto_rejected_requests': auto_rejected_requests,
+        'pending_auto_actions': pending_auto_actions,
+        'auto_accept_enabled': 'true' if auto_accept_enabled else 'false',
+        'auto_reject_enabled': 'true' if auto_reject_enabled else 'false',
+        'elided_page_range': elided_page_range,
+        'search_query': search_query,  # To preserve the search query in the template
     }
     return render(request, 'itrc_tools/itrc_dashboard.html', context)
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def auto_accept_all(request):
+    """
+    Automatically accept all pending verification requests.
+    """
+    pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+
+    if not pending_requests.exists():
+        messages.info(request, "There are no pending verification requests to accept.")
+        return redirect('itrc_dashboard')
+
+    with transaction.atomic():
+        for verification_request in pending_requests:
+            user = verification_request.user
+            remarks = "Auto verified by ITRC staff."
+
+            # Update user status
+            user.is_active = True
+            user.is_verified = True
+            user.verification_status = 'verified'
+            user.save()
+
+            # Update verification request
+            verification_request.status = 'verified'
+            verification_request.remarks = remarks
+            verification_request.save()
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='verify',
+                details=f"Auto-approved user {user.username}. Remarks: {remarks}",
+                timestamp=timezone.now()
+            )
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been automatically verified by the ITRC staff.',
+                link=reverse('itrc_dashboard')  # Adjust as needed
+            )
+
+    messages.success(request, f"Successfully auto-accepted {pending_requests.count()} verification requests.")
+
+    # Optionally, notify all ITRC staff about this bulk action
+    message = f"{request.user.username} auto-accepted {pending_requests.count()} verification requests."
+    link = reverse('itrc_dashboard')
+    notify_itrc_staff('info', message, link)
+
+    return redirect('itrc_dashboard')
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def toggle_auto_accept(request):
+    enabled = request.POST.get('enabled') == 'true'
+    try:
+        setting = SystemSetting.objects.get(name='auto_accept_enabled')
+        setting.value = 'true' if enabled else 'false'
+        setting.save()
+        return JsonResponse({'success': True})
+    except SystemSetting.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Setting not found.'})
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def toggle_auto_reject(request):
+    enabled = request.POST.get('enabled') == 'true'
+    try:
+        setting = SystemSetting.objects.get(name='auto_reject_enabled')
+        setting.value = 'true' if enabled else 'false'
+        setting.save()
+        return JsonResponse({'success': True})
+    except SystemSetting.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Setting not found.'})
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def manual_accept_user(request, user_id):
+    """
+    Manually accept a user via AJAX.
+    """
+    user = get_object_or_404(CustomUser, id=user_id)
+    verification_request = get_object_or_404(VerificationRequest, user=user, status='pending')
+
+    try:
+        with transaction.atomic():
+            user.is_active = True
+            user.is_verified = True
+            user.verification_status = 'verified'
+            user.save()
+
+            verification_request.status = 'verified'
+            verification_request.remarks = 'Manually approved by staff.'
+            verification_request.save()
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='verify',
+                details=f"Manually approved user {user.username}.",
+                timestamp=timezone.now()
+            )
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been manually verified by the ITRC staff.',
+                link=reverse('itrc_dashboard')  # Adjust as needed
+            )
+
+        return JsonResponse({'success': True, 'message': f'User {user.username} has been accepted.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': 'An error occurred while accepting the user.'}, status=500)
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def manual_reject_user(request, user_id):
+    """
+    Manually reject a user via AJAX.
+    """
+    user = get_object_or_404(CustomUser, id=user_id)
+    verification_request = get_object_or_404(VerificationRequest, user=user, status='pending')
+    remarks = request.POST.get('remarks', '').strip()
+
+    if not remarks:
+        return JsonResponse({'success': False, 'message': 'Remarks are required for rejection.'}, status=400)
+
+    try:
+        with transaction.atomic():
+            user.is_active = False
+            user.is_verified = False
+            user.verification_status = 'rejected'
+            user.save()
+
+            verification_request.status = 'rejected'
+            verification_request.remarks = remarks
+            verification_request.save()
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='reject',
+                details=f"Manually rejected user {user.username}. Remarks: {remarks}",
+                timestamp=timezone.now()
+            )
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='warning',
+                message='Your account verification request has been manually rejected by the ITRC staff.',
+                link=reverse('contact_support')  # Adjust as needed
+            )
+
+        return JsonResponse({'success': True, 'message': f'User {user.username} has been rejected.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': 'An error occurred while rejecting the user.'}, status=500)
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def auto_reject_all(request):
+    """
+    Automatically reject all pending verification requests.
+    """
+    pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+
+    if not pending_requests.exists():
+        messages.info(request, "There are no pending verification requests to reject.")
+        return redirect('itrc_dashboard')
+
+    with transaction.atomic():
+        for verification_request in pending_requests:
+            user = verification_request.user
+            remarks = "Auto-rejected by ITRC staff."
+
+            # Update user status
+            user.is_active = False
+            user.is_verified = False
+            user.verification_status = 'rejected'
+            user.save()
+
+            # Update verification request
+            verification_request.status = 'rejected'
+            verification_request.remarks = remarks
+            verification_request.save()
+
+            # Log the action
+            AuditLog.objects.create(
+                user=request.user,
+                action='reject',
+                details=f"Auto-rejected user {user.username}. Remarks: {remarks}",
+                timestamp=timezone.now()
+            )
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='warning',
+                message='Your account verification request has been automatically rejected by the ITRC staff.',
+                link=reverse('contact_support')  # Adjust as needed
+            )
+
+    messages.success(request, f"Successfully auto-rejected {pending_requests.count()} verification requests.")
+
+    # Optionally, notify all ITRC staff about this bulk action
+    message = f"{request.user.username} auto-rejected {pending_requests.count()} verification requests."
+    link = reverse('itrc_dashboard')
+    notify_itrc_staff('warning', message, link)
+
+    return redirect('itrc_dashboard')
+
 @user_passes_test(is_itrc_staff)
 @login_required
 def verify_user(request, user_id):
@@ -1081,16 +1423,18 @@ def mark_all_notifications_as_read(request):
     return JsonResponse({'success': True})
 
 # itrc_tools/views.py
-
+from django.contrib.auth.models import Group
 def notify_itrc_staff(notification_type, message, link=None):
     itrc_staff = CustomUser.objects.filter(is_itrc_staff=True)
-    for staff in itrc_staff:
-        Notification_System.objects.create(
+    notifications = [
+        Notification_System(
             user=staff,
             notification_type=notification_type,
             message=message,
             link=link
-        )
+        ) for staff in itrc_staff
+    ]
+    Notification_System.objects.bulk_create(notifications)
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_http_methods(["GET", "POST"])

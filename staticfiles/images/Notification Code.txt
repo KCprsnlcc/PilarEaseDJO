@@ -1,0 +1,4720 @@
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from asgiref.sync import async_to_sync
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from datetime import timedelta
+from datetime import datetime
+import pytz
+import json
+from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
+from django.contrib.auth.hashers import check_password
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from .models import UserProfile
+import logging
+from PIL import Image
+from io import BytesIO
+import os
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, ChatSession, CustomUser, EmailHistory, Notification, UserNotificationSettings
+import re
+from django.utils.timesince import timesince
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Count
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import BytesIO
+import base64
+from wordcloud import WordCloud
+from django.shortcuts import render
+from scipy.special import softmax
+from django.db.models import Avg, Count
+from better_profanity import profanity
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str, force_bytes  # Replace force_text with force_str
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.translation import gettext as _
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.templatetags.static import static
+from email.mime.image import MIMEImage
+from django.db.models import Q 
+from django.utils.timezone import make_aware
+from django.utils.html import strip_tags
+from django.utils.timezone import now
+logger = logging.getLogger(__name__)
+CustomUser = get_user_model()
+
+def current_time_view(request):
+    tz = pytz.timezone('Asia/Manila')
+    current_time = datetime.now(tz)
+    return HttpResponse(f"The current time in Manila is: {current_time}")
+
+def home(request):
+    return render(request, 'home.html')
+
+def register_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True, 'redirect_url': '/login/'})
+        else:
+            errors = form.errors.get_json_data()
+            return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
+
+def request_email_change(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_email = data.get('new_email')
+            user = request.user
+
+            # Check if the new email is provided
+            if not new_email:
+                return JsonResponse({'success': False, 'error': 'New email is required.'})
+
+            # Check if the new email is the same as the current email
+            if user.email == new_email:
+                return JsonResponse({'success': False, 'error': 'This is already your current email address.'})
+
+            # Check if the new email was used previously
+            if EmailHistory.objects.filter(Q(user=user) & Q(email=new_email)).exists():
+                return JsonResponse({'success': False, 'error': 'You have already used this email previously. Please choose a different one.'})
+
+            # Check if the new email is already in use by another user
+            if CustomUser.objects.filter(email=new_email).exists():
+                return JsonResponse({'success': False, 'error': 'This email is already in use by another user.'})
+
+            # Generate email change token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            # Store the email change request time (to verify expiry later)
+            user.profile.email_change_requested_at = now()
+            user.profile.new_email = new_email  # Temporarily store the new email in the profile
+            user.profile.save()
+
+            # Generate email verification link
+            verification_link = request.build_absolute_uri(f'/verify_email_change/{uid}/{token}/{new_email}/')
+
+            # Send the verification email to the new email address
+            email_subject = 'Confirm Your New Email'
+            email_html_content = render_to_string('change_email.html', {
+                'user': user,
+                'verification_link': verification_link,
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [new_email],  # Send to the new email address
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification link sent.'})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid data format.'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def request_email_verification(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        if not user.profile.is_email_verified:
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+TOKEN_EXPIRY_MINUTES = 60  # Set token expiry time to 60 minutes
+
+def verify_email_change(request, uidb64, token, new_email):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            token_age = now() - user.profile.email_change_requested_at
+
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "change_email_complete.html", {
+                    "invalid": True,
+                    "message": "The verification link has expired. Please request a new email change."
+                })
+
+            # Ensure the new email is still available (not taken by another user)
+            if CustomUser.objects.filter(email=new_email).exists():
+                return render(request, "change_email_complete.html", {
+                    "invalid": True,
+                    "message": "This email is already in use by another user. Please choose a different email."
+                })
+
+            # Add current email to email history before changing
+            EmailHistory.objects.create(user=user, email=user.email)
+
+            # Update the user's email to the new email and mark it as verified
+            user.email = new_email
+            user.profile.is_email_verified = True  # Automatically verify the new email
+            user.save()
+
+            return render(request, "change_email_complete.html", {"verified": True})
+
+        else:
+            return render(request, "change_email_complete.html", {
+                "invalid": True,
+                "message": "The verification link is invalid. Please request a new email change."
+            })
+
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "change_email_complete.html", {
+            "invalid": True,
+            "message": "Invalid verification link or user not found. Please try again."
+        })
+        return render(request, "change_email_complete.html", {"invalid": True})
+    
+def check_email_verification(request):
+    user = request.user
+    if user.is_authenticated:
+        is_verified = user.profile.is_email_verified
+        return JsonResponse({'is_verified': is_verified})
+    return JsonResponse({'error': 'User not authenticated'}, status=403)
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        # Check if the token is valid
+        if default_token_generator.check_token(user, token):
+            token_age = now() - user.profile.email_verification_requested_at
+            logger.info(f"Token age: {token_age}, Token valid: {default_token_generator.check_token(user, token)}")
+
+            if token_age > timedelta(minutes=TOKEN_EXPIRY_MINUTES):
+                return render(request, "email_verification_complete.html", {
+                    "invalid": True,
+                    "message": "The verification link has expired. Please request a new verification link."
+                })
+
+            # Mark email as verified if it is not already verified
+            if not user.profile.is_email_verified:
+                user.profile.is_email_verified = True
+                user.profile.save()
+
+            return render(request, "email_verification_complete.html", {"verified": True})
+        else:
+            return render(request, "email_verification_complete.html", {
+                "invalid": True,
+                "message": "The verification link is invalid. Please request a new verification link."
+            })
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "email_verification_complete.html", {
+            "invalid": True,
+            "message": "Invalid verification link or user not found. Please try again."
+        })
+    
+def send_verification_email(request):
+    if request.method == 'POST':
+        user = request.user
+        email = user.email
+        if not user.profile.is_email_verified:
+            # Set the email_verification_requested_at timestamp
+            user.profile.email_verification_requested_at = now()
+            user.profile.save()
+
+            # Generate a verification token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            verification_link = request.build_absolute_uri(f"/verify_email/{uid}/{token}/")
+
+            # Render the email content
+            email_subject = "Email Verification"
+            email_html_content = render_to_string("email_verification.html", {
+                "user": user,
+                "verification_link": verification_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',
+                [user.email],
+            )
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Email already verified.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({'success': True, 'redirect_url': '/'})
+            else:
+                form.add_error(None, "Invalid login credentials")
+        errors = form.errors.get_json_data()
+        return JsonResponse({'success': False, 'error_message': errors})
+    else:
+        form = CustomAuthenticationForm()
+    return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
+
+def strip_html_tags(text):
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
+
+def custom_password_reset_view(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        last_sent = request.session.get('last_password_reset_email', None)
+        # Check if the last email was sent less than 3 minutes ago
+        if last_sent:
+            last_sent_time = timezone.datetime.strptime(last_sent, "%Y-%m-%d %H:%M:%S.%f%z")
+            if timezone.now() - last_sent_time < timedelta(minutes=3):
+                return JsonResponse({
+                    "success": False, 
+                    "error": "You can request a new password reset link every 3 minutes."
+                })
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_link = request.build_absolute_uri(f"/reset/{uid}/{token}/")
+
+            # Render email content
+            email_subject = "Password Reset Requested"
+            email_html_content = render_to_string("password_reset_email.html", {
+                "user": user,
+                "reset_link": reset_link,
+                "site_name": "PilarEase",
+            })
+            email_text_content = strip_tags(email_html_content)
+
+            # Create the email message object
+            email_message = EmailMultiAlternatives(
+                email_subject,
+                email_text_content,
+                'PilarEase <no-reply@pilarease.com>',  # Use a no-reply email address here
+                [user.email],
+            )
+            email_message.reply_to = ['support@pilarease.com']
+            email_message.attach_alternative(email_html_content, "text/html")
+
+            # Send the email
+            email_message.send()
+
+            # Store the current time in session to track the cooldown for this email
+            request.session[f'last_password_reset_email_{email}'] = str(timezone.now())
+
+            return JsonResponse({"success": True, "message": "Password reset link has been sent to your email."})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"success": False, "error": "No user is associated with this email address."})
+    return render(request, "password_reset_form.html")
+
+def custom_password_reset_done_view(request):
+    return render(request, "password_reset_done.html")
+
+def custom_password_reset_confirm_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            if request.method == "POST":
+                new_password = request.POST.get("new_password")
+                new_password_confirm = request.POST.get("new_password_confirm")
+
+                if new_password and new_password == new_password_confirm:
+                    user.set_password(new_password)
+                    user.save()
+                    return redirect("password_reset_complete")
+                else:
+                    # Handle password mismatch
+                    return render(
+                        request, 
+                        "password_reset_confirm.html", 
+                        {"validlink": True, "user": user, "error": "Passwords do not match."}
+                    )
+            return render(request, "password_reset_confirm.html", {"validlink": True, "user": user})
+        else:
+            return render(request, "password_reset_confirm.html", {"validlink": False})
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        return render(request, "password_reset_confirm.html", {"validlink": False})
+
+def custom_password_reset_complete_view(request):
+    return render(request, "password_reset_complete.html")
+
+model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+
+def analyze_emotions(text):
+    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+    outputs = model(**inputs)
+    scores = outputs[0][0].detach().numpy()
+    scores = softmax(scores)
+    emotions = {
+        'anger': scores[0],
+        'disgust': scores[1],
+        'fear': scores[2],
+        'happiness': scores[3],
+        'neutral': scores[4],
+        'sadness': scores[5],
+        'surprise': scores[6]
+    }
+    return emotions
+
+# Load the profanity word list
+profanity.load_censor_words()
+
+def check_profanity(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        title = data.get('title')
+        description = data.get('description')
+
+        if profanity.contains_profanity(title) or profanity.contains_profanity(description):
+            return JsonResponse({'contains_profanity': True})
+        else:
+            return JsonResponse({'contains_profanity': False})
+    return JsonResponse({'contains_profanity': False}, status=400)
+
+def get_status(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    data = {
+        'success': True,
+        'status': {
+            'id': status.id,
+            'title': status.title,
+            'description': status.description,
+            'plain_description': status.plain_description,
+            'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': status.user.username,
+            'emotion': status.emotion,
+        }
+    }
+    return JsonResponse(data)
+
+@require_POST
+def submit_referral(request):
+    data = json.loads(request.body)
+    try:
+        status = Status.objects.get(id=data['status_id'])
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=data.get('highlighted_title', ''),
+            highlighted_description=data.get('highlighted_description', '')
+        )
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def save_chat_session(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        session_data = data.get("session_data", [])
+        
+        chat_session, created = ChatSession.objects.get_or_create(
+            user=request.user
+        )
+        chat_session.session_data = session_data
+        chat_session.save()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False}, status=400)
+
+@csrf_exempt
+def load_chat_session(request):
+    if request.method == "GET" and request.user.is_authenticated:
+        try:
+            chat_session = ChatSession.objects.get(user=request.user)
+            return JsonResponse({"success": True, "session_data": chat_session.session_data})
+        except ChatSession.DoesNotExist:
+            return JsonResponse({"success": False, "session_data": []})
+    return JsonResponse({"success": False, "session_data": []}, status=400)
+
+@csrf_exempt
+def save_questionnaire(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        question_index = data.get("question_index")
+        answer = data.get("answer", "No answer provided")
+        response = data.get("response", "No response provided")
+
+        # Define the questions list (ensure it matches the JavaScript)
+        questions = [
+            "What aspects of your academic life cause you the most stress?",
+            "How would you describe your overall emotional state in the past month?",
+            "How comfortable do you feel talking to friends or family about your mental health?",
+            "How frequently do you experience feelings of anxiety or worry related to school?",
+            "How many hours of sleep do you usually get on a school night?",
+            "How confident do you feel in your academic abilities?",
+            "How do you usually feel about changes in your academic or personal life?",
+            "How do you manage your time between schoolwork, extracurricular activities, and relaxation?",
+            "How motivated do you feel to complete your academic tasks?",
+            "Are you aware of the mental health resources available at your school?",
+        ]
+
+        # Fetch the corresponding question text
+        question_text = questions[question_index]
+
+        # Save the data into the Questionnaire model
+        Questionnaire.objects.create(
+            user=request.user,
+            question=question_text,
+            answer=answer,
+            response=response
+        )
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False}, status=400)
+
+@login_required
+@require_POST
+def refer_status(request, status_id):
+    try:
+        status = get_object_or_404(Status, id=status_id)
+        highlighted_title = request.POST.get('highlightedTitle', '')
+        highlighted_description = request.POST.get('highlightedDescription', '')
+        referral_reason = request.POST.get('referralReason', '')
+        other_reason = request.POST.get('otherReason', '')
+
+        # Save the referral
+        referral = Referral.objects.create(
+            status=status,
+            referred_by=request.user,
+            highlighted_title=highlighted_title,
+            highlighted_description=highlighted_description,
+            referral_reason=referral_reason,
+            other_reason=other_reason,
+        )
+
+        return JsonResponse({'success': True})
+    except Status.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Status not found'}, status=404)
+
+@login_required
+@csrf_exempt
+def submit_status(request):
+    if request.method == 'POST':
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            title = data.get('title')
+            description = data.get('description')
+            emotion = data.get('emotion')
+        else:
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            emotion = request.POST.get('emotion')
+        
+        plain_description = strip_html_tags(description)
+
+        # Validate the input fields
+        errors = {}
+        if not title:
+            errors['title'] = 'This field is required.'
+        if not description:
+            errors['description'] = 'This field is required.'
+        if not emotion:
+            errors['emotion'] = 'This field is required.'
+
+        # Check for inappropriate words
+        if profanity.contains_profanity(title) or profanity.contains_profanity(plain_description):
+            errors['profanity'] = 'Your status contains inappropriate language. Please edit and try again.'
+
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Analyze emotions
+        emotions = analyze_emotions(plain_description)
+
+        # Convert emotions to percentages
+        emotion_percentages = {key: int(value * 100) for key, value in emotions.items()}
+
+        # Save the status to the database
+        status = Status.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            plain_description=plain_description,
+            emotion=emotion,
+            anger=emotions['anger'],
+            disgust=emotions['disgust'],
+            fear=emotions['fear'],
+            happiness=emotions['happiness'],
+            sadness=emotions['sadness'],
+            surprise=emotions['surprise'],
+            neutral=emotions['neutral'],
+            anger_percentage=emotion_percentages['anger'],
+            disgust_percentage=emotion_percentages['disgust'],
+            fear_percentage=emotion_percentages['fear'],
+            happiness_percentage=emotion_percentages['happiness'],
+            sadness_percentage=emotion_percentages['sadness'],
+            surprise_percentage=emotion_percentages['surprise'],
+            neutral_percentage=emotion_percentages['neutral']
+        )
+
+        # Prepare the status data to return
+        status_data = {
+            'id': status.id,
+            'username': request.user.username,
+            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else None,
+            'title': status.title,
+            'description': status.plain_description,
+            'emotion': status.emotion,
+            'created_at': timesince(status.created_at),
+            'replies': 0  # Placeholder for replies
+        }
+
+        # Return success response to the user
+        return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+
+def format_timestamp(timestamp):
+    now = timezone.now()
+    diff = now - timestamp
+
+    seconds = diff.total_seconds()
+    minutes = seconds / 60
+    hours = minutes / 60
+    days = hours / 24
+    weeks = days / 7
+
+    if seconds < 60:
+        return f"{int(seconds)}s ago"
+    elif minutes < 60:
+        return f"{int(minutes)}m ago"
+    elif hours < 24:
+        return f"{int(hours)}hr ago"
+    elif days < 7:
+        return f"{int(days)}d ago"
+    else:
+        return f"{int(weeks)}w ago"
+
+@login_required
+def fetch_notifications(request):
+    page_number = request.GET.get('page', 1)
+    notifications = []
+
+    # Set the 7-week limit
+    seven_weeks_ago = timezone.now() - timedelta(weeks=7)
+
+    # Fetch user statuses created within the last 7 weeks
+    user_statuses = Status.objects.filter(user=request.user, created_at__gte=seven_weeks_ago)
+
+    # 1. Add notifications for statuses
+    for status in user_statuses:
+        # Create or get a notification entry for the status
+        notification, created = Notification.objects.get_or_create(
+            user=request.user, 
+            status=status,
+            defaults={'is_read': False}
+        )
+
+        # Add notification for the uploaded status
+        notifications.append({
+            'id': f"status_{status.id}",
+            'status_id': status.id,
+            'message': "You uploaded a status. Click to view it.",
+            'link': f'/status/{status.id}/',
+            'avatar': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'timestamp': status.created_at,  # Raw timestamp (sorting will be based on this)
+            'is_read': notification.is_read
+        })
+
+        # Fetch replies for the status
+        status_replies = Reply.objects.filter(status=status, created_at__gte=seven_weeks_ago).exclude(user=request.user).order_by('-created_at')
+        unique_users = {reply.user for reply in status_replies}  # Ensure unique users
+
+        if unique_users:
+            # Fetch only the latest reply from unique users
+            latest_unique_replies = list(status_replies.filter(user__in=unique_users))[:2]
+            latest_usernames = [reply.user.username for reply in latest_unique_replies]
+            latest_user_avatar = latest_unique_replies[0].user.profile.avatar.url if latest_unique_replies[0].user.profile.avatar else '/static/images/avatars/placeholder.png'
+
+            # Create the appropriate message based on the number of unique users
+            if len(unique_users) == 1:
+                message = f"{latest_usernames[0]} replied to your status, click to see it."
+            elif len(unique_users) == 2:
+                message = f"{latest_usernames[0]} and {latest_usernames[1]} replied to your status, click to see it."
+            elif len(unique_users) > 2:
+                message = f"{latest_usernames[0]}, {latest_usernames[1]} and others replied to your status, click to see it."
+
+            # Create or get a notification entry for the replies
+            notification, created = Notification.objects.get_or_create(
+                user=request.user, 
+                status=status,
+                defaults={'is_read': False}
+            )
+
+            # Add reply notifications
+            notifications.append({
+                'id': f"replies_{status.id}",
+                'message': message,
+                'link': f'/status/{status.id}/',
+                'avatar': latest_user_avatar,
+                'timestamp': latest_unique_replies[0].created_at,  # Raw timestamp (sorting will be based on this)
+                'is_read': notification.is_read
+            })
+
+    # Sort the notifications by timestamp in descending order
+    notifications.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    # Paginate notifications (5 per page)
+    paginator = Paginator(notifications, 5)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Convert the raw timestamps to human-readable format after sorting
+    for notification in page_obj.object_list:
+        notification['timestamp'] = format_timestamp(notification['timestamp'])
+
+    return JsonResponse({
+        'notifications': page_obj.object_list,
+        'total_pages': paginator.num_pages
+    })
+
+@login_required
+@csrf_exempt
+def mark_notification_as_read(request, notification_id):
+    try:
+        # Fetch the notification using the correct notification ID
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+    
+@login_required
+def mark_notification_button_clicked(request):
+    try:
+        # Mark the notification button as clicked in user settings
+        user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+        user_settings.has_clicked_notification = True  # Mark as clicked
+        user_settings.save()
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def check_notification_status(request):
+    notifications = Notification.objects.filter(user=request.user, is_read=False)
+    user_settings, created = UserNotificationSettings.objects.get_or_create(user=request.user)
+    has_unread_notifications = notifications.exists()
+    
+    return JsonResponse({
+        'has_unread_notifications': has_unread_notifications,
+        'has_clicked_notification': user_settings.has_clicked_notification
+    })
+
+@login_required
+@csrf_exempt
+def add_reply(request, status_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        text = data.get('text')
+        
+        if not text:
+            return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
+
+        status = get_object_or_404(Status, id=status_id)
+        reply = Reply.objects.create(status=status, user=request.user, text=text)
+
+        # Return a success response with the reply details
+        return JsonResponse({'success': True, 'reply': {
+            'id': reply.id,
+            'username': reply.user.username,
+            'text': reply.text,
+            'created_at': reply.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+@login_required
+def status_detail(request, status_id):
+    status = get_object_or_404(Status, id=status_id)
+    replies = status.replies.all()
+
+    # Check if there is an unread notification related to this status for the current user
+    try:
+        notification = Notification.objects.get(status=status, user=request.user, is_read=False)
+        notification.is_read = True  # Mark as read
+        notification.save()
+    except Notification.DoesNotExist:
+        pass  # No unread notification, do nothing
+
+    avatar_url = status.user.profile.avatar.url if status.user.profile.avatar else "/static/images/avatars/placeholder.png"
+    
+    return render(request, 'status_detail.html', {'status': status, 'replies': replies, 'avatar_url': avatar_url})
+
+@login_required
+@csrf_exempt
+def submit_reply(request, status_id):
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        if text:
+            status = get_object_or_404(Status, id=status_id)
+            reply = Reply.objects.create(status=status, user=request.user, text=text)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+
+@csrf_exempt
+def contact_us_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
+
+        ContactUs.objects.create(name=name, email=email, subject=subject, message=message)
+
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+@login_required
+def get_all_statuses(request):
+    page_size = 100  # Number of statuses per batch
+    page_number = int(request.GET.get('page', 1))
+    category = request.GET.get('category', 'recent')
+
+    if category == 'recent':
+        statuses = Status.objects.all().order_by('-created_at')
+    elif category == 'popular':
+        statuses = Status.objects.annotate(reply_count=Count('replies')).order_by('-reply_count', '-created_at')
+    else:
+        statuses = Status.objects.filter(emotion__iexact=category).order_by('-created_at')
+
+    paginator = Paginator(statuses, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    authenticated_user_id = request.user.id if request.user.is_authenticated else None
+
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+
+    statuses_data = [
+        {
+            'id': status.id,
+            'username': status.user.username,
+            'avatar_url': status.user.profile.avatar.url if status.user.profile.avatar else default_avatar_url,
+            'emotion': status.emotion,
+            'title': status.title,
+            'plain_description': status.plain_description,  # Include plain_description
+            'description': status.description,  # Include description with formatted text
+            'created_at': timesince(status.created_at).split(',')[0],  # Take only the first part
+            'replies': status.replies.count(),  # Count the number of replies
+            'can_delete': status.user.id == authenticated_user_id
+        }
+        for status in page_obj
+    ]
+
+    return JsonResponse({
+        'statuses': statuses_data,
+        'has_next': page_obj.has_next()
+    })
+
+@login_required
+@csrf_exempt
+def delete_status(request, status_id):
+    if request.method == 'DELETE':
+        try:
+            status = Status.objects.get(id=status_id, user=request.user)
+            status.delete()
+            return JsonResponse({'success': True, 'message': 'Status deleted successfully.'})
+        except Status.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Status not found or you do not have permission to delete this status.'}, status=404)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
+
+@login_required
+def get_user_profile(request):
+    user_profile = request.user.profile
+    default_avatar_url = "/static/images/avatars/placeholder.png"
+    avatar_url = user_profile.avatar.url if user_profile.avatar else default_avatar_url
+    data = {
+        'student_id': request.user.student_id,
+        'username': request.user.username,
+        'full_name': request.user.full_name,
+        'academic_year_level': request.user.academic_year_level,
+        'contact_number': request.user.contact_number,
+        'email': request.user.email,
+        'avatar': avatar_url,
+    }
+    return JsonResponse(data)
+
+@login_required
+@csrf_exempt
+def update_user_profile(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        contact_number = data.get('contact_number')
+        academic_year_level = data.get('academic_year_level')
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        # Check if the username or email already exists for another user
+        if CustomUser.objects.filter(username=username).exclude(id=user.id).exists():
+            response_data['success'] = False
+            response_data['errors']['username'] = 'Username already exists.'
+
+        # Update the user details if there are no errors
+        if response_data['success']:
+            user.username = username
+            user.contact_number = contact_number
+            user.academic_year_level = academic_year_level
+            user.save()
+        else:
+            return JsonResponse(response_data, status=400)
+        return JsonResponse({'success': True, 'message': 'Profile updated successfully!'})
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def password_manager_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        repeat_new_password = data.get('repeat_new_password')
+
+        user = request.user
+        response_data = {'success': True, 'errors': {}}
+
+        if not check_password(current_password, user.password):
+            response_data['success'] = False
+            response_data['errors']['current_password'] = 'Please check your current password.'
+        elif new_password != repeat_new_password:
+            response_data['success'] = False
+            response_data['errors']['new_password'] = 'Passwords do not match.'
+        else:
+            user.set_password(new_password)
+            user.save()
+
+        if response_data['success']:
+            return JsonResponse({'success': True, 'message': 'Password updated successfully!'})
+        else:
+            return JsonResponse(response_data, status=400)
+
+    return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request'}}, status=400)
+
+@login_required
+@csrf_exempt
+def upload_avatar(request):
+    if request.method == 'POST':
+        user_profile = request.user.profile
+
+        if 'avatar' in request.FILES:
+            avatar = request.FILES['avatar']
+
+            # Check file size (limit to 1MB)
+            if avatar.size > 1 * 1024 * 1024:
+                return JsonResponse({'success': False, 'errors': 'File size exceeds the 1MB limit.'}, status=400)
+
+            # Save the image file directly
+            user_profile.avatar.save(avatar.name, avatar)
+            user_profile.save()
+
+            return JsonResponse({'success': True, 'avatar_url': user_profile.avatar.url})
+
+        return JsonResponse({'success': False, 'errors': 'No avatar file uploaded.'}, status=400)
+
+    return JsonResponse({'success': False, 'errors': 'Invalid request'}, status=400)
+
+@login_required
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'success': True, 'message': 'Logout successful!', 'redirect_url': '/'})
+    return redirect('home')
+
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("loader-overlay").style.display = "none";
+  function fontsAndIconsLoaded() {
+    const fontNames = ["Aguafina Script", "Gothic A1", "Inter", "Epilogue"];
+
+    const allFontsLoaded = fontNames.every((font) =>
+      document.fonts.check(`1em ${font}`)
+    );
+
+    // Check if Boxicons are loaded by checking if any element using it has been styled
+    const boxiconLoaded = document.fonts.check('1em "boxicons"');
+
+    return allFontsLoaded && boxiconLoaded;
+  }
+
+  // Hide the loader once fonts and icons are loaded
+  document.fonts.ready.then(() => {
+    if (fontsAndIconsLoaded()) {
+      document.getElementById("loader-overlay").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    } else {
+      // If not loaded, keep checking
+      const interval = setInterval(() => {
+        if (fontsAndIconsLoaded()) {
+          clearInterval(interval);
+          document.getElementById("loader-overlay").style.display = "none";
+          document.getElementById("overlay").style.display = "none";
+        }
+      }, 100); // Check every 100ms
+    }
+  });
+  const avatarLoader = document.getElementById("avatarLoader");
+  const currentAvatar = document.getElementById("currentAvatar");
+  const avatarModal = document.getElementById("avatarModal");
+  const closeAvatarModal = document.getElementById("closeAvatarModal");
+  const saveAvatarBtn = document.getElementById("saveAvatarBtn");
+  const cancelAvatarBtn = document.getElementById("cancelAvatarBtn");
+  const avatarImages = document.querySelectorAll(
+    ".avatars-grid img.avatar-option"
+  );
+  const uploadAvatarInput = document.getElementById("uploadAvatarInput");
+  const cropperModal = document.getElementById("cropperModal");
+  const closeCropperModal = document.getElementById("closeCropperModal");
+  const cropImageBtn = document.getElementById("cropImageBtn");
+  const cancelCropBtn = document.getElementById("cancelCropBtn");
+  const imageToCrop = document.getElementById("imageToCrop");
+  let selectedAvatar = null;
+  let cropper;
+
+  const uploadAvatarUrl = document.getElementById("uploadAvatarUrl").value;
+  const placeholderUrl = currentAvatar.dataset.placeholderUrl;
+
+  const statusModal = document.getElementById("statusModal");
+  const statusModalOverlay = document.getElementById("statusModalOverlay");
+  const closeStatusModal = document.getElementById("closeStatusModal");
+  const statusComposerButton = document.getElementById("statuscomposer");
+
+  const statusForm = document.getElementById("statusForm");
+  const feelingIcons = document.querySelectorAll(".feeling-icon");
+  const statusTitle = document.getElementById("caption");
+  const statusDescription = document.getElementById("description");
+  const statusLoader = document.getElementById("statusLoader");
+  const confirmStatusModal = document.getElementById("ConfirmStatusModal");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const categoryElements = document.querySelectorAll(".v1_124 div");
+  const contactUsButton = document.getElementById("contactUsButton");
+  const contactUsModal = document.getElementById("contactUsModal");
+  const closeContactUsModal = document.getElementById("closeContactUsModal");
+
+  let selectedEmotion = null;
+  let page = 1;
+  let isLoading = false;
+  let hasNext = true;
+  let activeCategory = "recent";
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const rememberMeCheckbox = document.getElementById("rememberMe");
+    const usernameField = document.querySelector('input[name="username"]');
+    const passwordField = document.querySelector('input[name="password"]');
+
+    // Check if credentials are stored
+    if (localStorage.getItem("rememberMe") === "true") {
+      usernameField.value = localStorage.getItem("username");
+      passwordField.value = localStorage.getItem("password");
+      rememberMeCheckbox.checked = true;
+    }
+
+    // Save credentials if "Remember Me" is checked
+    document.getElementById("loginForm").onsubmit = function () {
+      if (rememberMeCheckbox.checked) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("username", usernameField.value);
+        localStorage.setItem("password", passwordField.value);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("username");
+        localStorage.removeItem("password");
+      }
+    };
+  });
+
+  // Get the relevant elements
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  const forgotPasswordModal = document.getElementById("forgotPasswordModal");
+  const closeForgotPasswordModal = document.getElementById(
+    "closeForgotPasswordModal"
+  );
+
+  // Show Forgot Password modal
+  if (forgotPasswordLink) {
+    forgotPasswordLink.onclick = function (event) {
+      event.preventDefault();
+      forgotPasswordModal.style.display = "block"; // Display the modal
+      setTimeout(() => {
+        forgotPasswordModal.classList.add("pop-in"); // Add pop-in animation
+      }, 10);
+    };
+  }
+
+  // Close Forgot Password modal
+  if (closeForgotPasswordModal) {
+    closeForgotPasswordModal.onclick = function () {
+      forgotPasswordModal.classList.add("pop-out"); // Add pop-out animation to the forgot password modal
+      setTimeout(() => {
+        forgotPasswordModal.style.display = "none"; // Hide the modal after the animation
+        forgotPasswordModal.classList.remove("pop-in", "pop-out"); // Clean up classes
+      }, 300); // Duration should match the animation time
+    };
+  }
+  document
+    .getElementById("forgotPasswordForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault(); // Prevent the default form submission
+
+      const emailInput = document.querySelector('input[name="email"]');
+      const email = emailInput.value;
+      const submitButton = document.querySelector(".v53_207");
+      const csrfToken = document.querySelector(
+        "[name=csrfmiddlewaretoken]"
+      ).value;
+
+      // Show the loader
+      showForgotPassLoader();
+
+      // Disable the button
+      submitButton.disabled = true;
+
+      fetch("/password-reset/", {
+        // Use the correct URL path
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: new URLSearchParams({ email: email }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Hide the loader
+          hideForgotPassLoader();
+
+          if (data.success) {
+            forgotPasswordSuccessBox(data.message);
+          } else {
+            if (data.error.includes("3 minutes")) {
+              forgotPasswordCooldownBox(data.error);
+            } else {
+              forgotPasswordErrorBox(data.error);
+            }
+          }
+
+          // Re-enable the button after the animation finishes
+          setTimeout(() => {
+            submitButton.disabled = false;
+          }, 3600); // 3000ms for dialog visibility + 300ms for pop-out animation
+        })
+        .catch((error) => {
+          hideForgotPassLoader(); // Ensure loader is hidden on error
+          console.error("Error:", error);
+          forgotPasswordErrorBox("An error occurred. Please try again later.");
+          setTimeout(() => {
+            submitButton.disabled = false;
+          }, 3600);
+        });
+    });
+
+  function showForgotPassLoader() {
+    document.getElementById("forgotpassOverlay").style.display = "block";
+  }
+
+  function hideForgotPassLoader() {
+    document.getElementById("forgotpassOverlay").style.display = "none";
+  }
+
+  // Function to show success dialog with pop-in and pop-out animation
+  function forgotPasswordSuccessBox(message) {
+    const successBox = document.getElementById("forgotPasswordSuccessBox");
+    document.getElementById("forgotPasswordSuccessContent").innerText = message;
+    successBox.classList.remove("pop-out");
+    successBox.classList.add("pop-in");
+    successBox.style.display = "block";
+
+    setTimeout(() => {
+      successBox.classList.remove("pop-in");
+      successBox.classList.add("pop-out");
+
+      // Hide the dialog and refresh the page
+      setTimeout(() => {
+        successBox.style.display = "none";
+        successBox.classList.remove("pop-in", "pop-out");
+        window.location.reload(); // Refresh the browser
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to show error dialog with pop-in and pop-out animation
+  function forgotPasswordErrorBox(error) {
+    const errorBox = document.getElementById("forgotPasswordErrorBox");
+    document.getElementById("forgotPasswordErrorContent").innerText = error;
+    errorBox.classList.remove("pop-out");
+    errorBox.classList.add("pop-in");
+    errorBox.style.display = "block";
+
+    setTimeout(() => {
+      errorBox.classList.remove("pop-in");
+      errorBox.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorBox.style.display = "none";
+        errorBox.classList.remove("pop-in", "pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Function to show cooldown notification dialog with pop-in and pop-out animation
+  function forgotPasswordCooldownBox(message) {
+    const cooldownBox = document.getElementById("forgotPasswordCooldownBox");
+    document.getElementById("forgotPasswordCooldownContent").innerText =
+      message;
+    cooldownBox.classList.remove("pop-out");
+    cooldownBox.classList.add("pop-in");
+    cooldownBox.style.display = "block";
+
+    setTimeout(() => {
+      cooldownBox.classList.remove("pop-in");
+      cooldownBox.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        cooldownBox.style.display = "none";
+        cooldownBox.classList.remove("pop-in", "pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show modal when Contact Us button is clicked
+  contactUsButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    contactUsModal.style.display = "block";
+    setTimeout(() => {
+      contactUsModal.classList.add("pop-in");
+      document.querySelector(".modal-content").classList.add("pop-in");
+    }, 10);
+  });
+
+  // Close modal when the close button is clicked
+  closeContactUsModal.addEventListener("click", function () {
+    document.querySelector(".modal-content").classList.add("pop-out");
+    contactUsModal.classList.add("pop-out");
+    setTimeout(() => {
+      contactUsModal.style.display = "none";
+      document.querySelector(".modal-content").classList.remove("pop-out");
+      contactUsModal.classList.remove("pop-out");
+    }, 300);
+  });
+
+  // Close modal when clicking outside of the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === contactUsModal) {
+      document.querySelector(".modal-content").classList.add("pop-out");
+      contactUsModal.classList.add("pop-out");
+      setTimeout(() => {
+        contactUsModal.style.display = "none";
+        document.querySelector(".modal-content").classList.remove("pop-out");
+        contactUsModal.classList.remove("pop-out");
+      }, 300);
+    }
+  });
+
+  // Handle form submission
+  const contactUsForm = document.getElementById("contactUsForm");
+  contactUsForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const formData = new FormData(contactUsForm);
+
+    fetch("/contact_us/", {
+      method: "POST",
+      body: JSON.stringify({
+        name: formData.get("name"),
+        email: formData.get("email"),
+        subject: formData.get("subject"),
+        message: formData.get("message"),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert("Your message has been sent successfully!");
+          contactUsModal.style.display = "none";
+          contactUsForm.reset();
+        } else {
+          alert("There was an error sending your message. Please try again.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("There was an error sending your message. Please try again.");
+      });
+  });
+  // Added back button functionality
+  const backButton = document.getElementById("backButton");
+  if (backButton) {
+    backButton.addEventListener("click", function () {
+      window.location.href = "/";
+    });
+  }
+
+  // Function to add pop animation to status detail
+  function addPopAnimation() {
+    const statusDetailContainer = document.querySelector(
+      ".status-detail-container"
+    );
+    if (statusDetailContainer) {
+      statusDetailContainer.classList.add("pop-in");
+    }
+  }
+
+  addPopAnimation();
+
+  categoryElements.forEach((categoryElement) => {
+    categoryElement.addEventListener("click", function () {
+      categoryElements.forEach((el) =>
+        el.querySelector("span").classList.remove("active")
+      );
+      this.querySelector("span").classList.add("active");
+      activeCategory = this.id;
+      page = 1;
+      document.getElementById("boxContainer").innerHTML = "";
+      fetchStatuses(page, activeCategory);
+    });
+  });
+
+  // Fetch initial statuses
+  fetchStatuses(page, activeCategory);
+
+  // Add scroll event listener for infinite scrolling
+  window.addEventListener("scroll", () => {
+    if (
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
+      !isLoading &&
+      hasNext
+    ) {
+      page++;
+      fetchStatuses(page);
+    }
+  });
+
+  // Show loader and overlay
+  function showLoader() {
+    statusLoader.style.display = "block";
+  }
+
+  // Hide loader and overlay
+  function hideLoader() {
+    statusLoader.style.display = "none";
+  }
+
+  feelingIcons.forEach((icon) => {
+    icon.addEventListener("click", () => {
+      feelingIcons.forEach((i) => i.classList.remove("active"));
+      icon.classList.add("active");
+      selectedEmotion = icon.querySelector("img").alt;
+      saveFormData();
+    });
+  });
+
+  statusTitle.addEventListener("input", saveFormData);
+  statusDescription.addEventListener("input", saveFormData);
+
+  // Show the profanity error modal with overlay
+  function showProfanityError(message) {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const dialogContent = document.getElementById("profanityErrorContent");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    overlay.style.display = "block";
+
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+  }
+
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", function () {
+      const dialogBox = document.getElementById("profanityErrorModal");
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    });
+
+  // Close the profanity error modal
+  function closeProfanityErrorModal() {
+    const dialogBox = document.getElementById("profanityErrorModal");
+    const overlay = document.getElementById("profanityErrorOverlay");
+
+    dialogBox.classList.remove("pop-in");
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+      overlay.style.display = "none";
+    }, 300);
+  }
+
+  // Show the guidelines modal
+  function showGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.style.display = "block";
+    guidelinesOverlay.style.display = "block";
+
+    guidelinesModal.classList.remove("pop-out");
+    guidelinesModal.classList.add("pop-in");
+  }
+
+  // Close the guidelines modal
+  function closeGuidelinesModal() {
+    const guidelinesModal = document.getElementById("guidelinesModal");
+    const guidelinesOverlay = document.getElementById("guidelinesOverlay");
+
+    guidelinesModal.classList.remove("pop-in");
+    guidelinesModal.classList.add("pop-out");
+    setTimeout(() => {
+      guidelinesModal.style.display = "none";
+      guidelinesModal.classList.remove("pop-out");
+      guidelinesOverlay.style.display = "none";
+    }, 300);
+  }
+
+  // Event listener to close the profanity error modal when the close button is clicked
+  document
+    .getElementById("closeProfanityModal")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to close the profanity error modal when the overlay is clicked
+  document
+    .getElementById("profanityErrorOverlay")
+    .addEventListener("click", closeProfanityErrorModal);
+
+  // Event listener to show the guidelines modal when the guidelines text is clicked
+  document
+    .getElementById("showGuidelines")
+    .addEventListener("click", showGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the close button is clicked
+  document
+    .getElementById("closeGuidelinesModal")
+    .addEventListener("click", closeGuidelinesModal);
+
+  // Event listener to close the guidelines modal when the overlay is clicked
+  document
+    .getElementById("guidelinesOverlay")
+    .addEventListener("click", closeGuidelinesModal);
+
+  function convertNewLinesToSpaces(text) {
+    return text.replace(/\n/g, " ");
+  }
+
+  document.getElementById("description").addEventListener("input", function () {
+    const descriptionElement = document.getElementById("description");
+    const plainDescription = descriptionElement.textContent;
+    const tokenCount = countTokens(plainDescription);
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
+      // Trim the content to the 512-token limit
+      const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+      descriptionElement.textContent = trimmedText;
+      // Move cursor to the end after trimming
+      moveCursorToEnd(descriptionElement);
+      updateCounters(); // Update the counters after trimming
+    } else {
+      updateCounters(); // Update the counters normally
+    }
+  });
+
+  //   if (tokenCount > 512) {
+  //     showSuggestDiary();
+  //     // Trim the content to the 512-token limit
+  //     const trimmedText = plainDescription.split(/\s+/).slice(0, 512).join(" ");
+  //     descriptionElement.textContent = trimmedText;
+  //     moveCursorToEnd(descriptionElement);
+  //     updateCounters(); // Update the counters after trimming
+  //   } else {
+  //     updateCounters(); // Update the counters normally
+  //   }
+  // });
+
+  function moveCursorToEnd(element) {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    element.focus();
+  }
+
+  // Event listener to handle paste events
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      handlePasteEvent(event);
+    });
+
+  // Event listener to handle drop events
+  document
+    .getElementById("description")
+    .addEventListener("drop", function (event) {
+      event.preventDefault(); // Prevent default drop behavior
+      showStatusError(
+        "Only text is allowed. Please do not drag and drop files or images."
+      );
+    });
+
+  // Preventing drag over behavior to avoid confusion
+  document
+    .getElementById("description")
+    .addEventListener("dragover", function (event) {
+      event.preventDefault(); // Prevent default drag behavior
+    });
+
+  function handlePasteEvent(event) {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const items = clipboardData.items;
+
+    // Check if any of the items are not text
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind !== "string") {
+        event.preventDefault(); // Prevent the paste
+        showStatusError(
+          "Only text is allowed. Please do not paste images, PDFs, or other files."
+        );
+        return;
+      }
+    }
+
+    // If only text is being pasted, check the token limit
+    setTimeout(() => {
+      const descriptionElement = document.getElementById("description");
+      const plainDescription = descriptionElement.textContent;
+      const tokenCount = countTokens(plainDescription);
+
+      if (tokenCount > 512) {
+        showStatusError("The description exceeds the 512 token limit.");
+        // Trim the content to the 512-token limit
+        const trimmedText = plainDescription
+          .split(/\s+/)
+          .slice(0, 512)
+          .join(" ");
+        descriptionElement.textContent = trimmedText;
+        moveCursorToEnd(descriptionElement);
+        updateCounters(); // Update the counters after trimming
+      } else {
+        updateCounters(); // Update the counters normally
+      }
+    }, 0);
+  }
+
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (event) {
+      event.preventDefault();
+
+      // Get plain text from the clipboard
+      const text = (event.clipboardData || window.clipboardData).getData(
+        "text/plain"
+      );
+
+      // Count the number of tokens in the pasted text
+      const tokenCount = countTokens(text);
+      const currentTokens = countTokens(
+        document.getElementById("description").textContent
+      );
+
+      if (tokenCount + currentTokens > 512) {
+        showStatusError("Pasting this text exceeds the 512 token limit.");
+        return;
+      }
+
+      // Insert the plain text at the cursor position
+      insertTextAtCursor(text);
+
+      // Update the counters
+      updateCounters();
+    });
+
+  // Utility function to insert text at the cursor position
+  function insertTextAtCursor(text) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+
+    // Move the cursor to the end of the inserted text
+    range.setStartAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  // Function to count tokens (assuming tokens are separated by spaces)
+  function countTokens(text) {
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+  // Update the token and character count
+  function updateCounters() {
+    const descriptionElement = document.getElementById("description");
+    const characterCount = descriptionElement.textContent.length;
+    const tokenCount = countTokens(descriptionElement.textContent);
+
+    document.getElementById(
+      "characterCount"
+    ).textContent = `${characterCount} characters`;
+    document.getElementById("tokenCount").textContent = `${tokenCount} tokens`;
+
+    if (tokenCount > 512) {
+      document.getElementById(
+        "tokenCount"
+      ).textContent = `512 tokens (Max reached)`;
+    }
+  }
+
+  // // Show the diary suggestion dialog
+  // function showSuggestDiary() {
+  //   const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //   suggestDiaryDialog.classList.remove("pop-out");
+  //   suggestDiaryDialog.classList.add("pop-in");
+  //   suggestDiaryDialog.style.display = "block";
+  // }
+
+  // // Close the diary suggestion dialog
+  // document
+  //   .getElementById("closeDiarySuggestionBtn")
+  //   .addEventListener("click", function () {
+  //     const suggestDiaryDialog = document.getElementById("suggestDiaryDialog");
+  //     suggestDiaryDialog.classList.remove("pop-in");
+  //     suggestDiaryDialog.classList.add("pop-out");
+  //     setTimeout(() => {
+  //       suggestDiaryDialog.style.display = "none";
+  //     }, 300);
+  //   });
+
+  // // Redirect to the diary module when clicked
+  // document
+  //   .getElementById("openDiaryBtn")
+  //   .addEventListener("click", function () {
+  //     window.location.href = "/diary_module_url"; // Replace with the actual diary module URL
+  //   });
+
+  // Add event listener to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  // Add event listeners to update counters on input
+  document
+    .getElementById("description")
+    .addEventListener("input", updateCounters);
+  document
+    .getElementById("description")
+    .addEventListener("paste", function (e) {
+      setTimeout(updateCounters, 0); // Update counters after paste
+    });
+
+  // Initial count update
+  updateCounters();
+
+  // Updated event listener for status form submission
+  statusForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.textContent.trim();
+    const plainDescription = description.replace(/\n+/g, " ");
+    const tokenCount = countTokens(plainDescription);
+
+    if (!selectedEmotion) {
+      showStatusError("Choose your emotion label.");
+      return;
+    }
+
+    if (!title) {
+      showStatusError("Choose a title for this status.");
+      return;
+    }
+
+    if (!description) {
+      showStatusError("Write what you feel in the description.");
+      return;
+    }
+
+    if (tokenCount > 512) {
+      showStatusError("The description exceeds the 512 token limit.");
+      return;
+    }
+
+    // Show confirmation dialog with pop-in animation
+    confirmStatusModal.style.display = "block";
+    setTimeout(() => {
+      confirmStatusModal.classList.add("pop-in");
+    }, 10);
+  });
+
+  confirmBtn.addEventListener("click", function () {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.classList.contains("placeholder")
+      ? ""
+      : statusDescription.innerHTML.trim();
+    const plainDescription = statusDescription.textContent
+      .trim()
+      .replace(/\n+/g, " ");
+
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+
+      // Proceed with profanity check
+      fetch("/check_profanity/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          title: title,
+          description: plainDescription,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.contains_profanity) {
+            showProfanityError("Your post contains inappropriate content.");
+          } else {
+            // Proceed with status submission
+            uploadStatus(title, description, plainDescription);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          showStatusError("Network error could not check profanity.");
+        });
+    }, 300);
+  });
+
+  cancelBtn.addEventListener("click", function () {
+    // Hide confirmation dialog with pop-out animation
+    confirmStatusModal.classList.remove("pop-in");
+    confirmStatusModal.classList.add("pop-out");
+    setTimeout(() => {
+      confirmStatusModal.style.display = "none";
+      confirmStatusModal.classList.remove("pop-out");
+    }, 300);
+  });
+
+  function uploadStatus(title, description, plainDescription) {
+    const csrfToken = document.querySelector(
+      'input[name="csrfmiddlewaretoken"]'
+    ).value;
+
+    showLoader();
+    statusModal.querySelector(".status-form").style.opacity = "0.5";
+
+    fetch("/submit_status/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      },
+      body: JSON.stringify({
+        emotion: selectedEmotion,
+        title: title,
+        description: description,
+        plain_description: plainDescription,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+
+        if (data.success) {
+          showStatusSuccess("Status shared successfully!");
+          setTimeout(() => {
+            const dialogBox = document.getElementById(
+              "statusNotificationSuccess"
+            );
+            dialogBox.classList.remove("pop-in");
+            dialogBox.classList.add("pop-out");
+            setTimeout(() => {
+              dialogBox.style.display = "none";
+              dialogBox.classList.remove("pop-out");
+
+              // Hide the status modal with animation
+              statusModal.classList.remove("pop-in");
+              statusModal.classList.add("pop-out");
+              setTimeout(() => {
+                statusModal.style.display = "none";
+                statusModal.classList.remove("pop-out");
+
+                // Reload the page after both animations complete
+                window.location.reload();
+              }, 300); // Duration of the status modal pop-out animation
+            }, 300); // Duration of the success dialog pop-out animation
+          }, 3000); // Duration to show the success message
+        } else {
+          showStatusError(
+            "Failed to share status: " + JSON.stringify(data.errors)
+          );
+        }
+      })
+      .catch((error) => {
+        hideLoader();
+        statusModal.querySelector(".status-form").style.opacity = "1";
+        console.error("Error:", error);
+        showStatusError("Network error could not upload.");
+      });
+  }
+
+  function fetchStatuses(page, category) {
+    isLoading = true;
+    const statusLoader = document.getElementById("statusLoader");
+    const statusOverlay = document.getElementById("statusOverlay");
+
+    statusLoader.style.display = "block";
+    statusOverlay.style.display = "block";
+
+    fetch(`/get_all_statuses/?page=${page}&category=${category}`)
+      .then((response) => response.json())
+      .then((data) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        const container = document.getElementById("boxContainer");
+
+        data.statuses.forEach((status) => {
+          const newBox = document.createElement("div");
+          newBox.classList.add("box5", "pop");
+          newBox.innerHTML = `
+                    <div class="avatar-content">
+                        <a href="/status/${status.id}/">
+                            <img src="${
+                              status.avatar_url
+                            }" alt="Avatar" class="circle-avatar-placeholder" />
+                        </a>
+                        <p class="username-placeholder">${status.username}</p>
+                    </div>
+                    <div class="content">
+                        <a href="/status/${status.id}/">
+                            <h2 class="title-placeholder">${status.title}</h2>
+                            <p class="description-placeholder">${truncateText(
+                              status.plain_description
+                            )}</p>
+                        </a>
+                        <span class="time-stamp time-stamp-placeholder">${
+                          status.created_at
+                        } ago</span>
+                        <span class="feelings feelings-placeholder">${getEmotionIcon(
+                          status.emotion
+                        )} ${mapEmotion(status.emotion)}</span>
+                        <span class="replies replies-placeholder">${
+                          status.replies
+                        } ${status.replies === 1 ? "Reply" : "Replies"}</span>
+                        ${
+                          status.can_delete
+                            ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                            : ""
+                        }
+                        ${
+                          !status.can_delete
+                            ? `<button id="refer-${status.id}" class="refer-button status"><i class='bx bxs-user-voice bx-tada'></i></button>`
+                            : ""
+                        }
+                    </div>
+                `;
+          container.appendChild(newBox);
+
+          if (status.can_delete) {
+            document
+              .getElementById(`delete-${status.id}`)
+              .addEventListener("click", function () {
+                deleteStatus(status.id);
+              });
+          } else {
+            document
+              .getElementById(`refer-${status.id}`)
+              .addEventListener("click", function () {
+                referStatusToCounselor(status.id);
+              });
+          }
+
+          newBox.addEventListener("animationend", function () {
+            newBox.classList.remove("pop");
+          });
+        });
+
+        hasNext = data.has_next;
+      })
+      .catch((error) => {
+        isLoading = false;
+        statusLoader.style.display = "none";
+        statusOverlay.style.display = "none";
+        console.error("Error fetching statuses:", error);
+      });
+  }
+
+  document
+    .getElementById("referralReason")
+    .addEventListener("change", function () {
+      const otherReasonContainer = document.getElementById(
+        "otherReasonContainer"
+      );
+      if (this.value === "Other Concerns") {
+        otherReasonContainer.style.display = "block";
+      } else {
+        otherReasonContainer.style.display = "none";
+      }
+    });
+
+  let undoStack = []; // Stack to keep track of the last highlight for undo
+
+  // Function to open the modal and fetch status data with animation
+  function referStatusToCounselor(statusId) {
+    fetch(`/get_status/${statusId}/`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById("referStatusTitle").textContent =
+            data.status.title;
+          document.getElementById("referStatusDescription").textContent =
+            data.status.plain_description;
+
+          const modalContent = document.getElementById("refercontent");
+          const modalOverlay = document.getElementById("referralModalOverlay");
+
+          // Display the modal overlay and content with animations
+          modalOverlay.style.display = "block";
+          modalOverlay.classList.remove("fade-out");
+          modalOverlay.classList.add("fade-in");
+
+          modalContent.style.display = "block";
+          modalContent.classList.remove("pop-out");
+          modalContent.classList.add("pop-in");
+
+          enableCustomHighlighting("referStatusTitle");
+          enableCustomHighlighting("referStatusDescription");
+
+          document.getElementById("submitReferStatus").onclick = function () {
+            showReferralConfirmation(statusId);
+          };
+
+          document.getElementById("clearHighlights").onclick = function () {
+            clearAllHighlights();
+          };
+
+          document.getElementById("highlightAllTitle").onclick = function () {
+            highlightAllText("referStatusTitle");
+          };
+
+          document.getElementById("highlightAllDescription").onclick =
+            function () {
+              highlightAllText("referStatusDescription");
+            };
+
+          document.addEventListener("keydown", handleUndoHighlight);
+        } else {
+          alert("Failed to load status data.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("Error fetching status data. Please try again.");
+      });
+  }
+
+  // Function to close the modal with animation (Renamed from closeModal)
+  function closeReferModal() {
+    const modalContent = document.getElementById("refercontent");
+    const modalOverlay = document.getElementById("referralModalOverlay");
+
+    modalContent.classList.remove("pop-in");
+    modalContent.classList.add("pop-out");
+
+    modalOverlay.classList.remove("fade-in");
+    modalOverlay.classList.add("fade-out");
+
+    // Wait for the animation to finish before hiding the modal content
+    setTimeout(() => {
+      modalContent.style.display = "none";
+      modalOverlay.style.display = "none";
+      document.removeEventListener("keydown", handleUndoHighlight);
+    }, 300); // Match the duration of the popOut animation
+  }
+
+  // Close modal when the close button is clicked
+  document.getElementById("closeReferStatusModal").onclick = function () {
+    closeReferModal();
+  };
+
+  // Function to enable custom highlighting
+  function enableCustomHighlighting(elementId) {
+    const element = document.getElementById(elementId);
+
+    element.addEventListener("mouseup", function () {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+
+        if (range && element.contains(range.commonAncestorContainer)) {
+          if (!rangeIsWithinHighlightedText(range)) {
+            wrapSelectedTextWithHighlight(range);
+          }
+          selection.removeAllRanges(); // Clear the selection
+        }
+      }
+    });
+  }
+
+  // Function to check if the selection range is valid (doesn't include spaces)
+  function isValidHighlight(range, originalText) {
+    const selectedText = range.toString();
+    const startOffset = originalText.indexOf(selectedText);
+
+    // Check if the selected text matches exactly with the original text slice
+    return (
+      startOffset !== -1 &&
+      selectedText.trim() !== "" &&
+      originalText.slice(startOffset, startOffset + selectedText.length) ===
+        selectedText
+    );
+  }
+
+  // Function to wrap selected text or merge with adjacent highlights
+  function mergeOrWrapSelectedText(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
+
+      let startSpan =
+        startContainer.nodeType === 3 ? startContainer.previousSibling : null;
+      let endSpan =
+        endContainer.nodeType === 3 ? endContainer.nextSibling : null;
+
+      // Check if the range is adjacent to existing highlighted spans and there is no space between them
+      if (
+        startSpan &&
+        startSpan.classList &&
+        startSpan.classList.contains("highlighted-text")
+      ) {
+        const textBeforeRange = startSpan.textContent.slice(-1); // Last character of the previous span
+        const textBetween = startContainer.textContent.slice(
+          0,
+          range.startOffset
+        );
+
+        if (textBetween.trim() === "" && !/\s/.test(textBeforeRange)) {
+          startSpan.textContent += selectedText;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      if (
+        endSpan &&
+        endSpan.classList &&
+        endSpan.classList.contains("highlighted-text")
+      ) {
+        const textAfterRange = endSpan.textContent.charAt(0); // First character of the next span
+        const textBetween = endContainer.textContent.slice(range.endOffset);
+
+        if (textBetween.trim() === "" && !/\s/.test(textAfterRange)) {
+          endSpan.textContent = selectedText + endSpan.textContent;
+          range.deleteContents();
+          return;
+        }
+      }
+
+      // Create new highlight if merging is not possible or spaces are between the selected text
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      span.textContent = selectedText;
+      range.deleteContents(); // Remove the selected text
+      range.insertNode(span); // Insert the highlighted text
+
+      // Push the span element to the undo stack
+      undoStack.push(span);
+    }
+  }
+
+  // Function to check if the selection range is within already highlighted text
+  function rangeIsWithinHighlightedText(range) {
+    const startContainer = range.startContainer;
+    const endContainer = range.endContainer;
+
+    return (
+      (startContainer.parentElement &&
+        startContainer.parentElement.classList.contains("highlighted-text")) ||
+      (endContainer.parentElement &&
+        endContainer.parentElement.classList.contains("highlighted-text"))
+    );
+  }
+
+  // Function to get highlighted text from the content
+  function getHighlightedText(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements =
+      element.getElementsByClassName("highlighted-text");
+    let highlightedText = "";
+
+    for (let i = 0; i < highlightedElements.length; i++) {
+      highlightedText += highlightedElements[i].textContent + " ";
+    }
+
+    return highlightedText.trim();
+  }
+
+  // Function to wrap selected text with custom highlight without deleting text
+  function wrapSelectedTextWithHighlight(range) {
+    const selectedText = range.toString().trim();
+    if (selectedText !== "") {
+      const span = document.createElement("span");
+      span.className = "highlighted-text";
+      range.surroundContents(span);
+      undoStack.push(span);
+    }
+  }
+
+  // Function to prevent merging highlights if spaces are involved
+  function preventMergeWithSpaces(span) {
+    const prevSibling = span.previousSibling;
+    const nextSibling = span.nextSibling;
+
+    if (
+      prevSibling &&
+      prevSibling.nodeType === 3 &&
+      /\s$/.test(prevSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        prevSibling.textContent.trimEnd()
+      );
+      span.parentNode.insertBefore(newTextNode, span);
+      prevSibling.textContent = " ";
+    }
+
+    if (
+      nextSibling &&
+      nextSibling.nodeType === 3 &&
+      /^\s/.test(nextSibling.textContent)
+    ) {
+      const newTextNode = document.createTextNode(
+        nextSibling.textContent.trimStart()
+      );
+      span.parentNode.insertBefore(span, nextSibling);
+      nextSibling.textContent = " ";
+    }
+  }
+
+  // Function to clear all highlights
+  function clearHighlightsInElement(elementId) {
+    const element = document.getElementById(elementId);
+    const highlightedElements = element.querySelectorAll(".highlighted-text");
+    highlightedElements.forEach((highlighted) => {
+      const parent = highlighted.parentNode;
+      parent.replaceChild(
+        document.createTextNode(highlighted.textContent),
+        highlighted
+      );
+      parent.normalize(); // Merge adjacent text nodes
+    });
+  }
+
+  // Function to clear all highlights in both title and description
+  function clearAllHighlights() {
+    clearHighlightsInElement("referStatusTitle");
+    clearHighlightsInElement("referStatusDescription");
+    undoStack = []; // Clear the undo stack
+  }
+
+  // Function to highlight all text in an element, reapplying even if already highlighted
+  function highlightAllText(elementId) {
+    const element = document.getElementById(elementId);
+
+    // First, clear all existing highlights within this specific element
+    clearHighlightsInElement(elementId);
+
+    // Then, create a new highlight across all text in this element
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    wrapSelectedTextWithHighlight(range);
+  }
+
+  // Function to handle undoing the last highlight (Ctrl + Z)
+  function handleUndoHighlight(event) {
+    if (event.ctrlKey && event.key === "z") {
+      const lastHighlighted = undoStack.pop();
+      if (lastHighlighted) {
+        const parent = lastHighlighted.parentNode;
+        const newTextNode = document.createTextNode(
+          lastHighlighted.textContent
+        );
+        parent.replaceChild(newTextNode, lastHighlighted);
+        parent.normalize(); // Merge adjacent text nodes
+      }
+    }
+  }
+
+  document.querySelectorAll(".refer-status-button").forEach((button) => {
+    button.addEventListener("click", function () {
+      const statusId = this.dataset.statusId;
+      referStatusToCounselor(statusId);
+    });
+  });
+
+  // Function to show the confirmation dialog
+  function showReferralConfirmation(statusId) {
+    const confirmationDialog = document.getElementById(
+      "referralConfirmationDialog"
+    );
+    confirmationDialog.classList.remove("pop-out");
+    confirmationDialog.classList.add("pop-in");
+    confirmationDialog.style.display = "block";
+
+    document.getElementById("confirmSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+        showReferralLoader();
+        submitReferral(statusId);
+      }, 300); // Match the duration of the pop-out animation
+    };
+
+    document.getElementById("cancelSubmitReferral").onclick = function () {
+      confirmationDialog.classList.remove("pop-in");
+      confirmationDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        confirmationDialog.style.display = "none";
+      }, 300); // Match the duration of the pop-out animation
+    };
+  }
+
+  // Function to show the loader and overlay
+  function showReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "block";
+    overlay.style.display = "block";
+  }
+
+  // Function to hide the loader and overlay
+  function hideReferralLoader() {
+    const loader = document.getElementById("referralLoader");
+    const overlay = document.getElementById("referralOverlay");
+
+    loader.style.display = "none";
+    overlay.style.display = "none";
+  }
+  // Function to submit the referral
+  function submitReferral(statusId) {
+    const highlightedTitle = getHighlightedText("referStatusTitle");
+    const highlightedDescription = getHighlightedText("referStatusDescription");
+
+    // Check if either title or description is highlighted
+    if (!highlightedTitle && !highlightedDescription) {
+      showHighlightError();
+      return;
+    }
+
+    const referralReason = document.getElementById("referralReason").value;
+    const otherReason = document.getElementById("otherReason").value;
+
+    // Check if "Other Concerns" is selected but the textarea is empty
+    if (referralReason === "Other Concerns" && otherReason.trim() === "") {
+      showOtherReasonError();
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("highlightedTitle", highlightedTitle);
+    formData.append("highlightedDescription", highlightedDescription);
+    formData.append("referralReason", referralReason);
+    if (referralReason === "Other Concerns") {
+      formData.append("otherReason", otherReason);
+    }
+
+    showReferralLoader(); // Show the loading overlay
+
+    fetch(`/refer_status/${statusId}/`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        hideReferralLoader(); // Hide the loading overlay
+
+        if (data.success) {
+          showReferralSuccess();
+        } else {
+          showReferralError();
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        hideReferralLoader(); // Hide the loading overlay
+        showReferralError();
+      });
+  }
+
+  // Function to show error dialog when "Other Concerns" is selected but no reason is provided
+  function showOtherReasonError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide referral reasons for 'Other Concerns'.";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+
+  // Function to show error dialog when no highlight is provided
+  function showHighlightError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    document.getElementById("referralErrorContent").textContent =
+      "Please provide a highlight for title or description for referral reasons.";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+  // Function to show success dialog with pop-out animation and refresh the page
+  function showReferralSuccess() {
+    const successDialog = document.getElementById("referralSuccessDialog");
+    successDialog.classList.remove("pop-out");
+    successDialog.classList.add("pop-in");
+    successDialog.style.display = "block";
+
+    setTimeout(() => {
+      successDialog.classList.remove("pop-in");
+      successDialog.classList.add("pop-out");
+
+      // Hide the dialog and close the modal with pop-out animation
+      setTimeout(() => {
+        successDialog.style.display = "none";
+        closeReferModal(); // Close the modal
+      }, 300); // Match the duration of the popOut animation
+    }, 2000); // Dialog visible for 2 seconds
+
+    // Refresh the page after the pop-out animation completes
+    setTimeout(() => {
+      window.location.reload(); // Refresh the browser
+    }, 2300); // Allow time for the pop-out animation before refreshing
+  }
+
+  // Function to show error dialog with pop-out animation
+  function showReferralError() {
+    hideReferralLoader(); // Hide the loading overlay (if active)
+
+    const errorDialog = document.getElementById("referralErrorDialog");
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      // Hide the dialog after the animation is done
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Match the duration of the popOut animation
+    }, 3000); // Dialog visible for 3 seconds
+  }
+
+  // Utility function to get selected text in an element
+  window.getSelectionText = function (elementId) {
+    const element = document.getElementById(elementId);
+    let selectedText = "";
+    if (window.getSelection) {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        if (
+          range.commonAncestorContainer.parentNode === element ||
+          range.commonAncestorContainer === element
+        ) {
+          selectedText = selection.toString();
+        }
+      }
+      return selectedText;
+    }
+  };
+
+  function deleteStatus(statusId) {
+    fetch(`/delete_status/${statusId}/`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          document
+            .getElementById(`delete-${statusId}`)
+            .closest(".box5")
+            .remove();
+        } else {
+          showStatusError(data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting status:", error);
+        showStatusError("Error deleting status. Please try again.");
+      });
+  }
+
+  function getEmotionIcon(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "<i class='bx bx-happy-alt'></i>";
+      case "sadness":
+        return "<i class='bx bx-sad'></i>";
+      case "fear":
+        return "<i class='bx bx-dizzy' ></i>";
+      case "anger":
+        return "<i class='bx bx-angry'></i>";
+      case "surprise":
+        return "<i class='bx bx-shocked' ></i>";
+      case "disgust":
+        return "<i class='bx bx-confused' ></i>";
+      default:
+        return "<i class='bx bx-face'></i>";
+    }
+  }
+  function mapEmotion(emotion) {
+    switch (emotion.toLowerCase()) {
+      case "happiness":
+        return "Happy";
+      case "sadness":
+        return "Sad";
+      case "fear":
+        return "Fear";
+      case "anger":
+        return "Angry";
+      case "surprise":
+        return "Surprise";
+      case "disgust":
+        return "Disgust";
+      default:
+        return emotion;
+    }
+  }
+
+  function truncateText(text, maxLength = 150) {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + "...";
+  }
+
+  function displayNewStatus(status) {
+    const container = document.getElementById("boxContainer");
+    const newBox = document.createElement("div");
+    newBox.classList.add("box5", "pop");
+    newBox.innerHTML = `
+            <div class="avatar-content">
+                <img src="${
+                  status.avatar_url
+                }" alt="Avatar" class="circle-avatar-placeholder" />
+                <p class="username-placeholder">${status.username}</p>
+            </div>
+            <div class="content">
+                <h2 class="title-placeholder">${status.title}</h2>
+                <p class="description-placeholder">${truncateText(
+                  status.description
+                )}</p>
+                <span class="time-stamp time-stamp-placeholder">${
+                  status.created_at
+                } ago</span>
+                <span class="feelings feelings-placeholder">${getEmotionIcon(
+                  status.emotion
+                )} ${mapEmotion(status.emotion)}</span>
+                <span class="replies replies-placeholder">${status.replies} ${
+      status.replies === 1 ? "Reply" : "Replies"
+    }</span>
+            </div>
+             ${
+               status.can_delete
+                 ? `<button id="delete-${status.id}" class="delete-button status"><i class='bx bxs-trash bx-tada bx-flip-horizontal'></i></button>`
+                 : ""
+             }
+          `;
+    container.prepend(newBox); // Prepend to show the new status at the top
+
+    newBox.addEventListener("animationend", function () {
+      newBox.classList.remove("pop");
+    });
+  }
+
+  statusDescription.addEventListener("focus", hidePlaceholder);
+  statusDescription.addEventListener("blur", showPlaceholder);
+
+  function hidePlaceholder() {
+    if (statusDescription.classList.contains("placeholder")) {
+      statusDescription.classList.remove("placeholder");
+      statusDescription.innerHTML = "";
+    }
+  }
+
+  function showPlaceholder() {
+    if (!statusDescription.innerHTML.trim().length) {
+      statusDescription.classList.add("placeholder");
+      statusDescription.innerHTML =
+        statusDescription.getAttribute("placeholder");
+    }
+  }
+
+  // Initialize placeholder display
+  showPlaceholder();
+
+  function saveFormData() {
+    const title = statusTitle.value.trim();
+    const description = statusDescription.innerHTML.trim();
+
+    const formData = {
+      selectedEmotion: selectedEmotion,
+      title: title,
+      description: description,
+    };
+
+    localStorage.setItem("statusFormData", JSON.stringify(formData));
+  }
+
+  function loadFormData() {
+    const formData = JSON.parse(localStorage.getItem("statusFormData"));
+
+    if (formData) {
+      selectedEmotion = formData.selectedEmotion;
+      statusTitle.value = formData.title;
+      statusDescription.innerHTML = formData.description;
+
+      feelingIcons.forEach((icon) => {
+        if (icon.querySelector("img").alt === selectedEmotion) {
+          icon.classList.add("active");
+        } else {
+          icon.classList.remove("active");
+        }
+      });
+    }
+  }
+
+  function clearFormData() {
+    localStorage.removeItem("statusFormData");
+  }
+
+  window.formatText = function (command, value = null) {
+    document.execCommand(command, false, value);
+    saveFormData();
+  };
+
+  // Function to show success message and close modal after animation
+  function showStatusSuccess(message) {
+    const dialogBox = document.getElementById("statusNotificationSuccess");
+    const dialogContent = document.getElementById(
+      "statusNotificationSuccessContent"
+    );
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+        clearStatusComposerModal();
+        closeStatusComposerModal(() => {
+          setTimeout(() => {
+            window.location.reload();
+          }, 300); // Wait for statusModal pop-out animation to finish
+        });
+      }, 300); // Wait for dialogBox pop-out animation to finish
+    }, 3000); // Duration to show the success message
+  }
+  // Function to show error message
+  function showStatusError(message) {
+    const errorDialog = document.getElementById("statusNotificationError");
+    document.getElementById("statusNotificationErrorContent").textContent =
+      message;
+
+    errorDialog.classList.remove("pop-out");
+    errorDialog.classList.add("pop-in");
+    errorDialog.style.display = "block";
+
+    setTimeout(() => {
+      errorDialog.classList.remove("pop-in");
+      errorDialog.classList.add("pop-out");
+
+      setTimeout(() => {
+        errorDialog.style.display = "none";
+      }, 300); // Hide after pop-out animation
+    }, 3000); // Error message visible for 3 seconds
+  }
+
+  function closeStatusComposerModal(callback) {
+    statusModal.classList.remove("pop-in");
+    statusModal.classList.add("pop-out");
+    statusModalOverlay.classList.remove("fade-in");
+    statusModalOverlay.classList.add("fade-out");
+    setTimeout(() => {
+      statusModal.style.display = "none";
+      statusModal.classList.remove("pop-out");
+      statusModalOverlay.style.display = "none";
+      statusModalOverlay.classList.remove("fade-out");
+      if (callback) {
+        callback();
+      }
+    }, 300); // Animation duration
+  }
+  function clearStatusComposerModal() {
+    selectedEmotion = null;
+    statusTitle.value = "";
+    statusDescription.innerHTML = "";
+    statusDescription.classList.add("placeholder");
+    feelingIcons.forEach((i) => i.classList.remove("active"));
+    clearFormData();
+  }
+
+  // Clear the modal fields when opened
+  if (statusComposerButton) {
+    statusComposerButton.addEventListener("click", function () {
+      loadFormData();
+      statusModal.style.display = "block";
+      statusModalOverlay.style.display = "block";
+      setTimeout(() => {
+        statusModal.classList.add("pop-in");
+        statusModalOverlay.classList.add("fade-in");
+      }, 10);
+    });
+  }
+
+  // Close the modal with pop-out animation
+  closeStatusModal.addEventListener("click", function () {
+    closeStatusComposerModal();
+  });
+  statusModalOverlay.addEventListener("click", function () {
+    closeStatusComposerModal();
+  });
+
+  // Load current avatar
+  fetch("/get_user_profile/")
+    .then((response) => response.json())
+    .then((data) => {
+      currentAvatar.src = data.avatar || placeholderUrl;
+      avatarLoader.style.display = "none";
+      currentAvatar.style.display = "block";
+    })
+    .catch((error) => {
+      console.error("", error);
+      avatarLoader.style.display = "none";
+      currentAvatar.style.display = "block";
+    });
+
+  // Select all avatar images and the upload-area image
+  const uploadAreaImg = document.querySelector(".upload-area img");
+
+  // Event listener for built-in avatars
+  avatarImages.forEach((img) => {
+    img.addEventListener("click", function () {
+      // Remove 'selected' class from all avatar options and the upload-area image
+      avatarImages.forEach((i) => i.classList.remove("selected"));
+      uploadAreaImg.classList.remove("selected");
+
+      // Add 'selected' class to the clicked avatar
+      this.classList.add("selected");
+      selectedAvatar = this.src;
+      saveAvatarBtn.style.display = "inline-block";
+    });
+  });
+
+  // Highlight the uploaded avatar like built-in avatars
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    uploadAvatarInput.click();
+  });
+
+  // Event listener for the upload area click
+  document.querySelector(".upload-area").addEventListener("click", function () {
+    // Remove 'selected' class from all avatar options and the upload-area image
+    avatarImages.forEach((i) => i.classList.remove("selected"));
+    uploadAreaImg.classList.add("selected");
+
+    // Trigger the file input click event
+    uploadAvatarInput.click();
+  });
+
+  uploadAvatarInput.addEventListener("change", function () {
+    if (uploadAvatarInput.files.length > 0) {
+      const uploadedFile = uploadAvatarInput.files[0];
+
+      // Check file size (limit to 1MB)
+      if (uploadedFile.size > 1 * 1024 * 1024) {
+        showNotificationError("File size exceeds the 1MB limit.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imageToCrop.src = e.target.result;
+
+        // Show cropping modal
+        cropperModal.style.display = "block";
+        cropperModal.classList.add("pop-in");
+
+        // Initialize cropper
+        if (cropper) {
+          cropper.destroy();
+        }
+        cropper = new Cropper(imageToCrop, {
+          aspectRatio: 1, // Ensure square crop box
+          viewMode: 1, // Keep crop box within the boundaries of the image
+          guides: false, // Disable dashed lines (guides)
+          center: false, // Disable center cross
+          highlight: false, // Remove highlight when cropping
+          background: false, // Disable dark background outside crop area
+          autoCropArea: 0.9, // Set the initial crop area size
+          dragMode: "move", // Allow moving the crop box within the image
+        });
+      };
+      reader.readAsDataURL(uploadedFile);
+    }
+  });
+
+  // Event listener for cropping the image
+  cropImageBtn.addEventListener("click", function () {
+    if (cropper) {
+      const croppedCanvas = cropper.getCroppedCanvas({
+        fillColor: "#ffffff", // Fill the background color to prevent transparency issues
+      });
+
+      // Create a circular cropped image
+      const circleCanvas = document.createElement("canvas");
+      const ctx = circleCanvas.getContext("2d");
+      const radius = croppedCanvas.width / 2;
+
+      // Adjust the circle canvas size to match the cropped area
+      circleCanvas.width = croppedCanvas.width;
+      circleCanvas.height = croppedCanvas.height;
+
+      // Draw a circular clipping mask
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+      ctx.clip();
+
+      // Draw the cropped image within the circular mask
+      ctx.drawImage(croppedCanvas, 0, 0);
+
+      // Convert the circular cropped image to a blob and upload
+      circleCanvas.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append("avatar", blob, "avatar.png");
+
+        fetch(uploadAvatarUrl, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((data) => {
+                throw new Error(data.errors || "Unknown error");
+              });
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              showNotificationSuccess("Avatar updated successfully!");
+              // Update the current avatar in the profile immediately
+              document.getElementById("currentAvatar").src = data.avatar_url;
+              // Optionally, if you have a profile icon in the header or other parts
+              document.getElementById("profileIconImage").src = data.avatar_url;
+            } else {
+              showNotificationError("" + (data.errors || "Unknown error"));
+            }
+            closeCropperModal.click();
+          })
+          .catch((error) => {
+            console.error("", error);
+            showNotificationError("" + error.message);
+            closeCropperModal.click();
+          });
+      });
+    }
+  });
+
+  // Event listener for saving the selected avatar
+  saveAvatarBtn.addEventListener("click", function () {
+    if (selectedAvatar) {
+      fetch(selectedAvatar)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const formData = new FormData();
+          formData.append("avatar", blob, "avatar.png");
+
+          fetch(uploadAvatarUrl, {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+            },
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((data) => {
+                  throw new Error(data.errors || "Unknown error");
+                });
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                showNotificationSuccess("Avatar updated successfully!");
+                // Update the current avatar in the profile immediately
+                document.getElementById("currentAvatar").src = data.avatar_url;
+                // Optionally, if you have a profile icon in the header or other parts
+                document.getElementById("profileIconImage").src =
+                  data.avatar_url;
+              } else {
+                showNotificationError("" + (data.errors || "Unknown error"));
+              }
+            })
+            .catch((error) => {
+              console.error("", error);
+              showNotificationError("" + error.message);
+            });
+        });
+    } else {
+      showNotificationError("Select or upload your avatar.");
+    }
+  });
+
+  cancelCropBtn.addEventListener("click", function () {
+    closeCropperModal.click();
+  });
+
+  closeCropperModal.addEventListener("click", function () {
+    cropperModal.classList.remove("pop-in");
+    cropperModal.classList.add("pop-out");
+    setTimeout(() => {
+      cropperModal.style.display = "none";
+      cropperModal.classList.remove("pop-out");
+      if (cropper) {
+        cropper.destroy();
+      }
+    }, 300);
+  });
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function showNotificationSuccess(message) {
+    const dialogBox = document.getElementById("notificationSuccessBox");
+    const dialogContent = document.getElementById("notificationSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+
+        // Close the avatar modal only after the success message animation is done
+        avatarModal.classList.add("slide-upSolid");
+        avatarModal.classList.remove("slide-downSolid");
+      }, 300);
+    }, 3000);
+  }
+
+  function showNotificationError(message) {
+    const dialogBox = document.getElementById("notificationErrorBox");
+    const dialogContent = document.getElementById("notificationErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+  cancelAvatarBtn.addEventListener("click", function () {
+    avatarModal.classList.add("slide-upSolid");
+    avatarModal.classList.remove("slide-downSolid");
+  });
+
+  closeAvatarModal.addEventListener("click", function () {
+    avatarModal.classList.add("slide-upSolid");
+    avatarModal.classList.remove("slide-downSolid");
+  });
+});
+const newPasswordInput = document.getElementById("newPassword");
+const repeatPasswordInput = document.getElementById("repeatPassword");
+const currentPasswordInput = document.getElementById("currentPassword");
+const strengthBar = document.getElementById("strengthBar");
+const generatePasswordBtn = document.getElementById("generatePassword");
+const passwordForm = document.getElementById("passwordForm");
+
+newPasswordInput.addEventListener("input", function () {
+  const password = newPasswordInput.value;
+  const strength = calculatePasswordStrength(password);
+  updateStrengthBar(strength);
+});
+
+generatePasswordBtn.addEventListener("click", function () {
+  const generatedPassword = generateSecurePassword();
+  newPasswordInput.value = generatedPassword;
+  repeatPasswordInput.value = generatedPassword;
+  const strength = calculatePasswordStrength(generatedPassword);
+  updateStrengthBar(strength);
+});
+
+passwordForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const currentPassword = currentPasswordInput.value;
+  const newPassword = newPasswordInput.value;
+  const repeatPassword = repeatPasswordInput.value;
+
+  if (newPassword !== repeatPassword) {
+    updatepassError("Passwords do not match.");
+    return;
+  }
+
+  const data = {
+    current_password: currentPassword,
+    new_password: newPassword,
+    repeat_new_password: repeatPassword,
+  };
+
+  fetch("/password_manager/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify(data),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        updatepassSuccess("Password updated successfully!");
+        passwordForm.reset();
+        updateStrengthBar(0);
+      } else {
+        updatepassError("Please check your current password.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      updatepassError("Please check your current password.");
+    });
+});
+
+function calculatePasswordStrength(password) {
+  let strength = 0;
+  if (password.length >= 8) strength += 1;
+  if (/[A-Z]/.test(password)) strength += 1;
+  if (/[0-9]/.test(password)) strength += 1;
+  if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+  return strength;
+}
+
+function updateStrengthBar(strength) {
+  const colors = ["#ff4b4b", "#ffb74b", "#fff44b", "#b4ff4b", "#4bff4b"];
+  strengthBar.style.width = strength * 25 + "%";
+  strengthBar.style.backgroundColor = colors[strength];
+}
+
+function generateSecurePassword() {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
+function updatepassSuccess(message) {
+  const dialogBox = document.getElementById("updatepasssuccess");
+  const dialogContent = document.getElementById("updatepasssuccessContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  setTimeout(() => {
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+
+function updatepassError(message) {
+  const dialogBox = document.getElementById("updatepasserror");
+  const dialogContent = document.getElementById("updatepasserrorContent");
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  setTimeout(() => {
+    dialogBox.classList.add("pop-out");
+    setTimeout(() => {
+      dialogBox.style.display = "none";
+      dialogBox.classList.remove("pop-out");
+    }, 300);
+  }, 3000);
+}
+// Start session timeout timer only if the user is authenticated
+if (document.body.classList.contains("authenticated")) {
+  startSessionTimer();
+}
+
+function startSessionTimer() {
+  document.addEventListener("mousemove", resetTimer);
+  document.addEventListener("keypress", resetTimer);
+
+  const sessionTimeout = 30 * 60 * 1000;
+
+  let timeout;
+
+  function resetTimer() {
+    clearTimeout(timeout);
+    timeout = setTimeout(endSession, sessionTimeout);
+  }
+
+  function endSession() {
+    showError("Session Expired, Please log in again.", "session");
+    fetch("/logout/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          // No redirect here, just show the session expired message
+        }
+      });
+  }
+
+  resetTimer();
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+const csrftoken = getCookie("csrftoken");
+
+var loginModal = document.getElementById("loginModal");
+var registerModal = document.getElementById("registerModal");
+var loginRequiredModal = document.getElementById("loginRequiredModal");
+var openLoginModalButton = document.getElementById("openLoginModal");
+var overlay = document.getElementById("overlay");
+var loginLink = document.getElementById("loginLink");
+var registerLink = document.getElementById("registerLink");
+var closeLoginModal = document.getElementById("closeLoginModal");
+var closeRegisterModal = document.getElementById("closeRegisterModal");
+var loginLinkFromRegister = document.getElementById("loginLinkFromRegister");
+
+// Show login modal and overlay
+if (loginLink) {
+  loginLink.onclick = function (event) {
+    event.preventDefault();
+    loginModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      loginModal.classList.add("pop-in");
+      overlay.classList.add("fade-in");
+    }, 10);
+  };
+}
+
+// Show register modal and overlay
+if (registerLink) {
+  registerLink.onclick = function (event) {
+    event.preventDefault();
+    registerModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      registerModal.classList.add("pop-in");
+      overlay.classList.add("fade-in");
+    }, 10);
+  };
+}
+
+// Show login modal from register modal
+if (loginLinkFromRegister) {
+  loginLinkFromRegister.onclick = function (event) {
+    event.preventDefault();
+    registerModal.classList.add("pop-out");
+    setTimeout(() => {
+      registerModal.style.display = "none";
+      registerModal.classList.remove("pop-out");
+      loginModal.style.display = "block";
+      setTimeout(() => {
+        loginModal.classList.add("pop-in");
+        overlay.classList.add("fade-in");
+      }, 10);
+    }, 300);
+  };
+}
+
+// Hide login modal and overlay
+if (closeLoginModal) {
+  closeLoginModal.onclick = function () {
+    loginModal.classList.add("pop-out");
+    overlay.classList.add("fade-out"); // Added fade-out effect
+    setTimeout(() => {
+      loginModal.style.display = "none";
+      overlay.style.display = "none";
+      loginModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("fade-in", "fade-out");
+    }, 300);
+  };
+}
+
+// Hide register modal and overlay
+if (closeRegisterModal) {
+  closeRegisterModal.onclick = function () {
+    registerModal.classList.add("pop-out");
+    loginModal.classList.add("pop-out");
+    overlay.classList.add("fade-out");
+    setTimeout(() => {
+      registerModal.style.display = "none";
+      loginModal.style.display = "none";
+      overlay.style.display = "none";
+      registerModal.classList.remove("pop-in", "pop-out");
+      loginModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("fade-in", "fade-out");
+    }, 300);
+  };
+}
+
+// Show login required modal and overlay
+var expressFeelingsButton = document.getElementById("loginButton");
+if (expressFeelingsButton) {
+  expressFeelingsButton.onclick = function (event) {
+    event.preventDefault();
+    loginRequiredModal.style.display = "block";
+    overlay.style.display = "flex";
+    setTimeout(() => {
+      loginRequiredModal.classList.add("pop-in");
+      overlay.classList.add("fade-in");
+    }, 10);
+  };
+}
+
+// Close modal and overlay when clicking outside
+window.onclick = function (event) {
+  if (event.target == overlay) {
+    if (
+      loginRequiredModal.style.display === "block" ||
+      document.querySelector(".flat-ui-dialog.session").style.display ===
+        "block"
+    ) {
+      closeModals();
+    }
+  }
+};
+
+function closeModals() {
+  if (loginRequiredModal.style.display === "block") {
+    loginRequiredModal.classList.add("pop-out");
+    overlay.classList.add("fade-out");
+    setTimeout(() => {
+      loginRequiredModal.style.display = "none";
+      overlay.style.display = "none";
+      loginRequiredModal.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("fade-in", "fade-out");
+    }, 300);
+  } else if (
+    document.querySelector(".flat-ui-dialog.session").style.display === "block"
+  ) {
+    const sessionDialogBox = document.querySelector(".flat-ui-dialog.session");
+    sessionDialogBox.classList.add("pop-out");
+    overlay.classList.add("fade-in");
+    setTimeout(() => {
+      sessionDialogBox.style.display = "none";
+      overlay.style.display = "none";
+      sessionDialogBox.classList.remove("pop-in", "pop-out");
+      overlay.classList.remove("fade-in", "fade-out");
+      window.location.reload();
+    }, 300);
+  }
+}
+
+// Close login required modal and show login modal
+if (openLoginModalButton) {
+  openLoginModalButton.onclick = function () {
+    loginRequiredModal.classList.add("pop-out");
+    setTimeout(() => {
+      loginRequiredModal.style.display = "none";
+      loginRequiredModal.classList.remove("pop-out");
+      loginModal.style.display = "block";
+      setTimeout(() => {
+        loginModal.classList.add("pop-in");
+      }, 10);
+    }, 300);
+  };
+}
+function showError(message, type) {
+  const dialogBox = document.getElementById(
+    type === "login"
+      ? "loginDialogBox"
+      : type === "register"
+      ? "registerDialogBox"
+      : "sessionDialogBox"
+  );
+
+  const dialogContent = document.getElementById(
+    type === "login"
+      ? "loginDialogContent"
+      : type === "register"
+      ? "registerDialogContent"
+      : "sessionDialogContent"
+  );
+
+  // Update the content of the dialog
+  dialogContent.innerHTML = message;
+  dialogBox.style.display = "block";
+  dialogBox.classList.add("error");
+  dialogBox.classList.remove("pop-out");
+  dialogBox.classList.add("pop-in");
+
+  // Handle session overlay specifically
+  if (type === "session") {
+    const overlay = document.getElementById("sessionOverlay");
+    overlay.style.display = "flex"; // Make the overlay visible
+    overlay.classList.add("show");
+    overlay.classList.remove("hide");
+
+    // Close session dialog and overlay on click outside
+    function handleOverlayClick(event) {
+      if (!dialogBox.contains(event.target)) {
+        dialogBox.classList.remove("pop-in");
+        dialogBox.classList.add("pop-out");
+        overlay.classList.remove("show");
+        overlay.classList.add("hide");
+
+        setTimeout(() => {
+          dialogBox.style.display = "none";
+          dialogBox.classList.remove("pop-out");
+          overlay.style.display = "none"; // Hide the overlay after fade-out
+          overlay.classList.remove("hide");
+          overlay.removeEventListener("click", handleOverlayClick);
+          window.location.reload(); // Reload the page after session expires
+        }, 300); // Match the pop-out animation duration
+      }
+    }
+
+    // Add event listener for clicking outside the modal
+    overlay.addEventListener("click", handleOverlayClick);
+  } else {
+    // For login and register dialogs, auto-close after 3 seconds
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300); // Ensure pop-out animation completes
+    }, 3000);
+  }
+}
+function showSuccess(message, type) {
+  const successBox = document.getElementById(
+    type === "login"
+      ? "loginSuccessBox"
+      : type === "register"
+      ? "registerSuccessBox"
+      : "logoutSuccessBox"
+  );
+  const successContent = document.getElementById(
+    type === "login"
+      ? "loginSuccessContent"
+      : type === "register"
+      ? "registerSuccessContent"
+      : "logoutSuccessContent"
+  );
+
+  successContent.innerHTML = message;
+  successBox.style.display = "block";
+  successBox.classList.add("success");
+  successBox.classList.remove("pop-out");
+  successBox.classList.add("pop-in");
+
+  setTimeout(() => {
+    successBox.classList.remove("pop-in");
+    successBox.classList.add("pop-out");
+    setTimeout(() => {
+      successBox.style.display = "none";
+      successBox.classList.remove("pop-out");
+      // Wait for the animation to finish before reloading
+      if (type === "login") {
+        window.location.reload();
+      }
+    }, 300);
+  }, 3000);
+
+  if (type === "logout") {
+    overlay.addEventListener("click", function handleOverlayClick() {
+      successBox.classList.add("pop-out");
+      overlay.classList.add("fade-out");
+      setTimeout(() => {
+        successBox.style.display = "none";
+        successBox.classList.remove("pop-out");
+        overlay.style.display = "none";
+        overlay.classList.remove("fade-in", "fade-out");
+        overlay.removeEventListener("click", handleOverlayClick);
+        window.location.reload();
+      }, 300);
+    });
+  }
+}
+
+function parseErrorMessages(errors) {
+  for (let field in errors) {
+    if (errors.hasOwnProperty(field)) {
+      return errors[field][0].message;
+    }
+  }
+  return "An error occurred. Please try again.";
+}
+document.addEventListener("DOMContentLoaded", function () {
+  // Separate references for login and register forms and buttons
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const loginButton = document.getElementById("loginButton");
+  const signupButton = document.getElementById("signupButton");
+
+  // Input fields for login form
+  const loginUsernameField = loginForm.querySelector('input[name="username"]');
+  const loginPasswordField = loginForm.querySelector('input[name="password"]');
+
+  // Input fields for register form
+  const registerFields = {
+    student_id: registerForm.querySelector('input[name="student_id"]'),
+    username: registerForm.querySelector('input[name="username"]'),
+    full_name: registerForm.querySelector('input[name="full_name"]'),
+    academic_year_level: registerForm.querySelector(
+      'input[name="academic_year_level"]'
+    ),
+    contact_number: registerForm.querySelector('input[name="contact_number"]'),
+    email: registerForm.querySelector('input[name="email"]'),
+    password1: registerForm.querySelector('input[name="password1"]'),
+    password2: registerForm.querySelector('input[name="password2"]'),
+  };
+
+  // Real-time validation for login form
+  loginUsernameField.addEventListener("input", function () {
+    validateField(loginUsernameField);
+  });
+  loginPasswordField.addEventListener("input", function () {
+    validateField(loginPasswordField);
+  });
+
+  // Real-time validation for register form
+  Object.values(registerFields).forEach((field) => {
+    field.addEventListener("input", function () {
+      validateField(field);
+    });
+  });
+
+  // Separate form submission handlers
+  loginForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    loginButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(loginForm);
+    let errorMessage = checkEmptyFields(formData, {
+      username: "Username",
+      password: "Password",
+    });
+
+    if (errorMessage) {
+      validateFieldOnSubmit(loginUsernameField);
+      validateFieldOnSubmit(loginPasswordField);
+      showError(errorMessage, "login");
+      loginButton.disabled = false; // Re-enable if there's an error
+      return;
+    }
+
+    // Show the loader and process the login form submission...
+  });
+
+  registerForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    signupButton.disabled = true; // Disable the button initially
+
+    const formData = new FormData(registerForm);
+    let errorMessage = checkEmptyFields(formData, {
+      student_id: "Student ID No.",
+      username: "Username",
+      full_name: "Full Name",
+      academic_year_level: "Academic Year Level",
+      contact_number: "Contact Number",
+      email: "Email",
+      password1: "Password",
+      password2: "Confirm Password",
+    });
+
+    if (errorMessage) {
+      Object.values(registerFields).forEach((field) => {
+        validateFieldOnSubmit(field);
+      });
+      showError(errorMessage, "register");
+      signupButton.disabled = false; // Re-enable if there's an error
+      return;
+    }
+
+    // Show the loader and process the register form submission...
+  });
+
+  // Validation function for real-time checks
+  function validateField(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Function to check for empty fields
+  function checkEmptyFields(formData, fields) {
+    let emptyFields = [];
+    let allFieldsEmpty = true;
+
+    for (let field in fields) {
+      if (formData.get(field) && formData.get(field).trim() !== "") {
+        allFieldsEmpty = false;
+      } else {
+        emptyFields.push(fields[field] + " is required.");
+      }
+    }
+
+    if (allFieldsEmpty) {
+      return "All fields are required.";
+    }
+
+    return emptyFields.length ? emptyFields[0] : null;
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.querySelector('input[name="username"]');
+  const passwordField = document.querySelector('input[name="password"]');
+  const loginButton = document.getElementById("loginButton");
+
+  // Real-time validation on input
+  usernameField.addEventListener("input", validateField);
+  passwordField.addEventListener("input", validateField);
+
+  // Form submit event
+  document
+    .getElementById("loginForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(this);
+      loginButton.disabled = true; // Disable the button initially
+
+      // Check if fields are empty
+      let errorMessage = checkEmptyFields(formData, {
+        username: "Username",
+        password: "Password",
+      });
+
+      // If there is an error, show it and validate fields
+      if (errorMessage) {
+        validateFieldOnSubmit(usernameField);
+        validateFieldOnSubmit(passwordField);
+        showError(errorMessage, "login");
+        loginButton.disabled = false; // Re-enable if there's an error
+        return;
+      }
+
+      // Show the loader
+      showLoginLoader();
+
+      fetch(this.action, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams(formData).toString(),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          hideLoginLoader();
+
+          if (data.success) {
+            showSuccess("Login successful!", "login");
+            setTimeout(() => {
+              document.getElementById("loginForm").reset();
+              loginModal.classList.add("pop-out");
+              overlay.classList.add("fade-in");
+              setTimeout(() => {
+                loginModal.style.display = "none";
+                overlay.style.display = "none";
+                loginModal.classList.remove("pop-in", "pop-out");
+                overlay.classList.remove("fade-in", "fade-out");
+                window.location.href = data.redirect_url;
+              }, 300); // Wait for pop-out animation to complete
+            }, 1500);
+          } else {
+            let errorMessage = parseErrorMessages(data.error_message);
+            showError(errorMessage, "login");
+          }
+        })
+        .catch((error) => {
+          hideLoginLoader();
+          showError("An error occurred. Please try again.", "login");
+        })
+        .finally(() => {
+          setTimeout(() => {
+            loginButton.disabled = false;
+          }, 3600); // Enable button after animations are complete
+        });
+    });
+
+  // Real-time validation function
+  function validateField(event) {
+    const field = event.target;
+    validateFieldStatus(field);
+  }
+
+  // Field validation function
+  function validateFieldStatus(field) {
+    if (field.value.trim() === "") {
+      field.classList.remove("valid");
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Trigger validation on form submission for empty fields
+  function validateFieldOnSubmit(field) {
+    if (field.value.trim() === "") {
+      field.classList.add("invalid");
+    } else {
+      field.classList.remove("invalid");
+      field.classList.add("valid");
+    }
+  }
+
+  // Show loader
+  function showLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "block";
+  }
+
+  // Hide loader
+  function hideLoginLoader() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    loginOverlay.style.display = "none";
+  }
+});
+
+document.querySelectorAll(".logout-link").forEach((item) => {
+  item.addEventListener("click", function (event) {
+    event.preventDefault();
+
+    // Disable the logout button to prevent multiple clicks
+    this.style.pointerEvents = "none";
+
+    // Send the logout request
+    fetch(this.href, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showSuccess("Logout successful!", "logout");
+          setTimeout(() => {
+            document
+              .getElementById("logoutSuccessBox")
+              .classList.add("pop-out");
+            overlay.classList.add("fade-out");
+            setTimeout(() => {
+              document.getElementById("logoutSuccessBox").style.display =
+                "none";
+              overlay.style.display = "none";
+              document
+                .getElementById("logoutSuccessBox")
+                .classList.remove("pop-in", "pop-out");
+              overlay.classList.remove("fade-in", "fade-out");
+              window.location.href = data.redirect_url;
+            }, 300);
+          }, 1500);
+        } else {
+          // Handle failure silently
+          window.location.reload(); // Refresh the page on failure
+        }
+      })
+      .catch((error) => {
+        // Handle network errors silently
+        window.location.reload(); // Refresh the page on error
+      });
+  });
+});
+
+function checkEmptyFields(formData, fields) {
+  let emptyFields = [];
+  let allFieldsEmpty = true;
+
+  for (let field in fields) {
+    if (formData.get(field) && formData.get(field).trim() !== "") {
+      allFieldsEmpty = false;
+    } else {
+      emptyFields.push(fields[field] + " is required.");
+    }
+  }
+
+  if (allFieldsEmpty) {
+    return "All fields are required.";
+  }
+
+  return emptyFields.length ? emptyFields[0] : null;
+}
+
+// Function to show the policy modal with overlay
+function showPolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.style.display = "block";
+  policyOverlay.style.display = "block";
+
+  policyModal.classList.remove("pop-out");
+  policyModal.classList.add("pop-in");
+}
+
+// Function to close the policy modal
+function closePolicyModal() {
+  const policyModal = document.getElementById("policyModal");
+  const policyOverlay = document.getElementById("policyOverlay");
+
+  policyModal.classList.remove("pop-in");
+  policyModal.classList.add("pop-out");
+  setTimeout(() => {
+    policyModal.style.display = "none";
+    policyModal.classList.remove("pop-out");
+    policyOverlay.style.display = "none";
+  }, 300);
+}
+
+// Event listener to show the policy modal when the policy text is clicked
+document
+  .getElementById("showPolicy")
+  .addEventListener("click", showPolicyModal);
+
+// Event listener to close the policy modal when the overlay is clicked
+document
+  .getElementById("policyOverlay")
+  .addEventListener("click", closePolicyModal);
+
+document.querySelectorAll(".v1_124 div").forEach((item) => {
+  item.addEventListener("click", function () {
+    document
+      .querySelectorAll(
+        ".v1_127, .v1_129, .v1_131, .v1_133, .v1_135, .v1_137, .v1_139, .v1_141"
+      )
+      .forEach((span) => {
+        span.classList.remove("active");
+      });
+    this.querySelector("span").classList.add("active");
+  });
+});
+
+document.querySelectorAll(".curved-line path").forEach(function (path) {
+  var controlPointX1 = Math.random() * 50;
+  var controlPointY1 = Math.random() * 50;
+  var controlPointX2 = 100 - Math.random() * 50;
+  var controlPointY2 = Math.random() * 50;
+  var endPointX = Math.random() * 100;
+  var endPointY = Math.random() * 100;
+  var d = `M0,0 C${controlPointX1},${controlPointY1} ${controlPointX2},${controlPointY2} ${endPointX},${endPointY}`;
+  path.setAttribute("d", d);
+});
+
+//  Profile Modal Codes
+document.addEventListener("DOMContentLoaded", function () {
+  const usernameField = document.getElementById("username");
+  const contactNumberField = document.getElementById("contact-number");
+  const emailField = document.getElementById("email");
+  const academicYearField = document.getElementById("academic-year");
+  const profileIcon = document.getElementById("profileIcon");
+  const tooltip = document.getElementById("profileTooltip");
+  const avatarModal = document.getElementById("avatarModal");
+
+  // Tooltip animation for profile icon
+  profileIcon.addEventListener("mouseenter", function () {
+    tooltip.classList.remove("popOut");
+    tooltip.classList.add("popIn");
+    tooltip.style.visibility = "visible";
+  });
+
+  profileIcon.addEventListener("mouseleave", function () {
+    tooltip.classList.remove("popIn");
+    tooltip.classList.add("popOut");
+    tooltip.addEventListener(
+      "animationend",
+      function () {
+        tooltip.style.visibility = "hidden";
+      },
+      { once: true }
+    );
+  });
+
+  // Redirect to avatar modal on profile icon click
+  profileIcon.addEventListener("click", function () {
+    avatarModal.classList.add("slide-downSolid");
+    avatarModal.classList.remove("slide-upSolid");
+    avatarModal.style.display = "block";
+  });
+
+  // Fetch user profile when opening the profile modal
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+
+  // Avatar refresh button logic
+  const refreshAvatarBtn = document.getElementById("refreshAvatarBtn");
+  refreshAvatarBtn.addEventListener("click", function () {
+    fetchUserProfile();
+  });
+
+  // Function to display random profile tips in the footer
+  const tips = [
+    "Keep your contact info updated for important notifications.",
+    "Make sure your academic year is accurate for proper service.",
+    "Use a unique email for account recovery.",
+    "Double-check your email to receive all communications.",
+    "Update your profile to avoid service disruptions.",
+    "Review your academic year each term for accuracy.",
+    "Update your contact number immediately if it changes.",
+    "Ensure your username is unique and memorable.",
+    "Use your most active email for notifications.",
+    "Verify your contact info regularly for smooth communication.",
+    "Check your spam folder for missed notifications.",
+    "Ensure your profile picture is appropriate and clear.",
+    "Log out of your account after using shared devices.",
+    "Keep your mailing address updated for physical notifications.",
+    "Make sure your name matches official documents.",
+    "Check your profile for any incomplete details.",
+    "Update your emergency contacts regularly for safety.",
+    "Review your email verification status for security.",
+    "Notify support if any personal details seem incorrect.",
+    "Ensure your student ID is correct for institutional access.",
+    "Refresh your avatar regularly to keep your profile current.",
+    "Complete your profile to unlock all features and services.",
+    "Review profile settings after every major update.",
+  ];
+
+  function displayRandomTip() {
+    const randomIndex = Math.floor(Math.random() * tips.length);
+    const randomTipElement = document.getElementById("randomTip");
+    randomTipElement.classList.remove("pop-in");
+
+    setTimeout(() => {
+      randomTipElement.innerText = `Tip: ${tips[randomIndex]}`;
+      randomTipElement.classList.add("pop-in");
+    }, 10);
+  }
+
+  setInterval(displayRandomTip, 5000);
+
+  // Fetch user profile data
+  function fetchUserProfile() {
+    const avatarLoader = document.getElementById("avatarLoader");
+    const profileIconImage = document.getElementById("profileIconImage");
+    const placeholderUrl = profileIconImage.src;
+
+    // Show loader and hide image
+    avatarLoader.style.display = "block";
+    profileIconImage.style.display = "none";
+
+    fetch("/get_user_profile/")
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("student-id").value = data.student_id;
+        document.getElementById("username").value = data.username;
+        document.getElementById("full-name").value = data.full_name;
+        document.getElementById("academic-year").value =
+          data.academic_year_level;
+        document.getElementById("contact-number").value = data.contact_number;
+
+        // Mask and display the email
+        document.getElementById("email").value = maskEmail(data.email);
+
+        // Set the profile icon image source
+        profileIconImage.src = data.avatar || placeholderUrl;
+        profileIconImage.onload = () => {
+          avatarLoader.style.display = "none";
+          profileIconImage.style.display = "block";
+        };
+      })
+      .catch((error) => {
+        console.error("Error fetching profile data:", error);
+        avatarLoader.style.display = "none";
+        profileIconImage.style.display = "block";
+      });
+  }
+
+  // Show profile success or error dialogs
+  function showProfileSuccess(message) {
+    const dialogBox = document.getElementById("profileSuccessDialog");
+    const dialogContent = document.getElementById("profileSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  function showProfileError(message) {
+    const dialogBox = document.getElementById("profileErrorDialog");
+    const dialogContent = document.getElementById("profileErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+  const updateProfileBtn = document.getElementById("updateProfileBtn");
+  const confirmUpdateDialog = document.getElementById("confirmUpdateDialog");
+  const confirmUpdateBtn = document.getElementById("confirmUpdateBtn");
+  const cancelUpdateBtn = document.getElementById("cancelUpdateBtn");
+
+  // Show confirmation dialog when "Save changes" is clicked
+  updateProfileBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.style.display = "block";
+    confirmUpdateDialog.classList.remove("pop-out");
+    confirmUpdateDialog.classList.add("pop-in");
+  });
+
+  // Confirm profile update
+  confirmUpdateBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.classList.remove("pop-in");
+    confirmUpdateDialog.classList.add("pop-out");
+
+    // Delay hiding the dialog to allow the animation to complete
+    setTimeout(() => {
+      confirmUpdateDialog.style.display = "none";
+    }, 300);
+
+    // Call the updateUserProfile function
+    updateUserProfile(event);
+  });
+
+  // Cancel profile update
+  cancelUpdateBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    confirmUpdateDialog.classList.remove("pop-in");
+    confirmUpdateDialog.classList.add("pop-out");
+
+    // Delay hiding the dialog to allow the animation to complete
+    setTimeout(() => {
+      confirmUpdateDialog.style.display = "none";
+    }, 300);
+  });
+  // Function to update user profile
+  function updateUserProfile(event) {
+    event.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const contactNumber = document.getElementById("contact-number").value;
+    const academicYear = document.getElementById("academic-year").value;
+
+    // Show the profile update overlay and loader
+    const profileUpdateOverlay = document.getElementById(
+      "profileupdateOverlay"
+    );
+    profileUpdateOverlay.style.display = "block";
+
+    fetch("/update_user_profile/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        username: username,
+        contact_number: contactNumber,
+        academic_year_level: academicYear, // Only include fields that are allowed to be updated
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        // Hide the overlay and loader
+        profileUpdateOverlay.style.display = "none";
+
+        if (data.success) {
+          showProfileSuccess("Profile updated successfully!");
+        } else {
+          showProfileError(data.errors || "Error updating profile.");
+        }
+      })
+      .catch((error) => {
+        // Hide the overlay and loader
+        profileUpdateOverlay.style.display = "none";
+        console.error("Error updating profile:", error);
+        showProfileError("Error updating profile. Please try again.");
+      });
+  }
+
+  document
+    .getElementById("profileForm")
+    .addEventListener("submit", updateUserProfile);
+
+  // Open modal and fetch profile data
+  document.getElementById("profileLink").addEventListener("click", function () {
+    fetchUserProfile();
+    profileModal.style.display = "block";
+  });
+  // Email verification logic
+  const verifyEmailBtn = document.getElementById("verifyEmailBtn");
+  const emailVerifiedLabel = document.getElementById("emailVerifiedLabel");
+  const resendCooldownLabel = document.getElementById("resendCooldownLabel");
+  const cooldownTimer = document.getElementById("cooldownTimer");
+  const verifyemailOverlay = document.getElementById("verifyemailOverlay");
+  const changeemailSuccessBox = document.getElementById(
+    "changeemailSuccessBox"
+  );
+  const changeemailErrorBox = document.getElementById("changeemailErrorBox");
+  const verifyemailSuccessBox = document.getElementById(
+    "verifyemailSuccessBox"
+  );
+  const verifyemailErrorBox = document.getElementById("verifyemailErrorBox");
+  let cooldownInterval;
+
+  const changeEmailBtn = document.getElementById("changeEmailBtn");
+  const changeEmailDialog = document.getElementById("changeEmailDialog");
+  const verifyNewEmailBtn = document.getElementById("verifyNewEmailBtn");
+  const cancelChangeEmailBtn = document.getElementById("cancelChangeEmailBtn");
+  const resendEmailCooldownLabel = document.getElementById(
+    "resendEmailCooldownLabel"
+  );
+  let emailCooldownInterval;
+
+  const resendNewEmailCooldownLabel = document.getElementById(
+    "resendNewEmailCooldownLabel"
+  );
+  const cooldownNewEmailTimer = document.getElementById(
+    "cooldownNewEmailTimer"
+  );
+
+  // Function to show the modal with pop-in animation
+  changeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-out");
+    changeEmailDialog.classList.add("pop-in");
+    changeEmailDialog.style.display = "block";
+  });
+
+  // Function to close the modal with pop-out animation
+  cancelChangeEmailBtn.addEventListener("click", function () {
+    changeEmailDialog.classList.remove("pop-in");
+    changeEmailDialog.classList.add("pop-out");
+
+    // Set timeout to hide modal after animation completes
+    setTimeout(() => {
+      changeEmailDialog.style.display = "none";
+    }, 300); // The timeout duration should match the animation duration
+  });
+
+  // Cooldown Timer for the new email verification
+  function startNewEmailCooldown(seconds) {
+    resendNewEmailCooldownLabel.style.display = "inline"; // Show the cooldown label
+    cooldownNewEmailTimer.textContent = seconds;
+
+    emailCooldownInterval = setInterval(() => {
+      seconds--;
+      cooldownNewEmailTimer.textContent = seconds;
+
+      if (seconds <= 0) {
+        clearInterval(emailCooldownInterval);
+        resendNewEmailCooldownLabel.style.display = "none"; // Hide cooldown when complete
+        verifyNewEmailBtn.innerText = "Resend"; // Change button text to "Resend"
+        verifyNewEmailBtn.style.display = "inline-block"; // Show the button
+      }
+    }, 1000);
+  }
+
+  // Email validation function
+  function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Simple regex to validate email format
+    return re.test(String(email).toLowerCase());
+  }
+
+  // Event listener for the "Verify" button for changing the email
+  verifyNewEmailBtn.addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    const newEmail = document.getElementById("new-email").value;
+
+    // Validate the email format
+    if (!validateEmail(newEmail)) {
+      showChangeEmailError("Invalid email format.");
+      return;
+    }
+
+    // Show overlay and loader while processing the request
+    const changeemailOverlay = document.getElementById("changeemailOverlay");
+    changeemailOverlay.style.display = "block";
+
+    // Send the email change request to the server
+    fetch("/request_email_change/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // Include CSRF token for Django
+      },
+      body: JSON.stringify({ new_email: newEmail }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+
+        if (data.success) {
+          // Start the cooldown timer and hide the "Verify" button
+          verifyNewEmailBtn.style.display = "none";
+          startNewEmailCooldown(60); // Start with 60 seconds countdown
+          showChangeEmailSuccess(
+            "Verification for email sent! Please check your inbox."
+          );
+        } else {
+          // Show error dialog in case of an error
+          showChangeEmailError(data.error || "Failed to update the email.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        changeemailOverlay.style.display = "none"; // Hide the loader and overlay
+        showChangeEmailError(
+          "An error occurred while sending the email change request."
+        );
+      });
+  });
+
+  document
+    .getElementById("verifyEmailBtn")
+    .addEventListener("click", function (event) {
+      event.preventDefault(); // Prevent any default form action if it's inside a form
+
+      // Get the email field value (make sure it's unmasked if masked)
+      const emailField = document.getElementById("email");
+      const email = emailField.value;
+
+      // Perform a check if the email is valid
+      if (!validateEmail(email)) {
+        showVerifyEmailError("Invalid email format.");
+        return;
+      }
+
+      // Show loader
+      const verifyemailOverlay = document.getElementById("verifyemailOverlay");
+      verifyemailOverlay.style.display = "block";
+
+      // Send the email verification request to the server
+      fetch("/send_verification_email/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"), // CSRF Token if required (Django setup)
+        },
+        body: JSON.stringify({ email: email }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          verifyemailOverlay.style.display = "none"; // Hide loader
+          if (data.success) {
+            showVerifyEmailSuccess(
+              "Verification email sent! Please check your inbox."
+            );
+          } else {
+            showVerifyEmailError(
+              data.error || "Failed to send verification email."
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          verifyemailOverlay.style.display = "none"; // Hide loader
+          showVerifyEmailError(
+            "An error occurred while sending the verification email."
+          );
+        });
+    });
+
+  // Function to mask the email
+  function maskEmail(email) {
+    const [localPart, domainPart] = email.split("@");
+    const maskedLocal = localPart.slice(0, 1) + "*****";
+    const maskedDomain = "*****." + domainPart.split(".").pop();
+    return maskedLocal + "@" + maskedDomain;
+  }
+  // Function to start the cooldown timer only after successful email sending
+  // Function to start cooldown timer
+  function startCooldown(seconds) {
+    resendCooldownLabel.style.display = "inline";
+    cooldownTimer.textContent = seconds;
+
+    cooldownInterval = setInterval(() => {
+      seconds--;
+      cooldownTimer.textContent = seconds;
+
+      if (seconds <= 0) {
+        clearInterval(cooldownInterval);
+        resendCooldownLabel.style.display = "none";
+        showResendButton();
+      }
+    }, 1000);
+  }
+
+  // Show the Resend button after cooldown
+  function showResendButton() {
+    const resendBtn = document.createElement("button");
+    resendBtn.innerText = "Resend";
+    resendBtn.classList.add("verify-btn");
+    resendBtn.addEventListener("click", function (event) {
+      event.stopPropagation(); // Stop event propagation
+      event.preventDefault(); // Prevent form submission
+      startCooldown(60);
+      resendBtn.style.display = "none"; // Hide resend during cooldown
+      sendVerificationEmail();
+    });
+    document.querySelector(".email-container").appendChild(resendBtn);
+  }
+
+  // Function to send a verification email
+  function sendVerificationEmail() {
+    const email = document.getElementById("email").value;
+
+    // Show the overlay and loader
+    verifyemailOverlay.style.display = "block";
+
+    fetch("/send_verification_email/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ email: email }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        verifyemailOverlay.style.display = "none"; // Hide loader
+        if (data.success) {
+          // Show success dialog with animation
+          showVerifyEmailSuccess(
+            "Verification email sent! Please check your inbox."
+          );
+        } else {
+          // Show error dialog with animation
+          showVerifyEmailError("Error sending verification email.");
+        }
+      })
+      .catch((error) => {
+        verifyemailOverlay.style.display = "none"; // Hide loader
+        showVerifyEmailError(
+          "An error occurred while sending the verification email."
+        );
+      });
+  }
+
+  // Show email verification success dialog
+  function showVerifyEmailSuccess(message) {
+    const dialogBox = document.getElementById("verifyemailSuccessBox");
+    const dialogContent = document.getElementById("verifyemailSuccessContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show email verification error dialog
+  function showVerifyEmailError(message) {
+    const dialogBox = document.getElementById("verifyemailErrorBox");
+    const dialogContent = document.getElementById("verifyemailErrorContent");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show email verification success dialog
+  function showChangeEmailSuccess(message) {
+    const dialogBox = document.getElementById("changeemailSuccessBox");
+    const dialogContent = document.getElementById("changeemailSuccessBox");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Show email verification error dialog
+  function showChangeEmailError(message) {
+    const dialogBox = document.getElementById("changeemailErrorBox");
+    const dialogContent = document.getElementById("changeemailErrorBox");
+    dialogContent.innerHTML = message;
+    dialogBox.style.display = "block";
+    dialogBox.classList.remove("pop-out");
+    dialogBox.classList.add("pop-in");
+
+    setTimeout(() => {
+      dialogBox.classList.remove("pop-in");
+      dialogBox.classList.add("pop-out");
+      setTimeout(() => {
+        dialogBox.style.display = "none";
+        dialogBox.classList.remove("pop-out");
+      }, 300);
+    }, 3000);
+  }
+
+  // Event listener for the Verify button
+  verifyEmailBtn.addEventListener("click", function (event) {
+    event.stopPropagation(); // Stop event propagation
+    event.preventDefault(); // Prevent form submission
+    verifyEmailBtn.style.display = "none"; // Hide verify button
+    startCooldown(60); // Start 60 seconds cooldown
+    sendVerificationEmail(); // Send verification email
+  });
+
+  // Check email verification status when modal opens
+  function checkEmailVerificationStatus() {
+    fetch("/check_email_verification/")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.is_verified) {
+          verifyEmailBtn.style.display = "none"; // Hide verify button
+          emailVerifiedLabel.style.display = "inline"; // Show verified label
+        } else {
+          verifyEmailBtn.style.display = "inline"; // Show verify button
+          emailVerifiedLabel.style.display = "none"; // Hide verified label
+        }
+      })
+      .catch((error) =>
+        console.error("Error checking email verification:", error)
+      );
+  }
+
+  document.getElementById("profileLink").addEventListener("click", function () {
+    checkEmailVerificationStatus();
+  });
+
+  const notificationButton = document.getElementById("notificationButton");
+  const notificationDot = document.getElementById("notificationDot");
+  const notificationList = document.getElementById("notificationList");
+  const notificationItems = document.getElementById("notificationItems");
+  const loadMoreButton = document.getElementById("notificationLoadMore");
+
+  let currentPage = 1; // Track the current page for pagination
+  let totalPages = 1; // Total pages to be fetched (to be updated after fetching data)
+  let renderedNotifications = new Map(); // Store rendered notifications by id
+
+  // Show loader while loading notifications
+  function showNotificationLoader() {
+    const loader = document.createElement("div");
+    loader.className = "loader-placeholder";
+    for (let i = 0; i < 3; i++) {
+      const loaderItem = document.createElement("div");
+      loaderItem.className = "loader-item";
+      loaderItem.innerHTML = `
+      <div class="loader-item-avatar"></div>
+      <div class="loader-item-content"></div>
+      <div class="loader-item-timestamp"></div>
+    `;
+      loader.appendChild(loaderItem);
+    }
+    notificationItems.appendChild(loader);
+  }
+
+  // Remove the loader after notifications are loaded
+  function removeNotificationLoader() {
+    const loader = document.querySelector(".loader-placeholder");
+    if (loader) {
+      loader.remove();
+    }
+  }
+
+  // Fetch notifications from the API with pagination support
+  async function fetchNotifications(page = 1) {
+    try {
+      showNotificationLoader();
+      const response = await fetch(`/notifications/fetch/?page=${page}`);
+      if (response.ok) {
+        const data = await response.json();
+        totalPages = data.total_pages;
+        return data.notifications;
+      } else {
+        console.error("Failed to fetch notifications.");
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return [];
+    } finally {
+      removeNotificationLoader();
+    }
+  }
+
+  // Mark the notification button as clicked in the backend
+  async function markNotificationButtonClicked() {
+    try {
+      const response = await fetch(`/notifications/mark_button_clicked/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+      });
+      if (!response.ok) {
+        console.error("Failed to mark notification button as clicked.");
+      } else {
+        notificationDot.style.display = "none"; // Hide the dot after clicking
+      }
+    } catch (error) {
+      console.error("Error marking notification button as clicked:", error);
+    }
+  }
+
+  // Mark a specific notification as read when clicked (permanent)
+  async function markNotificationAsRead(notificationId) {
+    try {
+      let cleanNotificationId = notificationId
+        .replace("status_", "")
+        .replace("replies_", "");
+
+      const response = await fetch(
+        `/notifications/mark_as_read/${cleanNotificationId}/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to mark notification as read.");
+      } else {
+        // Mark this notification as permanently read in the backend
+        renderedNotifications.get(notificationId).is_read = true;
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  }
+
+  // Get CSRF token for Django
+  function getCSRFToken() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+  }
+
+  // Render the notifications in the notification list
+  async function renderNotifications(page = 1) {
+    const notifications = await fetchNotifications(page);
+
+    if (notifications.length === 0) {
+      loadMoreButton.style.display = "none";
+      return;
+    }
+
+    notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    let hasUnreadNotifications = false;
+
+    notifications.forEach((notification) => {
+      if (!renderedNotifications.has(notification.id)) {
+        const item = document.createElement("div");
+        item.classList.add("notification-item");
+        item.dataset.id = notification.id;
+
+        // If the notification is unread, apply the unread styling
+        if (!notification.is_read) {
+          item.classList.add("unread");
+          hasUnreadNotifications = true; // Track if there are unread notifications
+        } else {
+          item.classList.add("read");
+        }
+
+        // Make the entire notification clickable and mark as read on click
+        item.addEventListener("click", async function () {
+          const notificationId = item.dataset.id; // Ensure this ID is the notification ID
+
+          // Mark the notification as read
+          if (!notification.is_read) {
+            await markNotificationAsRead(notificationId); // Pass the notification ID here
+            item.classList.remove("unread");
+            item.classList.add("read");
+
+            const greenDot = item.querySelector(".notification-dot-green");
+            if (greenDot) {
+              greenDot.remove();
+            }
+            item
+              .querySelector(".timestamp")
+              .classList.remove("timestamp-green");
+          }
+
+          // Redirect to the status page
+          window.location.href = notification.link;
+        });
+
+        // Build notification item structure
+        item.innerHTML = `
+          <img class="notification-avatar" src="${
+            notification.avatar
+          }" alt="Avatar">
+          <div class="notification-content">
+            <div class="message">${notification.message}</div>
+            <div class="timestamp ${
+              notification.is_read ? "" : "timestamp-green"
+            }">
+              ${formatTimestamp(notification.timestamp)}
+            </div>
+          </div>
+          ${
+            notification.is_read
+              ? ""
+              : '<div class="notification-dot-green"></div>'
+          }
+        `;
+
+        notificationItems.appendChild(item);
+
+        renderedNotifications.set(notification.id, notification);
+      }
+    });
+
+    // Show the "Load More" button if more pages are available
+    if (currentPage < totalPages) {
+      loadMoreButton.style.display = "block";
+    } else {
+      loadMoreButton.style.display = "none";
+    }
+
+    // Show or hide the red notification dot based on unread notifications
+    if (hasUnreadNotifications) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    } else {
+      notificationDot.style.display = "none";
+    }
+  }
+
+  // Check the notification status from the backend
+  async function checkNotificationStatus() {
+    try {
+      const response = await fetch(`/notifications/check_status/`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.has_unread_notifications && !data.has_clicked_notification) {
+          notificationDot.style.display = "block";
+          notificationDot.classList.add("blink");
+        } else {
+          notificationDot.style.display = "none";
+        }
+      }
+    } catch (error) {
+      console.error("Error checking notification status:", error);
+    }
+  }
+
+  // Initial notification loading when the button is clicked
+  notificationButton.addEventListener("click", async function () {
+    if (notificationList.style.display === "none") {
+      await renderNotifications(currentPage); // Render the list of notifications
+      notificationList.classList.remove("pop-up");
+      notificationList.classList.add("animated");
+      notificationList.style.display = "block";
+
+      // Mark notification button as clicked and hide the red dot
+      await markNotificationButtonClicked(); // Call to mark the notification button clicked
+    } else {
+      notificationList.classList.remove("animated");
+      notificationList.classList.add("pop-up");
+      setTimeout(() => {
+        notificationList.style.display = "none";
+      }, 300);
+    }
+  });
+
+  // Load more notifications when clicking the "Load More" button
+  loadMoreButton.addEventListener("click", async function () {
+    currentPage++;
+    await renderNotifications(currentPage);
+    notificationList.style.maxHeight = "700px";
+    notificationList.style.overflowY = "auto";
+  });
+
+  // Format the timestamp
+  function formatTimestamp(timestamp) {
+    if (timestamp.includes("0 minutes ago")) {
+      return "Just Now";
+    }
+    return timestamp;
+  }
+
+  // Periodically check for new unread notifications (without WebSocket)
+  setInterval(async () => {
+    const notifications = await fetchNotifications();
+    const hasUnread = notifications.some(
+      (notification) => !notification.is_read
+    );
+
+    if (hasUnread) {
+      notificationDot.style.display = "block";
+      notificationDot.classList.add("blink");
+    }
+  }, 60000); // Check every 60 seconds
+
+  // Close the notification list when clicking outside
+  window.addEventListener("click", function (event) {
+    if (
+      !notificationButton.contains(event.target) &&
+      !notificationList.contains(event.target)
+    ) {
+      if (notificationList.style.display === "block") {
+        notificationList.classList.remove("animated");
+        notificationList.classList.add("pop-up");
+
+        setTimeout(() => {
+          notificationList.style.display = "none";
+        }, 300);
+      }
+    }
+  });
+
+  // Initial rendering of notifications when the page loads
+  renderNotifications();
+
+  // Initial check for notification status when the page loads
+  checkNotificationStatus();
+});
