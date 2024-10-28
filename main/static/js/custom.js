@@ -111,8 +111,6 @@ floatingButton.addEventListener("click", function () {
     closeChat();
   }
 });
-
-// Function to open chat popup
 function openChat() {
   chatPopup.style.display = "block";
   chatPopup.classList.remove("chatPopOut");
@@ -127,9 +125,11 @@ function openChat() {
   }, 300);
   isOpen = true;
 
-  if (!questionnaireStarted) {
-    startChatSession(); // Initiate chat session
-  }
+  // Remove automatic initiation of chat session
+  // Only initiate when user clicks "Start"
+  // if (!questionnaireStarted) {
+  //   startChatSession(); // Initiate chat session
+  // }
 }
 
 // Function to close chat popup
@@ -271,14 +271,14 @@ function removeLoadingPlaceholder() {
 
 // Function to start chat session
 function startChatSession() {
-  fetch("/start_chat/", {
+  fetch("/chat/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
     },
     body: JSON.stringify({
-      // Optionally include answer_id if needed
+      message: "start", // Send 'start' to initiate the questionnaire
     }),
   })
     .then((response) => response.json())
@@ -374,30 +374,33 @@ function handleOptionClick(option, optionsWrapper) {
     { once: true }
   );
 
-  if (option === "Start") {
-    // Generate a unique answer_id
-    const answer_id = generateUUID();
-
-    // Send POST request to the /start_chat/ endpoint with "Start" message
-    fetch("/start_chat/", {
+  if (option === "Start" || option === "Not Yet") {
+    // Send the selected option to the backend
+    fetch("/chat/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
       },
-      body: JSON.stringify({
-        message: "Start",
-        answer_id: answer_id, // Include the unique identifier if needed
-      }),
+      body: JSON.stringify({ message: option.toLowerCase() }), // "start" or "not yet"
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.success && data.question && data.answer_options) {
+        if (
+          option === "Start" &&
+          data.success &&
+          data.question &&
+          data.answer_options
+        ) {
           // Proceed to display the first question
           simulateTyping(data.question, "bot", () => {
             displayAnswerOptions(data.answer_options, data.question_index);
             currentQuestionIndex = data.question_index;
+            questionnaireStarted = true;
           });
+        } else if (option === "Not Yet" && data.message) {
+          // Handle "Not Yet" acknowledgment
+          simulateTyping(data.message, "bot");
         } else {
           // Handle server-side errors
           console.error("Error:", data.error);
@@ -412,569 +415,7 @@ function handleOptionClick(option, optionsWrapper) {
           "Failed to start the questionnaire. Please try again."
         );
       });
-  } else if (option === "Not Yet") {
-    // Handle "Not Yet" option by acknowledging the user's choice
-    simulateTyping("Alright, feel free to start whenever you're ready!", "bot");
-  } else {
-    // Handle other options if any
-    showErrorMessage("Option not recognized.");
   }
-}
-
-// Function to handle answer selection within the questionnaire
-function handleAnswerSelection(questionIndex, answerText) {
-  const answersWrapper = document.getElementById("answersWrapper");
-
-  if (answersWrapper) {
-    answersWrapper.classList.remove("pop-up");
-    answersWrapper.classList.add("pop-down");
-    setTimeout(() => answersWrapper.remove(), 300);
-  }
-
-  generateMessage(answerText, "user");
-
-  // Generate a unique answer_id
-  const answer_id = generateUUID();
-
-  // Send POST request to the /submit_answer/ endpoint
-  fetch("/submit_answer/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      question_index: questionIndex,
-      answer_text: answerText,
-      answer_id: answer_id, // Include the unique identifier
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        if (data.next_question_index !== undefined && data.question) {
-          // Display the next question with its answer options
-          simulateTyping(data.question, "bot", () => {
-            displayAnswerOptions(data.answer_options, data.next_question_index);
-            currentQuestionIndex = data.next_question_index;
-          });
-        } else if (data.end_of_questions && data.final_bot_message) {
-          // Display the final message with options
-          simulateTyping(data.final_bot_message, "bot", () => {
-            displayFinalOptions();
-          });
-        }
-      } else {
-        // Handle errors returned from the server
-        console.error("Error:", data.error);
-        showErrorMessage(
-          data.error || "Failed to submit your choice. Please try again."
-        );
-      }
-    })
-    .catch((error) => {
-      console.error("Error submitting answer:", error);
-      showErrorMessage("Failed to submit your choice. Please try again.");
-    });
-}
-
-// Function to display final options (e.g., Yes/No)
-function displayFinalOptions() {
-  const optionsWrapper = document.createElement("div");
-  optionsWrapper.className = "message-wrapper final-options-wrapper pop-up"; // Added 'pop-up' class
-  optionsWrapper.id = "finalOptions";
-
-  const options = ["Yes", "No"];
-  options.forEach((option) => {
-    const button = document.createElement("button");
-    button.className = "option-button";
-    button.textContent = option;
-    button.onclick = function () {
-      handleFinalOptionSelection(option, optionsWrapper);
-    };
-    optionsWrapper.appendChild(button);
-  });
-
-  chatBody.appendChild(optionsWrapper);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to handle final option selection
-function handleFinalOptionSelection(selection, optionsWrapper) {
-  // Display user selection
-  generateMessage(selection, "user");
-
-  // Apply the 'pop-down' animation class
-  optionsWrapper.classList.remove("pop-up");
-  optionsWrapper.classList.add("pop-down");
-
-  // Disable buttons to prevent multiple clicks
-  const buttons = optionsWrapper.querySelectorAll("button");
-  buttons.forEach((btn) => (btn.disabled = true));
-
-  // Listen for the end of the animation to remove the wrapper
-  optionsWrapper.addEventListener(
-    "animationend",
-    () => {
-      optionsWrapper.remove();
-    },
-    { once: true }
-  );
-
-  // Send POST request to the /final_option_selection/ endpoint
-  fetch("/final_option_selection/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      selection: selection,
-      // answer_id: generateUUID(), // Include if necessary
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        // Append bot response with simulated typing
-        simulateTyping(data.message, "bot");
-      } else {
-        showErrorMessage(
-          data.error || "Failed to submit your choice. Please try again."
-        );
-      }
-    })
-    .catch((error) => {
-      console.error("Error submitting selection:", error);
-      showErrorMessage("Failed to submit your choice. Please try again.");
-    });
-}
-
-// Function to generate chat message
-function generateMessage(text, sender) {
-  const messageWrapper = document.createElement("div");
-  messageWrapper.className = "message-wrapper";
-
-  const messageElement = document.createElement("div");
-  messageElement.className =
-    sender === "user"
-      ? "user-message chat-message"
-      : "chatbot-message chat-message";
-  messageElement.textContent = text;
-
-  messageWrapper.appendChild(messageElement);
-  chatBody.appendChild(messageWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to simulate typing with delay
-function simulateTyping(text, sender, callback = null) {
-  showLoader(chatBody);
-  const typingDelay = Math.max(500, text.length * 30); // Adjusted delay
-
-  setTimeout(() => {
-    removeLoader(chatBody);
-    generateMessage(text, sender);
-    if (callback) callback();
-  }, typingDelay);
-}
-
-// Function to show loader animation
-function showLoader(chatBody) {
-  const loaderElement = document.createElement("div");
-  loaderElement.className = "loader";
-  loaderElement.innerHTML =
-    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to remove loader animation
-function removeLoader(chatBody) {
-  const loaderElement = chatBody.querySelector(".loader");
-  if (loaderElement) {
-    chatBody.removeChild(loaderElement);
-  }
-}
-
-// Function to show error message
-function showErrorMessage(errorText) {
-  const errorWrapper = document.createElement("div");
-  errorWrapper.className = "message-wrapper";
-
-  const errorElement = document.createElement("div");
-  errorElement.className = "error-message chat-message";
-  errorElement.textContent = errorText;
-
-  errorWrapper.appendChild(errorElement);
-  chatBody.appendChild(errorWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-
-  // Optionally, store the error in sessionStorage to display on reload
-  sessionStorage.setItem("chatError", errorText);
-}
-
-// Function to send messages via chat input
-function sendMessage() {
-  const message = chatInput.value.trim();
-  if (message === "") return;
-
-  generateMessage(message, "user");
-  chatInput.value = "";
-
-  // Send the message to the backend
-  fetch("/chat_view/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({ message: message }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        simulateTyping(data.message, "bot");
-      } else if (data.success && !data.message) {
-        // Handle cases where no immediate response is needed
-      } else {
-        showErrorMessage(data.error || "Failed to send message.");
-      }
-    })
-    .catch((error) => {
-      console.error("Error sending message:", error);
-      showErrorMessage("Failed to send message. Please try again.");
-    });
-}
-
-// Function to display a question based on question index
-function displayQuestion(questionIndex, questionText) {
-  simulateTyping(questionText, "bot", () => {
-    // The answer options are already displayed via displayAnswerOptions
-    // No need to fetch them again
-  });
-}
-
-// Utility function to generate UUID
-function generateUUID() {
-  // Public Domain/MIT
-  var d = new Date().getTime(); // Timestamp
-  var d2 = (performance && performance.now && performance.now() * 1000) || 0; // Time in microseconds since page-load or 0 if unsupported
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16; // random number between 0 and 16
-    if (d > 0) {
-      r = (d + r) % 16 | 0;
-      d = Math.floor(d / 16);
-    } else {
-      r = (d2 + r) % 16 | 0;
-      d2 = Math.floor(d2 / 16);
-    }
-    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
-
-// Function to display final options (e.g., Yes/No)
-function displayFinalOptions() {
-  const optionsWrapper = document.createElement("div");
-  optionsWrapper.className = "message-wrapper final-options-wrapper pop-up"; // Added 'pop-up' class
-  optionsWrapper.id = "finalOptions";
-
-  const options = ["Yes", "No"];
-  options.forEach((option) => {
-    const button = document.createElement("button");
-    button.className = "option-button";
-    button.textContent = option;
-    button.onclick = function () {
-      handleFinalOptionSelection(option, optionsWrapper);
-    };
-    optionsWrapper.appendChild(button);
-  });
-
-  chatBody.appendChild(optionsWrapper);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to handle final option selection
-function handleFinalOptionSelection(selection, optionsWrapper) {
-  // Display user selection
-  generateMessage(selection, "user");
-
-  // Apply the 'pop-down' animation class
-  optionsWrapper.classList.remove("pop-up");
-  optionsWrapper.classList.add("pop-down");
-
-  // Disable buttons to prevent multiple clicks
-  const buttons = optionsWrapper.querySelectorAll("button");
-  buttons.forEach((btn) => (btn.disabled = true));
-
-  // Listen for the end of the animation to remove the wrapper
-  optionsWrapper.addEventListener(
-    "animationend",
-    () => {
-      optionsWrapper.remove();
-    },
-    { once: true }
-  );
-
-  // Send POST request to the /final_option_selection/ endpoint
-  fetch("/final_option_selection/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      selection: selection,
-      // answer_id: generateUUID(), // Include if necessary
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        // Append bot response with simulated typing
-        simulateTyping(data.message, "bot");
-      } else {
-        showErrorMessage(
-          data.error || "Failed to submit your choice. Please try again."
-        );
-      }
-    })
-    .catch((error) => {
-      console.error("Error submitting selection:", error);
-      showErrorMessage("Failed to submit your choice. Please try again.");
-    });
-}
-
-// Function to handle sending messages via chat input
-function sendMessage() {
-  const message = chatInput.value.trim();
-  if (message === "") return;
-
-  generateMessage(message, "user");
-  chatInput.value = "";
-
-  // Send the message to the backend
-  fetch("/chat_view/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({ message: message }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        simulateTyping(data.message, "bot");
-      } else if (data.success && !data.message) {
-        // Handle cases where no immediate response is needed
-      } else {
-        showErrorMessage(data.error || "Failed to send message.");
-      }
-    })
-    .catch((error) => {
-      console.error("Error sending message:", error);
-      showErrorMessage("Failed to send message. Please try again.");
-    });
-}
-
-// Function to generate chat message
-function generateMessage(text, sender) {
-  const messageWrapper = document.createElement("div");
-  messageWrapper.className = "message-wrapper";
-
-  const messageElement = document.createElement("div");
-  messageElement.className =
-    sender === "user"
-      ? "user-message chat-message"
-      : "chatbot-message chat-message";
-  messageElement.textContent = text;
-
-  messageWrapper.appendChild(messageElement);
-  chatBody.appendChild(messageWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to simulate typing with delay
-function simulateTyping(text, sender, callback = null) {
-  showLoader(chatBody);
-  const typingDelay = Math.max(500, text.length * 30); // Adjusted delay
-
-  setTimeout(() => {
-    removeLoader(chatBody);
-    generateMessage(text, sender);
-    if (callback) callback();
-  }, typingDelay);
-}
-
-// Function to show loader animation
-function showLoader(chatBody) {
-  const loaderElement = document.createElement("div");
-  loaderElement.className = "loader";
-  loaderElement.innerHTML =
-    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-  chatBody.appendChild(loaderElement);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to remove loader animation
-function removeLoader(chatBody) {
-  const loaderElement = chatBody.querySelector(".loader");
-  if (loaderElement) {
-    chatBody.removeChild(loaderElement);
-  }
-}
-
-// Function to show error message
-function showErrorMessage(errorText) {
-  const errorWrapper = document.createElement("div");
-  errorWrapper.className = "message-wrapper";
-
-  const errorElement = document.createElement("div");
-  errorElement.className = "error-message chat-message";
-  errorElement.textContent = errorText;
-
-  errorWrapper.appendChild(errorElement);
-  chatBody.appendChild(errorWrapper);
-
-  chatBody.scrollTop = chatBody.scrollHeight;
-
-  // Optionally, store the error in sessionStorage to display on reload
-  sessionStorage.setItem("chatError", errorText);
-}
-
-// Function to send messages via chat input
-function sendMessage() {
-  const message = chatInput.value.trim();
-  if (message === "") return;
-
-  generateMessage(message, "user");
-  chatInput.value = "";
-
-  // Send the message to the backend
-  fetch("/chat_view/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({ message: message }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        simulateTyping(data.message, "bot");
-      } else if (data.success && !data.message) {
-        // Handle cases where no immediate response is needed
-      } else {
-        showErrorMessage(data.error || "Failed to send message.");
-      }
-    })
-    .catch((error) => {
-      console.error("Error sending message:", error);
-      showErrorMessage("Failed to send message. Please try again.");
-    });
-}
-
-// Function to display a question based on question index
-function displayQuestion(questionIndex, questionText) {
-  simulateTyping(questionText, "bot", () => {
-    // The answer options are already displayed via displayAnswerOptions
-    // No need to fetch them again
-  });
-}
-
-// Utility function to generate UUID
-function generateUUID() {
-  // Public Domain/MIT
-  var d = new Date().getTime(); // Timestamp
-  var d2 = (performance && performance.now && performance.now() * 1000) || 0; // Time in microseconds since page-load or 0 if unsupported
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    var r = Math.random() * 16; // random number between 0 and 16
-    if (d > 0) {
-      r = (d + r) % 16 | 0;
-      d = Math.floor(d / 16);
-    } else {
-      r = (d2 + r) % 16 | 0;
-      d2 = Math.floor(d2 / 16);
-    }
-    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
-
-// Function to display final options (e.g., Yes/No)
-function displayFinalOptions() {
-  const optionsWrapper = document.createElement("div");
-  optionsWrapper.className = "message-wrapper final-options-wrapper pop-up"; // Added 'pop-up' class
-  optionsWrapper.id = "finalOptions";
-
-  const options = ["Yes", "No"];
-  options.forEach((option) => {
-    const button = document.createElement("button");
-    button.className = "option-button";
-    button.textContent = option;
-    button.onclick = function () {
-      handleFinalOptionSelection(option, optionsWrapper);
-    };
-    optionsWrapper.appendChild(button);
-  });
-
-  chatBody.appendChild(optionsWrapper);
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-// Function to handle final option selection
-function handleFinalOptionSelection(selection, optionsWrapper) {
-  // Display user selection
-  generateMessage(selection, "user");
-
-  // Apply the 'pop-down' animation class
-  optionsWrapper.classList.remove("pop-up");
-  optionsWrapper.classList.add("pop-down");
-
-  // Disable buttons to prevent multiple clicks
-  const buttons = optionsWrapper.querySelectorAll("button");
-  buttons.forEach((btn) => (btn.disabled = true));
-
-  // Listen for the end of the animation to remove the wrapper
-  optionsWrapper.addEventListener(
-    "animationend",
-    () => {
-      optionsWrapper.remove();
-    },
-    { once: true }
-  );
-
-  // Send POST request to the /final_option_selection/ endpoint
-  fetch("/final_option_selection/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: JSON.stringify({
-      selection: selection,
-      // answer_id: generateUUID(), // Include if necessary
-    }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.message) {
-        // Append bot response with simulated typing
-        simulateTyping(data.message, "bot");
-      } else {
-        showErrorMessage(
-          data.error || "Failed to submit your choice. Please try again."
-        );
-      }
-    })
-    .catch((error) => {
-      console.error("Error submitting selection:", error);
-      showErrorMessage("Failed to submit your choice. Please try again.");
-    });
 }
 
 // Function to handle answer selection within the questionnaire
@@ -1023,6 +464,9 @@ function handleAnswerSelection(questionIndex, answerText) {
           simulateTyping(data.final_bot_message, "bot", () => {
             displayFinalOptions();
           });
+        } else if (data.response) {
+          // Display any bot response associated with the answer
+          simulateTyping(data.response, "bot");
         }
       } else {
         // Handle errors returned from the server
@@ -1036,6 +480,197 @@ function handleAnswerSelection(questionIndex, answerText) {
       console.error("Error submitting answer:", error);
       showErrorMessage("Failed to submit your choice. Please try again.");
     });
+}
+
+// Function to display final options (e.g., Yes/No)
+function displayFinalOptions() {
+  const optionsWrapper = document.createElement("div");
+  optionsWrapper.className = "message-wrapper final-options-wrapper pop-up"; // Added 'pop-up' class
+  optionsWrapper.id = "finalOptions";
+
+  const options = ["Yes", "No"];
+  options.forEach((option) => {
+    const button = document.createElement("button");
+    button.className = "option-button";
+    button.textContent = option;
+    button.onclick = function () {
+      handleFinalOptionSelection(option, optionsWrapper);
+    };
+    optionsWrapper.appendChild(button);
+  });
+
+  chatBody.appendChild(optionsWrapper);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to handle final option selection
+function handleFinalOptionSelection(selection, optionsWrapper) {
+  // Display user selection
+  generateMessage(selection, "user");
+
+  // Apply the 'pop-down' animation class
+  optionsWrapper.classList.remove("pop-up");
+  optionsWrapper.classList.add("pop-down");
+
+  // Disable buttons to prevent multiple clicks
+  const buttons = optionsWrapper.querySelectorAll("button");
+  buttons.forEach((btn) => (btn.disabled = true));
+
+  // Listen for the end of the animation to remove the wrapper
+  optionsWrapper.addEventListener(
+    "animationend",
+    () => {
+      optionsWrapper.remove();
+    },
+    { once: true }
+  );
+
+  // Send POST request to the /final_option_selection/ endpoint
+  fetch("/final_option_selection/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({
+      selection: selection,
+      // answer_id: generateUUID(), // Include if necessary
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && data.message) {
+        // Append bot response with simulated typing
+        simulateTyping(data.message, "bot");
+      } else if (data.error) {
+        // Display error message from backend
+        showErrorMessage(data.error);
+      } else {
+        showErrorMessage("An unexpected error occurred.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error submitting selection:", error);
+      showErrorMessage("Failed to submit your choice. Please try again.");
+    });
+}
+// Function to generate chat message
+function generateMessage(text, sender) {
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = "message-wrapper";
+
+  const messageElement = document.createElement("div");
+  messageElement.className =
+    sender === "user"
+      ? "user-message chat-message"
+      : "chatbot-message chat-message";
+  messageElement.textContent = text;
+
+  messageWrapper.appendChild(messageElement);
+  chatBody.appendChild(messageWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to simulate typing with delay
+function simulateTyping(text, sender, callback = null) {
+  showLoader(chatBody); // Show loader once
+  const typingDelay = Math.max(500, text.length * 30); // Adjusted delay
+
+  setTimeout(() => {
+    removeLoader(chatBody); // Remove loader once
+    generateMessage(text, sender);
+    if (callback) callback();
+  }, typingDelay);
+}
+
+// Function to show loader animation
+function showLoader(chatBody) {
+  const loaderElement = document.createElement("div");
+  loaderElement.className = "loader";
+  loaderElement.innerHTML =
+    '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  chatBody.appendChild(loaderElement);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to remove loader animation
+function removeLoader(chatBody) {
+  const loaderElement = chatBody.querySelector(".loader");
+  if (loaderElement) {
+    chatBody.removeChild(loaderElement);
+  }
+}
+
+// Function to show error message
+function showErrorMessage(errorText) {
+  const errorWrapper = document.createElement("div");
+  errorWrapper.className = "message-wrapper";
+
+  const errorElement = document.createElement("div");
+  errorElement.className = "error-message chat-message";
+  errorElement.textContent = errorText;
+
+  errorWrapper.appendChild(errorElement);
+  chatBody.appendChild(errorWrapper);
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  // Optionally, store the error in sessionStorage to display on reload
+  sessionStorage.setItem("chatError", errorText);
+}
+
+// Function to send messages via chat input
+function sendMessage() {
+  const message = chatInput.value.trim();
+  if (message === "") return;
+
+  generateMessage(message, "user");
+  chatInput.value = "";
+
+  // Send the message to the backend
+  fetch("/chat/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({ message: message }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        if (data.question && data.answer_options) {
+          // Handle the next question
+          simulateTyping(data.question, "bot", () => {
+            displayAnswerOptions(data.answer_options, data.question_index);
+            currentQuestionIndex = data.question_index;
+          });
+        } else if (data.message) {
+          // Handle any bot messages
+          simulateTyping(data.message, "bot");
+        }
+      } else {
+        // Handle errors or prompts from the bot
+        if (data.message) {
+          simulateTyping(data.message, "bot");
+        } else {
+          showErrorMessage(data.error || "An error occurred.");
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error sending message:", error);
+      showErrorMessage("Failed to send message. Please try again.");
+    });
+}
+
+// Function to display a question based on question index
+function displayQuestion(questionIndex, questionText) {
+  simulateTyping(questionText, "bot", () => {
+    // The answer options are already displayed via displayAnswerOptions
+    // No need to fetch them again
+  });
 }
 
 // Function to generate UUID
