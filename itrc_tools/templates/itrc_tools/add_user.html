@@ -3,37 +3,37 @@
 {% block page_title %}Add New User{% endblock %}
 
 {% block itrc_content %}
-<div class="pilarease-itrc-add-user-container">
+<div class="itrc-add-user-container">
   <!-- Animated SVG Icon -->
-  <div class="animated-icon">
-    <img src="{% static 'images/add_user_icon.svg' %}" alt="Add User Icon">
+  <div class="itrc-add-user-animated-icon">
+    <img src="{% static 'images/add_user_icon.svg' %}" alt="Add User Icon" class="itrc-add-user-icon">
   </div>
 
-  <h1 class="pilarease-itrc-section-title">Add New User</h1>
-  <p class="pilarease-itrc-section-info">
+  <h1 class="itrc-add-user-section-title">Add New User</h1>
+  <p class="itrc-add-user-section-info">
     Fill in the details below to add a new user to the system.
   </p>
 
-  <div class="pilarease-itrc-card">
-    <form method="post" enctype="multipart/form-data" class="pilarease-itrc-form">
+  <div class="itrc-add-user-card">
+    <form method="post" enctype="multipart/form-data" class="itrc-add-user-form">
       {% csrf_token %}
       {{ form.non_field_errors }}
 
       <!-- First Row -->
-      <div class="pilarease-itrc-form-row">
+      <div class="itrc-add-user-form-row">
         <!-- Username -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.username.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-user"></i>
             {{ form.username }}
           </div>
           {{ form.username.errors }}
         </div>
         <!-- Email -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.email.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-envelope"></i>
             {{ form.email }}
           </div>
@@ -42,20 +42,20 @@
       </div>
 
       <!-- Second Row -->
-      <div class="pilarease-itrc-form-row">
+      <div class="itrc-add-user-form-row">
         <!-- Student ID -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.student_id.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-id-card"></i>
             {{ form.student_id }}
           </div>
           {{ form.student_id.errors }}
         </div>
         <!-- Full Name -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.full_name.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-user-circle"></i>
             {{ form.full_name }}
           </div>
@@ -64,20 +64,20 @@
       </div>
 
       <!-- Third Row -->
-      <div class="pilarease-itrc-form-row">
+      <div class="itrc-add-user-form-row">
         <!-- Academic Year Level -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.academic_year_level.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-book"></i>
             {{ form.academic_year_level }}
           </div>
           {{ form.academic_year_level.errors }}
         </div>
         <!-- Contact Number -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.contact_number.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-phone"></i>
             {{ form.contact_number }}
           </div>
@@ -86,15 +86,15 @@
       </div>
 
       <!-- Fourth Row -->
-      <div class="pilarease-itrc-form-row">
+      <div class="itrc-add-user-form-row">
         <!-- Is Counselor -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.is_counselor.label_tag }}
           {{ form.is_counselor }}
           {{ form.is_counselor.errors }}
         </div>
         <!-- Is ITRC Staff -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.is_itrc_staff.label_tag }}
           {{ form.is_itrc_staff }}
           {{ form.is_itrc_staff.errors }}
@@ -102,17 +102,17 @@
       </div>
 
       <!-- Fifth Row -->
-      <div class="pilarease-itrc-form-row">
+      <div class="itrc-add-user-form-row">
         <!-- Is Active -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.is_active.label_tag }}
           {{ form.is_active }}
           {{ form.is_active.errors }}
         </div>
         <!-- Password -->
-        <div class="pilarease-itrc-form-group">
+        <div class="itrc-add-user-form-group">
           {{ form.password.label_tag }}
-          <div class="pilarease-itrc-input-icon">
+          <div class="itrc-add-user-input-icon">
             <i class="bx bx-lock"></i>
             {{ form.password }}
           </div>
@@ -121,18 +121,18 @@
       </div>
 
       <!-- Avatar -->
-      <div class="pilarease-itrc-form-group">
+      <div class="itrc-add-user-form-group">
         {{ form.avatar.label_tag }}
         {{ form.avatar }}
         {{ form.avatar.errors }}
       </div>
 
       <!-- Form Actions -->
-      <div class="pilarease-itrc-form-actions">
-        <button type="submit" class="pilarease-itrc-action-button approve-button">
+      <div class="itrc-add-user-form-actions">
+        <button type="submit" class="itrc-add-user-action-button itrc-add-user-approve-button">
           <i class="bx bx-plus"></i> Add User
         </button>
-        <a href="{% url 'manage_users' %}" class="pilarease-itrc-action-button reject-button">
+        <a href="{% url 'manage_users' %}" class="itrc-add-user-action-button itrc-add-user-reject-button">
           <i class="bx bx-x"></i> Cancel
         </a>
       </div>

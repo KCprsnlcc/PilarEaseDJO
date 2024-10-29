@@ -741,3 +741,20 @@ $(document).ready(function () {
     });
   });
 });
+$(document).ready(function () {
+  // Real-time validation for username
+  $("#id_username").on("input", function () {
+    const username = $(this).val();
+    if (username.length < 3) {
+      $(this).addClass("itrc-edit-user-input-error");
+      $(this)
+        .next(".itrc-edit-user-error")
+        .text("Username must be at least 3 characters long.");
+    } else {
+      $(this).removeClass("itrc-edit-user-input-error");
+      $(this).next(".itrc-edit-user-error").text("");
+    }
+  });
+
+  // Similarly, add validation for other fields as needed
+});

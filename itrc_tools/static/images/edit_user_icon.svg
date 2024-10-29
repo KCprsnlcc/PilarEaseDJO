@@ -1,6 +1,6 @@
 <!-- static/images/edit_user_icon.svg -->
-<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="60" cy="60" r="50" stroke="#4a90e2" stroke-width="5" fill="none">
+<svg class="itrc-edit-user-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <circle class="itrc-edit-user-circle" cx="60" cy="60" r="50" stroke="#4a90e2" stroke-width="5" fill="none">
     <animate attributeName="stroke-dasharray" from="0,314" to="314,0" dur="2s" repeatCount="indefinite" />
   </circle>
   <polygon points="50,40 80,70 70,80 40,50" fill="#4a90e2">
