@@ -29,7 +29,6 @@ $(document).ready(function () {
     currentCheckbox = $checkbox;
     currentUserId = userId;
 
-    // Update modal content based on actionType
     switch (actionType) {
       case "enable_auto_accept":
         $modalTitle.text("Confirm Enable Auto Accept");
@@ -68,14 +67,12 @@ $(document).ready(function () {
         $modalBody.html("<p>Are you sure you want to perform this action?</p>");
     }
 
-    // Show modal
     $modalOverlay.fadeIn(200);
   }
 
   // Function to close modal and optionally revert checkbox
   function closeModal(revert = false) {
     if (revert && currentCheckbox) {
-      // Revert the checkbox state
       currentCheckbox.prop("checked", !currentCheckbox.prop("checked"));
       updateToggleLabel(currentCheckbox);
     }
@@ -100,11 +97,10 @@ $(document).ready(function () {
       $toggleText.removeClass("enabled").addClass("disabled");
     }
   }
-
   // Handle checkbox changes
   $(".pilarease-itrc-toggle-checkbox").on("change", function () {
     const $checkbox = $(this);
-    const action = $checkbox.data("action"); // 'accept' or 'reject'
+    const action = $checkbox.data("action");
     const isChecked = $checkbox.is(":checked");
 
     let actionType = "";
@@ -115,10 +111,7 @@ $(document).ready(function () {
       actionType = isChecked ? "enable_auto_reject" : "disable_auto_reject";
     }
 
-    // Open confirmation modal
     openModal(actionType, $checkbox);
-
-    // Temporarily disable the checkbox to prevent multiple clicks until confirmation
     $checkbox.prop("disabled", true);
   });
 
@@ -146,7 +139,6 @@ $(document).ready(function () {
         rejectUser(currentUserId);
         break;
       default:
-        // Unknown action
         toastr.error("Unknown action.");
     }
 
@@ -154,20 +146,31 @@ $(document).ready(function () {
   });
 
   // Close modal on cancel or close button
-  $cancelModalButton.on("click", function () {
-    closeModal(true); // Revert checkbox state
+  cancelModalButton.on("click", function () {
+    closeModal(true);
   });
   $closeModalButton.on("click", function () {
-    closeModal(true); // Revert checkbox state
+    closeModal(true);
   });
 
   // Close modal when clicking outside the modal content
   $modalOverlay.on("click", function (event) {
     if ($(event.target).is($modalOverlay)) {
-      closeModal(true); // Revert checkbox state
+      closeModal(true);
     }
   });
 
+  // Additional: Handle keyboard accessibility for the modal
+  $modalOverlay.on("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeModal(true);
+    }
+  });
+
+  // Optional: Update labels on page load based on checkbox states
+  $(".pilarease-itrc-toggle-checkbox").each(function () {
+    updateToggleLabel($(this));
+  });
   // Function to enable Auto Accept
   function enableAutoAccept() {
     $.ajax({

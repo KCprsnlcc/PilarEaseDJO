@@ -1368,3 +1368,71 @@ a:hover {
   width: 100%;
   height: 100%;
 }
+/* Modal Overlay */
+.itrc-dashboard-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex; /* Changed to flex for centering */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  z-index: 2000000;
+  transition: opacity var(--transition-speed);
+}
+
+/* Modal Content */
+.itrc-dashboard-modal {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal Header */
+.itrc-dashboard-modal-header {
+  padding: 15px 20px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Close Button */
+.itrc-dashboard-close-modal {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.5em;
+  cursor: pointer;
+  transition: color var(--transition-speed);
+}
+
+.itrc-dashboard-close-modal:hover {
+  color: #f0f0f0;
+}
+
+/* Modal Body */
+.itrc-dashboard-modal-body {
+  padding: 20px;
+  font-size: 1em;
+  color: var(--text-color);
+}
+
+/* Modal Footer */
+.itrc-dashboard-modal-footer {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
