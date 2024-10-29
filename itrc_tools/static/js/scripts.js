@@ -171,29 +171,16 @@ $(document).ready(function () {
   // Function to enable Auto Accept
   function enableAutoAccept() {
     $.ajax({
-      url: window.toggleAutoAcceptUrl, // Ensure this URL is defined in your template
+      url: window.toggleAutoAcceptUrl,
       type: "POST",
       data: {
         enabled: true,
-        csrfmiddlewaretoken: window.csrfToken, // Ensure CSRF token is defined
+        csrfmiddlewaretoken: window.csrfToken,
       },
       success: function (response) {
         if (response.success) {
           toastr.success("Auto Accept All has been enabled.");
-
-          // Update Auto Accept checkbox label
-          const $acceptCheckbox = $("#autoAcceptCheckbox");
-          updateToggleLabel($acceptCheckbox);
-          $acceptCheckbox.prop("disabled", false); // Re-enable checkbox
-
-          // If Auto Reject is enabled, disable it
-          const $rejectCheckbox = $("#autoRejectCheckbox");
-          if ($rejectCheckbox.is(":checked")) {
-            $rejectCheckbox.prop("checked", false);
-            updateToggleLabel($rejectCheckbox);
-            // Disable Auto Reject without confirmation
-            disableAutoReject(false);
-          }
+          location.reload(); // Reload the page upon success
         } else {
           toastr.error("Failed to enable Auto Accept All.");
           closeModal(true); // Revert checkbox state
@@ -238,7 +225,7 @@ $(document).ready(function () {
   // Function to enable Auto Reject
   function enableAutoReject() {
     $.ajax({
-      url: window.toggleAutoRejectUrl, // Ensure this URL is defined in your template
+      url: window.toggleAutoRejectUrl,
       type: "POST",
       data: {
         enabled: true,
@@ -247,20 +234,7 @@ $(document).ready(function () {
       success: function (response) {
         if (response.success) {
           toastr.success("Auto Reject All has been enabled.");
-
-          // Update Auto Reject checkbox label
-          const $rejectCheckbox = $("#autoRejectCheckbox");
-          updateToggleLabel($rejectCheckbox);
-          $rejectCheckbox.prop("disabled", false); // Re-enable checkbox
-
-          // If Auto Accept is enabled, disable it
-          const $acceptCheckbox = $("#autoAcceptCheckbox");
-          if ($acceptCheckbox.is(":checked")) {
-            $acceptCheckbox.prop("checked", false);
-            updateToggleLabel($acceptCheckbox);
-            // Disable Auto Accept without confirmation
-            disableAutoAccept(false);
-          }
+          location.reload(); // Reload the page upon success
         } else {
           toastr.error("Failed to enable Auto Reject All.");
           closeModal(true); // Revert checkbox state
@@ -285,11 +259,7 @@ $(document).ready(function () {
       success: function (response) {
         if (response.success) {
           toastr.success("Auto Reject All has been disabled.");
-
-          // Update Auto Reject checkbox label
-          const $rejectCheckbox = $("#autoRejectCheckbox");
-          updateToggleLabel($rejectCheckbox);
-          $rejectCheckbox.prop("disabled", false); // Re-enable checkbox
+          location.reload(); // Reload the page upon success
         } else {
           toastr.error("Failed to disable Auto Reject All.");
           closeModal(true); // Revert checkbox state
@@ -301,37 +271,29 @@ $(document).ready(function () {
       },
     });
   }
-
   // Helper Functions to Disable the Opposite Setting
-  function disableAutoAccept(revert = true) {
-    const $acceptCheckbox = $("#autoAcceptCheckbox");
-    if ($acceptCheckbox.is(":checked")) {
-      $acceptCheckbox.prop("checked", false);
-      updateToggleLabel($acceptCheckbox);
-      // Send AJAX request to disable Auto Accept
-      $.ajax({
-        url: window.toggleAutoAcceptUrl,
-        type: "POST",
-        data: {
-          enabled: false,
-          csrfmiddlewaretoken: window.csrfToken,
-        },
-        success: function (response) {
-          if (response.success) {
-            toastr.info(
-              "Auto Accept All has been disabled due to enabling Auto Reject All."
-            );
-          } else {
-            toastr.error("Failed to disable Auto Accept All.");
-            if (revert) closeModal(true);
-          }
-        },
-        error: function () {
-          toastr.error("An error occurred while disabling Auto Accept All.");
-          if (revert) closeModal(true);
-        },
-      });
-    }
+  function disableAutoAccept() {
+    $.ajax({
+      url: window.toggleAutoAcceptUrl,
+      type: "POST",
+      data: {
+        enabled: false,
+        csrfmiddlewaretoken: window.csrfToken,
+      },
+      success: function (response) {
+        if (response.success) {
+          toastr.success("Auto Accept All has been disabled.");
+          location.reload(); // Reload the page upon success
+        } else {
+          toastr.error("Failed to disable Auto Accept All.");
+          closeModal(true); // Revert checkbox state
+        }
+      },
+      error: function () {
+        toastr.error("An error occurred while disabling Auto Accept All.");
+        closeModal(true); // Revert checkbox state
+      },
+    });
   }
 
   function disableAutoRejectButton(revert = true) {

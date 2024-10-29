@@ -1049,7 +1049,6 @@ def register_view(request):
         if form.is_valid():
             user = form.save(commit=False)
             message = ''
-
             try:
                 # Verify if the user details are in the EnrollmentMasterlist
                 EnrollmentMasterlist.objects.get(
@@ -1059,25 +1058,36 @@ def register_view(request):
                 )
 
                 if is_auto_accept_enabled():
-                    user.is_active = True  # Allow login
+                    # Auto-accept enabled: set user as verified and active
+                    user.is_active = True
                     user.is_verified = True
-                    user.verification_status = 'verified'  # Verified automatically based on ITRC check
+                    user.verification_status = 'verified'
                     message = 'Your account has been automatically verified based on ITRC records.'
-                else:
-                    user.is_active = False  # Restrict login until verified
+
+                elif is_auto_reject_enabled():
+                    # Auto-reject enabled: set user as inactive and not verified
+                    user.is_active = False
                     user.is_verified = False
-                    user.verification_status = 'pending'  # Pending verification if auto-accept is disabled
+                    user.verification_status = 'rejected'
+                    message = 'The ITRC has automatically rejected your registration. Please contact support if you have questions.'
+
+                else:
+                    # Disable automatic: set user as active but not verified
+                    user.is_active = True
+                    user.is_verified = False
+                    user.verification_status = 'pending'
                     message = 'Your registration is pending manual verification.'
 
             except EnrollmentMasterlist.DoesNotExist:
-                user.is_active = False  # Restrict login until verified
+                # User not found in master list, proceed with pending status
+                user.is_active = True
                 user.is_verified = False
-                user.verification_status = 'pending'  # Pending verification if not found in ITRC
+                user.verification_status = 'pending'
                 message = 'Your registration is pending manual verification.'
 
             user.save()
 
-            # Create a verification request record if manual verification is needed
+            # Create a verification request if manual verification is needed
             if user.verification_status == 'pending':
                 VerificationRequest.objects.create(user=user)
 
@@ -1321,24 +1331,22 @@ def login_view(request):
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)  # Now authenticates inactive users
+            user = authenticate(request, username=username, password=password)
 
             if user is not None:
                 if user.check_password(password):
                     if user.is_active:
                         # User is active, proceed to login
                         login(request, user)
-                        # Audit log and session handling...
+                        handle_session_tracking(request, user)
                         return JsonResponse({'success': True, 'message': 'Login successful!', 'redirect_url': '/'})
                     else:
                         # User account is inactive, check verification status
                         if user.verification_status == 'pending':
-                            # Attempt auto-accept or auto-reject
-                            user = process_pending_user(user)
+                            user = process_pending_user(user)  # Recheck auto-accept/reject conditions
                             if user.is_active:
-                                # User has been auto-accepted, proceed to login
                                 login(request, user)
-                                # Audit log and session handling...
+                                handle_session_tracking(request, user)
                                 return JsonResponse({'success': True, 'message': 'Login successful!', 'redirect_url': '/'})
                             else:
                                 # User remains inactive, return appropriate error
@@ -1353,15 +1361,15 @@ def login_view(request):
                             error_message = get_inactive_account_message()
                             return JsonResponse({'success': False, 'error_message': error_message}, status=400)
                 else:
-                    # Password does not match
                     form.add_error(None, "Invalid login credentials")
             else:
-                # User not found
                 form.add_error(None, "Invalid login credentials")
+        
+        # If form is invalid or other errors occur
         errors = form.errors.get_json_data()
         return JsonResponse({'success': False, 'error_message': errors})
-    else:
-        form = CustomAuthenticationForm()
+
+    form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
 
 def process_pending_user(user):
@@ -1399,7 +1407,7 @@ def process_pending_user(user):
         # User details not found in EnrollmentMasterlist
         if is_auto_reject_enabled():
             # Auto-reject the user
-            user.is_active = False
+            user.is_active = True
             user.is_verified = False
             user.verification_status = 'rejected'
             user.save()

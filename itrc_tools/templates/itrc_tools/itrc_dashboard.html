@@ -127,7 +127,7 @@ ITRC Dashboard
     <div class="pilarease-itrc-stat-card animate__animated animate__fadeInUp">
       <i class="bx bxs-check-shield stat-icon text-auto-accept"></i>
       <div class="stat-info">
-        <h3>{{ auto_accepted_requests }}</h3>
+        <h3>{{ auto_accepted_requests  }}</h3>
         <p>Auto Accepted Requests</p>
       </div>
     </div>
@@ -140,7 +140,7 @@ ITRC Dashboard
     >
       <i class="bx bxs-x-square stat-icon text-auto-reject"></i>
       <div class="stat-info">
-        <h3>{{ auto_rejected_requests }}</h3>
+        <h3>{{ auto_rejected_requests  }}</h3>
         <p>Auto Rejected Requests</p>
       </div>
     </div>
@@ -187,7 +187,28 @@ ITRC Dashboard
       </button>
     </form>
 
-    <!-- Pending Requests Table -->
+    <!-- Pending Verification Requests -->
+  <div class="pilarease-itrc-pending-requests-container">
+    <h2 class="pilarease-itrc-subsection-title">
+      Pending Verification Requests
+    </h2>
+    <p class="pilarease-itrc-section-info">
+      Review and manage users awaiting verification.
+    </p>
+
+    <form method="get" class="pilarease-itrc-search-form">
+      <input
+        type="text"
+        name="search"
+        placeholder="Search users..."
+        class="pilarease-itrc-search-input"
+        value="{{ request.GET.search }}"
+      />
+      <button type="submit" class="pilarease-itrc-search-button">
+        <i class="bx bx-search"></i>
+      </button>
+    </form>
+
     <table class="pilarease-itrc-table table table-striped">
       <thead>
         <tr>
@@ -206,18 +227,12 @@ ITRC Dashboard
           <td>{{ request.user.username }}</td>
           <td>{{ request.submitted_at|date:"Y-m-d H:i" }}</td>
           <td>
-            <button
-              class="accept-user-button btn btn-success btn-sm"
-              data-user-id="{{ request.user.id }}"
+            <a
+              href="{% url 'verify_user' request.user.id %}"
+              class="pilarease-itrc-action-button review-button btn btn-primary"
             >
-              Accept
-            </button>
-            <button
-              class="reject-user-button btn btn-danger btn-sm"
-              data-user-id="{{ request.user.id }}"
-            >
-              Reject
-            </button>
+              Review
+            </a>
           </td>
         </tr>
         {% empty %}
@@ -229,6 +244,7 @@ ITRC Dashboard
         {% endfor %}
       </tbody>
     </table>
+      </div>
 
     <!-- Pagination -->
     <nav aria-label="Page navigation" class="pilarease-itrc-pagination">
@@ -276,6 +292,9 @@ ITRC Dashboard
     </nav>
   </div>
 
+
+</div>
+
   <!-- Confirmation Modal -->
   <div class="pilarease-itrc-modal-overlay" id="confirmationModal">
     <div class="pilarease-itrc-modal animate__animated animate__fadeInDown">
@@ -292,7 +311,4 @@ ITRC Dashboard
       </div>
     </div>
   </div>
-
-</div>
-
 {% endblock %}

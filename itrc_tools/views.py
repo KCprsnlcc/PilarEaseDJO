@@ -114,6 +114,7 @@ class ItrcLoginView(LoginView):
 
         messages.success(self.request, f'User {user.username} has been automatically verified.')
 
+
     def auto_reject_user(self, user):
         user.is_active = False
         user.is_verified = False
@@ -164,6 +165,18 @@ def fetch_pending_requests(request):
             'submitted_at': req.submitted_at.strftime('%Y-%m-%d %H:%M'),
         })
     
+    # Log the action
+    AuditLog.objects.create(
+        user=request.user,
+        action='fetch_pending_requests',
+        details=f"Fetched pending requests with search query: '{search_query}'.",
+        timestamp=timezone.now()
+    )
+    # Notify ITRC staff
+    message = f"{request.user.username} fetched pending verification requests."
+    link = reverse('itrc_dashboard')  # Adjust as needed
+    notify_itrc_staff('info', message, link)
+
     return JsonResponse({'pending_requests': pending_list})
 class ItrcLogoutView(LogoutView):
     """
@@ -209,16 +222,12 @@ def itrc_dashboard(request):
     rejected_requests = VerificationRequest.objects.filter(
         Q(status='rejected') | Q(status='auto_rejected')
     ).count()
-
-    # Additional Statistics
-    auto_accepted_requests = VerificationRequest.objects.filter(status='auto_accepted').count()
-    auto_rejected_requests = VerificationRequest.objects.filter(status='auto_rejected').count()
-    pending_auto_actions = VerificationRequest.objects.filter(status='pending').count()
     
     # Additional Statistics
     auto_accepted_requests = VerificationRequest.objects.filter(status='auto_accepted').count()
     auto_rejected_requests = VerificationRequest.objects.filter(status='auto_rejected').count()
-    pending_auto_actions = VerificationRequest.objects.filter(status='pending_auto').count()
+    pending_auto_actions = VerificationRequest.objects.filter(status='pending').count()  # Set for all pending
+
     
     # Fetch auto settings
     auto_accept_enabled = SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
@@ -237,6 +246,8 @@ def itrc_dashboard(request):
         'elided_page_range': elided_page_range,
         'search_query': search_query,  # To preserve the search query in the template
     }
+
+
     return render(request, 'itrc_tools/itrc_dashboard.html', context)
 
 @user_passes_test(is_itrc_staff)
@@ -303,20 +314,19 @@ def toggle_auto_accept(request):
         # Update the setting
         SystemSetting.set_setting('auto_accept_enabled', 'true' if enabled else 'false')
         if enabled:
-            # Disable auto_reject
+            # Disable auto_reject and process all pending requests for auto-accept
             SystemSetting.set_setting('auto_reject_enabled', 'false')
-
-            # Process all pending requests
             pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
             for verification_request in pending_requests:
                 verification_request.auto_accept()
-                # Log the action
-                AuditLog.objects.create(
-                    user=request.user,
-                    action='verify',
-                    details=f"Auto-approved user {verification_request.user.username}.",
-                    timestamp=timezone.now()
-                )
+        elif not SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true':
+            # When both are disabled
+            pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+            for verification_request in pending_requests:
+                user = verification_request.user
+                user.is_active = True
+                user.is_verified = False
+                user.save()
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
@@ -330,20 +340,19 @@ def toggle_auto_reject(request):
         # Update the setting
         SystemSetting.set_setting('auto_reject_enabled', 'true' if enabled else 'false')
         if enabled:
-            # Disable auto_accept
+            # Disable auto_accept and process all pending requests for auto-reject
             SystemSetting.set_setting('auto_accept_enabled', 'false')
-
-            # Process all pending requests
             pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
             for verification_request in pending_requests:
                 verification_request.auto_reject()
-                # Log the action
-                AuditLog.objects.create(
-                    user=request.user,
-                    action='reject',
-                    details=f"Auto-rejected user {verification_request.user.username}.",
-                    timestamp=timezone.now()
-                )
+        elif not SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true':
+            # When both are disabled
+            pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+            for verification_request in pending_requests:
+                user = verification_request.user
+                user.is_active = True
+                user.is_verified = False
+                user.save()
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
@@ -405,7 +414,7 @@ def manual_reject_user(request, user_id):
 
     try:
         with transaction.atomic():
-            user.is_active = False
+            user.is_active = True
             user.is_verified = False
             user.verification_status = 'rejected'
             user.save()
@@ -493,7 +502,7 @@ def verify_user(request, user_id):
 
             messages.success(request, f'User {user.username} has been verified.')
         elif action == 'reject':
-            user.is_active = False
+            user.is_active = True
             user.is_verified = False
             user.verification_status = 'rejected'
             user.save()
@@ -630,16 +639,12 @@ def fetch_notifications(request):
     page_number = request.GET.get('page', 1)
     notifications = []
 
-    # Set the 7-week limit
     seven_weeks_ago = timezone.now() - timedelta(weeks=7)
-
-    # Fetch notifications created within the last 7 weeks
     user_notifications = Notification_System.objects.filter(
         user=request.user,
         timestamp__gte=seven_weeks_ago
     ).order_by('-timestamp')
 
-    # Paginate notifications (5 per page)
     paginator = Paginator(user_notifications, 5)
 
     try:
@@ -649,7 +654,6 @@ def fetch_notifications(request):
     except EmptyPage:
         page_obj = paginator.page(paginator.num_pages)
 
-    # Convert to list of dicts
     for notification in page_obj.object_list:
         notifications.append({
             'id': notification.id,
@@ -659,6 +663,13 @@ def fetch_notifications(request):
             'timestamp': notification.timestamp.strftime('%Y-%m-%d %H:%M'),
             'is_read': notification.is_read
         })
+
+    AuditLog.objects.create(
+        user=request.user,
+        action='fetch_notifications',
+        details=f"Fetched notifications for user {request.user.username}.",
+        timestamp=timezone.now()
+    )
 
     return JsonResponse({
         'notifications': notifications,
@@ -836,7 +847,6 @@ def deactivate_user(request, user_id):
 
 def contact_support(request):
     if request.method == 'POST':
-        # Handle the support form submission
         subject = request.POST.get('subject', '').strip()
         message = request.POST.get('message', '').strip()
 
@@ -844,11 +854,15 @@ def contact_support(request):
             messages.error(request, 'Both subject and message are required.')
             return redirect('contact_support')
 
-        # Implement your support message handling logic here
-        # For example, send an email to the support team
-        # ...
-
         messages.success(request, 'Your message has been sent to support.')
+
+        AuditLog.objects.create(
+            user=request.user,
+            action='contact_support',
+            details=f"User {request.user.username} contacted support with subject: {subject}",
+            timestamp=timezone.now()
+        )
+
         return redirect('itrc_dashboard')
 
     return render(request, 'itrc_tools/contact_support.html')
@@ -890,6 +904,15 @@ def system_settings(request):
                 key=key,
                 defaults={'value': value}
             )
+            AuditLog.objects.create(
+                user=request.user,
+                action=action,
+                details=f"Updated system setting: '{key}' to '{value}'.",
+                timestamp=timezone.now()
+                )
+            message = f"{request.user.username} updated system setting '{key}'."
+            link = reverse('system_settings')
+            notify_itrc_staff('info', message, link)
             if created:
                 messages.success(request, f'System setting "{key}" has been created.')
                 action = 'create_setting'
@@ -914,6 +937,9 @@ def system_settings(request):
         'settings': settings_qs,
         'form': form,
     }
+    # Log and notify action
+
+
     return render(request, 'itrc_tools/system_settings.html', context)
 
 @user_passes_test(is_itrc_staff)
@@ -1304,6 +1330,16 @@ def audit_logs_view(request):
             logs_page_obj.number, on_each_side=2, on_ends=1
         )
     }
+     # Log and notify action
+    AuditLog.objects.create(
+        user=request.user,
+        action='view_audit_logs',
+        details=f"Viewed audit logs with search query: '{search_query}'.",
+        timestamp=timezone.now()
+    )
+    message = f"{request.user.username} viewed audit logs."
+    link = reverse('audit_logs_view')
+    notify_itrc_staff('info', message, link)
     return render(request, 'itrc_tools/auditlog.html', context)
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -1414,9 +1450,16 @@ def mark_notification_as_read(request, notification_id):
     notification = get_object_or_404(Notification_System, id=notification_id, user=request.user)
     notification.is_read = True
     notification.save()
+
+    AuditLog.objects.create(
+        user=request.user,
+        action='mark_notification_as_read',
+        details=f"Marked notification {notification_id} as read.",
+        timestamp=timezone.now()
+    )
+
     return JsonResponse({'success': True})
 
-# itrc_tools/views.py
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -1424,6 +1467,14 @@ def mark_notification_as_read(request, notification_id):
 def mark_all_notifications_as_read(request):
     user_notifications = request.user.notifications.filter(is_read=False)
     user_notifications.update(is_read=True)
+
+    AuditLog.objects.create(
+        user=request.user,
+        action='mark_all_notifications_as_read',
+        details=f"Marked all notifications as read for user {request.user.username}.",
+        timestamp=timezone.now()
+    )
+
     return JsonResponse({'success': True})
 
 # itrc_tools/views.py
@@ -1439,6 +1490,14 @@ def notify_itrc_staff(notification_type, message, link=None):
         ) for staff in itrc_staff
     ]
     Notification_System.objects.bulk_create(notifications)
+    # Log the notification event
+    AuditLog.objects.create(
+        user=None,
+        action='notify_itrc_staff',
+        details=f"Sent '{notification_type}' notifications to all ITRC staff.",
+        timestamp=timezone.now()
+    )
+
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_http_methods(["GET", "POST"])
