@@ -292,12 +292,13 @@ def auto_accept_all(request):
 def toggle_auto_accept(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        setting = SystemSetting.objects.get(name='auto_accept_enabled')
-        setting.value = 'true' if enabled else 'false'
-        setting.save()
-        return JsonResponse({'success': True})
-    except SystemSetting.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Setting not found.'})
+        setting, created = SystemSetting.objects.get_or_create(key='auto_accept_enabled', defaults={'value': 'true' if enabled else 'false'})
+        if not created:
+            setting.value = 'true' if enabled else 'false'
+            setting.save()
+        return JsonResponse({'success': True, 'message': 'Auto Accept All has been updated.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -305,12 +306,13 @@ def toggle_auto_accept(request):
 def toggle_auto_reject(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        setting = SystemSetting.objects.get(name='auto_reject_enabled')
-        setting.value = 'true' if enabled else 'false'
-        setting.save()
-        return JsonResponse({'success': True})
-    except SystemSetting.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Setting not found.'})
+        setting, created = SystemSetting.objects.get_or_create(key='auto_reject_enabled', defaults={'value': 'true' if enabled else 'false'})
+        if not created:
+            setting.value = 'true' if enabled else 'false'
+            setting.save()
+        return JsonResponse({'success': True, 'message': 'Auto Reject All has been updated.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 @user_passes_test(is_itrc_staff)
 @login_required

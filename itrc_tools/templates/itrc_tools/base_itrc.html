@@ -24,227 +24,6 @@
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
     {% endcompress %}
-
-    <!-- Custom CSS for Toastr Notifications (Optional) -->
-    <style>
-      /* Customize Toastr Notifications */
-      #toast-container > .toast-success {
-        background-color: #28a745;
-      }
-
-      #toast-container > .toast-error {
-        background-color: #dc3545;
-      }
-
-      #toast-container > .toast-warning {
-        background-color: #ffc107;
-      }
-
-      #toast-container > .toast-info {
-        background-color: #17a2b8;
-      }
-
-      /* Style the Logout Button to look like a menu item */
-      .pilarease-itrc-logout-form {
-        display: block; /* Changed from inline to block for full-width */
-      }
-
-      .pilarease-itrc-logout-button {
-        background: none;
-        border: none;
-        color: inherit;
-        cursor: pointer;
-        padding: 0;
-        font: inherit;
-        text-align: left;
-        width: 100%;
-        height: 100%;
-      }
-
-      .pilarease-itrc-logout-button:hover {
-        background-color: #f0f0f0; /* Matches hover for other menu items */
-      }
-
-      /* Ensure the logout button spans the entire menu item area */
-      .pilarease-itrc-menu-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 20px;
-        text-decoration: none;
-        color: #333;
-        width: 100%; /* Ensure full width */
-        box-sizing: border-box; /* Include padding in width */
-      }
-
-      .pilarease-itrc-menu-item i {
-        margin-right: 10px;
-      }
-
-      .pilarease-itrc-menu-item:hover {
-        background-color: #f0f0f0;
-      }
-      #notificationButton {
-        width: 40px; /* Matches the avatar size */
-        height: 40px; /* Matches the avatar size */
-        font-size: 20px;
-        color: #ffffff;
-        background-color: var(--primary-color); /* Blue background */
-        border: 2px solid var(--primary-color); /* Blue border */
-        padding: 0;
-        border-radius: 50%; /* Circular shape */
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        transition: background-color var(--transition-speed),
-          border-color var(--transition-speed);
-      }
-
-      #notificationButton:hover {
-        background-color: #357ab8; /* Slightly darker on hover */
-        border-color: #357ab8; /* Matches background on hover */
-      }
-
-      .notification-dot {
-        width: 10px;
-        height: 10px;
-        z-index: 10000;
-        background-color: #e74c3c;
-        border-radius: 50%;
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        display: none;
-      }
-
-      .notification-dot.blink {
-        animation: blinkDot 1s infinite;
-      }
-
-      /* Blinking red animation for the dot */
-      @keyframes blinkDot {
-        0% {
-          opacity: 1;
-          background-color: #e74c3c;
-        }
-        50% {
-          opacity: 0.5;
-          background-color: #c0392b;
-        }
-        100% {
-          opacity: 1;
-          background-color: #e74c3c;
-        }
-      }
-
-      /* Notification List Styles */
-      #notificationList {
-        position: absolute;
-        top: 50px;
-        right: 20px;
-        background: #fff;
-        color: #000;
-        width: 350px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        display: none;
-        opacity: 0;
-        max-height: 400px;
-        overflow-y: auto;
-      }
-
-      #notificationList.active {
-        display: block;
-        animation: popDownNotification 0.3s ease-out forwards;
-      }
-
-      @keyframes popDownNotification {
-        from {
-          transform: translateY(-20px) scale(0.8);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0) scale(1);
-          opacity: 1;
-        }
-      }
-
-      .notification-header {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px;
-        font-size: 14px;
-        font-weight: bold;
-        border-bottom: 1px solid #ccc;
-      }
-
-      .notification-header .see-all a {
-        color: #4a90e2;
-        text-decoration: none;
-      }
-
-      .notification-header .see-all a:hover {
-        text-decoration: underline;
-      }
-
-      .notification-item {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        background-color: #fff;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-
-      .notification-item:hover {
-        background-color: #f9f9f9;
-      }
-
-      .notification-item.unread {
-        background-color: #fcfcfc;
-      }
-
-      .notification-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: #f0f0f0;
-        margin-right: 10px;
-        flex-shrink: 0;
-      }
-
-      .notification-content {
-        flex-grow: 1;
-        overflow: hidden;
-      }
-
-      .notification-content .message {
-        font-size: 13px;
-        color: #0f2326;
-      }
-
-      .notification-content .timestamp {
-        font-size: 12px;
-        color: #9095a0;
-        margin-top: 3px;
-      }
-
-      .notification-content .timestamp-green {
-        color: #4a90e2;
-      }
-
-      /* Loader Styles */
-      .loader {
-        text-align: center;
-        padding: 20px;
-        font-size: 14px;
-        color: #555;
-      }
-    </style>
   </head>
   <body>
     <!-- Sidebar -->
@@ -384,13 +163,20 @@
         {% endblock %}
       </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Include jQuery (required for Toastr and notifications) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <!-- Include Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <!-- Include Custom JS -->
     <script src="{% static 'js/scripts.js' %}"></script>
+    <script>
+      window.csrfToken = "{{ csrf_token }}";
+      window.toggleAutoAcceptUrl = "{% url 'toggle_auto_accept' %}";
+      window.toggleAutoRejectUrl = "{% url 'toggle_auto_reject' %}";
+      window.manualAcceptUserUrl = "{% url 'manual_accept_user' 0 %}"; // Replace 'manual_accept_user' with your URL name
+      window.manualRejectUserUrl = "{% url 'manual_reject_user' 0 %}"; // Replace 'manual_reject_user' with your URL name
+    </script>
 
     <!-- Toastr Notifications -->
     <script>

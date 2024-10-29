@@ -55,30 +55,5 @@
         </form>
       </div>
     </div>
-    <!-- Include jQuery (required for Toastr) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <!-- Include Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <!-- Toastr Notifications -->
-    <script>
-      $(document).ready(function () {
-          {% if messages %}
-              {% for message in messages %}
-                  toastr.options = {
-                      closeButton: true,
-                      progressBar: true,
-                      positionClass: "toast-top-right",
-                      timeOut: "5000",
-                      extendedTimeOut: "1000",
-                      showEasing: "swing",
-                      hideEasing: "linear",
-                      showMethod: "fadeIn",
-                      hideMethod: "fadeOut",
-                  };
-                  toastr["{{ message.tags }}"]("{{ message|escapejs }}");
-              {% endfor %}
-          {% endif %}
-      });
-    </script>
   </body>
 </html>

@@ -14,6 +14,9 @@
   --transition-speed: 0.3s;
   --font-family: "Roboto", sans-serif;
   --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --success-color: #28a745; /* Green */
+  --disabled-color: #6c757d; /* Gray */
+  --danger-color: #dc3545; /* Red */
 }
 /* Custom Text Colors for Auto Verification Settings */
 .text-auto-accept {
@@ -711,9 +714,10 @@ body {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   display: none; /* Hidden by default */
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  z-index: 2000000;
+  transition: opacity var(--transition-speed);
 }
 
 /* Modal Content */
@@ -724,7 +728,27 @@ body {
   max-width: 500px;
   box-shadow: var(--box-shadow);
   overflow: hidden;
-  animation: fadeIn 0.3s;
+  animation: slideDown 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+/* Animation Keyframes */
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  .pilarease-itrc-modal {
+    width: 95%;
+  }
 }
 
 /* Modal Header */
@@ -739,8 +763,16 @@ body {
 
 /* Close Button */
 .pilarease-itrc-close-modal {
+  background: none;
+  border: none;
+  color: #ffffff;
   font-size: 1.5em;
   cursor: pointer;
+  transition: color var(--transition-speed);
+}
+
+.pilarease-itrc-close-modal:hover {
+  color: #f0f0f0;
 }
 
 /* Modal Body */
@@ -757,7 +789,76 @@ body {
   justify-content: flex-end;
   gap: 10px;
   border-top: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
 }
+
+/* Modal Buttons */
+.pilarease-itrc-modal-footer .btn {
+  min-width: 100px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border-radius: 4px;
+  transition: background-color var(--transition-speed),
+    transform var(--transition-speed);
+}
+
+/* Primary Button */
+.pilarease-itrc-modal-footer .btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.pilarease-itrc-modal-footer .btn-primary:hover {
+  background-color: #357ab8;
+  border-color: #357ab8;
+  transform: translateY(-2px);
+}
+
+/* Secondary Button */
+.pilarease-itrc-modal-footer .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #ffffff;
+}
+
+.pilarease-itrc-modal-footer .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+  transform: translateY(-2px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  .pilarease-itrc-modal-overlay {
+    padding: 10px;
+  }
+
+  .pilarease-itrc-modal {
+    width: 95%;
+  }
+
+  .pilarease-itrc-modal-header,
+  .pilarease-itrc-modal-body,
+  .pilarease-itrc-modal-footer {
+    padding: 10px 15px;
+  }
+
+  .pilarease-itrc-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pilarease-itrc-modal-footer .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .pilarease-itrc-modal-footer .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
 /* Avatar Styles */
 .pilarease-itrc-avatar {
   width: 40px;
@@ -786,5 +887,284 @@ body {
   }
   to {
     opacity: 1;
+  }
+}
+/* Customize Toastr Notifications */
+#toast-container > .toast-success {
+  background-color: #28a745;
+}
+
+#toast-container > .toast-error {
+  background-color: #dc3545;
+}
+
+#toast-container > .toast-warning {
+  background-color: #ffc107;
+}
+
+#toast-container > .toast-info {
+  background-color: #17a2b8;
+}
+
+/* Style the Logout Button to look like a menu item */
+.pilarease-itrc-logout-form {
+  display: block; /* Changed from inline to block for full-width */
+}
+
+.pilarease-itrc-logout-button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  height: 100%;
+}
+
+.pilarease-itrc-logout-button:hover {
+  background-color: #f0f0f0; /* Matches hover for other menu items */
+}
+
+/* Ensure the logout button spans the entire menu item area */
+.pilarease-itrc-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #333;
+  width: 100%; /* Ensure full width */
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.pilarease-itrc-menu-item i {
+  margin-right: 10px;
+}
+
+.pilarease-itrc-menu-item:hover {
+  background-color: #f0f0f0;
+}
+#notificationButton {
+  width: 40px; /* Matches the avatar size */
+  height: 40px; /* Matches the avatar size */
+  font-size: 20px;
+  color: #ffffff;
+  background-color: var(--primary-color); /* Blue background */
+  border: 2px solid var(--primary-color); /* Blue border */
+  padding: 0;
+  border-radius: 50%; /* Circular shape */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color var(--transition-speed),
+    border-color var(--transition-speed);
+}
+
+#notificationButton:hover {
+  background-color: #357ab8; /* Slightly darker on hover */
+  border-color: #357ab8; /* Matches background on hover */
+}
+
+.notification-dot {
+  width: 10px;
+  height: 10px;
+  z-index: 10000;
+  background-color: #e74c3c;
+  border-radius: 50%;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+}
+
+.notification-dot.blink {
+  animation: blinkDot 1s infinite;
+}
+
+/* Blinking red animation for the dot */
+@keyframes blinkDot {
+  0% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+  50% {
+    opacity: 0.5;
+    background-color: #c0392b;
+  }
+  100% {
+    opacity: 1;
+    background-color: #e74c3c;
+  }
+}
+
+/* Notification List Styles */
+#notificationList {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: #fff;
+  color: #000;
+  width: 350px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: none;
+  opacity: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+#notificationList.active {
+  display: block;
+  animation: popDownNotification 0.3s ease-out forwards;
+}
+
+@keyframes popDownNotification {
+  from {
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+}
+
+.notification-header .see-all a {
+  color: #4a90e2;
+  text-decoration: none;
+}
+
+.notification-header .see-all a:hover {
+  text-decoration: underline;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #fff;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f9f9f9;
+}
+
+.notification-item.unread {
+  background-color: #fcfcfc;
+}
+
+.notification-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.notification-content .message {
+  font-size: 13px;
+  color: #0f2326;
+}
+
+.notification-content .timestamp {
+  font-size: 12px;
+  color: #9095a0;
+  margin-top: 3px;
+}
+
+.notification-content .timestamp-green {
+  color: #4a90e2;
+}
+
+/* Loader Styles */
+.loader {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: #555;
+}
+/* Custom Toggle Button Styles */
+.pilarease-itrc-toggle-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95em;
+  margin-bottom: 10px;
+  transition: background-color var(--transition-speed),
+    transform var(--transition-speed), color var(--transition-speed);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+/* Enabled States */
+.pilarease-itrc-toggle-button.enabled {
+  background-color: var(--success-color); /* Green for accept */
+  color: #ffffff;
+}
+.pilarease-itrc-toggle-button.reject-button.enabled {
+  background-color: var(--danger-color); /* Red for reject */
+  color: #ffffff;
+}
+
+/* Disabled States */
+.pilarease-itrc-toggle-button.disabled {
+  background-color: var(--disabled-color); /* Gray */
+  color: #ffffff;
+}
+
+/* Hover Effects for Enabled Buttons */
+.pilarease-itrc-toggle-button.enabled:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* No Hover Effects for Disabled Buttons */
+.pilarease-itrc-toggle-button.disabled:hover {
+  transform: none;
+  opacity: 1;
+}
+
+/* Icon Styles within Buttons */
+.pilarease-itrc-toggle-button i {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-itrc-toggle-button {
+    min-height: 35px;
+    font-size: 0.9em;
+  }
+
+  .pilarease-itrc-toggle-button i {
+    font-size: 1em;
+    margin-right: 6px;
   }
 }
