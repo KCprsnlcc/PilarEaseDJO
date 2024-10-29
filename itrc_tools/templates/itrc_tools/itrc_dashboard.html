@@ -52,7 +52,7 @@ ITRC Dashboard
     </div>
   </div>
 
-  <!-- Auto Verification Settings -->
+   <!-- Auto Verification Settings -->
   <div class="pilarease-itrc-settings-container my-4">
     <div class="card">
       <div class="card-header bg-primary text-white">
@@ -62,47 +62,59 @@ ITRC Dashboard
         <p class="pilarease-itrc-section-info">
           Enable or disable automatic acceptance or rejection of user verification requests.
         </p>
-        <div class="row g-4"> 
+        <div class="row g-4">
           <!-- Auto Accept All -->
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-4">
             <div class="d-flex align-items-center">
-              
-              <div class="w-100">
-                <button
-                  class="pilarease-itrc-toggle-button accept-button {% if auto_accept_enabled == 'true' %}enabled{% else %}disabled{% endif %}"
-                  id="autoAcceptButton"
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input pilarease-itrc-toggle-checkbox"
+                  type="checkbox"
+                  id="autoAcceptCheckbox"
                   data-action="accept"
-                  data-enabled="{{ auto_accept_enabled|yesno:'true,false' }}"
-                >
-                  {% if auto_accept_enabled == 'true' %}
-                     Enabled
-                  {% else %}
-                    Disabled
-                  {% endif %}
-                </button>
-                <small class="text-muted"><i class="bx bxs-check-circle fs-3 me-3 text-auto-accept"></i>Automatically accept all pending verification requests.</small>
+                  {% if auto_accept_enabled == 'true' %}checked{% endif %}
+                />
+                <label class="form-check-label pilarease-itrc-toggle-label" for="autoAcceptCheckbox">
+                  <span class="toggle-text {% if auto_accept_enabled == 'true' %}enabled{% else %}disabled{% endif %}">
+                    {% if auto_accept_enabled == 'true' %}
+                      Enabled
+                    {% else %}
+                      Disabled
+                    {% endif %}
+                  </span>
+                </label>
+              </div>
+              <div class="pilarease-itrc-info ms-3">
+                <i class="bx bxs-check-circle fs-3 text-auto-accept"></i>
+                <span>Automatically accept all pending verification requests.</span>
               </div>
             </div>
           </div>
 
           <!-- Auto Reject All -->
-          <div class="col-md-6 mb-3">
+          <div class="col-md-6 mb-4">
             <div class="d-flex align-items-center">
-              
-              <div class="w-100">
-                <button
-                  class="pilarease-itrc-toggle-button reject-button {% if auto_reject_enabled == 'true' %}enabled{% else %}disabled{% endif %}"
-                  id="autoRejectButton"
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input pilarease-itrc-toggle-checkbox"
+                  type="checkbox"
+                  id="autoRejectCheckbox"
                   data-action="reject"
-                  data-enabled="{{ auto_reject_enabled|yesno:'true,false' }}"
-                >
-                  {% if auto_reject_enabled == 'true' %}
-                     Enabled
-                  {% else %}
-                    Disabled
-                  {% endif %}
-                </button>
-                <small class="text-muted"><i class="bx bxs-x-circle fs-3 me-3 text-auto-reject"></i>Automatically reject all pending verification requests.</small>
+                  {% if auto_reject_enabled == 'true' %}checked{% endif %}
+                />
+                <label class="form-check-label pilarease-itrc-toggle-label" for="autoRejectCheckbox">
+                  <span class="toggle-text {% if auto_reject_enabled == 'true' %}enabled{% else %}disabled{% endif %}">
+                    {% if auto_reject_enabled == 'true' %}
+                      Enabled
+                    {% else %}
+                      Disabled
+                    {% endif %}
+                  </span>
+                </label>
+              </div>
+              <div class="pilarease-itrc-info ms-3">
+                <i class="bx bxs-x-circle fs-3 text-auto-reject"></i>
+                <span>Automatically reject all pending verification requests.</span>
               </div>
             </div>
           </div>

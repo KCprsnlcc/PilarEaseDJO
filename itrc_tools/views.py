@@ -292,13 +292,16 @@ def auto_accept_all(request):
 def toggle_auto_accept(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        setting, created = SystemSetting.objects.get_or_create(key='auto_accept_enabled', defaults={'value': 'true' if enabled else 'false'})
-        if not created:
-            setting.value = 'true' if enabled else 'false'
-            setting.save()
-        return JsonResponse({'success': True, 'message': 'Auto Accept All has been updated.'})
+        settings = SystemSetting.objects.get(id=1)  # Assuming a singleton settings object
+        settings.auto_accept = enabled
+        if enabled:
+            settings.auto_reject = False  # Disable Auto Reject if enabling Auto Accept
+        settings.save()
+        return JsonResponse({'success': True})
+    except SystemSetting.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Settings not found.'})
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        return JsonResponse({'success': False, 'message': str(e)})
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -306,13 +309,16 @@ def toggle_auto_accept(request):
 def toggle_auto_reject(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        setting, created = SystemSetting.objects.get_or_create(key='auto_reject_enabled', defaults={'value': 'true' if enabled else 'false'})
-        if not created:
-            setting.value = 'true' if enabled else 'false'
-            setting.save()
-        return JsonResponse({'success': True, 'message': 'Auto Reject All has been updated.'})
+        settings = SystemSetting.objects.get(id=1)  # Assuming a singleton settings object
+        settings.auto_reject = enabled
+        if enabled:
+            settings.auto_accept = False  # Disable Auto Accept if enabling Auto Reject
+        settings.save()
+        return JsonResponse({'success': True})
+    except SystemSetting.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Settings not found.'})
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+        return JsonResponse({'success': False, 'message': str(e)})
 
 @user_passes_test(is_itrc_staff)
 @login_required

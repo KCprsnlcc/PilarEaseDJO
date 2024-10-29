@@ -1,1 +1,3 @@
 itrc_tools/templates/itrc_tools/itrc_dashboard.html
+itrc_tools/templates/itrc_tools/edit_user.html
+itrc_tools/templates/itrc_tools/add_user.html

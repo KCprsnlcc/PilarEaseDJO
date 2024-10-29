@@ -35,6 +35,15 @@ body {
   margin: 0;
 }
 
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent-color);
+}
+
 /* Sidebar Styles */
 .pilarease-itrc-sidebar {
   width: var(--sidebar-width);
@@ -125,7 +134,7 @@ body {
 
 .pilarease-itrc-header {
   height: var(--header-height);
-  background-color: #ffffff;
+  background-color: var(--card-background);
   border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
@@ -137,10 +146,68 @@ body {
   right: 0;
   z-index: 999;
 }
-
 .pilarease-itrc-header-left h2 {
   font-size: 1.5em;
   color: var(--primary-color);
+  animation: fadeInDown 0.5s;
+}
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 60px;
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-15px);
+  }
+  60% {
+    transform: translateY(-7px);
+  }
 }
 
 .pilarease-itrc-header-right {
@@ -186,6 +253,7 @@ body {
   padding: 30px 25px;
   min-height: calc(100vh - var(--header-height));
   background-color: var(--background-color);
+  animation: fadeIn 0.5s;
 }
 
 .pilarease-itrc-section-title {
@@ -203,6 +271,7 @@ body {
   background-color: var(--primary-color);
   left: 0;
   bottom: -10px;
+  animation: slideInLeft 0.5s;
 }
 
 .pilarease-itrc-subsection-title {
@@ -382,6 +451,7 @@ body {
 
 .pilarease-itrc-action-button.upload-button:hover {
   background-color: #e89e1c;
+  color: #fff;
 }
 
 .pilarease-itrc-action-button.login-button {
@@ -872,6 +942,10 @@ body {
   margin-bottom: 15px;
 }
 
+.pilarease-itrc-add-user:hover {
+  color: #fff;
+}
+
 .pilarease-itrc-add-user .pilarease-itrc-action-button.upload-button {
   background-color: var(--accent-color);
 }
@@ -1107,64 +1181,190 @@ body {
   color: #555;
 }
 /* Custom Toggle Button Styles */
-.pilarease-itrc-toggle-button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 4px;
+.pilarease-itrc-toggle-checkbox {
+  width: 50px;
+  height: 25px;
+  margin-right: 10px;
   cursor: pointer;
-  font-size: 0.95em;
-  margin-bottom: 10px;
-  transition: background-color var(--transition-speed),
-    transform var(--transition-speed), color var(--transition-speed);
-  display: inline-flex;
+  appearance: none;
+  background-color: var(--disabled-color);
+  outline: none;
+  border-radius: 15px;
+  position: relative;
+  transition: background-color var(--transition-speed);
+}
+
+.pilarease-itrc-toggle-checkbox::before {
+  content: "";
+  position: absolute;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  background-color: #ffffff;
+  transition: transform var(--transition-speed);
+}
+
+.pilarease-itrc-toggle-checkbox:checked {
+  background-color: var(--success-color); /* Green for Auto Accept */
+}
+
+.pilarease-itrc-toggle-checkbox[data-action="reject"]:checked {
+  background-color: var(--danger-color); /* Red for Auto Reject */
+}
+
+.pilarease-itrc-toggle-checkbox:checked::before {
+  transform: translateX(25px);
+}
+
+.pilarease-itrc-toggle-label .toggle-text.enabled {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.pilarease-itrc-toggle-label .toggle-text.disabled {
+  color: var(--disabled-color);
+  font-weight: bold;
+}
+
+/* Specific styles for Auto Reject Checkbox Text */
+#autoRejectCheckbox.pilarease-itrc-toggle-checkbox:checked
+  + .pilarease-itrc-toggle-label
+  .toggle-text {
+  color: var(--danger-color);
+}
+
+/* Info Text and Icon Positioning */
+.pilarease-itrc-info {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 40px;
 }
 
-/* Enabled States */
-.pilarease-itrc-toggle-button.enabled {
-  background-color: var(--success-color); /* Green for accept */
-  color: #ffffff;
-}
-.pilarease-itrc-toggle-button.reject-button.enabled {
-  background-color: var(--danger-color); /* Red for reject */
-  color: #ffffff;
-}
-
-/* Disabled States */
-.pilarease-itrc-toggle-button.disabled {
-  background-color: var(--disabled-color); /* Gray */
-  color: #ffffff;
-}
-
-/* Hover Effects for Enabled Buttons */
-.pilarease-itrc-toggle-button.enabled:hover {
-  transform: translateY(-2px);
-  opacity: 0.9;
-}
-
-/* No Hover Effects for Disabled Buttons */
-.pilarease-itrc-toggle-button.disabled:hover {
-  transform: none;
-  opacity: 1;
-}
-
-/* Icon Styles within Buttons */
-.pilarease-itrc-toggle-button i {
+.pilarease-itrc-info i {
   margin-right: 8px;
   font-size: 1.2em;
 }
 
-/* Responsive Adjustments */
+.pilarease-itrc-info span {
+  font-size: 1em;
+  color: var(--text-color);
+}
+
+/* Adjust spacing between checkbox and info */
+.pilarease-itrc-settings-container .form-check {
+  display: flex;
+  align-items: center;
+}
+
+.pilarease-itrc-settings-container .pilarease-itrc-toggle-label {
+  margin-left: 10px;
+}
+
+.pilarease-itrc-settings-container .pilarease-itrc-toggle-label .toggle-text {
+  font-size: 1em;
+}
+
+/* Responsive Adjustments for Info Text */
 @media (max-width: 768px) {
-  .pilarease-itrc-toggle-button {
-    min-height: 35px;
-    font-size: 0.9em;
+  .pilarease-itrc-toggle-checkbox {
+    width: 45px;
+    height: 22px;
   }
 
-  .pilarease-itrc-toggle-button i {
-    font-size: 1em;
-    margin-right: 6px;
+  .pilarease-itrc-toggle-checkbox::before {
+    width: 18px;
+    height: 18px;
   }
+
+  .pilarease-itrc-info i {
+    font-size: 1em;
+  }
+
+  .pilarease-itrc-info span {
+    font-size: 0.95em;
+  }
+}
+
+/* Optional: Smooth transition for toggle knob */
+.pilarease-itrc-toggle-checkbox::before {
+  transition: transform var(--transition-speed) ease-in-out,
+    background-color var(--transition-speed) ease-in-out;
+}
+
+/* Ensure labels are clickable */
+.pilarease-itrc-toggle-label {
+  cursor: pointer;
+}
+/* Card Style */
+.pilarease-itrc-card {
+  background-color: var(--card-background);
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s;
+}
+
+/* Form Row for two-column layout */
+.pilarease-itrc-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.pilarease-itrc-form-row .pilarease-itrc-form-group {
+  flex: 1 1 45%;
+}
+
+/* Input with icon */
+.pilarease-itrc-input-icon {
+  position: relative;
+}
+.pilarease-itrc-input-icon i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+}
+
+.pilarease-itrc-input-icon input,
+.pilarease-itrc-input-icon select {
+  padding-left: 35px;
+}
+/* Form Actions */
+.pilarease-itrc-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pilarease-itrc-form-actions .pilarease-itrc-action-button {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pilarease-itrc-form-actions .pilarease-itrc-action-button i {
+  margin-right: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .pilarease-itrc-form-row {
+    flex-direction: column;
+  }
+}
+/* Animated SVG Icons */
+.animated-icon {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 20px;
+  animation: bounce 2s infinite;
+}
+
+.animated-icon svg {
+  width: 100%;
+  height: 100%;
 }

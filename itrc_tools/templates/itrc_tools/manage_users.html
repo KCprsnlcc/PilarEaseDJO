@@ -10,13 +10,13 @@ Manage Users {% endblock %} {% block itrc_content %}
 
   <!-- Add User Button -->
   <div class="pilarease-itrc-add-user">
-    <button
-      type="button"
+    <a
+      href="{% url 'add_user' %}"
       class="pilarease-itrc-action-button upload-button"
       id="addUserButton"
     >
       <i class="bx bx-user-plus"></i> Add User
-    </button>
+    </a>
   </div>
 
   <!-- Search Form -->
@@ -139,49 +139,6 @@ Manage Users {% endblock %} {% block itrc_content %}
               <i class="bx bxs-edit"></i>
             </button>
 
-            <select
-              class="pilarease-itrc-role-dropdown"
-              data-user-id="{{ user.id }}"
-            >
-              <option
-                value="user"
-                {%
-                if
-                not
-                user.is_itrc_staff
-                and
-                not
-                user.is_counselor
-                %}selected{%
-                endif
-                %}
-              >
-                User
-              </option>
-              <option
-                value="counselor"
-                {%
-                if
-                user.is_counselor
-                %}selected{%
-                endif
-                %}
-              >
-                Counselor
-              </option>
-              <option
-                value="itrc_staff"
-                {%
-                if
-                user.is_itrc_staff
-                %}selected{%
-                endif
-                %}
-              >
-                ITRC Staff
-              </option>
-            </select>
-
             {% if user.verification_status != 'verified' %}
             <button
               type="button"
@@ -261,159 +218,6 @@ Manage Users {% endblock %} {% block itrc_content %}
       {% endif %}
     </ul>
   </nav>
-</div>
-
-<!-- Add User Modal -->
-<div
-  class="pilarease-itrc-modal-overlay"
-  id="addUserModalOverlay"
-  style="display: none"
->
-  <div class="pilarease-itrc-modal">
-    <div class="pilarease-itrc-modal-header">
-      <h2>Add New User</h2>
-      <span class="pilarease-itrc-close-modal" id="closeAddUserModal"
-        >&times;</span
-      >
-    </div>
-    <div class="pilarease-itrc-modal-body">
-      <form
-        id="addUserForm"
-        method="post"
-        enctype="multipart/form-data"
-        action="{% url 'add_user' %}"
-      >
-        {% csrf_token %}
-        <div class="pilarease-itrc-form-group">
-          <label for="username">Username</label>
-          <input
-            type="text"
-            name="username"
-            id="username"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="email">Email</label>
-          <input
-            type="email"
-            name="email"
-            id="email"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="student_id">Student ID</label>
-          <input
-            type="text"
-            name="student_id"
-            id="student_id"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="full_name">Full Name</label>
-          <input
-            type="text"
-            name="full_name"
-            id="full_name"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="academic_year_level">Academic Year Level</label>
-          <input
-            type="text"
-            name="academic_year_level"
-            id="academic_year_level"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="contact_number">Contact Number</label>
-          <input
-            type="text"
-            name="contact_number"
-            id="contact_number"
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="is_counselor">Is Counselor</label>
-          <select
-            name="is_counselor"
-            id="is_counselor"
-            class="pilarease-itrc-role-dropdown"
-          >
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="is_itrc_staff">Is ITRC Staff</label>
-          <select
-            name="is_itrc_staff"
-            id="is_itrc_staff"
-            class="pilarease-itrc-role-dropdown"
-          >
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            name="password"
-            id="password"
-            required
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="avatar">Avatar</label>
-          <input
-            type="file"
-            name="avatar"
-            id="avatar"
-            accept="image/*"
-            class="pilarease-itrc-form-input"
-          />
-        </div>
-        <div class="pilarease-itrc-form-group">
-          <label for="is_active">Is Active</label>
-          <select
-            name="is_active"
-            id="is_active"
-            class="pilarease-itrc-role-dropdown"
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
-        </div>
-        <div class="pilarease-itrc-modal-footer">
-          <button
-            type="button"
-            class="pilarease-itrc-action-button reject-button"
-            id="cancelAddUser"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="pilarease-itrc-action-button approve-button"
-          >
-            Add User
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>
 
 <!-- Confirmation Modal for Bulk Actions -->

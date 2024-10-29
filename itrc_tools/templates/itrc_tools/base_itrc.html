@@ -169,7 +169,13 @@
     <!-- Include Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <!-- Include Custom JS -->
+
+    {% compress js %}
     <script src="{% static 'js/scripts.js' %}"></script>
+    {% endcompress %}
+    <!-- In your base_itrc.html head section -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+
     <script>
       window.csrfToken = "{{ csrf_token }}";
       window.toggleAutoAcceptUrl = "{% url 'toggle_auto_accept' %}";

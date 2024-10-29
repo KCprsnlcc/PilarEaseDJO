@@ -1,5 +1,7 @@
 // static/js/autoManage.js
 
+// static/js/autoManage.js
+
 $(document).ready(function () {
   // Initialize Bootstrap tooltips (if any)
   var tooltipTriggerList = [].slice.call(
@@ -18,11 +20,13 @@ $(document).ready(function () {
   const $closeModalButton = $("#closeModal");
 
   let currentActionType = null; // e.g., 'enable_auto_accept', 'disable_auto_reject', 'accept_user', 'reject_user'
+  let currentCheckbox = null; // The checkbox that triggered the action
   let currentUserId = null; // Relevant for user actions
 
   // Function to open modal with dynamic content
-  function openModal(actionType, userId = null) {
+  function openModal(actionType, $checkbox = null, userId = null) {
     currentActionType = actionType;
+    currentCheckbox = $checkbox;
     currentUserId = userId;
 
     // Update modal content based on actionType
@@ -68,41 +72,57 @@ $(document).ready(function () {
     $modalOverlay.fadeIn(200);
   }
 
-  // Function to close modal
-  function closeModal() {
+  // Function to close modal and optionally revert checkbox
+  function closeModal(revert = false) {
+    if (revert && currentCheckbox) {
+      // Revert the checkbox state
+      currentCheckbox.prop("checked", !currentCheckbox.prop("checked"));
+      updateToggleLabel(currentCheckbox);
+    }
     $modalOverlay.fadeOut(200);
     currentActionType = null;
+    currentCheckbox = null;
     currentUserId = null;
   }
 
-  // Attach a single event listener to toggle buttons
-  $(".pilarease-itrc-toggle-button").on("click", function () {
-    if (isProcessingToggle) return; // Prevent multiple simultaneous actions
-    isProcessingToggle = true;
+  // Function to update the toggle label based on checkbox state
+  function updateToggleLabel($checkbox) {
+    const isChecked = $checkbox.is(":checked");
+    const $toggleText = $checkbox
+      .next(".pilarease-itrc-toggle-label")
+      .find(".toggle-text");
 
-    const $button = $(this);
-    const action = $button.data("action"); // 'accept' or 'reject'
-    const isEnabled = $button.attr("data-enabled") === "true";
-
-    if (!isEnabled) {
-      // Attempting to enable the setting - show confirmation modal
-      const actionType =
-        action === "accept" ? "enable_auto_accept" : "enable_auto_reject";
-      openModal(actionType);
+    if (isChecked) {
+      $toggleText.text("Enabled");
+      $toggleText.removeClass("disabled").addClass("enabled");
     } else {
-      // Attempting to disable the setting - show confirmation modal
-      const actionType =
-        action === "accept" ? "disable_auto_accept" : "disable_auto_reject";
-      openModal(actionType);
+      $toggleText.text("Disabled");
+      $toggleText.removeClass("enabled").addClass("disabled");
+    }
+  }
+
+  // Handle checkbox changes
+  $(".pilarease-itrc-toggle-checkbox").on("change", function () {
+    const $checkbox = $(this);
+    const action = $checkbox.data("action"); // 'accept' or 'reject'
+    const isChecked = $checkbox.is(":checked");
+
+    let actionType = "";
+
+    if (action === "accept") {
+      actionType = isChecked ? "enable_auto_accept" : "disable_auto_accept";
+    } else if (action === "reject") {
+      actionType = isChecked ? "enable_auto_reject" : "disable_auto_reject";
     }
 
-    // Reset the processing flag after a short delay to prevent rapid clicks
-    setTimeout(() => {
-      isProcessingToggle = false;
-    }, 500); // Adjust the delay as needed
+    // Open confirmation modal
+    openModal(actionType, $checkbox);
+
+    // Temporarily disable the checkbox to prevent multiple clicks until confirmation
+    $checkbox.prop("disabled", true);
   });
 
-  // Attach event listeners to action buttons
+  // Handle confirmation modal buttons
   $confirmModalButton.on("click", function () {
     if (!currentActionType) return;
 
@@ -110,11 +130,11 @@ $(document).ready(function () {
       case "enable_auto_accept":
         enableAutoAccept();
         break;
-      case "enable_auto_reject":
-        enableAutoReject();
-        break;
       case "disable_auto_accept":
         disableAutoAccept();
+        break;
+      case "enable_auto_reject":
+        enableAutoReject();
         break;
       case "disable_auto_reject":
         disableAutoReject();
@@ -134,13 +154,17 @@ $(document).ready(function () {
   });
 
   // Close modal on cancel or close button
-  $cancelModalButton.on("click", closeModal);
-  $closeModalButton.on("click", closeModal);
+  $cancelModalButton.on("click", function () {
+    closeModal(true); // Revert checkbox state
+  });
+  $closeModalButton.on("click", function () {
+    closeModal(true); // Revert checkbox state
+  });
 
   // Close modal when clicking outside the modal content
   $modalOverlay.on("click", function (event) {
     if ($(event.target).is($modalOverlay)) {
-      closeModal();
+      closeModal(true); // Revert checkbox state
     }
   });
 
@@ -157,25 +181,27 @@ $(document).ready(function () {
         if (response.success) {
           toastr.success("Auto Accept All has been enabled.");
 
-          // Update Auto Accept button to Enabled state
-          const $acceptButton = $("#autoAcceptButton");
-          $acceptButton
-            .removeClass("disabled")
-            .addClass("enabled")
-            .html("Enabled")
-            .attr("data-enabled", "true");
+          // Update Auto Accept checkbox label
+          const $acceptCheckbox = $("#autoAcceptCheckbox");
+          updateToggleLabel($acceptCheckbox);
+          $acceptCheckbox.prop("disabled", false); // Re-enable checkbox
 
           // If Auto Reject is enabled, disable it
-          const $rejectButton = $("#autoRejectButton");
-          if ($rejectButton.attr("data-enabled") === "true") {
-            disableAutoRejectButton($rejectButton);
+          const $rejectCheckbox = $("#autoRejectCheckbox");
+          if ($rejectCheckbox.is(":checked")) {
+            $rejectCheckbox.prop("checked", false);
+            updateToggleLabel($rejectCheckbox);
+            // Disable Auto Reject without confirmation
+            disableAutoReject(false);
           }
         } else {
           toastr.error("Failed to enable Auto Accept All.");
+          closeModal(true); // Revert checkbox state
         }
       },
       error: function () {
         toastr.error("An error occurred while enabling Auto Accept All.");
+        closeModal(true); // Revert checkbox state
       },
     });
   }
@@ -193,19 +219,18 @@ $(document).ready(function () {
         if (response.success) {
           toastr.success("Auto Accept All has been disabled.");
 
-          // Update Auto Accept button to Disabled state
-          const $acceptButton = $("#autoAcceptButton");
-          $acceptButton
-            .removeClass("enabled")
-            .addClass("disabled")
-            .html("Disabled")
-            .attr("data-enabled", "false");
+          // Update Auto Accept checkbox label
+          const $acceptCheckbox = $("#autoAcceptCheckbox");
+          updateToggleLabel($acceptCheckbox);
+          $acceptCheckbox.prop("disabled", false); // Re-enable checkbox
         } else {
           toastr.error("Failed to disable Auto Accept All.");
+          closeModal(true); // Revert checkbox state
         }
       },
       error: function () {
         toastr.error("An error occurred while disabling Auto Accept All.");
+        closeModal(true); // Revert checkbox state
       },
     });
   }
@@ -223,25 +248,27 @@ $(document).ready(function () {
         if (response.success) {
           toastr.success("Auto Reject All has been enabled.");
 
-          // Update Auto Reject button to Enabled state
-          const $rejectButton = $("#autoRejectButton");
-          $rejectButton
-            .removeClass("disabled")
-            .addClass("enabled")
-            .html("Enabled")
-            .attr("data-enabled", "true");
+          // Update Auto Reject checkbox label
+          const $rejectCheckbox = $("#autoRejectCheckbox");
+          updateToggleLabel($rejectCheckbox);
+          $rejectCheckbox.prop("disabled", false); // Re-enable checkbox
 
           // If Auto Accept is enabled, disable it
-          const $acceptButton = $("#autoAcceptButton");
-          if ($acceptButton.attr("data-enabled") === "true") {
-            disableAutoAcceptButton($acceptButton);
+          const $acceptCheckbox = $("#autoAcceptCheckbox");
+          if ($acceptCheckbox.is(":checked")) {
+            $acceptCheckbox.prop("checked", false);
+            updateToggleLabel($acceptCheckbox);
+            // Disable Auto Accept without confirmation
+            disableAutoAccept(false);
           }
         } else {
           toastr.error("Failed to enable Auto Reject All.");
+          closeModal(true); // Revert checkbox state
         }
       },
       error: function () {
         toastr.error("An error occurred while enabling Auto Reject All.");
+        closeModal(true); // Revert checkbox state
       },
     });
   }
@@ -259,30 +286,83 @@ $(document).ready(function () {
         if (response.success) {
           toastr.success("Auto Reject All has been disabled.");
 
-          // Update Auto Reject button to Disabled state
-          const $rejectButton = $("#autoRejectButton");
-          $rejectButton
-            .removeClass("enabled")
-            .addClass("disabled")
-            .html("Disabled")
-            .attr("data-enabled", "false");
+          // Update Auto Reject checkbox label
+          const $rejectCheckbox = $("#autoRejectCheckbox");
+          updateToggleLabel($rejectCheckbox);
+          $rejectCheckbox.prop("disabled", false); // Re-enable checkbox
         } else {
           toastr.error("Failed to disable Auto Reject All.");
+          closeModal(true); // Revert checkbox state
         }
       },
       error: function () {
         toastr.error("An error occurred while disabling Auto Reject All.");
+        closeModal(true); // Revert checkbox state
       },
     });
   }
 
   // Helper Functions to Disable the Opposite Setting
-  function disableAutoAcceptButton($button) {
-    disableAutoAccept();
+  function disableAutoAccept(revert = true) {
+    const $acceptCheckbox = $("#autoAcceptCheckbox");
+    if ($acceptCheckbox.is(":checked")) {
+      $acceptCheckbox.prop("checked", false);
+      updateToggleLabel($acceptCheckbox);
+      // Send AJAX request to disable Auto Accept
+      $.ajax({
+        url: window.toggleAutoAcceptUrl,
+        type: "POST",
+        data: {
+          enabled: false,
+          csrfmiddlewaretoken: window.csrfToken,
+        },
+        success: function (response) {
+          if (response.success) {
+            toastr.info(
+              "Auto Accept All has been disabled due to enabling Auto Reject All."
+            );
+          } else {
+            toastr.error("Failed to disable Auto Accept All.");
+            if (revert) closeModal(true);
+          }
+        },
+        error: function () {
+          toastr.error("An error occurred while disabling Auto Accept All.");
+          if (revert) closeModal(true);
+        },
+      });
+    }
   }
 
-  function disableAutoRejectButton($button) {
-    disableAutoReject();
+  function disableAutoRejectButton(revert = true) {
+    const $rejectCheckbox = $("#autoRejectCheckbox");
+    if ($rejectCheckbox.is(":checked")) {
+      $rejectCheckbox.prop("checked", false);
+      updateToggleLabel($rejectCheckbox);
+      // Send AJAX request to disable Auto Reject
+      $.ajax({
+        url: window.toggleAutoRejectUrl,
+        type: "POST",
+        data: {
+          enabled: false,
+          csrfmiddlewaretoken: window.csrfToken,
+        },
+        success: function (response) {
+          if (response.success) {
+            toastr.info(
+              "Auto Reject All has been disabled due to enabling Auto Accept All."
+            );
+          } else {
+            toastr.error("Failed to disable Auto Reject All.");
+            if (revert) closeModal(true);
+          }
+        },
+        error: function () {
+          toastr.error("An error occurred while disabling Auto Reject All.");
+          if (revert) closeModal(true);
+        },
+      });
+    }
   }
 
   // Function to accept a user
@@ -349,39 +429,38 @@ $(document).ready(function () {
     });
   }
 
-  // Event listener for toggle buttons - to prevent multiple modals or actions
+  // Event listener for toggle checkboxes - to prevent multiple modals or actions
   // This ensures that only one action is processed at a time
   let isProcessingToggle = false;
-  $(".pilarease-itrc-toggle-button").on("click", function () {
-    if (isProcessingToggle) return; // Prevent multiple simultaneous actions
+  $(".pilarease-itrc-toggle-checkbox").on("click", function (e) {
+    if (isProcessingToggle) {
+      e.preventDefault();
+      return; // Prevent multiple simultaneous actions
+    }
     isProcessingToggle = true;
 
-    const $button = $(this);
-    const action = $button.data("action"); // 'accept' or 'reject'
-    const isEnabled = $button.attr("data-enabled") === "true";
+    // The checkbox change event will handle opening the modal
+    // So we don't need to do anything else here
 
-    if (!isEnabled) {
-      // Attempting to enable the setting - show confirmation modal
-      const actionType =
-        action === "accept" ? "enable_auto_accept" : "enable_auto_reject";
-      openModal(actionType);
-    } else {
-      // Attempting to disable the setting - show confirmation modal
-      const actionType =
-        action === "accept" ? "disable_auto_accept" : "disable_auto_reject";
-      openModal(actionType);
-    }
-
-    isProcessingToggle = false;
+    // Reset the processing flag after a short delay to prevent rapid clicks
+    setTimeout(() => {
+      isProcessingToggle = false;
+    }, 500); // Adjust the delay as needed
   });
 
   // Additional: Handle keyboard accessibility for the modal
   $modalOverlay.on("keydown", function (e) {
     if (e.key === "Escape") {
-      closeModal();
+      closeModal(true); // Revert checkbox state
     }
   });
+
+  // Optional: Update labels on page load based on checkbox states
+  $(".pilarease-itrc-toggle-checkbox").each(function () {
+    updateToggleLabel($(this));
+  });
 });
+
 // notifications.js
 
 $(document).ready(function () {
@@ -508,23 +587,23 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  // Add User Modal Handling
-  const addUserButton = document.getElementById("addUserButton");
-  const addUserModalOverlay = document.getElementById("addUserModalOverlay");
-  const closeAddUserModal = document.getElementById("closeAddUserModal");
-  const cancelAddUser = document.getElementById("cancelAddUser");
+  // // Add User Modal Handling
+  // const addUserButton = document.getElementById("addUserButton");
+  // const addUserModalOverlay = document.getElementById("addUserModalOverlay");
+  // const closeAddUserModal = document.getElementById("closeAddUserModal");
+  // const cancelAddUser = document.getElementById("cancelAddUser");
 
-  addUserButton.onclick = function () {
-    addUserModalOverlay.style.display = "flex";
-  };
+  // addUserButton.onclick = function () {
+  //   addUserModalOverlay.style.display = "flex";
+  // };
 
-  closeAddUserModal.onclick = function () {
-    addUserModalOverlay.style.display = "none";
-  };
+  // closeAddUserModal.onclick = function () {
+  //   addUserModalOverlay.style.display = "none";
+  // };
 
-  cancelAddUser.onclick = function () {
-    addUserModalOverlay.style.display = "none";
-  };
+  // cancelAddUser.onclick = function () {
+  //   addUserModalOverlay.style.display = "none";
+  // };
 
   // Activate Button Click Handler
   document.querySelectorAll(".activate-button").forEach(function (button) {
