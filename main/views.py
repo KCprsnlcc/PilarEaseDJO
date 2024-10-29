@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
+from django.urls import reverse
 from datetime import datetime
 from django.db import IntegrityError
 import pytz
@@ -16,7 +17,7 @@ from django.db import transaction, IntegrityError
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
 from django.contrib.auth.hashers import check_password
 from django.core.files.storage import default_storage
-from itrc_tools.models import EnrollmentMasterlist, SystemSetting, AuditLog
+from itrc_tools.models import EnrollmentMasterlist, SystemSetting, AuditLog, Notification_System
 from django.core.files.base import ContentFile
 from .models import UserProfile
 import logging
@@ -1314,188 +1315,177 @@ def send_verification_email(request):
                 'PilarEase <no-reply@pilarease.com>',
                 [user.email],
             )
-            email_message.attach_alternative(email_html_content, "text/html")
-
-            # Send the email
-            email_message.send()
-
-            return JsonResponse({'success': True, 'message': 'Verification email sent!'})
-        else:
-            return JsonResponse({'success': False, 'error': 'Email already verified.'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
-
 def login_view(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
+            user = authenticate(request, username=username, password=password)  # Now authenticates inactive users
+
             if user is not None:
-                if user.is_active:
-                    # User is active, proceed to login
-                    login(request, user)
-
-                    # Create an AuditLog entry for login
-                    AuditLog.objects.create(
-                        user=user,
-                        action='login',
-                        details=f"User {user.username} logged in at {timezone.now()}."
-                    )
-
-                    # Handle session tracking
-                    session_key = request.session.session_key
-                    if not session_key:
-                        request.session.create()
-                        session_key = request.session.session_key
-
-                    try:
-                        session = Session.objects.get(session_key=session_key)
-                        expire_date = session.expire_date
-                    except Session.DoesNotExist:
-                        expire_date = timezone.now() + timezone.timedelta(days=1)  # Default expiration
-
-                    # Create a UserSession entry
-                    UserSession.objects.create(
-                        user=user,
-                        session_key=session_key,
-                        created_at=timezone.now(),
-                        expire_date=expire_date
-                    )
-
-                    return JsonResponse({'success': True, 'redirect_url': '/'})
-                else:
-                    # User account is inactive
-                    if user.verification_status == 'pending':
-                        # Account is pending verification
-                        try:
-                            # Verify if the user details are in the EnrollmentMasterlist
-                            EnrollmentMasterlist.objects.get(
-                                student_id=user.student_id.strip(),
-                                full_name=user.full_name.strip(),
-                                academic_year_level=user.academic_year_level.strip()
-                            )
-
-                            if is_auto_accept_enabled():
-                                # Auto-activate and verify the user
-                                user.is_active = True
-                                user.is_verified = True
-                                user.verification_status = 'verified'
-                                user.save()
-
-                                # Remove any existing verification requests
-                                VerificationRequest.objects.filter(user=user).delete()
-
-                                # Log the action
-                                AuditLog.objects.create(
-                                    user=user,
-                                    action='auto_verify',
-                                    details=f"User {user.username} auto-verified upon login at {timezone.now()}."
-                                )
-
-                                # Log the user in
-                                login(request, user)
-
-                                # Handle session tracking
-                                session_key = request.session.session_key
-                                if not session_key:
-                                    request.session.create()
-                                    session_key = request.session.session_key
-
-                                try:
-                                    session = Session.objects.get(session_key=session_key)
-                                    expire_date = session.expire_date
-                                except Session.DoesNotExist:
-                                    expire_date = timezone.now() + timezone.timedelta(days=1)  # Default expiration
-
-                                # Create a UserSession entry
-                                UserSession.objects.create(
-                                    user=user,
-                                    session_key=session_key,
-                                    created_at=timezone.now(),
-                                    expire_date=expire_date
-                                )
-
-                                return JsonResponse({'success': True, 'redirect_url': '/'})
-                            else:
-                                # Auto-accept not enabled, keep account pending
-                                error_message = {
-                                    '__all__': [
-                                        {
-                                            'message': 'Your account is pending manual verification.',
-                                            'code': 'inactive'
-                                        }
-                                    ]
-                                }
-                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
-                        except EnrollmentMasterlist.DoesNotExist:
-                            # User details not found in EnrollmentMasterlist
-                            if is_auto_reject_enabled():
-                                # Auto-reject the user
-                                user.is_active = False
-                                user.is_verified = False
-                                user.verification_status = 'rejected'
-                                user.save()
-
-                                # Remove any existing verification requests
-                                VerificationRequest.objects.filter(user=user).delete()
-
-                                # Log the action
-                                AuditLog.objects.create(
-                                    user=user,
-                                    action='auto_reject',
-                                    details=f"User {user.username} auto-rejected upon login at {timezone.now()}."
-                                )
-
-                                error_message = {
-                                    '__all__': [
-                                        {
-                                            'message': 'Your account has been automatically rejected.',
-                                            'code': 'rejected'
-                                        }
-                                    ]
-                                }
-                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
-                            else:
-                                # Auto-reject not enabled, keep account pending
-                                error_message = {
-                                    '__all__': [
-                                        {
-                                            'message': 'Your account is pending manual verification.',
-                                            'code': 'inactive'
-                                        }
-                                    ]
-                                }
-                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
-                    elif user.verification_status == 'rejected':
-                        # Account has been rejected
-                        error_message = {
-                            '__all__': [
-                                {
-                                    'message': 'Your account has been rejected.',
-                                    'code': 'rejected'
-                                }
-                            ]
-                        }
-                        return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                if user.check_password(password):
+                    if user.is_active:
+                        # User is active, proceed to login
+                        login(request, user)
+                        # Audit log and session handling...
+                        return JsonResponse({'success': True, 'message': 'Login successful!', 'redirect_url': '/'})
                     else:
-                        # Account is inactive for another reason
-                        error_message = {
-                            '__all__': [
-                                {
-                                    'message': 'Your account is inactive.',
-                                    'code': 'inactive'
-                                }
-                            ]
-                        }
-                        return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                        # User account is inactive, check verification status
+                        if user.verification_status == 'pending':
+                            # Attempt auto-accept or auto-reject
+                            user = process_pending_user(user)
+                            if user.is_active:
+                                # User has been auto-accepted, proceed to login
+                                login(request, user)
+                                # Audit log and session handling...
+                                return JsonResponse({'success': True, 'message': 'Login successful!', 'redirect_url': '/'})
+                            else:
+                                # User remains inactive, return appropriate error
+                                error_message = get_pending_account_message(user)
+                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                        elif user.verification_status == 'rejected':
+                            # Account has been rejected
+                            error_message = get_rejected_account_message()
+                            return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                        else:
+                            # Account is inactive for another reason
+                            error_message = get_inactive_account_message()
+                            return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                else:
+                    # Password does not match
+                    form.add_error(None, "Invalid login credentials")
             else:
+                # User not found
                 form.add_error(None, "Invalid login credentials")
         errors = form.errors.get_json_data()
         return JsonResponse({'success': False, 'error_message': errors})
     else:
         form = CustomAuthenticationForm()
     return render(request, 'base.html', {'login_form': form, 'show_login_modal': True})
+
+def process_pending_user(user):
+    try:
+        # Verify if the user details are in the EnrollmentMasterlist
+        EnrollmentMasterlist.objects.get(
+            student_id=user.student_id.strip(),
+            full_name=user.full_name.strip(),
+            academic_year_level=user.academic_year_level.strip()
+        )
+
+        if is_auto_accept_enabled():
+            # Auto-activate and verify the user
+            user.is_active = True
+            user.is_verified = True
+            user.verification_status = 'verified'
+            user.save()
+
+            # Remove any existing verification requests
+            VerificationRequest.objects.filter(user=user).delete()
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='success',
+                message='Your account has been automatically verified by the ITRC staff.',
+                link=reverse('itrc_dashboard')  # Adjust as needed
+            )
+
+        else:
+            # Auto-accept not enabled, user remains pending
+            pass
+
+    except EnrollmentMasterlist.DoesNotExist:
+        # User details not found in EnrollmentMasterlist
+        if is_auto_reject_enabled():
+            # Auto-reject the user
+            user.is_active = False
+            user.is_verified = False
+            user.verification_status = 'rejected'
+            user.save()
+
+            # Remove any existing verification requests
+            VerificationRequest.objects.filter(user=user).delete()
+
+            # Send notification to the user
+            Notification_System.objects.create(
+                user=user,
+                notification_type='warning',
+                message='Your account has been automatically rejected by the ITRC staff.',
+                link=reverse('contact_support')  # Adjust as needed
+            )
+        else:
+            # Auto-reject not enabled, user remains pending
+            pass
+    return user
+
+def handle_session_tracking(request, user):
+    # Handle session tracking
+    session_key = request.session.session_key
+    if not session_key:
+        request.session.create()
+        session_key = request.session.session_key
+
+    try:
+        session = Session.objects.get(session_key=session_key)
+        expire_date = session.expire_date
+    except Session.DoesNotExist:
+        expire_date = timezone.now() + timezone.timedelta(days=1)  # Default expiration
+
+    # Create a UserSession entry
+    UserSession.objects.create(
+        user=user,
+        session_key=session_key,
+        created_at=timezone.now(),
+        expire_date=expire_date
+    )
+
+def get_pending_account_message(user):
+    if is_auto_accept_enabled() or is_auto_reject_enabled():
+        # Auto accept/reject is enabled but user remains pending
+        message = {
+            '__all__': [
+                {
+                    'message': 'Your account is pending verification.',
+                    'code': 'pending_verification'
+                }
+            ]
+        }
+    else:
+        # Auto accept/reject is not enabled
+        message = {
+            '__all__': [
+                {
+                    'message': 'Your account is pending manual verification.',
+                    'code': 'inactive'
+                }
+            ]
+        }
+    return message
+
+def get_rejected_account_message():
+    message = {
+        '__all__': [
+            {
+                'message': 'Your account has been rejected.',
+                'code': 'rejected'
+            }
+        ]
+    }
+    return message
+
+def get_inactive_account_message():
+    message = {
+        '__all__': [
+            {
+                'message': 'Your account is inactive.',
+                'code': 'inactive'
+            }
+        ]
+    }
+    return message
+
+
 
 def strip_html_tags(text):
     clean = re.compile('<.*?>')

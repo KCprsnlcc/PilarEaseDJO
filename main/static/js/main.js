@@ -3432,6 +3432,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (errorMessage) {
       validateFieldOnSubmit(loginUsernameField);
       validateFieldOnSubmit(loginPasswordField);
+      let errorMessage = parseErrorMessages(data.error_message);
       showError(errorMessage, "login");
       loginButton.disabled = false; // Re-enable if there's an error
       return;
@@ -3555,17 +3556,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const passwordField = document.querySelector('input[name="password"]');
   const loginButton = document.getElementById("loginButton");
 
-  // Real-time validation on input
-  usernameField.addEventListener("input", validateField);
-  passwordField.addEventListener("input", validateField);
-
-  // Form submit event
   document
     .getElementById("loginForm")
     .addEventListener("submit", function (event) {
       event.preventDefault();
 
       const formData = new FormData(this);
+
       loginButton.disabled = true; // Disable the button initially
 
       // Check if fields are empty
@@ -3607,7 +3604,8 @@ document.addEventListener("DOMContentLoaded", function () {
           hideLoginLoader();
 
           if (data.success) {
-            showSuccess("Login successful!", "login");
+            // Use the message returned from the server
+            showSuccess(data.message, "login");
             setTimeout(() => {
               document.getElementById("loginForm").reset();
               loginModal.classList.add("pop-out");
@@ -3621,7 +3619,15 @@ document.addEventListener("DOMContentLoaded", function () {
               }, 300); // Wait for pop-out animation to complete
             }, 1500);
           } else {
-            let errorMessage = parseErrorMessages(data.error_message);
+            // Extract and display error messages
+            let errorMessage = "";
+            if (data.message) {
+              errorMessage = data.message;
+            } else if (data.error_message) {
+              errorMessage = extractErrorMessages(data.error_message);
+            } else {
+              errorMessage = "An unknown error occurred. Please try again.";
+            }
             showError(errorMessage, "login");
           }
         })
@@ -3636,6 +3642,22 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+  // Helper function to extract error messages
+  function extractErrorMessages(errorData) {
+    let errorMessage = "";
+    if (typeof errorData === "string") {
+      errorMessage = errorData;
+    } else if (typeof errorData === "object") {
+      for (let key in errorData) {
+        let errors = errorData[key];
+        errors.forEach(function (error) {
+          errorMessage += error.message + " ";
+        });
+      }
+      errorMessage = errorMessage.trim();
+    }
+    return errorMessage;
+  }
   // Real-time validation function
   function validateField(event) {
     const field = event.target;

@@ -82,6 +82,12 @@ LOGIN_REDIRECT_URL = '/itrc/dashboard/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# settings.py
+
+AUTHENTICATION_BACKENDS = [
+    'main.authentication_backends.CustomBackend',  # Replace 'your_app' with your actual app name
+    # 'django.contrib.auth.backends.ModelBackend',  # Optionally keep the default backend
+]
 
 MIDDLEWARE = [
     # 'django.middleware.cache.UpdateCacheMiddleware',  # Must be first

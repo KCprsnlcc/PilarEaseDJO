@@ -44,9 +44,6 @@ class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'Username'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Password'}))
 
-    def confirm_login_allowed(self, user):
-        if not user.is_active:
-            raise forms.ValidationError("This account is inactive.", code='inactive')
         
 class StatusForm(forms.ModelForm):
     class Meta:
