@@ -35,9 +35,11 @@
     <div id="overlay" class="overlay" style="display: none"></div>
     <header>
       <div class="v1_119">
-        <span class="v1_120">PilarEase</span>
-        <div class="v1_122"></div>
-        <div class="v1_123"></div>
+<a href="{% url 'home' %}">
+  <span class="v1_120">PilarEase</span>
+<div class="v1_122"></div>
+<div class="v1_123"></div>
+</a>
         {% if user.is_authenticated %}
         <label class="burger" for="burger">
           <input type="checkbox" id="burger" />
