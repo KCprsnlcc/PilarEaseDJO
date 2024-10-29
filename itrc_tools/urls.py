@@ -32,7 +32,7 @@ urlpatterns = [
 
     # New User Management URLs
     path('add-user/', views.add_user, name='add_user'),
-    path('edit-user/<int:user_id>/', views.edit_user, name='edit_user'),  # Optional: Implement this view
+    path('edit-user/<int:user_id>/', views.edit_user_view, name='edit_user'), # Optional: Implement this view
     path('change-role/<int:user_id>/', views.change_role, name='change_role'),  # Optional: Implement this view
     path('check-unique/', views.check_unique, name='check_unique'),
     

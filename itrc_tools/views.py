@@ -1558,37 +1558,48 @@ def check_unique(request):
 
     exists = CustomUser.objects.filter(**{f"{field}__iexact": value}).exists()
     return JsonResponse({'is_unique': not exists})
+
 @user_passes_test(is_itrc_staff)
 @login_required
-@require_http_methods(["GET", "POST"])
-def edit_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    if request.method == 'POST':
-        form = EditUserForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            form.save()
-            # Log the action
-            AuditLog.objects.create(
-                user=request.user,
-                action='update_user',
-                details=f"Edited user {user.username}.",
-                timestamp=timezone.now()
-            )
-            # Send notification to ITRC staff
-            message = f"{request.user.username} edited user: {user.username}."
-            link = reverse('manage_users')
-            notify_itrc_staff('info', message, link)
+def edit_user_view(request, user_id):
+    user_obj = get_object_or_404(CustomUser, id=user_id)
 
-            messages.success(request, f'User {user.username} has been updated successfully.')
-            return redirect('manage_users')
+    if request.method == 'POST':
+        form = EditUserForm(request.POST, request.FILES, instance=user_obj)
+        if form.is_valid():
+            try:
+                form.save()
+                # Log the action
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='update_user',
+                    details=f"Edited user {user_obj.username}.",
+                    timestamp=timezone.now()
+                )
+                # Send notification to ITRC staff
+                message = f"{request.user.username} edited user: {user_obj.username}."
+                link = reverse('manage_users')
+                notify_itrc_staff('info', message, link)
+
+                messages.success(request, f'User "{user_obj.username}" has been updated successfully.')
+                return redirect('manage_users')
+            except IntegrityError as e:
+                if 'unique constraint' in str(e).lower():
+                    form.add_error(None, "A user with that username, email, or student ID already exists.")
+                else:
+                    form.add_error(None, f'An unexpected error occurred: {str(e)}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = EditUserForm(instance=user)
+        form = EditUserForm(instance=user_obj)
+        # Pass original values for validation to JavaScript
+        form.fields['username'].widget.attrs.update({'data-original': user_obj.username})
+        form.fields['email'].widget.attrs.update({'data-original': user_obj.email})
+        form.fields['student_id'].widget.attrs.update({'data-original': user_obj.student_id})
 
     context = {
         'form': form,
-        'user_obj': user,
+        'user_obj': user_obj,
     }
     return render(request, 'itrc_tools/edit_user.html', context)
 

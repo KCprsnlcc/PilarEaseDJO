@@ -878,3 +878,177 @@ $(document).ready(function () {
 
   // Similarly, add validation for other fields as needed
 });
+// itrc_tools/static/js/edit_user_validation.js
+
+$(document).ready(function () {
+  // Function to get CSRF token from a meta tag
+  function getCSRFToken() {
+    return $('meta[name="csrf-token"]').attr("content");
+  }
+
+  // Real-time validation for username uniqueness
+  $("#id_username").on("blur", function () {
+    const username = $(this).val().trim();
+    const $errorDiv = $(this)
+      .closest(".itrc-edit-user-form-group")
+      .find(".itrc-edit-user-error");
+
+    // If the username hasn't changed, skip validation
+    const originalUsername = $(this).data("original");
+    if (username.toLowerCase() === originalUsername.toLowerCase()) {
+      $errorDiv.text("");
+      $(this).removeClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    if (username.length < 3) {
+      $errorDiv.text("Username must be at least 3 characters long.");
+      $(this).addClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    $.ajax({
+      url: "/itrc/check-unique/",
+      type: "POST",
+      data: {
+        field: "username",
+        value: username,
+        csrfmiddlewaretoken: getCSRFToken(),
+      },
+      success: function (response) {
+        if (!response.is_unique) {
+          $errorDiv.text("This username is already taken.");
+          $("#id_username").addClass("itrc-edit-user-input-error");
+        } else {
+          $errorDiv.text("");
+          $("#id_username").removeClass("itrc-edit-user-input-error");
+        }
+      },
+      error: function () {
+        $errorDiv.text("An error occurred while validating the username.");
+        $("#id_username").addClass("itrc-edit-user-input-error");
+      },
+    });
+  });
+
+  // Real-time validation for email uniqueness
+  $("#id_email").on("blur", function () {
+    const email = $(this).val().trim().toLowerCase();
+    const $errorDiv = $(this)
+      .closest(".itrc-edit-user-form-group")
+      .find(".itrc-edit-user-error");
+
+    // If the email hasn't changed, skip validation
+    const originalEmail = $(this).data("original");
+    if (email === originalEmail.toLowerCase()) {
+      $errorDiv.text("");
+      $(this).removeClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    if (email === "") {
+      $errorDiv.text("Email is required.");
+      $(this).addClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    $.ajax({
+      url: "/itrc/check-unique/",
+      type: "POST",
+      data: {
+        field: "email",
+        value: email,
+        csrfmiddlewaretoken: getCSRFToken(),
+      },
+      success: function (response) {
+        if (!response.is_unique) {
+          $errorDiv.text("This email is already registered.");
+          $("#id_email").addClass("itrc-edit-user-input-error");
+        } else {
+          $errorDiv.text("");
+          $("#id_email").removeClass("itrc-edit-user-input-error");
+        }
+      },
+      error: function () {
+        $errorDiv.text("An error occurred while validating the email.");
+        $("#id_email").addClass("itrc-edit-user-input-error");
+      },
+    });
+  });
+
+  // Real-time validation for student ID uniqueness
+  $("#id_student_id").on("blur", function () {
+    const student_id = $(this).val().trim();
+    const $errorDiv = $(this)
+      .closest(".itrc-edit-user-form-group")
+      .find(".itrc-edit-user-error");
+
+    // If the student ID hasn't changed, skip validation
+    const originalStudentID = $(this).data("original");
+    if (student_id.toLowerCase() === originalStudentID.toLowerCase()) {
+      $errorDiv.text("");
+      $(this).removeClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    if (student_id === "") {
+      $errorDiv.text("Student ID is required.");
+      $(this).addClass("itrc-edit-user-input-error");
+      return;
+    }
+
+    $.ajax({
+      url: "/itrc/check-unique/",
+      type: "POST",
+      data: {
+        field: "student_id",
+        value: student_id,
+        csrfmiddlewaretoken: getCSRFToken(),
+      },
+      success: function (response) {
+        if (!response.is_unique) {
+          $errorDiv.text("This student ID is already in use.");
+          $("#id_student_id").addClass("itrc-edit-user-input-error");
+        } else {
+          $errorDiv.text("");
+          $("#id_student_id").removeClass("itrc-edit-user-input-error");
+        }
+      },
+      error: function () {
+        $errorDiv.text("An error occurred while validating the student ID.");
+        $("#id_student_id").addClass("itrc-edit-user-input-error");
+      },
+    });
+  });
+
+  // Optional: Password Strength Indicator
+  $("#id_password").on("input", function () {
+    const password = $(this).val();
+    const $errorDiv = $(this)
+      .closest(".itrc-edit-user-form-group")
+      .find(".itrc-edit-user-error");
+
+    // Simple password strength check
+    const strength = getPasswordStrength(password);
+
+    if (password.length > 0 && strength < 3) {
+      $errorDiv.text(
+        "Password is too weak. Consider adding numbers and special characters."
+      );
+      $(this).addClass("itrc-edit-user-input-error");
+    } else {
+      $errorDiv.text("");
+      $(this).removeClass("itrc-edit-user-input-error");
+    }
+  });
+
+  function getPasswordStrength(password) {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[\W]/.test(password)) strength++;
+    return strength;
+  }
+});

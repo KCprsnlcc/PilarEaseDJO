@@ -8,6 +8,7 @@ from .models import (
     AuditLog,
     AuditLogEntry,
     Notification_System,
+    CustomUser
 )
 
 @admin.register(VerificationRequest)
@@ -44,3 +45,19 @@ class NotificationSystemAdmin(admin.ModelAdmin):
     list_display = ('user', 'notification_type', 'message', 'is_read', 'timestamp')
     list_filter = ('notification_type', 'is_read', 'timestamp')
     search_fields = ('user__username', 'message')
+
+
+@admin.register(CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'student_id', 'full_name', 'is_itrc_staff', 'is_counselor', 'is_active', 'verification_status')
+    search_fields = ('username', 'email', 'student_id', 'full_name')
+    list_filter = ('is_itrc_staff', 'is_counselor', 'is_active', 'verification_status')
+    readonly_fields = ('date_joined', 'last_login')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('profile')  # Optimize queries if you have related profiles
+
+    def profile_avatar(self, obj):
+        return obj.profile.avatar.url if obj.profile.avatar else "No Avatar"
+    profile_avatar.short_description = 'Avatar'

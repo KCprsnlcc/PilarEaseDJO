@@ -2060,3 +2060,13 @@ a:hover {
     margin-bottom: 15px;
   }
 }
+.itrc-edit-user-error {
+  color: var(--danger-color);
+  font-size: 0.85em;
+  margin-top: 5px;
+}
+
+.itrc-edit-user-input-error {
+  border-color: var(--danger-color) !important;
+  box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+}

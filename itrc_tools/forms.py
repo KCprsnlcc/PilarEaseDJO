@@ -2,7 +2,7 @@
 
 from django import forms
 from .models import SystemSetting
-
+from django.core.validators import FileExtensionValidator
 class SystemSettingForm(forms.ModelForm):
     class Meta:
         model = SystemSetting
@@ -90,15 +90,16 @@ class UserProfileForm(forms.ModelForm):
             'avatar': forms.FileInput(attrs={'class': 'itrc-add-user-input-file'}),
         }
 class EditUserForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput, required=False)
-    avatar = forms.ImageField(required=False)
-    verification_status = forms.ChoiceField(
-        choices=[
-            ('pending', 'Pending'),
-            ('verified', 'Verified'),
-            ('rejected', 'Rejected')
-        ],
-        widget=forms.Select(attrs={'class': 'pilarease-itrc-form-select'})
+    # Include UserProfile fields
+    avatar = forms.ImageField(
+        required=False,
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
+        widget=forms.ClearableFileInput(attrs={'class': 'itrc-edit-user-input-field'})
+    )
+    bio = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'itrc-edit-user-input-field', 'rows': 4}),
+        label='Bio'
     )
 
     class Meta:
@@ -106,26 +107,76 @@ class EditUserForm(forms.ModelForm):
         fields = [
             'username',
             'email',
-            'student_id',
             'full_name',
             'academic_year_level',
             'contact_number',
             'is_counselor',
             'is_itrc_staff',
             'is_active',
-            'verification_status',  # Include verification_status
+            'password',
         ]
+        widgets = {
+            'password': forms.PasswordInput(attrs={'placeholder': 'Leave blank to keep the current password'}),
+        }
+        help_texts = {
+            'password': 'Enter a new password if you want to change it.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Pop the user instance if provided
+        self.user = kwargs.pop('instance', None)
+        super(EditUserForm, self).__init__(*args, instance=self.user, **kwargs)
+        
+        # Make student_id read-only
+        if self.user:
+            self.fields['student_id'] = forms.CharField(
+                initial=self.user.student_id,
+                required=False,
+                label='Student ID',
+                disabled=True,
+                widget=forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'})
+            )
+        
+        # Populate initial values for UserProfile fields
+            try:
+                profile = self.user.profile
+                self.fields['avatar'].initial = profile.avatar
+                self.fields['bio'].initial = profile.bio
+            except UserProfile.DoesNotExist:
+                pass
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exclude(pk=self.user.pk).exists():
+            raise forms.ValidationError("This email is already in use by another user.")
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if CustomUser.objects.filter(username=username).exclude(pk=self.user.pk).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if password:
+            # You can add more password validations here if needed
+            if len(password) < 8:
+                raise forms.ValidationError("Password must be at least 8 characters long.")
+        return password
 
     def save(self, commit=True):
-        user = super().save(commit=False)
+        user = super(EditUserForm, self).save(commit=False)
         password = self.cleaned_data.get('password')
         if password:
             user.set_password(password)
         if commit:
             user.save()
-            # Update UserProfile
+            # Update UserProfile fields
             profile, created = UserProfile.objects.get_or_create(user=user)
-            if self.cleaned_data.get('avatar'):
-                profile.avatar = self.cleaned_data.get('avatar')
+            profile.bio = self.cleaned_data.get('bio')
+            avatar = self.cleaned_data.get('avatar')
+            if avatar:
+                profile.avatar = avatar
             profile.save()
         return user

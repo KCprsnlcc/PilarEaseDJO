@@ -1,5 +1,8 @@
+<!-- itrc_tools/templates/itrc_tools/edit_user.html -->
 {% extends "itrc_tools/base_itrc.html" %}
 {% load static %}
+{% load compress %}
+
 {% block page_title %}Edit User - {{ user_obj.username }}{% endblock %}
 
 {% block itrc_content %}
@@ -15,9 +18,12 @@
   </p>
 
   <div class="itrc-edit-user-card">
-    <form method="post" enctype="multipart/form-data" class="itrc-edit-user-form">
+    <form method="post" enctype="multipart/form-data" class="itrc-edit-user-form" id="editUserForm">
       {% csrf_token %}
       {{ form.non_field_errors }}
+
+      <!-- User Information -->
+      <h2>User Information</h2>
 
       <!-- First Row -->
       <div class="itrc-edit-user-form-row">
@@ -28,7 +34,9 @@
             <i class="bx bx-user"></i>
             {{ form.username }}
           </div>
-          {{ form.username.errors }}
+          {% for error in form.username.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Email -->
         <div class="itrc-edit-user-form-group">
@@ -37,7 +45,9 @@
             <i class="bx bx-envelope"></i>
             {{ form.email }}
           </div>
-          {{ form.email.errors }}
+          {% for error in form.email.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -50,7 +60,9 @@
             <i class="bx bx-id-card"></i>
             {{ form.student_id }}
           </div>
-          {{ form.student_id.errors }}
+          {% for error in form.student_id.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Full Name -->
         <div class="itrc-edit-user-form-group">
@@ -59,7 +71,9 @@
             <i class="bx bx-user-circle"></i>
             {{ form.full_name }}
           </div>
-          {{ form.full_name.errors }}
+          {% for error in form.full_name.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -72,7 +86,9 @@
             <i class="bx bx-book"></i>
             {{ form.academic_year_level }}
           </div>
-          {{ form.academic_year_level.errors }}
+          {% for error in form.academic_year_level.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Contact Number -->
         <div class="itrc-edit-user-form-group">
@@ -81,7 +97,9 @@
             <i class="bx bx-phone"></i>
             {{ form.contact_number }}
           </div>
-          {{ form.contact_number.errors }}
+          {% for error in form.contact_number.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -90,14 +108,22 @@
         <!-- Is Counselor -->
         <div class="itrc-edit-user-form-group">
           {{ form.is_counselor.label_tag }}
-          {{ form.is_counselor }}
-          {{ form.is_counselor.errors }}
+          <div class="itrc-edit-user-input-checkbox">
+            {{ form.is_counselor }}
+          </div>
+          {% for error in form.is_counselor.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Is ITRC Staff -->
         <div class="itrc-edit-user-form-group">
           {{ form.is_itrc_staff.label_tag }}
-          {{ form.is_itrc_staff }}
-          {{ form.is_itrc_staff.errors }}
+          <div class="itrc-edit-user-input-checkbox">
+            {{ form.is_itrc_staff }}
+          </div>
+          {% for error in form.is_itrc_staff.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -106,8 +132,12 @@
         <!-- Is Active -->
         <div class="itrc-edit-user-form-group">
           {{ form.is_active.label_tag }}
-          {{ form.is_active }}
-          {{ form.is_active.errors }}
+          <div class="itrc-edit-user-input-checkbox">
+            {{ form.is_active }}
+          </div>
+          {% for error in form.is_active.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Password -->
         <div class="itrc-edit-user-form-group">
@@ -116,15 +146,22 @@
             <i class="bx bx-lock"></i>
             {{ form.password }}
           </div>
-          {{ form.password.errors }}
+          {% for error in form.password.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
-      <!-- Avatar -->
+      <!-- User Profile -->
+      <h2>User Profile</h2>
       <div class="itrc-edit-user-form-group">
         {{ form.avatar.label_tag }}
-        {{ form.avatar }}
-        {{ form.avatar.errors }}
+        <div class="itrc-edit-user-input-file">
+          {{ form.avatar }}
+        </div>
+        {% for error in form.avatar.errors %}
+          <div class="itrc-edit-user-error">{{ error }}</div>
+        {% endfor %}
       </div>
 
       <!-- Form Actions -->
@@ -142,6 +179,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Include any additional JavaScript here -->
-{% endblock %}
 
+{% endblock %}
