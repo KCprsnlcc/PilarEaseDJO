@@ -184,28 +184,36 @@
       window.manualRejectUserUrl = "{% url 'manual_reject_user' 0 %}"; // Replace 'manual_reject_user' with your URL name
     </script>
 
-    <!-- Toastr Notifications -->
+    <!-- Toastr Configuration -->
     <script>
-      $(document).ready(function () {
-        {% if messages %}
-          {% for message in messages %}
-            toastr.options = {
-              closeButton: true,
-              progressBar: true,
-              positionClass: "toast-top-right",
-              timeOut: "5000",
-              extendedTimeOut: "1000",
-              showEasing: "swing",
-              hideEasing: "linear",
-              showMethod: "fadeIn",
-              hideMethod: "fadeOut",
-            };
-            toastr["{{ message.tags }}"]("{{ message|escapejs }}");
-          {% endfor %}
-        {% endif %}
-      });
+      // Configure Toastr options globally
+      toastr.options = {
+        closeButton: true,
+        debug: false,
+        newestOnTop: false,
+        progressBar: true,
+        positionClass: "toast-top-right",
+        preventDuplicates: false,
+        onclick: null,
+        showDuration: "300",
+        hideDuration: "1000",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+        showEasing: "swing",
+        hideEasing: "linear",
+        showMethod: "fadeIn",
+        hideMethod: "fadeOut",
+      };
     </script>
 
+    <!-- Toastr Notifications from Django Messages -->
+    <script>
+      {% if messages %}
+        {% for message in messages %}
+          toastr["{{ message.tags }}"]("{{ message }}");
+        {% endfor %}
+      {% endif %}
+    </script>
     <!-- Notification Dropdown Script -->
     <script>
       $(document).ready(function () {

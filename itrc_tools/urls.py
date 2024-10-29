@@ -20,7 +20,7 @@ urlpatterns = [
     path('system-settings/', views.system_settings, name='system_settings'),
     path('generate-reports/', views.generate_reports, name='generate_reports'),
     path('audit-logs/', views.audit_logs_view, name='audit_logs'),
-
+    
     # Notifications URLs
     path('fetch-notifications/', views.fetch_notifications, name='fetch_notifications'),
     path('notifications/', views.notifications_view, name='notifications'),
@@ -34,6 +34,7 @@ urlpatterns = [
     path('add-user/', views.add_user, name='add_user'),
     path('edit-user/<int:user_id>/', views.edit_user, name='edit_user'),  # Optional: Implement this view
     path('change-role/<int:user_id>/', views.change_role, name='change_role'),  # Optional: Implement this view
+    path('check-unique/', views.check_unique, name='check_unique'),
     
     # Bulk Verification Actions
     path('auto-accept-all/', views.auto_accept_all, name='auto_accept_all'),

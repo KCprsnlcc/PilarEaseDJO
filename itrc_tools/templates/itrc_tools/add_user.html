@@ -1,5 +1,8 @@
+<!-- itrc_tools/templates/itrc_tools/add_user.html -->
 {% extends "itrc_tools/base_itrc.html" %}
 {% load static %}
+{% load compress %}
+
 {% block page_title %}Add New User{% endblock %}
 
 {% block itrc_content %}
@@ -15,29 +18,38 @@
   </p>
 
   <div class="itrc-add-user-card">
-    <form method="post" enctype="multipart/form-data" class="itrc-add-user-form">
+    <form method="post" enctype="multipart/form-data" class="itrc-add-user-form" id="addUserForm">
       {% csrf_token %}
-      {{ form.non_field_errors }}
+      
+      <!-- Toastr handles notifications; Bootstrap alerts removed -->
 
+      <!-- User Form Fields -->
+      <h2>User Information</h2>
+      {{ user_form.non_field_errors }}
+      
       <!-- First Row -->
       <div class="itrc-add-user-form-row">
         <!-- Username -->
         <div class="itrc-add-user-form-group">
-          {{ form.username.label_tag }}
+          {{ user_form.username.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-user"></i>
-            {{ form.username }}
+            {{ user_form.username }}
           </div>
-          {{ form.username.errors }}
+          {% for error in user_form.username.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Email -->
         <div class="itrc-add-user-form-group">
-          {{ form.email.label_tag }}
+          {{ user_form.email.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-envelope"></i>
-            {{ form.email }}
+            {{ user_form.email }}
           </div>
-          {{ form.email.errors }}
+          {% for error in user_form.email.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -45,21 +57,25 @@
       <div class="itrc-add-user-form-row">
         <!-- Student ID -->
         <div class="itrc-add-user-form-group">
-          {{ form.student_id.label_tag }}
+          {{ user_form.student_id.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-id-card"></i>
-            {{ form.student_id }}
+            {{ user_form.student_id }}
           </div>
-          {{ form.student_id.errors }}
+          {% for error in user_form.student_id.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Full Name -->
         <div class="itrc-add-user-form-group">
-          {{ form.full_name.label_tag }}
+          {{ user_form.full_name.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-user-circle"></i>
-            {{ form.full_name }}
+            {{ user_form.full_name }}
           </div>
-          {{ form.full_name.errors }}
+          {% for error in user_form.full_name.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -67,21 +83,25 @@
       <div class="itrc-add-user-form-row">
         <!-- Academic Year Level -->
         <div class="itrc-add-user-form-group">
-          {{ form.academic_year_level.label_tag }}
+          {{ user_form.academic_year_level.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-book"></i>
-            {{ form.academic_year_level }}
+            {{ user_form.academic_year_level }}
           </div>
-          {{ form.academic_year_level.errors }}
+          {% for error in user_form.academic_year_level.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Contact Number -->
         <div class="itrc-add-user-form-group">
-          {{ form.contact_number.label_tag }}
+          {{ user_form.contact_number.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-phone"></i>
-            {{ form.contact_number }}
+            {{ user_form.contact_number }}
           </div>
-          {{ form.contact_number.errors }}
+          {% for error in user_form.contact_number.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -89,15 +109,23 @@
       <div class="itrc-add-user-form-row">
         <!-- Is Counselor -->
         <div class="itrc-add-user-form-group">
-          {{ form.is_counselor.label_tag }}
-          {{ form.is_counselor }}
-          {{ form.is_counselor.errors }}
+          {{ user_form.is_counselor.label_tag }}
+          <div class="itrc-add-user-input-checkbox">
+            {{ user_form.is_counselor }}
+          </div>
+          {% for error in user_form.is_counselor.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Is ITRC Staff -->
         <div class="itrc-add-user-form-group">
-          {{ form.is_itrc_staff.label_tag }}
-          {{ form.is_itrc_staff }}
-          {{ form.is_itrc_staff.errors }}
+          {{ user_form.is_itrc_staff.label_tag }}
+          <div class="itrc-add-user-input-checkbox">
+            {{ user_form.is_itrc_staff }}
+          </div>
+          {% for error in user_form.is_itrc_staff.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
@@ -105,26 +133,39 @@
       <div class="itrc-add-user-form-row">
         <!-- Is Active -->
         <div class="itrc-add-user-form-group">
-          {{ form.is_active.label_tag }}
-          {{ form.is_active }}
-          {{ form.is_active.errors }}
+          {{ user_form.is_active.label_tag }}
+          <div class="itrc-add-user-input-checkbox">
+            {{ user_form.is_active }}
+          </div>
+          {% for error in user_form.is_active.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
         <!-- Password -->
         <div class="itrc-add-user-form-group">
-          {{ form.password.label_tag }}
+          {{ user_form.password.label_tag }}
           <div class="itrc-add-user-input-icon">
             <i class="bx bx-lock"></i>
-            {{ form.password }}
+            {{ user_form.password }}
           </div>
-          {{ form.password.errors }}
+          {% for error in user_form.password.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
         </div>
       </div>
 
+      <!-- User Profile Form Fields -->
+      <h2>User Profile</h2>
+      {{ profile_form.non_field_errors }}
       <!-- Avatar -->
       <div class="itrc-add-user-form-group">
-        {{ form.avatar.label_tag }}
-        {{ form.avatar }}
-        {{ form.avatar.errors }}
+        {{ profile_form.avatar.label_tag }}
+        <div class="itrc-add-user-input-file">
+          {{ profile_form.avatar }}
+        </div>
+        {% for error in profile_form.avatar.errors %}
+          <div class="itrc-add-user-error">{{ error }}</div>
+        {% endfor %}
       </div>
 
       <!-- Form Actions -->
@@ -142,5 +183,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Include any additional JavaScript here -->
+<script src="{% static 'js/add_user_validation.js' %}"></script>
 {% endblock %}

@@ -936,7 +936,26 @@ a:hover {
   border-radius: 50%;
   object-fit: cover;
 }
+/* Error Styling */
+.itrc-add-user-input-error {
+  border-color: var(--danger-color) !important;
+  box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+}
 
+.itrc-add-user-error-message,
+.itrc-add-user-error {
+  color: var(--danger-color);
+  font-size: 0.875em;
+  margin-top: 5px;
+}
+
+/* Optional: Smooth transition for input fields */
+.itrc-add-user-input,
+.itrc-add-user-input-file,
+.itrc-add-user-input-checkbox {
+  transition: border-color var(--transition-speed),
+    box-shadow var(--transition-speed);
+}
 /* Add User Button Styles */
 .pilarease-itrc-add-user {
   margin-bottom: 15px;

@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView, LogoutView  # Import LogoutView
 from django.contrib import messages
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.urls import reverse
 from django.core.paginator import Paginator
@@ -16,11 +17,13 @@ from django.db.models.functions import TruncDate
 from django.db.models import Q, Count, Avg, Case, When, Value, DurationField
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import tablib
 from import_export.formats.base_formats import CSV
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_GET
-from .forms import AddUserForm, EditUserForm 
+from django.db import IntegrityError
+from .forms import AddUserForm, EditUserForm, UserProfileForm
 from .models import (
     VerificationRequest,
     EnrollmentMasterlist,
@@ -33,12 +36,12 @@ from .models import (
     PageViewLog,
     FeatureUtilizationLog,
     Feedback,
-    Notification_System
+    Notification_System,
 )
 from django.contrib.auth import get_user_model
 from django.db import models
 from .forms import SystemSettingForm
-from main.models import CustomUser  
+from main.models import CustomUser, UserProfile
 from .resources import EnrollmentMasterlistResource
 from .forms import SystemSettingForm
 from django.db.models.functions import TruncDay
@@ -1503,32 +1506,68 @@ def notify_itrc_staff(notification_type, message, link=None):
 @require_http_methods(["GET", "POST"])
 def add_user(request):
     if request.method == 'POST':
-        form = AddUserForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = form.save()
-            # Log the action
-            AuditLog.objects.create(
-                user=request.user,
-                action='register',  # Assuming 'register' is appropriate
-                details=f"Added new user {user.username}.",
-                timestamp=timezone.now()
-            )
-            # Send notification to ITRC staff
-            message = f"{request.user.username} added a new user: {user.username}."
-            link = reverse('manage_users')
-            notify_itrc_staff('info', message, link)
+        user_form = AddUserForm(request.POST)
+        profile_form = UserProfileForm(request.POST, request.FILES)
+        if user_form.is_valid() and profile_form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Save the user
+                    user = user_form.save()
 
-            messages.success(request, f'User {user.username} has been added successfully.')
-            return redirect('manage_users')
+                    # At this point, the signal has already created the UserProfile
+                    # Now, update the profile with form data
+                    profile = user.profile
+                    profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+                    profile_form.save()
+
+                    # Log the action
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action='add_user',
+                        details=f"Added new user {user.username}.",
+                        timestamp=timezone.now()
+                    )
+
+                    # Send notification to ITRC staff
+                    message = f"{request.user.username} added a new user: {user.username}."
+                    link = reverse('manage_users')
+                    notify_itrc_staff('info', message, link)
+
+                    messages.success(request, f'User "{user.username}" has been added successfully.')
+                    return redirect('manage_users')
+            except IntegrityError as e:
+                if 'unique constraint' in str(e).lower():
+                    messages.error(request, f'A user with that username or email already exists.')
+                else:
+                    messages.error(request, f'An unexpected error occurred: {str(e)}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
-        form = AddUserForm()
+        user_form = AddUserForm()
+        profile_form = UserProfileForm()
 
     context = {
-        'form': form,
+        'user_form': user_form,
+        'profile_form': profile_form,
     }
     return render(request, 'itrc_tools/add_user.html', context)
+@csrf_exempt  # Ensure CSRF tokens are handled; alternatively, include CSRF tokens in AJAX requests
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def check_unique(request):
+    """
+    AJAX view to check the uniqueness of a given field.
+    Expects 'field' and 'value' in POST data.
+    """
+    field = request.POST.get('field')
+    value = request.POST.get('value')
+
+    if field not in ['username', 'email', 'student_id']:
+        return JsonResponse({'is_unique': False, 'error': 'Invalid field.'}, status=400)
+
+    exists = CustomUser.objects.filter(**{f"{field}__iexact": value}).exists()
+    return JsonResponse({'is_unique': not exists})
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_http_methods(["GET", "POST"])

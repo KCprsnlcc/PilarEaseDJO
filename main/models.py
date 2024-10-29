@@ -382,17 +382,17 @@ class UserSession(models.Model):
     def __str__(self):
         return f"Session for {self.user.username} - {self.session_key}"
 
-# Signal Receivers
-@receiver(post_save, sender=CustomUser)
-def create_user_notification_settings(sender, instance, created, **kwargs):
-    if created:
-        UserNotificationSettings.objects.create(user=instance)
+# # Signal Receivers
+# @receiver(post_save, sender=CustomUser)
+# def create_user_notification_settings(sender, instance, created, **kwargs):
+#     if created:
+#         UserNotificationSettings.objects.create(user=instance)
 
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
+# @receiver(post_save, sender=CustomUser)
+# def create_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         UserProfile.objects.create(user=instance)
 
-@receiver(post_save, sender=CustomUser)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+# @receiver(post_save, sender=CustomUser)
+# def save_user_profile(sender, instance, **kwargs):
+#     instance.profile.save()
