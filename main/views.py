@@ -1333,6 +1333,7 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 if user.is_active:
+                    # User is active, proceed to login
                     login(request, user)
 
                     # Create an AuditLog entry for login
@@ -1364,16 +1365,130 @@ def login_view(request):
 
                     return JsonResponse({'success': True, 'redirect_url': '/'})
                 else:
-                    # User account is inactive (pending verification)
-                    error_message = {
-                        '__all__': [
-                            {
-                                'message': 'Your account is pending verification.',
-                                'code': 'inactive'
-                            }
-                        ]
-                    }
-                    return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                    # User account is inactive
+                    if user.verification_status == 'pending':
+                        # Account is pending verification
+                        try:
+                            # Verify if the user details are in the EnrollmentMasterlist
+                            EnrollmentMasterlist.objects.get(
+                                student_id=user.student_id.strip(),
+                                full_name=user.full_name.strip(),
+                                academic_year_level=user.academic_year_level.strip()
+                            )
+
+                            if is_auto_accept_enabled():
+                                # Auto-activate and verify the user
+                                user.is_active = True
+                                user.is_verified = True
+                                user.verification_status = 'verified'
+                                user.save()
+
+                                # Remove any existing verification requests
+                                VerificationRequest.objects.filter(user=user).delete()
+
+                                # Log the action
+                                AuditLog.objects.create(
+                                    user=user,
+                                    action='auto_verify',
+                                    details=f"User {user.username} auto-verified upon login at {timezone.now()}."
+                                )
+
+                                # Log the user in
+                                login(request, user)
+
+                                # Handle session tracking
+                                session_key = request.session.session_key
+                                if not session_key:
+                                    request.session.create()
+                                    session_key = request.session.session_key
+
+                                try:
+                                    session = Session.objects.get(session_key=session_key)
+                                    expire_date = session.expire_date
+                                except Session.DoesNotExist:
+                                    expire_date = timezone.now() + timezone.timedelta(days=1)  # Default expiration
+
+                                # Create a UserSession entry
+                                UserSession.objects.create(
+                                    user=user,
+                                    session_key=session_key,
+                                    created_at=timezone.now(),
+                                    expire_date=expire_date
+                                )
+
+                                return JsonResponse({'success': True, 'redirect_url': '/'})
+                            else:
+                                # Auto-accept not enabled, keep account pending
+                                error_message = {
+                                    '__all__': [
+                                        {
+                                            'message': 'Your account is pending manual verification.',
+                                            'code': 'inactive'
+                                        }
+                                    ]
+                                }
+                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                        except EnrollmentMasterlist.DoesNotExist:
+                            # User details not found in EnrollmentMasterlist
+                            if is_auto_reject_enabled():
+                                # Auto-reject the user
+                                user.is_active = False
+                                user.is_verified = False
+                                user.verification_status = 'rejected'
+                                user.save()
+
+                                # Remove any existing verification requests
+                                VerificationRequest.objects.filter(user=user).delete()
+
+                                # Log the action
+                                AuditLog.objects.create(
+                                    user=user,
+                                    action='auto_reject',
+                                    details=f"User {user.username} auto-rejected upon login at {timezone.now()}."
+                                )
+
+                                error_message = {
+                                    '__all__': [
+                                        {
+                                            'message': 'Your account has been automatically rejected.',
+                                            'code': 'rejected'
+                                        }
+                                    ]
+                                }
+                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                            else:
+                                # Auto-reject not enabled, keep account pending
+                                error_message = {
+                                    '__all__': [
+                                        {
+                                            'message': 'Your account is pending manual verification.',
+                                            'code': 'inactive'
+                                        }
+                                    ]
+                                }
+                                return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                    elif user.verification_status == 'rejected':
+                        # Account has been rejected
+                        error_message = {
+                            '__all__': [
+                                {
+                                    'message': 'Your account has been rejected.',
+                                    'code': 'rejected'
+                                }
+                            ]
+                        }
+                        return JsonResponse({'success': False, 'error_message': error_message}, status=400)
+                    else:
+                        # Account is inactive for another reason
+                        error_message = {
+                            '__all__': [
+                                {
+                                    'message': 'Your account is inactive.',
+                                    'code': 'inactive'
+                                }
+                            ]
+                        }
+                        return JsonResponse({'success': False, 'error_message': error_message}, status=400)
             else:
                 form.add_error(None, "Invalid login credentials")
         errors = form.errors.get_json_data()

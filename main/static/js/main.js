@@ -3359,13 +3359,24 @@ function showSuccess(message, type) {
   }
 }
 
-function parseErrorMessages(errors) {
-  for (let field in errors) {
-    if (errors.hasOwnProperty(field)) {
-      return errors[field][0].message;
+function parseErrorMessages(errorData) {
+  let errorMessage = "";
+
+  // Check for '__all__' errors first
+  if (errorData["__all__"]) {
+    errorData["__all__"].forEach((error) => {
+      errorMessage += error.message + " ";
+    });
+  } else {
+    // Iterate over field-specific errors
+    for (let field in errorData) {
+      errorData[field].forEach((error) => {
+        errorMessage += error.message + " ";
+      });
     }
   }
-  return "An error occurred. Please try again.";
+
+  return errorMessage.trim();
 }
 document.addEventListener("DOMContentLoaded", function () {
   // Separate references for login and register forms and buttons
@@ -3583,7 +3594,15 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         body: new URLSearchParams(formData).toString(),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          // Check if response is JSON
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.indexOf("application/json") !== -1) {
+            return response.json();
+          } else {
+            throw new TypeError("Response is not JSON");
+          }
+        })
         .then((data) => {
           hideLoginLoader();
 
