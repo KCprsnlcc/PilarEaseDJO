@@ -1370,19 +1370,26 @@ a:hover {
 }
 /* Modal Overlay */
 .itrc-dashboard-modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  display: flex; /* Changed to flex for centering */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-  z-index: 2000000;
-  transition: opacity var(--transition-speed);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
+.itrc-dashboard-modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease;
+}
 /* Modal Content */
 .itrc-dashboard-modal {
   background-color: var(--card-background);
@@ -1391,9 +1398,32 @@ a:hover {
   max-width: 500px;
   box-shadow: var(--box-shadow);
   overflow: hidden;
-  animation: slideDown 0.3s ease-out;
-  display: flex;
-  flex-direction: column;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.itrc-dashboard-modal-overlay.show .itrc-dashboard-modal {
+  transform: translateY(0);
+  opacity: 1;
+}
+/* Animation Keyframes */
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  .itrc-dashboard-modal {
+    width: 95%;
+  }
 }
 
 /* Modal Header */
@@ -1435,4 +1465,71 @@ a:hover {
   gap: 10px;
   border-top: 1px solid #e0e0e0;
   background-color: #f9f9f9;
+}
+
+/* Modal Buttons */
+.itrc-dashboard-modal-footer .btn {
+  min-width: 100px;
+  padding: 10px 20px;
+  font-size: 1em;
+  border-radius: 4px;
+  transition: background-color var(--transition-speed),
+    transform var(--transition-speed);
+}
+
+/* Primary Button */
+.itrc-dashboard-modal-footer .btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.itrc-dashboard-modal-footer .btn-primary:hover {
+  background-color: #357ab8;
+  border-color: #357ab8;
+  transform: translateY(-2px);
+}
+
+/* Secondary Button */
+.itrc-dashboard-modal-footer .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #ffffff;
+}
+
+.itrc-dashboard-modal-footer .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+  transform: translateY(-2px);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  .itrc-dashboard-modal-overlay {
+    padding: 10px;
+  }
+
+  .itrc-dashboard-modal {
+    width: 95%;
+  }
+
+  .itrc-dashboard-modal-header,
+  .itrc-dashboard-modal-body,
+  .itrc-dashboard-modal-footer {
+    padding: 10px 15px;
+  }
+
+  .itrc-dashboard-modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .itrc-dashboard-modal-footer .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .itrc-dashboard-modal-footer .btn:last-child {
+    margin-bottom: 0;
+  }
 }

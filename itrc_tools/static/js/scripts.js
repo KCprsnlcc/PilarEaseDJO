@@ -29,6 +29,7 @@ $(document).ready(function () {
     currentCheckbox = $checkbox;
     currentUserId = userId;
 
+    // Update modal content based on actionType
     switch (actionType) {
       case "enable_auto_accept":
         $modalTitle.text("Confirm Enable Auto Accept");
@@ -67,21 +68,28 @@ $(document).ready(function () {
         $modalBody.html("<p>Are you sure you want to perform this action?</p>");
     }
 
-    $modalOverlay.fadeIn(200);
+    $modalOverlay.addClass("show");
   }
 
   // Function to close modal and optionally revert checkbox
   function closeModal(revert = false) {
-    if (revert && currentCheckbox) {
-      currentCheckbox.prop("checked", !currentCheckbox.prop("checked"));
-      updateToggleLabel(currentCheckbox);
-    }
-    $modalOverlay.fadeOut(200);
-    currentActionType = null;
-    currentCheckbox = null;
-    currentUserId = null;
-  }
+    // Add smooth hide transition and remove after completed
+    $modalOverlay.removeClass("show");
 
+    setTimeout(() => {
+      if (revert && currentCheckbox) {
+        currentCheckbox.prop("checked", !currentCheckbox.prop("checked"));
+        updateToggleLabel(currentCheckbox);
+      }
+      // Re-enable checkbox if it was disabled
+      if (currentCheckbox) {
+        currentCheckbox.prop("disabled", false);
+      }
+      currentActionType = null;
+      currentCheckbox = null;
+      currentUserId = null;
+    }, 300); // Match the CSS transition duration
+  }
   // Function to update the toggle label based on checkbox state
   function updateToggleLabel($checkbox) {
     const isChecked = $checkbox.is(":checked");
@@ -111,7 +119,10 @@ $(document).ready(function () {
       actionType = isChecked ? "enable_auto_reject" : "disable_auto_reject";
     }
 
+    // Open confirmation modal
     openModal(actionType, $checkbox);
+
+    // Temporarily disable the checkbox to prevent multiple clicks until confirmation
     $checkbox.prop("disabled", true);
   });
 
@@ -119,6 +130,7 @@ $(document).ready(function () {
   $confirmModalButton.on("click", function () {
     if (!currentActionType) return;
 
+    // Run specific function based on action type
     switch (currentActionType) {
       case "enable_auto_accept":
         enableAutoAccept();
@@ -132,34 +144,27 @@ $(document).ready(function () {
       case "disable_auto_reject":
         disableAutoReject();
         break;
-      case "accept_user":
-        acceptUser(currentUserId);
-        break;
-      case "reject_user":
-        rejectUser(currentUserId);
-        break;
-      default:
-        toastr.error("Unknown action.");
+      // Additional cases for other actions
     }
 
+    // Close modal without reverting the checkbox state
     closeModal();
   });
 
   // Close modal on cancel or close button
-  cancelModalButton.on("click", function () {
-    closeModal(true);
+  $cancelModalButton.on("click", function () {
+    closeModal(true); // Revert checkbox state on cancel
   });
   $closeModalButton.on("click", function () {
-    closeModal(true);
+    closeModal(true); // Revert checkbox state on close
   });
 
-  // Close modal when clicking outside the modal content
+  // Handle overlay click outside modal content to close
   $modalOverlay.on("click", function (event) {
     if ($(event.target).is($modalOverlay)) {
-      closeModal(true);
+      closeModal(true); // Revert checkbox state on overlay click
     }
   });
-
   // Additional: Handle keyboard accessibility for the modal
   $modalOverlay.on("keydown", function (e) {
     if (e.key === "Escape") {
