@@ -54,9 +54,6 @@ def is_itrc_staff(user):
     return user.is_authenticated and user.is_itrc_staff
 
 class ItrcLoginView(LoginView):
-    """
-    Custom Login View for ITRC Tools
-    """
     template_name = 'itrc_tools/login.html'
     redirect_authenticated_user = True
 
@@ -76,14 +73,15 @@ class ItrcLoginView(LoginView):
             timestamp=timezone.now()
         )
 
-        # Check for auto accept/reject settings
-        auto_accept_enabled = SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
-        auto_reject_enabled = SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true'
-
-        if auto_accept_enabled and user.verification_status == 'pending':
-            self.auto_accept_user(user)
-        elif auto_reject_enabled and user.verification_status == 'pending':
-            self.auto_reject_user(user)
+        # Process pending verification request
+        if user.verification_status == 'pending':
+            verification_request = VerificationRequest.objects.get(user=user)
+            if SystemSetting.is_auto_accept_enabled():
+                verification_request.auto_accept()
+                messages.success(self.request, f'User {user.username} has been automatically verified.')
+            elif SystemSetting.is_auto_reject_enabled():
+                verification_request.auto_reject()
+                messages.info(self.request, f'User {user.username} has been automatically rejected.')
 
         return response
 
@@ -205,8 +203,17 @@ def itrc_dashboard(request):
     pending_requests_page = paginator.get_page(page_number)
     
     total_requests = VerificationRequest.objects.count()
-    verified_requests = VerificationRequest.objects.filter(status='verified').count()
-    rejected_requests = VerificationRequest.objects.filter(status='rejected').count()
+    verified_requests = VerificationRequest.objects.filter(
+        Q(status='verified') | Q(status='auto_accepted')
+    ).count()
+    rejected_requests = VerificationRequest.objects.filter(
+        Q(status='rejected') | Q(status='auto_rejected')
+    ).count()
+
+    # Additional Statistics
+    auto_accepted_requests = VerificationRequest.objects.filter(status='auto_accepted').count()
+    auto_rejected_requests = VerificationRequest.objects.filter(status='auto_rejected').count()
+    pending_auto_actions = VerificationRequest.objects.filter(status='pending').count()
     
     # Additional Statistics
     auto_accepted_requests = VerificationRequest.objects.filter(status='auto_accepted').count()
@@ -236,55 +243,56 @@ def itrc_dashboard(request):
 @login_required
 @require_POST
 def auto_accept_all(request):
-    """
-    Automatically accept all pending verification requests.
-    """
     pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
-
     if not pending_requests.exists():
-        messages.info(request, "There are no pending verification requests to accept.")
+        messages.info(request, "No pending verification requests to accept.")
         return redirect('itrc_dashboard')
 
-    with transaction.atomic():
-        for verification_request in pending_requests:
-            user = verification_request.user
-            remarks = "Auto verified by ITRC staff."
-
-            # Update user status
-            user.is_active = True
-            user.is_verified = True
-            user.verification_status = 'verified'
-            user.save()
-
-            # Update verification request
-            verification_request.status = 'verified'
-            verification_request.remarks = remarks
-            verification_request.save()
-
-            # Log the action
-            AuditLog.objects.create(
-                user=request.user,
-                action='verify',
-                details=f"Auto-approved user {user.username}. Remarks: {remarks}",
-                timestamp=timezone.now()
-            )
-
-            # Send notification to the user
-            Notification_System.objects.create(
-                user=user,
-                notification_type='success',
-                message='Your account has been automatically verified by the ITRC staff.',
-                link=reverse('itrc_dashboard')  # Adjust as needed
-            )
+    for request in pending_requests:
+        request.auto_accept()
+        # Log the action
+        AuditLog.objects.create(
+            user=request.user,
+            action='verify',
+            details=f"Auto-approved user {request.user.username}.",
+            timestamp=timezone.now()
+        )
 
     messages.success(request, f"Successfully auto-accepted {pending_requests.count()} verification requests.")
-
-    # Optionally, notify all ITRC staff about this bulk action
-    message = f"{request.user.username} auto-accepted {pending_requests.count()} verification requests."
-    link = reverse('itrc_dashboard')
-    notify_itrc_staff('info', message, link)
-
     return redirect('itrc_dashboard')
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def toggle_auto_reject(request):
+    enabled = request.POST.get('enabled') == 'true'
+    try:
+        # Update the setting
+        SystemSetting.set_setting('auto_reject_enabled', 'true' if enabled else 'false')
+        if enabled:
+            # Disable auto_accept
+            SystemSetting.set_setting('auto_accept_enabled', 'false')
+
+            # Process all pending requests
+            pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+            for verification_request in pending_requests:
+                verification_request.auto_reject()
+                # Log the action
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='reject',
+                    details=f"Auto-rejected user {verification_request.user.username}.",
+                    timestamp=timezone.now()
+                )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+    
+def is_auto_accept_enabled():
+    return SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
+
+def is_auto_reject_enabled():
+    return SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true'
 
 @user_passes_test(is_itrc_staff)
 @login_required
@@ -292,14 +300,24 @@ def auto_accept_all(request):
 def toggle_auto_accept(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        settings = SystemSetting.objects.get(id=1)  # Assuming a singleton settings object
-        settings.auto_accept = enabled
+        # Update the setting
+        SystemSetting.set_setting('auto_accept_enabled', 'true' if enabled else 'false')
         if enabled:
-            settings.auto_reject = False  # Disable Auto Reject if enabling Auto Accept
-        settings.save()
+            # Disable auto_reject
+            SystemSetting.set_setting('auto_reject_enabled', 'false')
+
+            # Process all pending requests
+            pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+            for verification_request in pending_requests:
+                verification_request.auto_accept()
+                # Log the action
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='verify',
+                    details=f"Auto-approved user {verification_request.user.username}.",
+                    timestamp=timezone.now()
+                )
         return JsonResponse({'success': True})
-    except SystemSetting.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Settings not found.'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
 
@@ -309,14 +327,24 @@ def toggle_auto_accept(request):
 def toggle_auto_reject(request):
     enabled = request.POST.get('enabled') == 'true'
     try:
-        settings = SystemSetting.objects.get(id=1)  # Assuming a singleton settings object
-        settings.auto_reject = enabled
+        # Update the setting
+        SystemSetting.set_setting('auto_reject_enabled', 'true' if enabled else 'false')
         if enabled:
-            settings.auto_accept = False  # Disable Auto Accept if enabling Auto Reject
-        settings.save()
+            # Disable auto_accept
+            SystemSetting.set_setting('auto_accept_enabled', 'false')
+
+            # Process all pending requests
+            pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
+            for verification_request in pending_requests:
+                verification_request.auto_reject()
+                # Log the action
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='reject',
+                    details=f"Auto-rejected user {verification_request.user.username}.",
+                    timestamp=timezone.now()
+                )
         return JsonResponse({'success': True})
-    except SystemSetting.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Settings not found.'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
 
@@ -409,54 +437,22 @@ def manual_reject_user(request, user_id):
 @login_required
 @require_POST
 def auto_reject_all(request):
-    """
-    Automatically reject all pending verification requests.
-    """
     pending_requests = VerificationRequest.objects.filter(status='pending').select_related('user')
-
     if not pending_requests.exists():
-        messages.info(request, "There are no pending verification requests to reject.")
+        messages.info(request, "No pending verification requests to reject.")
         return redirect('itrc_dashboard')
 
-    with transaction.atomic():
-        for verification_request in pending_requests:
-            user = verification_request.user
-            remarks = "Auto-rejected by ITRC staff."
-
-            # Update user status
-            user.is_active = False
-            user.is_verified = False
-            user.verification_status = 'rejected'
-            user.save()
-
-            # Update verification request
-            verification_request.status = 'rejected'
-            verification_request.remarks = remarks
-            verification_request.save()
-
-            # Log the action
-            AuditLog.objects.create(
-                user=request.user,
-                action='reject',
-                details=f"Auto-rejected user {user.username}. Remarks: {remarks}",
-                timestamp=timezone.now()
-            )
-
-            # Send notification to the user
-            Notification_System.objects.create(
-                user=user,
-                notification_type='warning',
-                message='Your account verification request has been automatically rejected by the ITRC staff.',
-                link=reverse('contact_support')  # Adjust as needed
-            )
+    for request in pending_requests:
+        request.auto_reject()
+        # Log the action
+        AuditLog.objects.create(
+            user=request.user,
+            action='reject',
+            details=f"Auto-rejected user {request.user.username}.",
+            timestamp=timezone.now()
+        )
 
     messages.success(request, f"Successfully auto-rejected {pending_requests.count()} verification requests.")
-
-    # Optionally, notify all ITRC staff about this bulk action
-    message = f"{request.user.username} auto-rejected {pending_requests.count()} verification requests."
-    link = reverse('itrc_dashboard')
-    notify_itrc_staff('warning', message, link)
-
     return redirect('itrc_dashboard')
 
 @user_passes_test(is_itrc_staff)

@@ -6,11 +6,21 @@ from .models import SystemSetting
 class SystemSettingForm(forms.ModelForm):
     class Meta:
         model = SystemSetting
-        fields = ['key', 'value']
+        fields = ['auto_accept_enabled', 'auto_reject_enabled']
         widgets = {
-            'key': forms.TextInput(attrs={'class': 'pilarease-itrc-form-input'}),
-            'value': forms.TextInput(attrs={'class': 'pilarease-itrc-form-input'}),
+            'auto_accept_enabled': forms.CheckboxInput(attrs={'class': 'pilarease-itrc-form-checkbox'}),
+            'auto_reject_enabled': forms.CheckboxInput(attrs={'class': 'pilarease-itrc-form-checkbox'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        auto_accept = cleaned_data.get('auto_accept_enabled')
+        auto_reject = cleaned_data.get('auto_reject_enabled')
+
+        if auto_accept and auto_reject:
+            raise forms.ValidationError("You cannot enable both Auto Accept and Auto Reject at the same time.")
+
+        return cleaned_data
         
 from django.contrib.auth import get_user_model
 from main.models import UserProfile
@@ -20,6 +30,14 @@ CustomUser = get_user_model()
 class AddUserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, required=True)
     avatar = forms.ImageField(required=False)
+    verification_status = forms.ChoiceField(
+        choices=[
+            ('pending', 'Pending'),
+            ('verified', 'Verified'),
+            ('rejected', 'Rejected')
+        ],
+        widget=forms.Select(attrs={'class': 'pilarease-itrc-form-select'})
+    )
 
     class Meta:
         model = CustomUser
@@ -34,6 +52,7 @@ class AddUserForm(forms.ModelForm):
             'is_itrc_staff',
             'is_active',
             'password',
+            'verification_status',  # Include verification_status
         ]
 
     def save(self, commit=True):
@@ -46,10 +65,17 @@ class AddUserForm(forms.ModelForm):
             profile.avatar = self.cleaned_data.get('avatar') or profile.avatar
             profile.save()
         return user
-
 class EditUserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, required=False)
     avatar = forms.ImageField(required=False)
+    verification_status = forms.ChoiceField(
+        choices=[
+            ('pending', 'Pending'),
+            ('verified', 'Verified'),
+            ('rejected', 'Rejected')
+        ],
+        widget=forms.Select(attrs={'class': 'pilarease-itrc-form-select'})
+    )
 
     class Meta:
         model = CustomUser
@@ -63,6 +89,7 @@ class EditUserForm(forms.ModelForm):
             'is_counselor',
             'is_itrc_staff',
             'is_active',
+            'verification_status',  # Include verification_status
         ]
 
     def save(self, commit=True):

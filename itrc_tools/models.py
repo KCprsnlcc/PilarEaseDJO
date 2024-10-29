@@ -5,30 +5,46 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from main.models import CustomUser, Feedback
 from django.utils import timezone
-
+from django.db import transaction
 class VerificationRequest(models.Model):
+        # Define the choices somewhere
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('verified', 'Verified'),
         ('rejected', 'Rejected'),
+        ('auto_accepted', 'Auto Accepted'),
+        ('auto_rejected', 'Auto Rejected'),
     ]
-
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='verification_request'
-    )
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     remarks = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"VerificationRequest({self.user.username}) - {self.status}"
 
+
+    def auto_accept(self):
+        with transaction.atomic():
+            self.status = 'auto_accepted'
+            self.remarks = 'Automatically accepted by system.'
+            self.save()
+
+            user = self.user
+            user.is_active = True
+            user.is_verified = True
+            user.verification_status = 'verified'
+            user.save()
+
+    def auto_reject(self):
+        with transaction.atomic():
+            self.status = 'auto_rejected'
+            self.remarks = 'Automatically rejected by system.'
+            self.save()
+
+            user = self.user
+            user.is_active = False
+            user.is_verified = False
+            user.verification_status = 'rejected'
+            user.save()
 class APIPerformanceLog(models.Model):
     endpoint = models.CharField(max_length=255)
     response_time = models.FloatField(help_text="Response time in milliseconds")
@@ -98,23 +114,25 @@ class EnrollmentMasterlist(models.Model):
 
 class SystemSetting(models.Model):
     key = models.CharField(max_length=100, unique=True)
-    value = models.CharField(max_length=255)
+    value = models.CharField(max_length=100)
+    auto_accept_enabled = models.BooleanField(default=False)
+    auto_reject_enabled = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
-    def __str__(self):
-        return f"{self.key}: {self.value}"
-
-    @classmethod
-    def get_setting(cls, key, default=None):
-        try:
-            return cls.objects.get(key=key).value
-        except cls.DoesNotExist:
-            return default
-
-    @classmethod
-    def set_setting(cls, key, value):
-        setting, created = cls.objects.update_or_create(key=key, defaults={'value': value})
+    @staticmethod
+    def set_setting(key, value):
+        setting, created = SystemSetting.objects.update_or_create(
+            key=key,
+            defaults={'value': value}
+        )
         return setting
 
+    @staticmethod
+    def get_setting(key, default=None):
+        try:
+            return SystemSetting.objects.get(key=key).value
+        except SystemSetting.DoesNotExist:
+            return default
 class AuditLog(models.Model):
     ACTION_CHOICES = [
         ('verify', 'Verify User'),

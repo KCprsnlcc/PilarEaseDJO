@@ -3471,7 +3471,9 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          showSuccess("Registration successful!", "register");
+          // Use the message returned from the server
+          showSuccess(data.message, "register");
+
           setTimeout(() => {
             registerModal.classList.add("pop-out");
             setTimeout(() => {

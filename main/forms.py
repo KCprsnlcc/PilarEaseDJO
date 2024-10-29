@@ -7,10 +7,10 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = CustomUser
         fields = [
-            'student_id', 'username', 'full_name', 'is_counselor',
-            'academic_year_level', 'contact_number', 'email', 'password1', 'password2'
+            'student_id', 'username', 'full_name', 'academic_year_level',
+            'contact_number', 'email', 'password1', 'password2'
         ]
-
+    
     def clean(self):
         cleaned_data = super().clean()
         student_id = cleaned_data.get('student_id')
@@ -19,7 +19,7 @@ class CustomUserCreationForm(UserCreationForm):
         password1 = cleaned_data.get("password1")
         password2 = cleaned_data.get("password2")
         email = cleaned_data.get("email")
-
+        
         if password1 and password2 and password1 != password2:
             self.add_error('password2', "The passwords you entered do not match. Please try again.")
 
@@ -29,7 +29,7 @@ class CustomUserCreationForm(UserCreationForm):
         # Validate that the provided student_id, full_name, and academic_year_level match a record in EnrollmentMasterlist
         if student_id and full_name and academic_year_level:
             try:
-                enrollment_record = EnrollmentMasterlist.objects.get(
+                EnrollmentMasterlist.objects.get(
                     student_id=student_id.strip(),
                     full_name=full_name.strip(),
                     academic_year_level=academic_year_level.strip()
@@ -40,7 +40,6 @@ class CustomUserCreationForm(UserCreationForm):
             self.add_error(None, "Please fill in all required fields.")
 
         return cleaned_data
-
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'input-field', 'placeholder': 'Username'}))
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'input-field', 'placeholder': 'Password'}))

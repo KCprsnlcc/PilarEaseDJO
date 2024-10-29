@@ -16,6 +16,7 @@ from django.db import transaction, IntegrityError
 from .forms import CustomUserCreationForm, CustomAuthenticationForm, AvatarUploadForm
 from django.contrib.auth.hashers import check_password
 from django.core.files.storage import default_storage
+from itrc_tools.models import EnrollmentMasterlist, SystemSetting, AuditLog
 from django.core.files.base import ContentFile
 from .models import UserProfile
 import logging
@@ -38,6 +39,7 @@ import seaborn as sns
 from io import BytesIO
 import base64
 from wordcloud import WordCloud
+from itrc_tools.models import SystemSetting
 from .models import Feedback
 from .forms import FeedbackForm
 from textblob import TextBlob
@@ -1034,39 +1036,70 @@ def get_recent_activity(request):
         'activities': activities_data,
         'has_next': page_obj.has_next(),
     })
+def is_auto_accept_enabled():
+    return SystemSetting.get_setting('auto_accept_enabled', 'false') == 'true'
+
+def is_auto_reject_enabled():
+    return SystemSetting.get_setting('auto_reject_enabled', 'false') == 'true'
 
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False  # User cannot login until verified
-            user.verification_status = 'pending'
-            user.save()
-            VerificationRequest.objects.create(user=user)
+            message = ''
 
-            # Create an AuditLog entry for registration
+            try:
+                # Verify if the user details are in the EnrollmentMasterlist
+                EnrollmentMasterlist.objects.get(
+                    student_id=user.student_id.strip(),
+                    full_name=user.full_name.strip(),
+                    academic_year_level=user.academic_year_level.strip()
+                )
+
+                if is_auto_accept_enabled():
+                    user.is_active = True  # Allow login
+                    user.is_verified = True
+                    user.verification_status = 'verified'  # Verified automatically based on ITRC check
+                    message = 'Your account has been automatically verified based on ITRC records.'
+                else:
+                    user.is_active = False  # Restrict login until verified
+                    user.is_verified = False
+                    user.verification_status = 'pending'  # Pending verification if auto-accept is disabled
+                    message = 'Your registration is pending manual verification.'
+
+            except EnrollmentMasterlist.DoesNotExist:
+                user.is_active = False  # Restrict login until verified
+                user.is_verified = False
+                user.verification_status = 'pending'  # Pending verification if not found in ITRC
+                message = 'Your registration is pending manual verification.'
+
+            user.save()
+
+            # Create a verification request record if manual verification is needed
+            if user.verification_status == 'pending':
+                VerificationRequest.objects.create(user=user)
+
+            # Log the registration action in the audit log
             AuditLog.objects.create(
                 user=user,
                 action='register',
-                details=f"User {user.username} registered at {user.date_joined}."
+                details=f"User {user.username} registered at {timezone.now()} with verification status '{user.verification_status}'."
             )
 
-            # Optionally, send a confirmation email or other post-registration actions
-
-            # Return a JSON response indicating success
             return JsonResponse({
                 'success': True,
-                'message': 'Your registration is pending verification.',
+                'message': message,
                 'redirect_url': '/login/'
             })
-        else:
-            errors = form.errors.get_json_data()
-            return JsonResponse({'success': False, 'error_message': errors}, status=400)
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 
+        # Return errors if the form is not valid
+        errors = form.errors.get_json_data()
+        return JsonResponse({'success': False, 'error_message': errors}, status=400)
+    
+    # Display the registration form
+    form = CustomUserCreationForm()
+    return render(request, 'base.html', {'register_form': form, 'show_register_modal': False})
 def request_email_change(request):
     if request.method == 'POST':
         try:
