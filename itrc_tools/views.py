@@ -1333,16 +1333,6 @@ def audit_logs_view(request):
             logs_page_obj.number, on_each_side=2, on_ends=1
         )
     }
-     # Log and notify action
-    AuditLog.objects.create(
-        user=request.user,
-        action='view_audit_logs',
-        details=f"Viewed audit logs with search query: '{search_query}'.",
-        timestamp=timezone.now()
-    )
-    message = f"{request.user.username} viewed audit logs."
-    link = reverse('audit_logs_view')
-    notify_itrc_staff('info', message, link)
     return render(request, 'itrc_tools/auditlog.html', context)
 @user_passes_test(is_itrc_staff)
 @login_required
