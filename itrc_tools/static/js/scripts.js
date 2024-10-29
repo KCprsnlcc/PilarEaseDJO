@@ -280,29 +280,6 @@ $(document).ready(function () {
     });
   }
   // Helper Functions to Disable the Opposite Setting
-  function disableAutoAccept() {
-    $.ajax({
-      url: window.toggleAutoAcceptUrl,
-      type: "POST",
-      data: {
-        enabled: false,
-        csrfmiddlewaretoken: window.csrfToken,
-      },
-      success: function (response) {
-        if (response.success) {
-          toastr.success("Auto Accept All has been disabled.");
-          location.reload(); // Reload the page upon success
-        } else {
-          toastr.error("Failed to disable Auto Accept All.");
-          closeModal(true); // Revert checkbox state
-        }
-      },
-      error: function () {
-        toastr.error("An error occurred while disabling Auto Accept All.");
-        closeModal(true); // Revert checkbox state
-      },
-    });
-  }
 
   function disableAutoRejectButton(revert = true) {
     const $rejectCheckbox = $("#autoRejectCheckbox");
@@ -505,13 +482,18 @@ document.addEventListener("DOMContentLoaded", function () {
       document.querySelectorAll(".pilarease-itrc-user-checkbox:checked")
     ).map((cb) => cb.value);
 
+    if (!selectedAction) {
+      toastr.error("Please select a bulk action to perform.");
+      return;
+    }
+
     // Create a hidden form dynamically to submit the selected action and users
     const form = document.createElement("form");
     form.method = "post";
     form.action = manageUsersBulkActionUrl; // Defined in HTML
 
     // CSRF Token
-    const csrfToken = csrfTokenValue; // Defined in HTML
+    const csrfToken = window.csrfToken; // Corrected reference
     const csrfInput = document.createElement("input");
     csrfInput.type = "hidden";
     csrfInput.name = "csrfmiddlewaretoken";
@@ -1051,4 +1033,106 @@ $(document).ready(function () {
     if (/[\W]/.test(password)) strength++;
     return strength;
   }
+});
+// static/js/bulkActions.js
+$(document).ready(function () {
+  // Initialize Toastr options
+  toastr.options = {
+    closeButton: true,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    timeOut: "5000",
+    extendedTimeOut: "1000",
+    showEasing: "swing",
+    hideEasing: "linear",
+    showMethod: "fadeIn",
+    hideMethod: "fadeOut",
+  };
+
+  // Function to open the confirmation modal
+  function openBulkActionModal() {
+    $("#bulkActionModalOverlay").css("display", "flex");
+  }
+
+  // Function to close the confirmation modal
+  function closeBulkActionModal() {
+    $("#bulkActionModalOverlay").css("display", "none");
+  }
+
+  // Handle Bulk Action Form Submission
+  $("#bulk-action-form").on("submit", function (e) {
+    e.preventDefault(); // Prevent the default form submission
+
+    const selectedAction = $("#bulk-action-select").val();
+    const selectedUsers = $(".pilarease-itrc-user-checkbox:checked")
+      .map(function () {
+        return $(this).val();
+      })
+      .get();
+
+    if (!selectedAction) {
+      toastr.error("Please select a bulk action to perform.");
+      return;
+    }
+
+    if (selectedUsers.length === 0) {
+      toastr.error("Please select at least one user to perform this action.");
+      return;
+    }
+
+    // Store the selected action and users in data attributes
+    $("#confirmBulkAction").data("action", selectedAction);
+    $("#confirmBulkAction").data("users", selectedUsers);
+
+    // Open the confirmation modal
+    openBulkActionModal();
+  });
+
+  // Handle Confirm Bulk Action in Modal
+  $("#confirmBulkAction").on("click", function () {
+    const selectedAction = $(this).data("action");
+    const selectedUsers = $(this).data("users");
+
+    $.ajax({
+      url: window.manageUsersBulkActionUrl, // Ensure this URL is correctly defined in your template
+      type: "POST",
+      data: {
+        bulk_action: selectedAction,
+        selected_users: selectedUsers,
+        csrfmiddlewaretoken: window.csrfToken, // Ensure CSRF token is correctly defined in your template
+      },
+      success: function (response) {
+        if (response.success) {
+          toastr.success(response.message);
+          location.reload(); // Reload to reflect changes without redirecting to JSON
+        } else {
+          toastr.error(response.message);
+        }
+        // Hide the confirmation modal
+        closeBulkActionModal();
+      },
+      error: function (xhr, status, error) {
+        let errorMessage =
+          "An error occurred while performing the bulk action.";
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+        toastr.error(errorMessage);
+        // Hide the confirmation modal
+        closeBulkActionModal();
+      },
+    });
+  });
+
+  // Handle Cancel and Close Buttons in Modal
+  $("#cancelBulkAction, #closeBulkActionModal").on("click", function () {
+    closeBulkActionModal();
+  });
+
+  // Close Modal When Clicking Outside the Modal Content
+  $(window).on("click", function (event) {
+    if ($(event.target).is("#bulkActionModalOverlay")) {
+      closeBulkActionModal();
+    }
+  });
 });

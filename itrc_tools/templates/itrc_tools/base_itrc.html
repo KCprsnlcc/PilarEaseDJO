@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
     <title>PilarEase ITRC Tools</title>
     <!-- Include Boxicons -->
     <link
@@ -182,8 +182,8 @@
       window.toggleAutoRejectUrl = "{% url 'toggle_auto_reject' %}";
       window.manualAcceptUserUrl = "{% url 'manual_accept_user' 0 %}"; // Replace 'manual_accept_user' with your URL name
       window.manualRejectUserUrl = "{% url 'manual_reject_user' 0 %}"; // Replace 'manual_reject_user' with your URL name
+      window.manageUsersBulkActionUrl = "{% url 'manage_users_bulk_action' %}";
     </script>
-
     <!-- Toastr Configuration -->
     <script>
       // Configure Toastr options globally

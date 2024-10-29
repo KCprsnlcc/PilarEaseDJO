@@ -50,7 +50,8 @@ import json
 from collections import Counter
 import string
 from wordcloud import WordCloud
-
+import logging
+logger = logging.getLogger(__name__)
 # Existing functions and classes (ItrcLoginView, ItrcLogoutView, etc.)
 
 def is_itrc_staff(user):
@@ -1341,19 +1342,19 @@ def manage_users_bulk_action(request):
     bulk_action = request.POST.get('bulk_action')
     selected_users = request.POST.getlist('selected_users')
 
+    logger.debug(f"Received Bulk Action: {bulk_action}")
+    logger.debug(f"Selected Users: {selected_users}")
+
     if not bulk_action:
-        messages.error(request, 'No bulk action selected.')
-        return redirect('manage_users')
+        return JsonResponse({'success': False, 'message': 'No bulk action selected.'}, status=400)
 
     if not selected_users:
-        messages.error(request, 'No users selected for the bulk action.')
-        return redirect('manage_users')
+        return JsonResponse({'success': False, 'message': 'No users selected for the bulk action.'}, status=400)
 
     try:
         selected_users = list(map(int, selected_users))
     except ValueError:
-        messages.error(request, 'Invalid user selection.')
-        return redirect('manage_users')
+        return JsonResponse({'success': False, 'message': 'Invalid user selection.'}, status=400)
 
     users_qs = CustomUser.objects.filter(id__in=selected_users).exclude(
         Q(is_itrc_staff=True) | Q(is_counselor=True)
@@ -1367,12 +1368,9 @@ def manage_users_bulk_action(request):
             details=f"Bulk verified {updated_count} users.",
             timestamp=timezone.now()
         )
-        # Send notification to all ITRC staff
-        message = f"{request.user.username} bulk verified {updated_count} users."
-        link = reverse('manage_users')  # Adjust as needed
-        notify_itrc_staff('success', message, link)
-
-        messages.success(request, f'Successfully verified {updated_count} users.')
+        message = f'Successfully verified {updated_count} users.'
+        notify_itrc_staff('success', f"{request.user.username} bulk verified {updated_count} users.", reverse('manage_users'))
+        return JsonResponse({'success': True, 'message': message})
 
     elif bulk_action == 'activate':
         updated_count = users_qs.update(is_active=True, is_verified=True, verification_status='verified')
@@ -1382,12 +1380,9 @@ def manage_users_bulk_action(request):
             details=f"Bulk activated and verified {updated_count} users.",
             timestamp=timezone.now()
         )
-        # Send notification to all ITRC staff
-        message = f"{request.user.username} bulk activated and verified {updated_count} users."
-        link = reverse('manage_users')  # Adjust as needed
-        notify_itrc_staff('success', message, link)
-
-        messages.success(request, f'Successfully activated and verified {updated_count} users.')
+        message = f'Successfully activated and verified {updated_count} users.'
+        notify_itrc_staff('success', f"{request.user.username} bulk activated and verified {updated_count} users.", reverse('manage_users'))
+        return JsonResponse({'success': True, 'message': message})
 
     elif bulk_action == 'deactivate':
         updated_count = users_qs.update(is_active=False, is_verified=False, verification_status='deactivated')
@@ -1397,20 +1392,16 @@ def manage_users_bulk_action(request):
             details=f"Bulk deactivated {updated_count} users.",
             timestamp=timezone.now()
         )
-        # Send notification to all ITRC staff
-        message = f"{request.user.username} bulk deactivated {updated_count} users."
-        link = reverse('manage_users')  # Adjust as needed
-        notify_itrc_staff('warning', message, link)
-
-        messages.success(request, f'Successfully deactivated {updated_count} users.')
+        message = f'Successfully deactivated {updated_count} users.'
+        notify_itrc_staff('warning', f"{request.user.username} bulk deactivated {updated_count} users.", reverse('manage_users'))
+        return JsonResponse({'success': True, 'message': message})
 
     elif bulk_action == 'delete':
         non_deletable_users = CustomUser.objects.filter(
             Q(id__in=selected_users) & (Q(is_itrc_staff=True) | Q(is_counselor=True))
         )
         if non_deletable_users.exists():
-            messages.error(request, 'Cannot delete ITRC staff or counselors.')
-            return redirect('manage_users')
+            return JsonResponse({'success': False, 'message': 'Cannot delete ITRC staff or counselors.'}, status=400)
 
         deleted_count, _ = users_qs.delete()
         AuditLog.objects.create(
@@ -1419,17 +1410,12 @@ def manage_users_bulk_action(request):
             details=f"Bulk deleted {deleted_count} users.",
             timestamp=timezone.now()
         )
-        # Send notification to all ITRC staff
-        message = f"{request.user.username} bulk deleted {deleted_count} users."
-        link = reverse('manage_users')  # Adjust as needed
-        notify_itrc_staff('error', message, link)
-
-        messages.success(request, f'Successfully deleted {deleted_count} users.')
+        notify_itrc_staff('error', f"{request.user.username} bulk deleted {deleted_count} users.", reverse('manage_users'))
+        message = f'Successfully deleted {deleted_count} users.'
+        return JsonResponse({'success': True, 'message': message})
 
     else:
-        messages.error(request, 'Invalid bulk action selected.')
-
-    return redirect('manage_users')
+        return JsonResponse({'success': False, 'message': 'Invalid bulk action selected.'}, status=400)
 @login_required
 def notifications_view(request):
     user_notifications = request.user.notifications.all().order_by('-timestamp')
