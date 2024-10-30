@@ -35,6 +35,7 @@ urlpatterns = [
     path('edit-user/<int:user_id>/', views.edit_user_view, name='edit_user'), # Optional: Implement this view
     path('change-role/<int:user_id>/', views.change_role, name='change_role'),  # Optional: Implement this view
     path('check-unique/', views.check_unique, name='check_unique'),
+     path('generate-pdf-report/', views.generate_pdf_report, name='generate_pdf_report'),
     
     # Bulk Verification Actions
     path('auto-accept-all/', views.auto_accept_all, name='auto_accept_all'),

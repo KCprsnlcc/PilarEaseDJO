@@ -1,0 +1,360 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Reports & Analytics PDF</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      h1,
+      h2 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .section {
+        margin-bottom: 30px;
+      }
+      .chart {
+        margin: 20px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .description {
+        font-style: italic;
+        color: #666;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ITRC Reports & Analytics</h1>
+
+    <!-- User Activity Metrics Section -->
+    <div class="section">
+      <h2>User Activity Metrics</h2>
+      <p class="description">
+        Analyze user engagement and activity over the past 30 days.
+      </p>
+
+      <!-- Login Activity Chart -->
+      <h3>Login Activity</h3>
+      <p class="description">
+        Shows the number of user logins over the last 30 days.
+      </p>
+      <img
+        src="data:image/png;base64,{{ login_activity_chart }}"
+        alt="Login Activity Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Logins</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for label, count in login_activity_labels_counts %}
+          <tr>
+            <td>{{ label }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Daily Active Users Chart -->
+      <h3>Daily Active Users (DAU)</h3>
+      <p class="description">
+        Number of unique users active each day over the last 30 days.
+      </p>
+      <img
+        src="data:image/png;base64,{{ dau_chart }}"
+        alt="Daily Active Users Chart"
+        class="chart"
+      />
+    </div>
+
+    <!-- User Demographic Insights Section -->
+    <div class="section">
+      <h2>User Demographic Insights</h2>
+      <p class="description">
+        Gain insights into the composition of your user base.
+      </p>
+
+      <!-- User Role Distribution -->
+      <h3>User Role Distribution</h3>
+      <img
+        src="data:image/png;base64,{{ user_role_chart }}"
+        alt="User Role Distribution Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for role, count in role_labels_counts %}
+          <tr>
+            <td>{{ role }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- User Verification Status -->
+      <h3>User Verification Status</h3>
+      <img
+        src="data:image/png;base64,{{ user_verification_chart }}"
+        alt="User Verification Status Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for status, count in verification_labels_counts %}
+          <tr>
+            <td>{{ status }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- User Feedback Analysis Section -->
+    <div class="section">
+      <h2>User Feedback Analysis</h2>
+      <p class="description">
+        Understand user sentiment and common feedback themes.
+      </p>
+
+      <!-- Feedback Sentiment -->
+      <h3>Feedback Sentiment</h3>
+      <img
+        src="data:image/png;base64,{{ feedback_sentiment_chart }}"
+        alt="Feedback Sentiment Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Sentiment</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sentiment, count in sentiment_labels_counts %}
+          <tr>
+            <td>{{ sentiment }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Top Feedback Keywords -->
+      <h3>Top Feedback Keywords</h3>
+      <img
+        src="data:image/png;base64,{{ feedback_keywords_chart }}"
+        alt="Feedback Keywords Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Keyword</th>
+            <th>Frequency</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for keyword, count in keywords_counts %}
+          <tr>
+            <td>{{ keyword }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- System Performance Metrics Section -->
+    <div class="section">
+      <h2>System Performance Metrics</h2>
+      <p class="description">
+        Evaluate system performance and reliability metrics.
+      </p>
+
+      <!-- API Response Time -->
+      <h3>API Response Time</h3>
+      <img
+        src="data:image/png;base64,{{ api_response_time_chart }}"
+        alt="API Response Time Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Average Response Time (ms)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for date, time in api_response_time_data %}
+          <tr>
+            <td>{{ date }}</td>
+            <td>{{ time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Error Rates -->
+      <h3>Error Rates</h3>
+      <p class="description">
+        Displays the error rates by type over the past 30 days.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            {% for error_type in error_type_labels %}
+            <th>{{ error_type }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for date, errors in error_rate_data %}
+          <tr>
+            <td>{{ date }}</td>
+            {% for error_count in errors %}
+            <td>{{ error_count }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Usage Statistics Section -->
+    <div class="section">
+      <h2>Usage Statistics</h2>
+      <p class="description">
+        Monitor feature usage and page views for the past month.
+      </p>
+
+      <!-- Page Views -->
+      <h3>Top Page Views</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Views</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for page, views in page_views_data %}
+          <tr>
+            <td>{{ page }}</td>
+            <td>{{ views }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Feature Utilization -->
+      <h3>Top Feature Utilizations</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Utilizations</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for feature, utilization in feature_utilizations_data %}
+          <tr>
+            <td>{{ feature }}</td>
+            <td>{{ utilization }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Volume Metrics Section -->
+    <div class="section">
+      <h2>Data Volume Metrics</h2>
+      <p class="description">Track data volume and storage usage.</p>
+
+      <!-- Masterlist Uploads -->
+      <h3>Masterlist Uploads Over Time</h3>
+      <img
+        src="data:image/png;base64,{{ masterlist_uploads_chart }}"
+        alt="Masterlist Uploads Chart"
+        class="chart"
+      />
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Uploads</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for date, count in masterlist_uploads_data %}
+          <tr>
+            <td>{{ date }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Data Storage Usage -->
+      <h3>Total Data Storage</h3>
+      <p>{{ total_data_storage }} MB</p>
+    </div>
+
+    <!-- Notifications & Alerts -->
+    <div class="section">
+      <h2>System Notifications & Alerts</h2>
+      <p class="description">
+        Analyze notification delivery and pending alerts.
+      </p>
+
+      <!-- Notification Delivery Success -->
+      <h3>Notification Delivery Success</h3>
+      <img
+        src="data:image/png;base64,{{ notification_delivery_chart }}"
+        alt="Notification Delivery Chart"
+        class="chart"
+      />
+      <p>Pending Notifications: {{ pending_notifications }}</p>
+    </div>
+  </body>
+</html>

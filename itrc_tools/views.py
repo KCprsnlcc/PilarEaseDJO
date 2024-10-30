@@ -1,5 +1,11 @@
-# itrc_tools/views.py
-
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+import plotly.express as px
+import io
 import csv
 from django.urls import reverse_lazy
 import io
@@ -24,6 +30,7 @@ from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_GET
 from django.db import IntegrityError
 from .forms import AddUserForm, EditUserForm, UserProfileForm
+from django.http import HttpResponse
 from .models import (
     VerificationRequest,
     EnrollmentMasterlist,
@@ -1297,9 +1304,284 @@ def generate_reports(request):
         'notification_delivery_success': json.dumps(notification_delivery_success),
         'pending_notifications': pending_notifications,
     }
+     # Check if the request is for a PDF download
+    if request.GET.get('download') == 'pdf':
+        # Create a byte stream buffer
+        buffer = io.BytesIO()
+
+        # Set up PDF document using SimpleDocTemplate
+        pdf_doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        elements = []
+
+        # Add a title to the PDF
+        elements.append(Paragraph("ITRC Reports", styles['Title']))
+
+        # Section: User Activity Metrics
+        elements.append(Paragraph("User Activity Metrics", styles['Heading2']))
+        elements.append(Paragraph("Login Activity", styles['Heading3']))
+
+        # Prepare data for tables
+        login_activity_data = [["Date", "Logins"]] + list(zip(context['login_activity_labels'], context['login_activity_counts']))
+        login_activity_table = Table(login_activity_data)
+        login_activity_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        elements.append(login_activity_table)
+
+        # Other sections (Daily Active Users, User Registrations, etc.) follow similarly
+        # Example of adding another section
+        elements.append(Paragraph("User Registrations", styles['Heading3']))
+        user_registration_data = [["Date", "Registrations"]] + list(zip(context['user_registration_labels'], context['user_registration_counts']))
+        user_registration_table = Table(user_registration_data)
+        user_registration_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        elements.append(user_registration_table)
+
+        # Finalize PDF generation
+        pdf_doc.build(elements)
+
+        # Get PDF data from buffer
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="ITRC_Report.pdf"'
+        buffer.close()
+        return response
 
     return render(request, 'itrc_tools/reports.html', context)
 
+@user_passes_test(is_itrc_staff)
+@login_required
+def generate_pdf_report(request):
+    # Define context data for PDF generation as in generate_reports
+    # Replace these placeholders with actual data from generate_reports
+    context = {
+        'login_activity_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'login_activity_counts': [10, 15, 20],
+        'user_registration_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'user_registration_counts': [3, 6, 9],
+        'dau_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'dau_counts': [5, 8, 10],
+        'avg_session_duration_seconds': 300,
+        'api_response_time_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'api_response_time_avg': [100, 150, 120],
+        'error_rate_labels': ["System Error", "Network Error"],
+        'error_rate_data': {"System Error": [1, 2, 3], "Network Error": [2, 1, 0]},
+        'system_downtime': False,
+        'sentiment_labels': ["Positive", "Neutral", "Negative"],
+        'sentiment_counts': [20, 30, 10],
+        'keywords': ["service", "feedback", "help"],
+        'keyword_counts': [15, 12, 10],
+        'page_view_labels': ["Dashboard", "Profile", "Settings"],
+        'page_view_counts': [100, 200, 150],
+        'feature_utilization_labels': ["Login", "View Profile", "Upload"],
+        'feature_utilization_counts': [300, 150, 90],
+        'masterlist_uploads_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'masterlist_uploads_counts': [5, 10, 8],
+        'total_data_storage': 512.5,
+        'notification_delivery_labels': ["2024-01-01", "2024-01-02", "2024-01-03"],
+        'notification_delivery_success': [50, 60, 70],
+        'role_labels': ["ITRC Staff", "Counselor", "User"],
+        'role_counts': [10, 20, 70],
+        'verification_labels': ["Verified", "Pending", "Rejected"],
+        'verification_counts': [50, 30, 20],
+        'retention_labels': ["Week 1", "Week 2", "Week 3"],
+        'retention_counts': [12, 10, 8],
+    }
+
+    # Create a byte buffer for the PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # Add title
+    elements.append(Paragraph("ITRC Reports & Analytics", styles['Title']))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 1. User Activity Metrics
+    # --------------------------
+    elements.append(Paragraph("User Activity Metrics", styles['Heading2']))
+
+    # Login Activity Table
+    login_activity_data = [["Date", "Logins"]] + list(zip(context['login_activity_labels'], context['login_activity_counts']))
+    elements.append(Paragraph("Login Activity", styles['Heading3']))
+    elements.append(Table(login_activity_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # Daily Active Users Table
+    dau_data = [["Date", "Active Users"]] + list(zip(context['dau_labels'], context['dau_counts']))
+    elements.append(Paragraph("Daily Active Users", styles['Heading3']))
+    elements.append(Table(dau_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # -----------------------------
+    # 2. System Performance Metrics
+    # -----------------------------
+    elements.append(Paragraph("System Performance Metrics", styles['Heading2']))
+
+    # API Response Time Table
+    api_response_data = [["Date", "Avg Response Time"]] + list(zip(context['api_response_time_labels'], context['api_response_time_avg']))
+    elements.append(Paragraph("API Response Times", styles['Heading3']))
+    elements.append(Table(api_response_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # Error Rate Table
+    error_rate_data = [["Date"] + context['error_rate_labels']]
+    for i, date in enumerate(context['api_response_time_labels']):
+        row = [date] + [context['error_rate_data'][error][i] for error in context['error_rate_labels']]
+        error_rate_data.append(row)
+    elements.append(Paragraph("Error Rates", styles['Heading3']))
+    elements.append(Table(error_rate_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 3. User Feedback Analysis
+    # --------------------------
+    elements.append(Paragraph("User Feedback Analysis", styles['Heading2']))
+
+    # Sentiment Counts Table
+    sentiment_data = [["Sentiment", "Count"]] + list(zip(context['sentiment_labels'], context['sentiment_counts']))
+    elements.append(Paragraph("Sentiment Analysis", styles['Heading3']))
+    elements.append(Table(sentiment_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 4. Usage Statistics
+    # --------------------------
+    elements.append(Paragraph("Usage Statistics", styles['Heading2']))
+
+    # Page Views Table
+    page_view_data = [["Page", "Views"]] + list(zip(context['page_view_labels'], context['page_view_counts']))
+    elements.append(Paragraph("Page Views", styles['Heading3']))
+    elements.append(Table(page_view_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # Feature Utilization Table
+    feature_utilization_data = [["Feature", "Usage Count"]] + list(zip(context['feature_utilization_labels'], context['feature_utilization_counts']))
+    elements.append(Paragraph("Feature Utilization", styles['Heading3']))
+    elements.append(Table(feature_utilization_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 5. Data Volume Metrics
+    # --------------------------
+    elements.append(Paragraph("Data Volume Metrics", styles['Heading2']))
+
+    # Masterlist Uploads Table
+    masterlist_data = [["Date", "Uploads"]] + list(zip(context['masterlist_uploads_labels'], context['masterlist_uploads_counts']))
+    elements.append(Paragraph("Masterlist Uploads", styles['Heading3']))
+    elements.append(Table(masterlist_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 6. System Notifications & Alerts
+    # --------------------------
+    elements.append(Paragraph("System Notifications & Alerts", styles['Heading2']))
+
+    # Notification Delivery Table
+    notification_data = [["Date", "Success Count"]] + list(zip(context['notification_delivery_labels'], context['notification_delivery_success']))
+    elements.append(Paragraph("Notification Deliveries", styles['Heading3']))
+    elements.append(Table(notification_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 7. User Demographic Insights
+    # --------------------------
+    elements.append(Paragraph("User Demographic Insights", styles['Heading2']))
+
+    # Role Distribution Table
+    role_data = [["Role", "Count"]] + list(zip(context['role_labels'], context['role_counts']))
+    elements.append(Paragraph("User Roles", styles['Heading3']))
+    elements.append(Table(role_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # Verification Status Table
+    verification_data = [["Status", "Count"]] + list(zip(context['verification_labels'], context['verification_counts']))
+    elements.append(Paragraph("User Verification Status", styles['Heading3']))
+    elements.append(Table(verification_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+    elements.append(Spacer(1, 12))
+
+    # --------------------------
+    # 8. User Retention Rate (Weekly)
+    # --------------------------
+    elements.append(Paragraph("User Retention Rate (Weekly)", styles['Heading2']))
+
+    # Retention Rate Table
+    retention_data = [["Week", "Users"]] + list(zip(context['retention_labels'], context['retention_counts']))
+    elements.append(Table(retention_data, style=[
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    # Finalize PDF
+    doc.build(elements)
+    
+    # Get PDF data from buffer
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="ITRC_Report.pdf"'
+    buffer.close()
+    return response
 @user_passes_test(is_itrc_staff)
 @login_required
 def audit_logs_view(request):

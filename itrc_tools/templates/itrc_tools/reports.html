@@ -7,6 +7,15 @@ Analytics{% endblock %} {% block itrc_content %}
 >
   <h1 class="pilarease-itrc-section-title">Reports & Analytics</h1>
 
+  <div class="text-end mb-3">
+    <a
+      href="{% url 'generate_pdf_report' %}?download=pdf"
+      class="pilarease-itrc-download-button"
+    >
+      <i class="fas fa-file-pdf"></i> Download PDF Report
+    </a>
+  </div>
+
   <!-- User Activity Metrics -->
   <h2 class="pilarease-itrc-subsection-title">User Activity Metrics</h2>
   <p class="pilarease-itrc-section-info">
