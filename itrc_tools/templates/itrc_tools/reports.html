@@ -14,27 +14,29 @@ Analytics{% endblock %} {% block itrc_content %}
   </p>
 
   <div class="pilarease-itrc-filter-wrapper">
-    <!-- Left-aligned filtering options -->
+    <!-- Left-aligned filtering options with date range picker -->
     <div class="pilarease-itrc-filter-group">
-      <label for="filter-date" class="pilarease-itrc-filter-label"
+      <label for="date-range" class="pilarease-itrc-filter-label"
         >Filter by Date Range:</label
       >
       <input
         type="text"
-        id="start-date"
+        id="date-range"
         class="pilarease-itrc-filter-input"
-        placeholder="dd/mm/yyyy"
+        placeholder="Select Date Range"
       />
-      <input
-        type="text"
-        id="end-date"
-        class="pilarease-itrc-filter-input"
-        placeholder="dd/mm/yyyy"
-      />
-      <button class="pilarease-itrc-action-button apply-button">
+      <button
+        id="applyFilterButton"
+        class="pilarease-itrc-action-button apply-button"
+      >
         Apply Filters
       </button>
-      <button class="pilarease-itrc-action-button reset-button">Reset</button>
+      <button
+        id="resetFilterButton"
+        class="pilarease-itrc-action-button reset-button"
+      >
+        Reset
+      </button>
     </div>
 
     <!-- Right-aligned download button -->
@@ -669,24 +671,32 @@ Analytics{% endblock %} {% block itrc_content %}
     },
   });
 
-  document.getElementById("applyFilterButton").addEventListener("click", () => {
-    const startDate = document.getElementById("startDate").value;
-    const endDate = document.getElementById("endDate").value;
+  // Initialize Flatpickr in range mode for date range selection
+  flatpickr("#date-range", {
+    mode: "range",
+    dateFormat: "d/m/Y", // Format matches your placeholder
+    onChange: function (selectedDates, dateStr, instance) {
+      // dateStr will contain the range in format "dd/mm/yyyy to dd/mm/yyyy"
+      console.log("Selected Date Range:", dateStr);
+    },
+  });
 
-    if (startDate && endDate) {
-      // Logic to filter charts by date range goes here.
-      // Use Chart.js methods to update datasets based on selected dates.
-      alert(`Filter applied from ${startDate} to ${endDate}`);
+  // Event listener for Apply Filters button
+  document.getElementById("applyFilterButton").addEventListener("click", () => {
+    const dateRange = document.getElementById("date-range").value;
+    if (dateRange.includes(" to ")) {
+      alert(`Filter applied for date range: ${dateRange}`);
+      // Insert filtering logic here using the selected date range
     } else {
-      alert("Please select both start and end dates.");
+      alert("Please select a complete date range.");
     }
   });
 
+  // Event listener for Reset button
   document.getElementById("resetFilterButton").addEventListener("click", () => {
-    document.getElementById("startDate").value = "";
-    document.getElementById("endDate").value = "";
-    // Reset chart data to original data
+    document.getElementById("date-range").value = "";
     alert("Filters reset");
+    // Add logic here to reset charts or data to the default view
   });
 </script>
 {% endblock %}
