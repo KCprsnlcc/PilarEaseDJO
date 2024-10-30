@@ -2076,9 +2076,7 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  box-shadow: var(--box-shadow);
+  background-color: transparent;
   margin-bottom: 20px;
 }
 
@@ -2103,6 +2101,7 @@ a:hover {
 }
 
 .pilarease-itrc-download-button:hover {
+  color: #fff;
   background-color: #357ab8;
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
