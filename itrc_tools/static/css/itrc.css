@@ -2070,15 +2070,27 @@ a:hover {
   border-color: var(--danger-color) !important;
   box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
 }
-/* Download Button Styling */
+/* Wrapper to position filter and download button */
+.pilarease-itrc-filter-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 20px;
+}
+
+/* Adjusted Download Button Styling */
 .pilarease-itrc-download-button {
-  padding: 10px 18px;
+  padding: 8px 15px;
   background-color: var(--primary-color);
   color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 0.9em;
   transition: background-color var(--transition-speed),
     transform var(--transition-speed);
   display: inline-flex;
@@ -2087,11 +2099,11 @@ a:hover {
 
 .pilarease-itrc-download-button i {
   margin-right: 5px;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 
 .pilarease-itrc-download-button:hover {
-  background-color: #357ab8; /* Slightly darker shade on hover */
+  background-color: #357ab8;
   transform: translateY(-2px);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
@@ -2099,4 +2111,53 @@ a:hover {
 .pilarease-itrc-download-button:active {
   transform: translateY(0);
   box-shadow: none;
+}
+
+/* Filter Section Styles */
+.pilarease-itrc-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pilarease-itrc-filter-label {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9em;
+  margin-right: 8px;
+}
+
+.pilarease-itrc-filter-input {
+  padding: 8px 10px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+  background-color: #ffffff;
+}
+
+.pilarease-itrc-filter-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 6px rgba(74, 144, 226, 0.2);
+  outline: none;
+}
+
+/* Apply and Reset Button Styles */
+.pilarease-itrc-action-button.apply-button {
+  background-color: var(--success-color);
+  font-size: 0.9em;
+  padding: 8px 15px;
+}
+
+.pilarease-itrc-action-button.apply-button:hover {
+  background-color: #218838;
+}
+
+.pilarease-itrc-action-button.reset-button {
+  background-color: var(--danger-color);
+  font-size: 0.9em;
+  padding: 8px 15px;
+}
+
+.pilarease-itrc-action-button.reset-button:hover {
+  background-color: #c82333;
 }

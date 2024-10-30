@@ -7,7 +7,31 @@ Analytics{% endblock %} {% block itrc_content %}
 >
   <h1 class="pilarease-itrc-section-title">Reports & Analytics</h1>
 
-  <div class="text-end mb-3">
+  <div class="pilarease-itrc-filter-wrapper">
+    <!-- Left-aligned filtering options -->
+    <div class="pilarease-itrc-filter-group">
+      <label for="filter-date" class="pilarease-itrc-filter-label"
+        >Filter by Date Range:</label
+      >
+      <input
+        type="text"
+        id="start-date"
+        class="pilarease-itrc-filter-input"
+        placeholder="dd/mm/yyyy"
+      />
+      <input
+        type="text"
+        id="end-date"
+        class="pilarease-itrc-filter-input"
+        placeholder="dd/mm/yyyy"
+      />
+      <button class="pilarease-itrc-action-button apply-button">
+        Apply Filters
+      </button>
+      <button class="pilarease-itrc-action-button reset-button">Reset</button>
+    </div>
+
+    <!-- Right-aligned download button -->
     <a
       href="{% url 'generate_pdf_report' %}?download=pdf"
       class="pilarease-itrc-download-button"
@@ -120,7 +144,92 @@ Analytics{% endblock %} {% block itrc_content %}
       </div>
     </div>
   </div>
+  <!-- System Performance Metrics -->
+  <h2 class="pilarease-itrc-subsection-title">System Performance Metrics</h2>
+  <div class="row pilarease-itrc-analytics-grid">
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">API Response Time</h3>
+        <canvas id="apiResponseTimeChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Error Rates</h3>
+        <canvas id="errorRateChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usage Statistics -->
+  <h2 class="pilarease-itrc-subsection-title">Usage Statistics</h2>
+  <div class="row pilarease-itrc-analytics-grid">
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Page Views</h3>
+        <canvas id="pageViewsChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Feature Utilization</h3>
+        <canvas id="featureUtilizationChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Volume Metrics -->
+  <h2 class="pilarease-itrc-subsection-title">Data Volume Metrics</h2>
+  <div class="row pilarease-itrc-analytics-grid">
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">
+          Masterlist Uploads Over Time
+        </h3>
+        <canvas id="masterlistDataVolumeChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">
+          Total Data Storage Usage (MB)
+        </h3>
+        <p>{{ total_data_storage }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Notifications & Alerts -->
+  <h2 class="pilarease-itrc-subsection-title">System Notifications & Alerts</h2>
+  <div class="row pilarease-itrc-analytics-grid">
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">
+          Notification Delivery Success
+        </h3>
+        <canvas id="notificationDeliveryChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Pending Notifications</h3>
+        <p>{{ pending_notifications }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Retention Rate (Weekly) -->
+  <h2 class="pilarease-itrc-subsection-title">User Retention Rate (Weekly)</h2>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="pilarease-itrc-analytics-item">
+        <h3 class="pilarease-itrc-analytics-title">Retention Rate</h3>
+        <canvas id="retentionRateChart"></canvas>
+      </div>
+    </div>
+  </div>
 </div>
+
 {% endblock %} {% block extra_scripts %}
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -469,6 +578,109 @@ Analytics{% endblock %} {% block itrc_content %}
         }
       }
     }
+  });
+</script>
+<script>
+  // Dummy data functions
+  const dummyData30Days = Array.from(
+    { length: 30 },
+    () => Math.floor(Math.random() * 100) + 1
+  );
+  const dummyLabels30Days = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    return d.toISOString().slice(0, 10);
+  });
+  const dummyData12Weeks = Array.from(
+    { length: 12 },
+    () => Math.floor(Math.random() * 50) + 10
+  );
+  const dummyLabels12Weeks = Array.from(
+    { length: 12 },
+    (_, i) => `Week ${i + 1}`
+  );
+
+  // New Charts
+  new Chart(document.getElementById("apiResponseTimeChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: dummyLabels30Days,
+      datasets: [{ label: "Response Time (ms)", data: dummyData30Days }],
+    },
+  });
+
+  new Chart(document.getElementById("errorRateChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: dummyLabels30Days,
+      datasets: [{ label: "Error Rate (%)", data: dummyData30Days }],
+    },
+  });
+
+  new Chart(document.getElementById("pageViewsChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: ["Dashboard", "Profile", "Settings", "Reports", "Help"],
+      datasets: [{ label: "Views", data: dummyData30Days.slice(0, 5) }],
+    },
+  });
+
+  new Chart(
+    document.getElementById("featureUtilizationChart").getContext("2d"),
+    {
+      type: "pie",
+      data: {
+        labels: ["Feature A", "Feature B", "Feature C"],
+        datasets: [{ label: "Usage", data: [300, 150, 90] }],
+      },
+    }
+  );
+
+  new Chart(
+    document.getElementById("masterlistDataVolumeChart").getContext("2d"),
+    {
+      type: "line",
+      data: {
+        labels: dummyLabels30Days,
+        datasets: [{ label: "Data Volume (MB)", data: dummyData30Days }],
+      },
+    }
+  );
+
+  new Chart(
+    document.getElementById("notificationDeliveryChart").getContext("2d"),
+    {
+      type: "doughnut",
+      data: { labels: ["Delivered", "Failed"], datasets: [{ data: [70, 30] }] },
+    }
+  );
+
+  new Chart(document.getElementById("retentionRateChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: dummyLabels12Weeks,
+      datasets: [{ label: "Retention Rate (%)", data: dummyData12Weeks }],
+    },
+  });
+
+  document.getElementById("applyFilterButton").addEventListener("click", () => {
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+
+    if (startDate && endDate) {
+      // Logic to filter charts by date range goes here.
+      // Use Chart.js methods to update datasets based on selected dates.
+      alert(`Filter applied from ${startDate} to ${endDate}`);
+    } else {
+      alert("Please select both start and end dates.");
+    }
+  });
+
+  document.getElementById("resetFilterButton").addEventListener("click", () => {
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+    // Reset chart data to original data
+    alert("Filters reset");
   });
 </script>
 {% endblock %}
