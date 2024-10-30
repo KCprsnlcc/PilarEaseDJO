@@ -902,47 +902,38 @@ def system_settings(request):
     if request.method == 'POST':
         form = SystemSettingForm(request.POST)
         if form.is_valid():
-            key = form.cleaned_data['key']
-            value = form.cleaned_data['value']
-            setting, created = SystemSetting.objects.update_or_create(
-                key=key,
-                defaults={'value': value}
-            )
-            AuditLog.objects.create(
-                user=request.user,
-                action=action,
-                details=f"Updated system setting: '{key}' to '{value}'.",
-                timestamp=timezone.now()
-                )
-            message = f"{request.user.username} updated system setting '{key}'."
-            link = reverse('system_settings')
-            notify_itrc_staff('info', message, link)
-            if created:
-                messages.success(request, f'System setting "{key}" has been created.')
-                action = 'create_setting'
-            else:
-                messages.success(request, f'System setting "{key}" has been updated.')
-                action = 'update_setting'
+            auto_accept_enabled = form.cleaned_data['auto_accept_enabled']
+            auto_reject_enabled = form.cleaned_data['auto_reject_enabled']
+
+            # Update the settings in the database
+            SystemSetting.set_setting('auto_accept_enabled', 'true' if auto_accept_enabled else 'false')
+            SystemSetting.set_setting('auto_reject_enabled', 'true' if auto_reject_enabled else 'false')
 
             # Log the action
+            action = 'update_setting'
             AuditLog.objects.create(
                 user=request.user,
                 action=action,
-                details=f"Set {key} to {value}."
+                details=f"Set auto_accept_enabled to {auto_accept_enabled} and auto_reject_enabled to {auto_reject_enabled}.",
+                timestamp=timezone.now()
             )
 
+            messages.success(request, 'System settings have been updated successfully.')
             return redirect('system_settings')
         else:
             messages.error(request, 'There was an error with the form. Please check the fields.')
     else:
-        form = SystemSettingForm()
+        # Populate the form with current settings
+        initial_data = {
+            'auto_accept_enabled': SystemSetting.get_setting('auto_accept_enabled') == 'true',
+            'auto_reject_enabled': SystemSetting.get_setting('auto_reject_enabled') == 'true',
+        }
+        form = SystemSettingForm(initial=initial_data)
 
     context = {
         'settings': settings_qs,
         'form': form,
     }
-    # Log and notify action
-
 
     return render(request, 'itrc_tools/system_settings.html', context)
 

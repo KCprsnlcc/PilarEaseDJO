@@ -7,25 +7,49 @@ Settings{% endblock %} {% block itrc_content %}
 >
   <h1 class="pilarease-itrc-section-title">System Settings</h1>
 
+  <!-- Form for Adding or Updating System Settings -->
   <form method="post" class="pilarease-itrc-settings-form">
-    {% csrf_token %} {{ form.non_field_errors }}
+    {% csrf_token %}
 
+    <!-- Key Text Field -->
     <div class="pilarease-itrc-form-group">
-      {{ form.key.label_tag }} {{ form.key }} {% if form.key.errors %}
+      <label for="id_key" class="pilarease-itrc-label">Setting Key</label>
+      <input
+        type="text"
+        name="key"
+        id="id_key"
+        class="pilarease-itrc-input"
+        placeholder="Enter setting key"
+        required
+      />
+      {% if form.key.errors %}
       <div class="pilarease-itrc-error">{{ form.key.errors }}</div>
       {% endif %}
     </div>
+
+    <!-- Value Text Field -->
     <div class="pilarease-itrc-form-group">
-      {{ form.value.label_tag }} {{ form.value }} {% if form.value.errors %}
+      <label for="id_value" class="pilarease-itrc-label">Setting Value</label>
+      <input
+        type="text"
+        name="value"
+        id="id_value"
+        class="pilarease-itrc-input"
+        placeholder="Enter setting value"
+        required
+      />
+      {% if form.value.errors %}
       <div class="pilarease-itrc-error">{{ form.value.errors }}</div>
       {% endif %}
     </div>
+
+    <!-- Save Button -->
     <button type="submit" class="pilarease-itrc-action-button save-button">
       <i class="bx bxs-save"></i> Save Setting
     </button>
   </form>
 
-  <h2 class="pilarease-itrc-subsection-title">Current Settings</h2>
+  <!-- Display Current System Settings Table -->
   <h2 class="pilarease-itrc-subsection-title">Current Settings</h2>
   <table class="pilarease-itrc-table">
     <thead>
@@ -33,7 +57,6 @@ Settings{% endblock %} {% block itrc_content %}
         <th>Key</th>
         <th>Value</th>
         <th>Status</th>
-        <!-- Add Status Column -->
       </tr>
     </thead>
     <tbody>
@@ -42,12 +65,12 @@ Settings{% endblock %} {% block itrc_content %}
         <td>{{ setting.key }}</td>
         <td>{{ setting.value }}</td>
         <td>
-          <span class="status {% if setting.is_active %}active{% else %}inactive{% endif %}"></span>
-
+          <span
+            class="status {% if setting.is_active %}active{% else %}inactive{% endif %}"
+          >
             {% if setting.is_active %}Active{% else %}Inactive{% endif %}
           </span>
         </td>
-        <!-- Display Active/Inactive Status -->
       </tr>
       {% empty %}
       <tr>
