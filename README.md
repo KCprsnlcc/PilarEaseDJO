@@ -2,8 +2,9 @@
 
 <div align="center">
     <img src="main/static/images/screenshots/aboutinterface.png" alt="About Interface">
-    <p><b>Emotional Support Platform is designed to provide Pilar College students <br/> with the resources and community they need to navigate their <br/>emotional well-being effectively.</b></p>
+    <p><b>PilarEase - An Emotional Support Platform for Pilar College students, providing resources and a supportive community to foster emotional well-being.</b></p>
 </div>
+
 <div align="center">
   <table>
     <tr>
@@ -22,7 +23,7 @@
     </tr>
     <tr>
       <td align="center">
-        <img src="main/static/images/screenshots/profilesetting.png"  width="200px" alt="Homepage (Authenticated)" />
+        <img src="main/static/images/screenshots/profilesetting.png"  width="200px" alt="Profile Setting" />
         <p><b>Profile Setting</b></p>
       </td>
       <td align="center">
@@ -34,7 +35,7 @@
         <p><b>Password Manager</b></p>
       </td>
     </tr>
-     <tr>
+    <tr>
       <td align="center">
         <img src="main/static/images/screenshots/chatinteraction.png"  width="200px" alt="Chat Interface" />
         <p><b>Chat Interaction</b></p>
@@ -51,189 +52,186 @@
   </table>
 </div>
 
-PilarEaseDJO is a Django-based platform for emotion management and sentiment analysis, featuring user authentication, status posting, emotion filtering, machine learning integration, chatbot interaction, and administrative tools.
+PilarEaseDJO is a Django-based emotional support platform designed to help Pilar College students manage their emotional well-being. The platform provides features such as emotion-based status posting, sentiment analysis, chatbot assistance, and administrative tools. PilarEase leverages machine learning to create a supportive and secure environment for students.
+
+---
 
 ## Installation
 
-### 1. **Clone the Repository**
+### 1. Clone the Repository
 
-First, clone the PilarEaseDJO repository from GitHub:
+To begin, clone the PilarEaseDJO repository:
 
 ```sh
 git clone https://github.com/KCprsnlcc/PilarEaseDJO.git
-```
-
-Navigate to the project directory:
-
-```sh
 cd PilarEaseDJO
 ```
 
-### 2. **Set up a Python Virtual Environment**
+### 2. Set Up a Python Virtual Environment
 
-It is highly recommended to use a Python virtual environment to manage dependencies and avoid conflicts with other Python projects.
+It’s recommended to use a Python virtual environment to manage dependencies:
 
 #### For macOS/Linux:
 
-1. **Create the virtual environment:**
-
-   ```sh
-   python3 -m venv .venv
-   ```
-
-2. **Activate the virtual environment:**
-
-   ```sh
-   source .venv/bin/activate
-   ```
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
 #### For Windows:
 
-1. **Set the PowerShell execution policy (Optional):**
+Optionally, set the PowerShell execution policy:
 
-   If you're using PowerShell on Windows, you may need to change the execution policy to allow the script to run:
+```sh
+Set-ExecutionPolicy RemoteSigned -Scope Process -Force
+```
 
-   ```sh
-   Set-ExecutionPolicy RemoteSigned -Scope Process -Force
-   ```
+Create and activate the virtual environment:
 
-2. **Create the virtual environment:**
+```sh
+python -m venv .venv
+.venv\Scripts\activate
+```
 
-   ```sh
-   python -m venv .venv
-   ```
+### 3. Install Dependencies
 
-3. **Activate the virtual environment:**
-
-   ```sh
-   .venv\Scripts\activate
-   ```
-
-### 3. **Install Dependencies**
-
-Once the virtual environment is activated, install the required dependencies listed in the `requirements.txt` file.
-
-Use the following command for both macOS/Linux and Windows:
+Install the dependencies listed in `requirements.txt`:
 
 ```sh
 pip install -r requirements.txt --progress-bar on
 ```
 
-### 4. **Apply Database Migrations**
+### 4. Apply Database Migrations
 
-Next, set up the database by applying the necessary migrations:
+Set up the database by applying migrations:
 
 ```sh
 python manage.py migrate
 ```
 
-### 5. **Start the Development Server**
+### 5. Start the Development Server
 
-Once the migrations are applied, you can start the Django development server with this command:
+Launch the Django development server:
 
 ```sh
 python manage.py runserver
 ```
 
-### 6. **Access the Application**
+### 6. Access the Application
 
-Open your web browser and navigate to:
+Open a web browser and navigate to:
 
 ```
 http://localhost:8000
 ```
 
-### 7. **Deactivate the Virtual Environment (Optional)**
+### 7. Deactivate the Virtual Environment (Optional)
 
-When you're done working in the virtual environment, you can deactivate it using:
-
-#### For macOS/Linux:
+When finished, deactivate the virtual environment:
 
 ```sh
 deactivate
 ```
 
-#### For Windows:
-
-```sh
-deactivate
-```
+---
 
 ## Features
 
 ### 1. User Authentication & Management
 
-- **Logins**: Allows users to log in using their credentials. Includes session management to maintain user login state.
-- **Register**: Enables new users to create an account with validated input data saved to the database.
-- **Forgot Password**: Provides a mechanism for users to reset their password via email.
-- **Masterlist Verification**: Verifies user credentials against master list data during registration or login.
+- **Login/Logout**: Secure login with session tracking and logout features, including session end auditing.
+- **Registration**: User registration with masterlist verification, supporting auto-verification, manual approval, or rejection based on the enrollment masterlist.
+- **Forgot Password**: Password reset through email verification and rate-limiting to prevent spam.
+- **Email Verification**: Users can verify email addresses and request email changes, including verification link expiry management.
 
 ### 2. User Profile Management
 
-- **User Profile Interface**: Allows users to view and update their profile information.
-- **Password Management**: Enables users to manage and update their passwords securely.
-- **Upload Avatar**: Allows users to upload and update their profile pictures.
-- **Email Verification**: Provides functionality for users to verify their specific email address through an email verification link. Once verified, the user's profile will show a 'Verified' badge, improving security and trust.
+- **Profile Editing**: Users can update their profile information, including usernames, contact numbers, and academic year levels.
+- **Password Management**: Provides a secure password update with current password verification.
+- **Avatar Upload**: Supports customizable avatars with file size validation and storage.
+- **Session Tracking**: Tracks user sessions for analytics and session-based actions.
 
 ### 3. Main Interface
 
-- **Dashboard**: Provides a main interface for user interactions, including posting and viewing statuses.
-- **About Interface**: Includes an informational page providing details about the portal.
+- **Home & About Pages**: Provides access to main platform features, including testimonials on the About page.
+- **Contact Us**: Users can submit inquiries, which are saved for admin review.
+- **Dashboard**: Displays recent activity, statuses, and analytics.
 
 ### 4. Status Management
 
-- **Status Posting**: Allows users to post updates. Includes a content filter to detect and block inappropriate content.
-- **View Status**: Enables users to view statuses posted by themselves and others.
-- **Reply to Status**: Allows users to reply to statuses, with replies saved to the database.
-- **Referral Module**: Allows users to refer and report inappropriate statuses directly to a counselor for review. The counselor can block inappropriate content or take further action as needed.
+- **Status Posting**: Allows users to post statuses, with custom profanity filtering, text sanitization, and emotion analysis.
+- **Status Moderation**: Admins can delete statuses flagged as inappropriate.
+- **View Statuses by Categories**: Filter statuses based on categories like recent, popular, or emotion-based categories.
+- **Referral Module**: Allows users to flag content for counselor review, with referral options for content highlighting.
 
-### 5. Emotion Management
+### 5. Emotion & Chat Management
 
-- **Emotion Filter Category**: Provides options to filter statuses based on different emotions for targeted viewing.
+- **Emotion-Based Status Analysis**: Each status is analyzed for emotional tone, with a breakdown of emotion scores such as anger, happiness, sadness, etc.
+- **Chatbot Questionnaire**: Users can initiate a guided emotional assessment using a chatbot, with customizable questions, response validation, and counselor referral options.
+- **Chat History & Analytics**: Includes chat history pagination, tracking user progress, and storing bot responses.
 
-### 6. Data Collection
+### 6. Data Collection & Machine Learning Integration
 
-- **Emotion Dataset Collection**: Collects data on expressed emotions in English.
+- **Emotion Model**: Integrates a pre-trained transformer model for emotion classification, supporting emotion percentages.
+- **Profanity Filtering**: Uses both built-in and custom profanity lists for content moderation.
+- **Feedback Analysis**: User feedback is analyzed with sentiment scores for auto-approval of positive feedback.
 
-### 7. Machine Learning Integration
+### 7. Notifications & Recent Activity
 
-- **Pre-trained Model Collection**: Integrates suitable pre-trained models for emotion analysis.
-- **Fine-Tuning Pre-trained Model**: Fine-tunes emotion analysis models using Tagalog datasets.
-- **Analysis Model Deployment**: Deploys the fine-tuned sentiment analysis model within the portal.
+- **Notification System**: Tracks user interactions, including status updates, replies, and flagged content, providing alerts in real-time.
+- **Recent Activity Feed**: Displays recent replies to user statuses and other interactions.
+- **Notification Settings**: Users can customize notification preferences, and unread notifications are highlighted.
 
-### 8. Chatbot Integration
+### 8. ITRC Administrative Tools
 
-- **Chatbot Interface**: Provides an interface for chatbot interaction using an expert system with backward chaining, allowing smooth transitions between bot and live counselor interactions.
-- **Chatbot Model Deployment**: Ensures real-time interaction and the seamless operation of the chatbot.
+- **Admin Authentication**: Admin-only login, audit-logging, and session tracking.
+- **Verification Dashboard**: ITRC staff can review and approve user verification requests manually or automatically.
+- **Bulk Actions**: ITRC staff can bulk-verify, activate, deactivate, or delete user accounts as needed.
+- **Masterlist Uploads**: Enables admins to upload, review, and filter enrollment masterlists to manage student accounts.
+- **Audit Log**: Comprehensive logging of admin actions, including user modifications, setting updates, and role assignments.
 
-### 9. Contact & Support
+### 9. Counselor Features
 
-- **Contact Interface**: Allows users to send messages via a contact form routed to administrators.
-- **Message Queries**: Implements a system for users to send and receive responses to their queries.
+- **Referral Management**: Counselors can review and respond to user referrals flagged for support.
+- **User Chat Review**: Counselors have access to user-chatbot interaction history to assess and provide further assistance if needed.
 
-### 10. Administrative Tools
+### 10. Analytics & Reports
 
-- **View Text Message Queries**: Enables administrators to view user queries.
-- **Emotion Category Search Filtering**: Allows filtering of searches by emotion categories.
-- **Analysis Search Filtering**: Provides options to filter sentiment analysis results.
-- **View Text Analysis Results**: Displays detailed sentiment analysis results for review.
-- **Counselor Chat Interface**: Collects all questions and answers from chatbot interactions and allows counselors to chat in real-time with users. This interface enables counselors to manage and respond to reported statuses and provide personalized support.
-- **Manage Users**: Includes tools for managing user profiles, including deactivation, deletion, and editing.
-- **Manage Referral**: Allows administrators to manage user referrals for specific statuses. Administrators can view referred statuses, review reported issues, and take action (e.g., removing inappropriate content or contacting users for clarification).
-- **Download Analysis Data**: Allows exporting of sentiment analysis data in CSV format.
+- **User Activity Analytics**: Tracks logins, daily activity, and session metrics for user engagement insights.
+- **Emotion Analysis Reports**: Graphical emotion distribution breakdowns on statuses and interactions.
+- **Feedback Analysis**: Visualization of feedback sentiment (positive, neutral, negative) for quality assurance.
+- **System Performance Metrics**: API response times, error rates, and system uptime analysis.
+- **Report Download**: PDF download options for offline report viewing of all key analytics.
 
-## Contributing
+### 11. System Notifications & Alerts for ITRC Staff
 
-Contributions are welcome! Please follow the [Contribution Guidelines](CONTRIBUTING.md).
+- **Custom Notifications**: Admins can broadcast notifications for all users or selected groups.
+- **Notification History**: Maintains a log of all sent notifications for reference and audit.
+- **Email and SMS Alerts**: Sends email and SMS notifications for significant user actions (e.g., password resets, account status changes).
 
-## License
+### 12. User Demographic Insights
 
-This project is licensed under the [License](LICENSE.md).
-
-## Support
-
-For any inquiries or issues, please contact [kcpersonalacc@gmail.com](mailto:kcpersonalacc@gmail.com).
+- **Role-Based Insights**: Distribution of user roles (e.g., ITRC staff, counselor, student) for system demographics.
+- **Verification Status Overview**: Tracks user verification statuses (verified, pending, rejected).
 
 ---
 
-**Note:** This project is still in development. Some features may not be fully implemented or may change as the project evolves.
+## Contributing
+
+Contributions are welcome! Please refer to the [Contribution Guidelines](CONTRIBUTING.md) for details.
+
+---
+
+## License
+
+This project is licensed under the terms outlined in the [License](LICENSE.md).
+
+---
+
+## Support
+
+For inquiries or issues, please contact [kcpersonalacc@gmail.com](mailto:kcpersonalacc@gmail.com).
+
+---
+
+**Note:** PilarEase is under active development, and features may evolve as enhancements and fixes are applied.
