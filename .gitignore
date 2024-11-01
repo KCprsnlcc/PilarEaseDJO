@@ -1,2 +1,3 @@
 /.venv
 /data/fine_tune_app
+/sql/pilarease_db.sql
