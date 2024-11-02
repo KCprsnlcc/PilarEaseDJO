@@ -437,6 +437,10 @@ body {
   background-color: var(--accent-light);
   transform: translateY(-2px);
 }
+.pilarease-admin-testimonial-table .pilarease-admin-action-button {
+  display: block; /* Stack buttons vertically */
+  margin-bottom: 10px; /* Adjusts vertical spacing */
+}
 
 /* Tables */
 .pilarease-admin-feedback-table,
@@ -650,13 +654,11 @@ body {
 
 /* Form Textareas */
 .pilarease-admin-reply-form textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  resize: vertical;
-  font-size: 14px;
-  margin-bottom: 5px;
+  resize: vertical; /* Allow only vertical resizing */
+  width: 100%; /* Full width of the container */
+  min-height: 100px; /* Set initial height */
+  max-width: 100%; /* Restrict horizontal resizing */
+  overflow-y: auto; /* Enable vertical scrolling if necessary */
 }
 
 .pilarease-admin-reply-form textarea:focus {
