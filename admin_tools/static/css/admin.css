@@ -442,6 +442,17 @@ body {
   margin-bottom: 10px; /* Adjusts vertical spacing */
 }
 
+/* Align Approve and Delete buttons vertically in User Feedbacks */
+.pilarease-admin-feedback-table .pilarease-admin-action-button {
+  display: block; /* Stack buttons vertically */
+  margin-bottom: 10px; /* Adjust vertical spacing */
+}
+
+/* Remove the bottom margin for the last button to prevent extra space */
+.pilarease-admin-feedback-table .pilarease-admin-action-button:last-child {
+  margin-bottom: 0;
+}
+
 /* Tables */
 .pilarease-admin-feedback-table,
 .pilarease-admin-testimonial-table,
@@ -541,18 +552,18 @@ body {
 
 /* Action Buttons */
 .pilarease-admin-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  text-align: center;
   text-decoration: none;
   color: #ffffff;
   font-size: 12px;
   transition: background-color 0.3s ease, transform 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
 }
 
 .pilarease-admin-action-button.approve-button {
@@ -683,6 +694,19 @@ body {
   padding: 10px 12px; /* Reduced padding for a more compact look */
 }
 
+.pilarease-admin-testimonial-table td {
+  text-align: center; /* Horizontal centering */
+  vertical-align: middle; /* Vertical centering */
+}
+
+.pilarease-admin-approved-label,
+.pilarease-admin-pending-label,
+.pilarease-admin-excluded-label {
+  display: inline-block; /* Allows margin auto to work if needed */
+  text-align: center; /* Centers text within the label */
+  width: 100px;
+  margin: 0 auto;
+}
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   .pilarease-admin-testimonial-img {
