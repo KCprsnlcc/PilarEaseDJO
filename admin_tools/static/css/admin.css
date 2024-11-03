@@ -654,11 +654,13 @@ body {
 
 /* Form Textareas */
 .pilarease-admin-reply-form textarea {
-  resize: vertical; /* Allow only vertical resizing */
-  width: 100%; /* Full width of the container */
-  min-height: 100px; /* Set initial height */
-  max-width: 100%; /* Restrict horizontal resizing */
-  overflow-y: auto; /* Enable vertical scrolling if necessary */
+  resize: vertical;
+  width: 100%;
+  width: 200px;
+  margin-bottom: 10px;
+  min-height: 55px;
+  max-width: 100%;
+  overflow-y: auto;
 }
 
 .pilarease-admin-reply-form textarea:focus {
