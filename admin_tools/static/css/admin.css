@@ -1047,8 +1047,10 @@ body {
 
 /* Chart Content */
 .pilarease-admin-chart-content {
-  position: relative;
-  height: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px; /* Ensure the container takes up the full height */
 }
 
 /* Word Cloud Image */
