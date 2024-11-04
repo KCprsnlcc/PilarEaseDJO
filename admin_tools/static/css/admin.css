@@ -1979,7 +1979,18 @@ ete Button */ .pilarease-admin-action-button.delete-button {
    ========================================================= */
 
 .pilarease-admin-classification-report-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
   margin-top: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-classification-report-section:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }
 
 .pilarease-admin-classification-report-section h3 {
