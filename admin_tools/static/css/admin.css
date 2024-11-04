@@ -1268,30 +1268,106 @@ body {
 .status-table tr:hover {
   background-color: rgba(104, 158, 75, 0.1);
 }
-
-/* Progress Bars */
 .pilarease-admin-progress-bar-container {
   position: relative;
-  width: 100%;
+  width: 120px; /* Fixed width for consistency */
   background-color: rgba(14, 35, 38, 0.1);
   border-radius: 5px;
-  overflow: hidden;
+  /* overflow: hidden; */ /* Removed to allow tooltip visibility */
   height: 10px;
+  margin: 0 auto; /* Center the progress bar within the table cell */
+  cursor: pointer; /* Indicate that it's interactive */
+  outline: none; /* Remove default outline */
 }
 
 .pilarease-admin-progress-bar {
   height: 100%;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.pilarease-admin-progress-tooltip {
+  position: absolute;
+  top: -25px; /* Position above the progress bar */
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px); /* Slight upward shift */
+  background-color: var(--accent-color);
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 10;
+}
+
+.pilarease-admin-progress-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -5px; /* Adjust based on tooltip height */
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--accent-color) transparent transparent transparent;
+}
+
+/* Show Tooltip on Hover */
+.pilarease-admin-progress-bar-container:hover .pilarease-admin-progress-tooltip,
+.pilarease-admin-progress-bar-container:focus
+  .pilarease-admin-progress-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .pilarease-admin-progress-bar-container {
+    width: 100px; /* Reduced width for tablets */
+  }
+
+  .pilarease-admin-progress-tooltip {
+    font-size: 11px;
+    top: -22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pilarease-admin-progress-bar-container {
+    width: 80px; /* Further reduced for mobile */
+  }
+
+  .pilarease-admin-progress-tooltip {
+    font-size: 10px;
+    top: -20px;
+  }
 }
 
 .pilarease-admin-progress-percentage {
   position: absolute;
-  top: -25px;
+  top: -20px; /* Position above the progress bar */
   left: 50%;
   transform: translateX(-50%);
   font-size: 12px;
   color: var(--accent-color);
   font-weight: bold;
+}
+
+.pilarease-admin-progress-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.status-table th Anger,
+.status-table th Disgust,
+.status-table th Fear,
+.status-table th Happiness,
+.status-table th Neutral,
+.status-table th Sadness,
+.status-table th Surprise {
+  width: 120px; /* Fixed width for emotion columns */
 }
 
 /* Delete Button */
@@ -1822,7 +1898,7 @@ body {
   color: var(--accent-color);
 }
 
-.pilarease-admin-progress-bar-container {
+.pilarease-admin-progress-bar-container-matrix {
   width: 100%;
   background-color: rgba(14, 35, 38, 0.1);
   border-radius: 10px;
@@ -1831,7 +1907,7 @@ body {
   margin-bottom: 10px;
 }
 
-.pilarease-admin-progress-bar {
+.pilarease-admin-progress-bar-matrix {
   height: 100%;
   background-color: var(--accent-color);
   width: 0%;
@@ -2866,68 +2942,6 @@ body {
 .pilarease-admin-action-button.delete-button:hover {
   background-color: rgba(14, 35, 38, 0.9); /* Slightly darker on hover */
   transform: translateY(-2px);
-}
-
-/* Progress Bars */
-.pilarease-admin-progress-bar-container {
-  position: relative;
-  width: 100%;
-  background-color: rgba(14, 35, 38, 0.1);
-  border-radius: 5px;
-  overflow: hidden;
-  height: 10px;
-}
-
-.pilarease-admin-progress-bar {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-.pilarease-admin-progress-percentage {
-  position: absolute;
-  top: -25px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: var(--accent-color);
-  font-weight: bold;
-}
-
-/* Pagination */
-.pilarease-admin-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.pilarease-admin-step-links {
-  display: flex;
-  gap: 10px;
-}
-
-.pilarease-admin-step-link {
-  padding: 6px 12px;
-  background-color: var(--accent-color);
-  color: #ffffff;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  font-size: 12px;
-}
-
-.pilarease-admin-step-link:hover {
-  background-color: var(--accent-light);
-  transform: translateY(-2px);
-}
-
-.pilarease-admin-current {
-  padding: 6px 12px;
-  background-color: var(--accent-light);
-  color: #ffffff;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 12px;
 }
 
 /* =========================================================

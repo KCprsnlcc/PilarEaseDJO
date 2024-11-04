@@ -46,7 +46,7 @@
         <table class="pilarease-admin-statuses-table status-table">
             <thead>
                 <tr>
-                    <th>No.</th>
+                    <th>Status ID</th>
                     <th>Body</th>
                     <th>Anger</th>
                     <th>Disgust</th>
@@ -62,48 +62,62 @@
             <tbody>
                 {% for status in statuses %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
+                    <td>{{ status.id }}</td>
                     <td>{{ status.plain_description|truncatewords:10 }}</td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.anger_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.anger_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.disgust_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.disgust_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.fear_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.fear_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.happiness_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.happiness_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.neutral_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.neutral_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.sadness_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.sadness_percentage }}%
+                            </div>
                         </div>
                     </td>
-                    <td>
+                    <td class="pilarease-admin-progress-cell">
                         <div class="pilarease-admin-progress-bar-container">
                             <div class="pilarease-admin-progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
-                            <span class="pilarease-admin-progress-percentage">{{ status.surprise_percentage }}%</span>
+                            <div class="pilarease-admin-progress-tooltip">
+                                {{ status.surprise_percentage }}%
+                            </div>
                         </div>
                     </td>
                     <td>{{ status.created_at|date:"Y-m-d" }}</td>
@@ -135,6 +149,42 @@
             </span>
         </div>
     </div>
+
+
+    <!-- Keywords or Topics Detection Table -->
+    <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
+        <h2 class="pilarease-admin-subtitle">
+            Keywords or Topics Detection
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Keywords or Topics Detection" tabindex="0"></i>
+            <span class="pilarease-admin-tooltip">
+                Detect and analyze keywords or topics from user statuses for better insights.
+            </span>
+        </h2>
+        <table class="pilarease-admin-keywords-table keywords-table">
+            <thead>
+                <tr>
+                    <th>Status ID</th>
+                    <th>Keywords/Topics</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for keyword in keywords_data %}
+                <tr>
+                    <td>{{ keyword.status_id }}</td>
+                    <td>
+                        {% for kw in keyword.keywords %}
+                            <span class="pilarease-admin-tag keyword-tag">{{ kw }}</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not keywords_data %}
+        <p class="pilarease-admin-no-data">No keywords data available.</p>
+        {% endif %}
+    </div>
+
 
     <!-- Contextual Emotion Comparison User Table -->
     <div class="pilarease-admin-comparison-section animate__animated animate__fadeInUp">
@@ -191,39 +241,51 @@
         <p class="pilarease-admin-no-data">No comparison data available.</p>
         {% endif %}
     </div>
-
-    <!-- Keywords or Topics Detection Table -->
-    <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
-        <h2 class="pilarease-admin-subtitle">
-            Keywords or Topics Detection
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Keywords or Topics Detection" tabindex="0"></i>
-            <span class="pilarease-admin-tooltip">
-                Detect and analyze keywords or topics from user statuses for better insights.
-            </span>
-        </h2>
-        <table class="pilarease-admin-keywords-table keywords-table">
-            <thead>
-                <tr>
-                    <th>Status ID</th>
-                    <th>Keywords/Topics</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for keyword in keywords_data %}
-                <tr>
-                    <td>{{ keyword.status_id }}</td>
-                    <td>
-                        {% for kw in keyword.keywords %}
-                            <span class="pilarease-admin-tag keyword-tag">{{ kw }}</span>
-                        {% endfor %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if not keywords_data %}
-        <p class="pilarease-admin-no-data">No keywords data available.</p>
-        {% endif %}
-    </div>
 </div>
+
+<!-- JavaScript for Tooltip Functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all progress bar containers
+        const progressBarContainers = document.querySelectorAll('.pilarease-admin-progress-bar-container');
+
+        progressBarContainers.forEach(function(container) {
+            const tooltip = container.querySelector('.pilarease-admin-progress-tooltip');
+
+            // Ensure the tooltip exists
+            if (!tooltip) {
+                console.warn('Tooltip not found in:', container);
+                return;
+            }
+
+            // Make the container focusable for accessibility
+            container.setAttribute('tabindex', '0');
+
+            // Show tooltip on mouse enter
+            container.addEventListener('mouseenter', function() {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            });
+
+            // Hide tooltip on mouse leave
+            container.addEventListener('mouseleave', function() {
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+            });
+
+            // Show tooltip on focus (for keyboard navigation)
+            container.addEventListener('focus', function() {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            });
+
+            // Hide tooltip on blur
+            container.addEventListener('blur', function() {
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+            });
+        });
+    });
+</script>
+
 {% endblock %}
