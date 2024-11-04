@@ -1359,7 +1359,7 @@ body {
   flex-direction: column;
   align-items: center;
 }
-
+.status-table th.Status_ID,
 .status-table th Anger,
 .status-table th Disgust,
 .status-table th Fear,
@@ -1370,8 +1370,7 @@ body {
   width: 120px; /* Fixed width for emotion columns */
 }
 
-/* Delete Button */
-.pilarease-admin-action-button.delete-button {
+ete Button */ .pilarease-admin-action-button.delete-button {
   background-color: var(--delete-color); /* rgba(14, 35, 38, 0.7) */
   padding: 6px 12px;
   border: none;

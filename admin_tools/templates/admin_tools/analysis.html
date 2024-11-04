@@ -61,7 +61,7 @@
             </thead>
             <tbody>
                 {% for status in statuses %}
-                <tr>
+                <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
                     <td>{{ status.id }}</td>
                     <td>{{ status.plain_description|truncatewords:10 }}</td>
                     <td class="pilarease-admin-progress-cell">
@@ -125,6 +125,18 @@
                         <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status">Delete</a>
                     </td>
                 </tr>
+                <!-- Expanded View Row -->
+                <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
+                    <td colspan="11">
+                        <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
+                            <h3>{{ status.title }}</h3>
+                            <p><strong>Description:</strong> {{ status.plain_description }}</p>
+                            <p><strong>Category:</strong> {{ status.emotion|title }}</p>
+                            <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
+                            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -150,6 +162,7 @@
         </div>
     </div>
 
+    
 
     <!-- Keywords or Topics Detection Table -->
     <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
@@ -243,49 +256,72 @@
     </div>
 </div>
 
-<!-- JavaScript for Tooltip Functionality -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Select all progress bar containers
-        const progressBarContainers = document.querySelectorAll('.pilarease-admin-progress-bar-container');
 
-        progressBarContainers.forEach(function(container) {
-            const tooltip = container.querySelector('.pilarease-admin-progress-tooltip');
+    <!-- JavaScript for Tooltip Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all progress bar containers
+            const progressBarContainers = document.querySelectorAll('.pilarease-admin-progress-bar-container');
 
-            // Ensure the tooltip exists
-            if (!tooltip) {
-                console.warn('Tooltip not found in:', container);
-                return;
-            }
+            progressBarContainers.forEach(function(container) {
+                const tooltip = container.querySelector('.pilarease-admin-progress-tooltip');
 
-            // Make the container focusable for accessibility
-            container.setAttribute('tabindex', '0');
+                // Ensure the tooltip exists
+                if (!tooltip) {
+                    console.warn('Tooltip not found in:', container);
+                    return;
+                }
 
-            // Show tooltip on mouse enter
-            container.addEventListener('mouseenter', function() {
-                tooltip.style.opacity = '1';
-                tooltip.style.pointerEvents = 'auto';
+                // Make the container focusable for accessibility
+                container.setAttribute('tabindex', '0');
+
+                // Show tooltip on mouse enter
+                container.addEventListener('mouseenter', function() {
+                    tooltip.style.opacity = '1';
+                    tooltip.style.pointerEvents = 'auto';
+                });
+
+                // Hide tooltip on mouse leave
+                container.addEventListener('mouseleave', function() {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.pointerEvents = 'none';
+                });
+
+                // Show tooltip on focus (for keyboard navigation)
+                container.addEventListener('focus', function() {
+                    tooltip.style.opacity = '1';
+                    tooltip.style.pointerEvents = 'auto';
+                });
+
+                // Hide tooltip on blur
+                container.addEventListener('blur', function() {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.pointerEvents = 'none';
+                });
             });
 
-            // Hide tooltip on mouse leave
-            container.addEventListener('mouseleave', function() {
-                tooltip.style.opacity = '0';
-                tooltip.style.pointerEvents = 'none';
-            });
+            // Select all main status rows
+            const statusRows = document.querySelectorAll('.pilarease-admin-status-row');
 
-            // Show tooltip on focus (for keyboard navigation)
-            container.addEventListener('focus', function() {
-                tooltip.style.opacity = '1';
-                tooltip.style.pointerEvents = 'auto';
-            });
+            statusRows.forEach(function(row) {
+                row.addEventListener('click', function(event) {
+                    // Prevent toggling when clicking on the Delete button or any actionable element
+                    if (event.target.closest('.pilarease-admin-action-button')) {
+                        return;
+                    }
 
-            // Hide tooltip on blur
-            container.addEventListener('blur', function() {
-                tooltip.style.opacity = '0';
-                tooltip.style.pointerEvents = 'none';
+                    const statusId = this.getAttribute('data-status-id');
+                    const expandedView = document.getElementById('expanded-view-' + statusId);
+                    if (expandedView.style.display === 'table-row') {
+                        expandedView.style.display = 'none';
+                    } else {
+                        expandedView.style.display = 'table-row';
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
+
+</div>
 
 {% endblock %}
