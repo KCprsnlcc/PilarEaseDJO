@@ -58,25 +58,44 @@
     <p id="progress-percentage">0%</p>
   </div>
   {% endif %} {% if performance_result %}
-  <!-- Performance Results Section -->
-  <div class="pilarease-admin-metrics-section">
-    <h3>Overall Metrics</h3>
-    <ul class="pilarease-admin-metrics-list">
-      <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
-      <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
-      <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
-      <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
-    </ul>
-  </div>
 
-  <div class="pilarease-admin-confusion-matrix-section">
-    <h3>Confusion Matrix</h3>
-    <img
-      src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
-      alt="Confusion Matrix"
-      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
-    />
-  </div>
+        <!-- Overall Metrics Section -->
+    <div class="pilarease-admin-metrics-section elevated-container">
+      <h3 class="pilarease-admin-section-title">
+        Overall Metrics
+        <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Overall Metrics" tabindex="0"></i>
+        <span class="pilarease-admin-tooltip">
+          Overall performance metrics of the model including Accuracy, Precision, Recall, and F1 Score.
+        </span>
+      </h3>
+      <ul class="pilarease-admin-metrics-list">
+        <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
+        <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
+        <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
+        <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
+      </ul>
+    </div>
+
+    
+    <!-- Confusion Matrix Section -->
+    <div class="pilarease-admin-confusion-matrix-section elevated-container">
+      <h3 class="pilarease-admin-section-title">
+        Confusion Matrix
+        <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Confusion Matrix" tabindex="0"></i>
+        <span class="pilarease-admin-tooltip">
+          Visual representation of the performance of the classification model, showing true vs. predicted labels.
+        </span>
+      </h3>
+      <img
+        src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
+        alt="Confusion Matrix"
+        class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
+      />
+    </div>
+
+    
+
+    
 
   <div class="pilarease-admin-classification-report-section">
     <h2 class="pilarease-admin-subtitle">
