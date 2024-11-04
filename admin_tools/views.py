@@ -10,6 +10,7 @@ from django.db.models import Q, Avg
 from django.views.decorators.http import require_http_methods, require_POST
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
+from django.db.models import Count, Case, When, Value, DurationField
 import matplotlib
 matplotlib.use('Agg')  # Must be set before importing pyplot
 import base64 
@@ -1235,98 +1236,147 @@ def contains_custom_profanity(text):
 
 @login_required
 def analysis_view(request):
-    search_query = request.GET.get('search', '')
-    category = request.GET.get('category', 'all')
-    page_number = request.GET.get('page', 1)
-    page_size = 10
+    """
+    Remastered Analysis View:
+    - Separates Contextual Emotion Comparison from search filtering.
+    - Compares each user's latest emotion status with their average emotions.
+    - Adds independent search filtering and pagination for the comparison table.
+    - Maintains Statuses and Keywords or Topics Detection functionalities.
+    """
+    # -------------------------
+    # Statuses Management
+    # -------------------------
+    statuses_search_query = request.GET.get('search_status', '')
+    category_status = request.GET.get('category_status', 'all')
+    statuses_page_number = request.GET.get('page_statuses', 1)
+    statuses_page_size = 10  # Adjust as needed
 
     # Filter statuses based on search query and category
-    if category == 'all':
-        statuses = Status.objects.filter(
-            Q(title__icontains=search_query) |
-            Q(plain_description__icontains=search_query)
+    if category_status == 'all':
+        statuses_queryset = Status.objects.filter(
+            Q(title__icontains=statuses_search_query) |
+            Q(plain_description__icontains=statuses_search_query)
         )
     else:
-        statuses = Status.objects.filter(
-            Q(title__icontains=search_query) |
-            Q(plain_description__icontains=search_query),
-            emotion=category
+        statuses_queryset = Status.objects.filter(
+            Q(title__icontains=statuses_search_query) |
+            Q(plain_description__icontains=statuses_search_query),
+            emotion=category_status
         )
 
-    paginator = Paginator(statuses, page_size)
-    page_obj = paginator.get_page(page_number)
+    # Paginate statuses
+    statuses_paginator = Paginator(statuses_queryset, statuses_page_size)
+    statuses_page_obj = statuses_paginator.get_page(statuses_page_number)
 
-    # --- Contextual Emotion Comparison User Table ---
-    # Calculate average emotion percentages for each user based on their recent statuses
-    recent_statuses = Status.objects.filter(created_at__gte=timezone.now() - timedelta(days=30))
-    user_emotions = recent_statuses.values('user__id', 'user__full_name').annotate(
-        avg_anger=Avg('anger_percentage'),
-        avg_disgust=Avg('disgust_percentage'),
-        avg_fear=Avg('fear_percentage'),
-        avg_neutral=Avg('neutral_percentage'),
-        avg_happiness=Avg('happiness_percentage'),
-        avg_sadness=Avg('sadness_percentage'),
-        avg_surprise=Avg('surprise_percentage'),
-    )
-
-    # Prepare comparison data: current status vs average
-    comparison_data = []
-    for status in page_obj:
-        user = status.user
-        averages = user_emotions.filter(user__id=user.id).order_by('user__id').first()
-        if averages:
-            comparison = {
-                'user_full_name': user.full_name,
-                'current_status': {
-                    'anger': status.anger_percentage,
-                    'disgust': status.disgust_percentage,
-                    'fear': status.fear_percentage,
-                    'neutral': status.neutral_percentage,
-                    'happiness': status.happiness_percentage,
-                    'sadness': status.sadness_percentage,
-                    'surprise': status.surprise_percentage,
-                },
-                'average_recent': {
-                    'anger': round(averages['avg_anger'], 2) if averages['avg_anger'] else 0,
-                    'disgust': round(averages['avg_disgust'], 2) if averages['avg_disgust'] else 0,
-                    'fear': round(averages['avg_fear'], 2) if averages['avg_fear'] else 0,
-                    'neutral': round(averages['avg_neutral'], 2) if averages['avg_neutral'] else 0,
-                    'happiness': round(averages['avg_happiness'], 2) if averages['avg_happiness'] else 0,
-                    'sadness': round(averages['avg_sadness'], 2) if averages['avg_sadness'] else 0,
-                    'surprise': round(averages['avg_surprise'], 2) if averages['avg_surprise'] else 0,
-                }
-            }
-            comparison_data.append(comparison)
-
-    # --- Keywords or Topics Detection ---
+    # -------------------------
+    # Keywords or Topics Detection
+    # -------------------------
     # Function to extract keywords from text
     def extract_keywords(text, num_keywords=5):
         tokens = word_tokenize(text.lower())
-        stop_words = set(stopwords.words('english'))
-        filtered_tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
+        stop_words_set = set(stopwords.words('english'))
+        filtered_tokens = [word for word in tokens if word.isalpha() and word not in stop_words_set]
         word_counts = Counter(filtered_tokens)
         common_words = [word for word, count in word_counts.most_common(num_keywords)]
         return common_words
 
-    # Extract keywords for each status
+    # Extract keywords for each status in the current page
     keywords_data = []
-    for status in page_obj:
+    for status in statuses_page_obj:
         keywords = extract_keywords(status.plain_description)
         keywords_data.append({
             'status_id': status.id,
             'keywords': keywords
         })
 
+    # -------------------------
+    # Contextual Emotion Comparison
+    # -------------------------
+    comparison_search_query = request.GET.get('search_comparison', '')
+    comparison_page_number = request.GET.get('page_comparison', 1)
+    comparison_page_size = 10  # 10 users per page
+
+    # Fetch all users who are not counselors and have at least one status
+    comparison_users = CustomUser.objects.filter(is_counselor=False).annotate(status_count=Count('status')).filter(status_count__gte=1)
+
+    # Apply search filter for comparison
+    if comparison_search_query:
+        comparison_users = comparison_users.filter(
+            Q(username__icontains=comparison_search_query) |
+            Q(full_name__icontains=comparison_search_query)
+        )
+
+    # Paginate the comparison users
+    comparison_paginator = Paginator(comparison_users, comparison_page_size)
+    comparison_page_obj = comparison_paginator.get_page(comparison_page_number)
+
+    # Prepare comparison data
+    comparison_data = []
+    for user in comparison_page_obj:
+        latest_status = Status.objects.filter(user=user).order_by('-created_at').first()
+        if latest_status:
+            # Calculate average emotions across all statuses
+            average_emotions = Status.objects.filter(user=user).aggregate(
+                avg_anger=Avg('anger_percentage'),
+                avg_disgust=Avg('disgust_percentage'),
+                avg_fear=Avg('fear_percentage'),
+                avg_neutral=Avg('neutral_percentage'),
+                avg_happiness=Avg('happiness_percentage'),
+                avg_sadness=Avg('sadness_percentage'),
+                avg_surprise=Avg('surprise_percentage'),
+            )
+            comparison = {
+                'user_full_name': user.full_name,
+                'latest_status': {
+                    'anger': latest_status.anger_percentage,
+                    'disgust': latest_status.disgust_percentage,
+                    'fear': latest_status.fear_percentage,
+                    'neutral': latest_status.neutral_percentage,
+                    'happiness': latest_status.happiness_percentage,
+                    'sadness': latest_status.sadness_percentage,
+                    'surprise': latest_status.surprise_percentage,
+                },
+                'average_emotions': {
+                    'anger': round(average_emotions['avg_anger'] or 0, 2),
+                    'disgust': round(average_emotions['avg_disgust'] or 0, 2),
+                    'fear': round(average_emotions['avg_fear'] or 0, 2),
+                    'neutral': round(average_emotions['avg_neutral'] or 0, 2),
+                    'happiness': round(average_emotions['avg_happiness'] or 0, 2),
+                    'sadness': round(average_emotions['avg_sadness'] or 0, 2),
+                    'surprise': round(average_emotions['avg_surprise'] or 0, 2),
+                }
+            }
+            comparison_data.append(comparison)
+
     context = {
-        'statuses': page_obj,
-        'search_query': search_query,
-        'category': category,
-        'page_obj': page_obj,
-        'comparison_data': comparison_data,
+        # Statuses Management
+        'statuses': statuses_page_obj,
+        'statuses_search_query': statuses_search_query,
+        'category_status': category_status,
+        'statuses_page_obj': statuses_page_obj,
+
+        # Keywords or Topics Detection
         'keywords_data': keywords_data,
+
+        # Contextual Emotion Comparison
+        'comparison_data': comparison_data,
+        'comparison_search_query': comparison_search_query,
+        'comparison_page_obj': comparison_page_obj,
+
+        # Any additional context variables as needed
     }
+
     return render(request, 'admin_tools/analysis.html', context)
 
+def delete_status(request, status_id):
+    """
+    Deletes a status given its ID.
+    Only accessible by authenticated users.
+    """
+    status = get_object_or_404(Status, id=status_id)
+    status.delete()
+    messages.success(request, f'Status ID {status_id} has been deleted successfully.')
+    return redirect('analysis')
 @login_required
 def contact_us_view(request):
     search_query = request.GET.get('search', '')

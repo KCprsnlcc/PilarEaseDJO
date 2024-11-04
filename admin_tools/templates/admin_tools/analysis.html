@@ -6,6 +6,7 @@
 
 {% block content %}
 <div class="pilarease-admin-analysis animate__animated animate__fadeIn">
+    <!-- Dashboard Header -->
     <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="pilarease-admin-title">
             Analysis
@@ -16,155 +17,157 @@
         </h1>
     </div>
 
-    <!-- Search and Filter Form -->
-    <div class="pilarease-admin-search-filter animate__animated animate__fadeInDown">
-        <form method="get" class="pilarease-admin-search-form search-form">
-            <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input">
-            <select name="category" class="pilarease-admin-select category-select">
-                <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
-                <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
-                <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
-                <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
-                <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
-                <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
-                <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
-                <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
-            </select>
-            <button type="submit" class="pilarease-admin-button search-button animate__animated animate__pulse">Search</button>
-        </form>
-    </div>
-
-    <!-- Statuses Table -->
-    <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
+    <!-- Statuses Management Section -->
+    <div class="pilarease-admin-statuses-section animate__animated animate__fadeInDown">
         <h2 class="pilarease-admin-subtitle">
-            Statuses
-            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Statuses" tabindex="0"></i>
+            Status Management
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Status Management" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
-                Overview of user statuses with corresponding emotion percentages.
+                Manage and oversee user statuses, including searching, filtering, and deletion.
             </span>
         </h2>
-        <table class="pilarease-admin-statuses-table status-table">
-            <thead>
-                <tr>
-                    <th>Status ID</th>
-                    <th>Body</th>
-                    <th>Anger</th>
-                    <th>Disgust</th>
-                    <th>Fear</th>
-                    <th>Happiness</th>
-                    <th>Neutral</th>
-                    <th>Sadness</th>
-                    <th>Surprise</th>
-                    <th>Timestamp</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for status in statuses %}
-                <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
-                    <td>{{ status.id }}</td>
-                    <td>{{ status.plain_description|truncatewords:10 }}</td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.anger_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.disgust_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.fear_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.happiness_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.neutral_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.sadness_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td class="pilarease-admin-progress-cell">
-                        <div class="pilarease-admin-progress-bar-container">
-                            <div class="pilarease-admin-progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
-                            <div class="pilarease-admin-progress-tooltip">
-                                {{ status.surprise_percentage }}%
-                            </div>
-                        </div>
-                    </td>
-                    <td>{{ status.created_at|date:"Y-m-d" }}</td>
-                    <td>
-                        <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status">Delete</a>
-                    </td>
-                </tr>
-                <!-- Expanded View Row -->
-                <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
-                    <td colspan="11">
-                        <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
-                            <h3>{{ status.title }}</h3>
-                            <p><strong>Description:</strong> {{ status.plain_description }}</p>
-                            <p><strong>Category:</strong> {{ status.emotion|title }}</p>
-                            <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
-                            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if not statuses %}
-        <p class="pilarease-admin-no-data">No analysis data found.</p>
-        {% endif %}
-        <div class="pilarease-admin-pagination pagination">
-            <span class="pilarease-admin-step-links step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Previous</a>
-                {% endif %}
 
-                <span class="pilarease-admin-current current">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        <!-- Search and Filter Form for Statuses -->
+        <form method="get" class="pilarease-admin-search-form search-form" id="statuses-search-form">
+            <input type="text" name="search_status" placeholder="Search Statuses..." value="{{ statuses_search_query }}" class="pilarease-admin-input search-input">
+            <select name="category_status" class="pilarease-admin-select category-select">
+                <option value="all" {% if category_status == 'all' %}selected{% endif %}>All</option>
+                <option value="anger" {% if category_status == 'anger' %}selected{% endif %}>Anger</option>
+                <option value="disgust" {% if category_status == 'disgust' %}selected{% endif %}>Disgust</option>
+                <option value="fear" {% if category_status == 'fear' %}selected{% endif %}>Fear</option>
+                <option value="happiness" {% if category_status == 'happiness' %}selected{% endif %}>Happiness</option>
+                <option value="neutral" {% if category_status == 'neutral' %}selected{% endif %}>Neutral</option>
+                <option value="sadness" {% if category_status == 'sadness' %}selected{% endif %}>Sadness</option>
+                <option value="surprise" {% if category_status == 'surprise' %}selected{% endif %}>Surprise</option>
+            </select>
+            <button type="submit" class="pilarease-admin-button search-button animate__animated animate__pulse">Search</button>
+            <a href="{% url 'analysis' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
+        </form>
+
+        <!-- Statuses Table -->
+        <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
+            <table class="pilarease-admin-statuses-table status-table">
+                <thead>
+                    <tr>
+                        <th>Status ID</th>
+                        <th>Body</th>
+                        <th>Anger</th>
+                        <th>Disgust</th>
+                        <th>Fear</th>
+                        <th>Happiness</th>
+                        <th>Neutral</th>
+                        <th>Sadness</th>
+                        <th>Surprise</th>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for status in statuses %}
+                    <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
+                        <td>{{ status.id }}</td>
+                        <td>{{ status.plain_description|truncatewords:10 }}</td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.anger_percentage }}%; background-color: #FF5733;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.anger_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.disgust_percentage }}%; background-color: #C70039;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.disgust_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.fear_percentage }}%; background-color: #900C3F;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.fear_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.happiness_percentage }}%; background-color: #FFC300;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.happiness_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.neutral_percentage }}%; background-color: #DAF7A6;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.neutral_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.sadness_percentage }}%; background-color: #581845;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.sadness_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td class="pilarease-admin-progress-cell">
+                            <div class="pilarease-admin-progress-bar-container">
+                                <div class="pilarease-admin-progress-bar" style="width: {{ status.surprise_percentage }}%; background-color: #900C3F;"></div>
+                                <div class="pilarease-admin-progress-tooltip">
+                                    {{ status.surprise_percentage }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ status.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status">Delete</a>
+                        </td>
+                    </tr>
+                    <!-- Expanded View Row -->
+                    <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
+                        <td colspan="11">
+                            <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
+                                <h3>{{ status.title }}</h3>
+                                <p><strong>Description:</strong> {{ status.plain_description }}</p>
+                                <p><strong>Category:</strong> {{ status.emotion|title }}</p>
+                                <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
+                                <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not statuses %}
+            <p class="pilarease-admin-no-data">No analysis data found.</p>
+            {% endif %}
+            <!-- Statuses Pagination -->
+            <div class="pilarease-admin-pagination pagination">
+                <span class="pilarease-admin-step-links step-links">
+                    {% if statuses_page_obj.has_previous %}
+                        <a href="?page_statuses=1&search_status={{ statuses_search_query }}&category_status={{ category_status }}&search_comparison={{ comparison_search_query }}" class="pilarease-admin-pagination-link">First</a>
+                        <a href="?page_statuses={{ statuses_page_obj.previous_page_number }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}&search_comparison={{ comparison_search_query }}" class="pilarease-admin-pagination-link">Previous</a>
+                    {% endif %}
+
+                    <span class="pilarease-admin-current current">
+                        Page {{ statuses_page_obj.number }} of {{ statuses_page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if statuses_page_obj.has_next %}
+                        <a href="?page_statuses={{ statuses_page_obj.next_page_number }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}&search_comparison={{ comparison_search_query }}" class="pilarease-admin-pagination-link">Next</a>
+                        <a href="?page_statuses={{ statuses_page_obj.paginator.num_pages }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}&search_comparison={{ comparison_search_query }}" class="pilarease-admin-pagination-link">Last</a>
+                    {% endif %}
                 </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-pagination-link">Last</a>
-                {% endif %}
-            </span>
+            </div>
         </div>
     </div>
 
-    
-
-    <!-- Keywords or Topics Detection Table -->
+    <!-- Keywords or Topics Detection Section -->
     <div class="pilarease-admin-keywords-section animate__animated animate__fadeInUp">
         <h2 class="pilarease-admin-subtitle">
             Keywords or Topics Detection
@@ -198,54 +201,62 @@
         {% endif %}
     </div>
 
-
-    <!-- Contextual Emotion Comparison User Table -->
+    <!-- Contextual Emotion Comparison Section -->
     <div class="pilarease-admin-comparison-section animate__animated animate__fadeInUp">
         <h2 class="pilarease-admin-subtitle">
             Contextual Emotion Comparison
             <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Contextual Emotion Comparison" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
-                Compare current emotion statuses against average recent emotions for each user.
+                Compare each user's latest emotion status against their average emotions to understand overall emotional trends.
             </span>
         </h2>
+
+        <!-- Search and Filter Form for Contextual Emotion Comparison -->
+        <form method="get" class="pilarease-admin-search-form search-form" id="comparison-search-form">
+            <input type="text" name="search_comparison" placeholder="Search Users..." value="{{ comparison_search_query }}" class="pilarease-admin-input search-input">
+            <button type="submit" class="pilarease-admin-button search-button animate__animated animate__pulse">Search</button>
+            <a href="{% url 'analysis' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
+        </form>
+
+        <!-- Contextual Emotion Comparison Table -->
         <table class="pilarease-admin-comparison-table comparison-table">
             <thead>
                 <tr>
                     <th>User</th>
-                    <th>Anger (Current)</th>
-                    <th>Anger (Avg Recent)</th>
-                    <th>Disgust (Current)</th>
-                    <th>Disgust (Avg Recent)</th>
-                    <th>Fear (Current)</th>
-                    <th>Fear (Avg Recent)</th>
-                    <th>Neutral (Current)</th>
-                    <th>Neutral (Avg Recent)</th>
-                    <th>Happiness (Current)</th>
-                    <th>Happiness (Avg Recent)</th>
-                    <th>Sadness (Current)</th>
-                    <th>Sadness (Avg Recent)</th>
-                    <th>Surprise (Current)</th>
-                    <th>Surprise (Avg Recent)</th>
+                    <th>Anger (Latest)</th>
+                    <th>Anger (Avg)</th>
+                    <th>Disgust (Latest)</th>
+                    <th>Disgust (Avg)</th>
+                    <th>Fear (Latest)</th>
+                    <th>Fear (Avg)</th>
+                    <th>Neutral (Latest)</th>
+                    <th>Neutral (Avg)</th>
+                    <th>Happiness (Latest)</th>
+                    <th>Happiness (Avg)</th>
+                    <th>Sadness (Latest)</th>
+                    <th>Sadness (Avg)</th>
+                    <th>Surprise (Latest)</th>
+                    <th>Surprise (Avg)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for comparison in comparison_data %}
                 <tr>
                     <td>{{ comparison.user_full_name }}</td>
-                    <td>{{ comparison.current_status.anger }}%</td>
-                    <td>{{ comparison.average_recent.anger|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.disgust }}%</td>
-                    <td>{{ comparison.average_recent.disgust|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.fear }}%</td>
-                    <td>{{ comparison.average_recent.fear|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.neutral }}%</td>
-                    <td>{{ comparison.average_recent.neutral|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.happiness }}%</td>
-                    <td>{{ comparison.average_recent.happiness|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.sadness }}%</td>
-                    <td>{{ comparison.average_recent.sadness|floatformat:1 }}%</td>
-                    <td>{{ comparison.current_status.surprise }}%</td>
-                    <td>{{ comparison.average_recent.surprise|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.anger }}%</td>
+                    <td>{{ comparison.average_emotions.anger|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.disgust }}%</td>
+                    <td>{{ comparison.average_emotions.disgust|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.fear }}%</td>
+                    <td>{{ comparison.average_emotions.fear|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.neutral }}%</td>
+                    <td>{{ comparison.average_emotions.neutral|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.happiness }}%</td>
+                    <td>{{ comparison.average_emotions.happiness|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.sadness }}%</td>
+                    <td>{{ comparison.average_emotions.sadness|floatformat:1 }}%</td>
+                    <td>{{ comparison.latest_status.surprise }}%</td>
+                    <td>{{ comparison.average_emotions.surprise|floatformat:1 }}%</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -253,75 +264,84 @@
         {% if not comparison_data %}
         <p class="pilarease-admin-no-data">No comparison data available.</p>
         {% endif %}
+        <!-- Contextual Emotion Comparison Pagination -->
+        <div class="pilarease-admin-pagination pagination">
+            <span class="pilarease-admin-step-links step-links">
+                {% if comparison_page_obj.has_previous %}
+                    <a href="?page_comparison=1&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}" class="pilarease-admin-pagination-link">First</a>
+                    <a href="?page_comparison={{ comparison_page_obj.previous_page_number }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}" class="pilarease-admin-pagination-link">Previous</a>
+                {% endif %}
+
+                <span class="pilarease-admin-current current">
+                    Page {{ comparison_page_obj.number }} of {{ comparison_page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if comparison_page_obj.has_next %}
+                    <a href="?page_comparison={{ comparison_page_obj.next_page_number }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}" class="pilarease-admin-pagination-link">Next</a>
+                    <a href="?page_comparison={{ comparison_page_obj.paginator.num_pages }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}" class="pilarease-admin-pagination-link">Last</a>
+                {% endif %}
+            </span>
+        </div>
     </div>
 </div>
 
+<!-- JavaScript for Tooltip and Row Expansion Functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tooltip Functionality
+        const progressBarContainers = document.querySelectorAll('.pilarease-admin-progress-bar-container');
 
-    <!-- JavaScript for Tooltip Functionality -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Select all progress bar containers
-            const progressBarContainers = document.querySelectorAll('.pilarease-admin-progress-bar-container');
+        progressBarContainers.forEach(function(container) {
+            const tooltip = container.querySelector('.pilarease-admin-progress-tooltip');
 
-            progressBarContainers.forEach(function(container) {
-                const tooltip = container.querySelector('.pilarease-admin-progress-tooltip');
+            if (!tooltip) {
+                console.warn('Tooltip not found in:', container);
+                return;
+            }
 
-                // Ensure the tooltip exists
-                if (!tooltip) {
-                    console.warn('Tooltip not found in:', container);
+            container.setAttribute('tabindex', '0');
+
+            container.addEventListener('mouseenter', function() {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            });
+
+            container.addEventListener('mouseleave', function() {
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+            });
+
+            container.addEventListener('focus', function() {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            });
+
+            container.addEventListener('blur', function() {
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+            });
+        });
+
+        // Row Expansion for Statuses
+        const statusRows = document.querySelectorAll('.pilarease-admin-status-row');
+
+        statusRows.forEach(function(row) {
+            row.addEventListener('click', function(event) {
+                // Prevent toggling when clicking on the Delete button or any actionable element
+                if (event.target.closest('.pilarease-admin-action-button')) {
                     return;
                 }
 
-                // Make the container focusable for accessibility
-                container.setAttribute('tabindex', '0');
-
-                // Show tooltip on mouse enter
-                container.addEventListener('mouseenter', function() {
-                    tooltip.style.opacity = '1';
-                    tooltip.style.pointerEvents = 'auto';
-                });
-
-                // Hide tooltip on mouse leave
-                container.addEventListener('mouseleave', function() {
-                    tooltip.style.opacity = '0';
-                    tooltip.style.pointerEvents = 'none';
-                });
-
-                // Show tooltip on focus (for keyboard navigation)
-                container.addEventListener('focus', function() {
-                    tooltip.style.opacity = '1';
-                    tooltip.style.pointerEvents = 'auto';
-                });
-
-                // Hide tooltip on blur
-                container.addEventListener('blur', function() {
-                    tooltip.style.opacity = '0';
-                    tooltip.style.pointerEvents = 'none';
-                });
-            });
-
-            // Select all main status rows
-            const statusRows = document.querySelectorAll('.pilarease-admin-status-row');
-
-            statusRows.forEach(function(row) {
-                row.addEventListener('click', function(event) {
-                    // Prevent toggling when clicking on the Delete button or any actionable element
-                    if (event.target.closest('.pilarease-admin-action-button')) {
-                        return;
-                    }
-
-                    const statusId = this.getAttribute('data-status-id');
-                    const expandedView = document.getElementById('expanded-view-' + statusId);
-                    if (expandedView.style.display === 'table-row') {
-                        expandedView.style.display = 'none';
-                    } else {
-                        expandedView.style.display = 'table-row';
-                    }
-                });
+                const statusId = this.getAttribute('data-status-id');
+                const expandedView = document.getElementById('expanded-view-' + statusId);
+                if (expandedView.style.display === 'table-row') {
+                    expandedView.style.display = 'none';
+                } else {
+                    expandedView.style.display = 'table-row';
+                }
             });
         });
-    </script>
-
-</div>
+    });
+</script>
 
 {% endblock %}
