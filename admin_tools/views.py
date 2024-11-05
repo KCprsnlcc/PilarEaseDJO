@@ -1756,10 +1756,10 @@ def data(request):
         # Parse the date_range string
         try:
             start_date_str, end_date_str = date_range.split(' - ')
-            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d')
-            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d')
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
             # Adjust end_date to include the entire day
-            end_date = end_date + datetime.timedelta(days=1)
+            end_date = end_date + timedelta(days=1)
             datasets = datasets.filter(uploaded_at__range=(start_date, end_date))
         except ValueError:
             # Handle invalid date format
