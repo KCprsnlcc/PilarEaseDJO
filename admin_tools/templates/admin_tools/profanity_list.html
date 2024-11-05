@@ -1,106 +1,161 @@
-{% extends 'admin_tools/base_admin.html' %} {% block content %}
-<div
-  class="pilarease-admin-profanity-container animate__animated animate__fadeInUp"
->
-  <h3 class="pilarease-admin-profanity-title">Custom Profanity List</h3>
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
 
-  <!-- Profanity List -->
-  <ul class="pilarease-admin-profanity-list">
-    {% for word in profanities %}
-    <li class="pilarease-admin-profanity-item">
-      <span class="pilarease-admin-profanity-word">{{ word }}</span>
-      <div class="pilarease-admin-profanity-actions">
-        <button
-          class="pilarease-admin-button delete-button"
-          onclick="deleteProfanity('{{ word }}')"
-        >
-          Delete
+{% block content %}
+
+<div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="pilarease-admin-title">
+        Profanity Management
+        <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Profanity Management" tabindex="0"></i>
+        <span class="pilarease-admin-tooltip">
+            Manage your custom list of profane words, including searching, adding, and deleting words.
+        </span>
+    </h1>
+</div>
+
+<div class="pilarease-admin-profanity-container">
+    <!-- Search Form -->
+    <form method="get" class="pilarease-admin-search-form" aria-label="Search profane words">
+        <input
+            type="text"
+            name="search"
+            value="{{ search_query }}"
+            placeholder="Search profane words..."
+            class="pilarease-admin-input search-input"
+            aria-label="Search profane words"
+        />
+        <button type="submit" class="pilarease-admin-button search-button" aria-label="Search">Search</button>
+        {% if search_query %}
+        <a href="{% url 'profanity_list' %}" class="pilarease-admin-button pilarease-admin-reset-button" aria-label="Reset search">Reset</a>
+        {% endif %}
+    </form>
+
+    <!-- Profanity List Table -->
+    <table class="pilarease-admin-profanity-table pilarease-admin-base-table">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Profane Word</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for profanity in profanities %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ profanity }}</td>
+                <td>
+                    <button
+                        class="pilarease-admin-button delete-button"
+                        onclick="deleteProfanity('{{ profanity|escapejs }}')"
+                        aria-label="Delete Profane Word"
+                    >
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="pilarease-admin-no-data">No profane words found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <div class="pilarease-admin-pagination">
+        <span class="pilarease-admin-step-links">
+            {% if profanities.has_previous %}
+                <a href="?page=1&search={{ search_query }}" class="pilarease-admin-step-link">First</a>
+                <a href="?page={{ profanities.previous_page_number }}&search={{ search_query }}" class="pilarease-admin-step-link">Previous</a>
+            {% endif %}
+
+            <span class="pilarease-admin-current">
+                Page {{ profanities.number }} of {{ profanities.paginator.num_pages }}.
+            </span>
+
+            {% if profanities.has_next %}
+                <a href="?page={{ profanities.next_page_number }}&search={{ search_query }}" class="pilarease-admin-step-link">Next</a>
+                <a href="?page={{ profanities.paginator.num_pages }}&search={{ search_query }}" class="pilarease-admin-step-link">Last</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+    <!-- Add Profanity Form -->
+    <form class="pilarease-admin-add-profanity-form" onsubmit="addProfanity(event)">
+        <input
+            type="text"
+            id="newProfanity"
+            placeholder="Add new profane word"
+            class="pilarease-admin-input"
+            required
+            aria-label="New Profane Word"
+        />
+        <button type="submit" class="pilarease-admin-button add-button" aria-label="Add Profane Word">
+            Add
         </button>
-      </div>
-    </li>
-    {% empty %}
-    <li class="pilarease-admin-profanity-item">
-      <p>No profane words added yet.</p>
-    </li>
-    {% endfor %}
-  </ul>
-
-  <!-- Add Profanity Form -->
-  <form
-    class="pilarease-admin-add-profanity-form"
-    onsubmit="addProfanity(event)"
-  >
-    <input
-      type="text"
-      id="newProfanity"
-      placeholder="Add new profane word"
-      required
-    />
-    <button type="submit">Add</button>
-  </form>
+    </form>
 </div>
 
 <!-- JavaScript for Profanity Management -->
 <script>
-  // Add Profanity via Form
-  function addProfanity(event) {
-    event.preventDefault();
-    const newWord = document.getElementById("newProfanity").value.trim();
-    if (newWord === "") return;
+    // Add Profanity via Form
+    function addProfanity(event) {
+        event.preventDefault();
+        const newWord = document.getElementById("newProfanity").value.trim();
+        if (newWord === "") return;
 
-    fetch("{% url 'add_profanity' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-      body: JSON.stringify({ words: [newWord] }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          alert("Profane word added successfully.");
-          location.reload();
-        } else {
-          alert("Error adding profane word: " + data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("An error occurred while adding the profane word.");
-      });
-  }
+        fetch("{% url 'add_profanity_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ word: newWord }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === "success") {
+                alert("Profane word added successfully.");
+                location.reload();
+            } else {
+                alert("Error adding profane word: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while adding the profane word.");
+        });
+    }
 
-  // Delete Profanity
-  function deleteProfanity(word) {
-    if (
-      !confirm(
-        `Are you sure you want to delete the word "${word}" from the profanity list?`
-      )
-    )
-      return;
+    // Delete Profanity
+    function deleteProfanity(word) {
+        if (!confirm(`Are you sure you want to delete the word "${word}" from the profanity list?`)) return;
 
-    fetch("", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}",
-      },
-      body: JSON.stringify({ word: word }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          alert("Profane word deleted successfully.");
-          location.reload();
-        } else {
-          alert("Error deleting profane word: " + data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        alert("An error occurred while deleting the profane word.");
-      });
-  }
+        fetch("{% url 'delete_profanity_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify({ word: word }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === "success") {
+                alert("Profane word deleted successfully.");
+                location.reload();
+            } else {
+                alert("Error deleting profane word: " + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while deleting the profane word.");
+        });
+    }
 </script>
+
 {% endblock %}

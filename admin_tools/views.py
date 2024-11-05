@@ -716,6 +716,41 @@ def manage_referrals_view(request):
     return render(request, 'admin_tools/referral.html', context)
 
 @login_required
+def profanity_list(request):
+    # Ensure only counselors can access the profanity list
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+
+    # Retrieve the ProfanityWord object
+    profanity_obj = ProfanityWord.objects.first()
+    if profanity_obj:
+        word_list = profanity_obj.word_list
+    else:
+        word_list = []
+
+    # Apply search filter
+    search_query = request.GET.get('search', '').strip().lower()
+    if search_query:
+        filtered_words = [word for word in word_list if search_query in word.lower()]
+    else:
+        filtered_words = word_list
+
+    # Implement pagination
+    paginator = Paginator(filtered_words, 10)  # Show 10 words per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Calculate the starting index for numbering
+    start_index = (page_obj.number - 1) * paginator.per_page
+
+    context = {
+        'profanities': page_obj,
+        'search_query': search_query,
+        'start_index': start_index,
+    }
+    return render(request, 'admin_tools/profanity_list.html', context)
+
+@login_required
 @user_passes_test(is_counselor)
 def referral_view(request):
     """
@@ -872,32 +907,55 @@ def manage_profanities_view(request):
 @login_required
 @user_passes_test(is_counselor)
 def add_profanity(request):
-    """
-    Handles adding a new profanity word via AJAX.
-    """
-    try:
-        data = json.loads(request.body)
-        word = data.get('word', '').strip().lower()
-        if not word:
-            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
-        if Profanity.objects.filter(word=word).exists():
-            return JsonResponse({'status': 'error', 'message': 'Word already exists.'}, status=400)
-        Profanity.objects.create(word=word)
-        return JsonResponse({'status': 'success', 'message': 'Profanity word added successfully.'})
-    except json.JSONDecodeError:
-        return HttpResponseBadRequest('Invalid JSON')
+    # Ensure only counselors can add profanity
+    if not request.user.is_counselor:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+
+    data = json.loads(request.body)
+    words = data.get('words', [])
+    errors = []
+
+    # Get or create the ProfanityWord object
+    profanity_obj, created = ProfanityWord.objects.get_or_create(id=1, defaults={'word_list': []})
+
+    for word in words:
+        word = word.strip().lower()
+        if word:
+            if word in profanity_obj.word_list:
+                errors.append(f'"{word}" already exists.')
+            else:
+                profanity_obj.word_list.append(word)
+        else:
+            errors.append('Invalid word.')
+
+    if errors:
+        return JsonResponse({'success': False, 'error': ' '.join(errors)})
+
+    profanity_obj.save()
+    return JsonResponse({'success': True})
 
 @require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_counselor)
-def delete_profanity(request, profanity_id):
-    try:
-        profanity = Profanity.objects.get(id=profanity_id)
-        profanity.delete()
-        return JsonResponse({'status': 'success', 'message': 'Profanity word deleted successfully.'})
-    except Profanity.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Profanity word not found.'}, status=404)
+def delete_profanity(request):
+    # Ensure only counselors can delete profanity
+    if not request.user.is_counselor:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
+    data = json.loads(request.body)
+    word = data.get('word', '').strip().lower()
+
+    if word:
+        # Get the ProfanityWord object
+        profanity_obj = ProfanityWord.objects.first()
+        if profanity_obj and word in profanity_obj.word_list:
+            profanity_obj.word_list.remove(word)
+            profanity_obj.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'error': 'Word not found.'})
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid word.'})
 # ==============================
 # API Endpoints for Referrals
 # ==============================

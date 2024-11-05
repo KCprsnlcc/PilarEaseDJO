@@ -2909,6 +2909,122 @@ body {
 }
 
 /* =========================================================
+   Profanity Management Page Specific Styles
+   ========================================================= */
+
+/* General Container Styling */
+.pilarease-admin-profanity-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-profanity-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+/* Profanity List Table */
+.pilarease-admin-profanity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pilarease-admin-profanity-table th,
+.pilarease-admin-profanity-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
+}
+
+.pilarease-admin-profanity-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.pilarease-admin-profanity-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.pilarease-admin-profanity-table tr:hover {
+  background-color: rgba(104, 158, 75, 0.1);
+}
+
+/* Action Buttons in Table */
+.pilarease-admin-profanity-table .pilarease-admin-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  color: #ffffff;
+}
+
+.pilarease-admin-profanity-table .pilarease-admin-button.delete-button {
+  background-color: var(--delete-color);
+}
+
+.pilarease-admin-profanity-table .pilarease-admin-button.delete-button:hover {
+  background-color: #da190b;
+  transform: translateY(-2px);
+}
+
+/* Add Profanity Form */
+.pilarease-admin-add-profanity-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pilarease-admin-add-profanity-form .pilarease-admin-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.pilarease-admin-add-profanity-form .pilarease-admin-input:focus {
+  border-color: var(--accent-light);
+  outline: none;
+}
+
+.pilarease-admin-add-profanity-form .pilarease-admin-button.add-button {
+  padding: 8px 16px;
+  background-color: var(--highlight-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-add-profanity-form .pilarease-admin-button.add-button:hover {
+  background-color: #e0a800;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pilarease-admin-search-form {
+    flex-direction: column;
+  }
+
+  .pilarease-admin-input,
+  .pilarease-admin-select {
+    width: 100%;
+  }
+}
+
+/* =========================================================
    Chat Interface Specific Styles
    ========================================================= */
 

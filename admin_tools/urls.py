@@ -39,9 +39,9 @@ urlpatterns = [
     path('referrals/<int:referral_id>/', views.referral_detail_view, name='referral_detail'),
 
     # Profanity Management
-    path('profanities/', views.manage_profanities_view, name='manage_profanities'),
+    path('profanities/', views.profanity_list, name='manage_profanities'),
     path('profanities/add/', views.add_profanity, name='add_profanity'),
-    path('profanities/delete/<int:profanity_id>/', views.delete_profanity, name='delete_profanity'),
+    path('profanities/delete/', views.delete_profanity, name='delete_profanity'),
 
     # API Endpoints
     path('api/referrals/', views.referrals_api, name='referrals_api'),
