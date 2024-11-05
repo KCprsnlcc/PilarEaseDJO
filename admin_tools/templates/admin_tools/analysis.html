@@ -19,7 +19,11 @@
 
     <!-- Statuses Management Section -->
     <div class="pilarease-admin-statuses-section animate__animated animate__fadeInDown">
-        <h2 class="pilarease-admin-subtitle">
+
+        
+        <!-- Statuses Table -->
+        <div class="pilarease-admin-statuses-table-container">
+                    <h2 class="pilarease-admin-subtitle">
             Status Management
             <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Status Management" tabindex="0"></i>
             <span class="pilarease-admin-tooltip">
@@ -27,7 +31,7 @@
             </span>
         </h2>
 
-        <!-- Search and Filter Form for Statuses -->
+            <!-- Search and Filter Form for Statuses -->
         <form method="get" class="pilarease-admin-search-form search-form" id="statuses-search-form">
             <input type="text" name="search_status" placeholder="Search Statuses..." value="{{ statuses_search_query }}" class="pilarease-admin-input search-input">
             <select name="category_status" class="pilarease-admin-select category-select">
@@ -43,9 +47,8 @@
             <button type="submit" class="pilarease-admin-button search-button animate__animated animate__pulse">Search</button>
             <a href="{% url 'analysis' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
         </form>
+        
 
-        <!-- Statuses Table -->
-        <div class="pilarease-admin-statuses-table-container animate__animated animate__fadeInUp">
             <table class="pilarease-admin-statuses-table status-table">
                 <thead>
                     <tr>
