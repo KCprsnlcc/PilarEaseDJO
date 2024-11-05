@@ -262,7 +262,8 @@ class PerformanceResult(models.Model):
     confusion_matrix_image = models.TextField()  # Base64 encoded image
     classification_report_html = models.TextField()  # HTML table
     classification_report_csv = models.TextField()  # Base64 encoded CSV
-    processed_csv_file = models.FileField(upload_to='processed_datasets/', null=True, blank=True)  # New Field
+    processed_csv_file = models.FileField(upload_to='processed_datasets/', null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)  # New field for timestamp
 
     def __str__(self):
         return f"Performance Result for Dataset {self.dataset.id}"

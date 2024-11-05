@@ -174,15 +174,6 @@
                 </select>
             </div>
             <div class="pilarease-admin-filter-group">
-                <label for="user" class="pilarease-admin-filter-label">User</label>
-                <select name="user" id="user" class="pilarease-admin-filter-select">
-                    <option value="">All Users</option>
-                    {% for user in users %}
-                    <option value="{{ user.id }}" {% if user_filter|add:'' == user.id|stringformat:"s" %}selected{% endif %}>{{ user.get_full_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="pilarease-admin-filter-group">
                 <label for="date_range" class="pilarease-admin-filter-label">Date Range</label>
                 <input type="text" name="date_range" id="date_range" class="pilarease-admin-filter-input" placeholder="Select Date Range" value="{{ date_range }}">
             </div>

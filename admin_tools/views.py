@@ -17,6 +17,7 @@ import base64
 import matplotlib.pyplot as plt
 import io
 from django.core.files.base import ContentFile
+import csv
 from django.urls import reverse
 import threading
 import seaborn as sns
@@ -129,6 +130,7 @@ def performance_dashboard(request):
         form = DatasetUploadForm()
 
     if dataset_id:
+        # Fetch performance results for a specific dataset
         dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
         if dataset.status == 'completed':
             performance_result = PerformanceResult.objects.get(dataset=dataset)
@@ -152,6 +154,17 @@ def performance_dashboard(request):
         else:
             # Handle any other statuses if applicable
             pass
+    else:
+        # Load the latest performance result if no dataset is specified
+        latest_performance = PerformanceResult.objects.filter(
+    dataset__status='completed', dataset__user=request.user
+).order_by('-created_at').first()
+        if latest_performance:
+            performance_result = latest_performance
+            dataset_id = latest_performance.dataset.id
+            text_analyses = TextAnalysis.objects.filter(dataset=latest_performance.dataset)
+            paginator = Paginator(text_analyses, page_size)
+            page_obj = paginator.get_page(page_number)
 
     # The context includes page_obj regardless of the dataset status
     context = {
@@ -1752,7 +1765,7 @@ def data(request):
             # Handle invalid date format
             pass
 
-    # Check if 'export' parameter is in GET request
+        # Check if 'export' parameter is in GET request
     if 'export' in request.GET:
         export_format = request.GET.get('export')
         datasets_to_export = datasets.order_by('-uploaded_at')
@@ -1762,9 +1775,9 @@ def data(request):
         elif export_format == 'zip':
             return export_datasets_zip(datasets_to_export)
         elif export_format == 'performance':
-            return export_performance_report(datasets_to_export)
+            return export_performance_report(request, datasets_to_export)
         elif export_format == 'error_logs':
-            return export_error_logs(datasets_to_export)
+            return export_error_logs(request, datasets_to_export)  # Add 'request' as the first argument
         else:
             messages.error(request, 'Invalid export format specified.')
             return redirect('admin_data')
@@ -1834,7 +1847,7 @@ def export_performance_report(request, datasets):
     # Collect performance data
     performance_data = []
     for dataset in datasets:
-        performance = dataset.performanceresult_set.first()
+        performance = getattr(dataset, 'performance_result', None)
         if performance:
             performance_data.append({
                 'Dataset Name': dataset.name,
@@ -1853,11 +1866,14 @@ def export_performance_report(request, datasets):
     with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Performance Report')
     excel_buffer.seek(0)
-    response = HttpResponse(excel_buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response = HttpResponse(
+        excel_buffer,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
     response['Content-Disposition'] = 'attachment; filename="performance_report.xlsx"'
     return response
 
-def export_error_logs(datasets):
+def export_error_logs(request, datasets):
     # Collect error logs from datasets with 'failed' status
     error_logs = []
     for dataset in datasets.filter(status='failed'):
