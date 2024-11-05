@@ -60,7 +60,7 @@ urlpatterns = [
     path('analysis/', views.analysis_view, name='analysis'),
 
     # Settings
-    path('settings/', views.settings, name='settings'),
+    path('download_data/', views.download_data, name='download_data'),
 
     # Authentication
     path('login/', views.admin_login_view, name='admin_login'),

@@ -1661,10 +1661,10 @@ def delete_contact_us(request, contact_id):
     return redirect('dashboard')
 
 @login_required
-def settings(request):
+def download_data(request):
     if not request.user.is_counselor:
         return redirect('admin_login')
-    return render(request, 'admin_tools/settings.html')
+    return render(request, 'admin_tools/download_data.html')
 
 
 @login_required
