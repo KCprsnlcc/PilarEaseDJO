@@ -208,63 +208,61 @@
                 </tr>
             </thead>
             <tbody>
-                {% for dataset in page_obj %}
-                <tr>
-                    <td>{{ dataset.name }}</td>
-                    <td>{{ dataset.uploaded_at|date:"Y-m-d H:i" }}</td>
-                    <td>{{ dataset.user.get_full_name }}</td>
-                    <td>
-                        {% if dataset.status == 'processing' %}
-                        <span class="pilarease-admin-status-label processing">Processing</span>
-                        {% elif dataset.status == 'completed' %}
-                        <span class="pilarease-admin-status-label completed">Completed</span>
-                        {% elif dataset.status == 'failed' %}
-                        <span class="pilarease-admin-status-label failed">Failed</span>
-                        {% endif %}
-                    </td>
-                    {% with performance=dataset.performanceresult_set.first %}
-                    <td>
-                        {% if performance %}
-                            {{ performance.accuracy|floatformat:2 }}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if performance %}
-                            {{ performance.precision|floatformat:2 }}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if performance %}
-                            {{ performance.recall|floatformat:2 }}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if performance %}
-                            {{ performance.f1_score|floatformat:2 }}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    {% endwith %}
-                    <td>
-                        <!-- Actions such as View, Download, Delete -->
-                        <a href="{% url 'dataset_detail' dataset.id %}" class="pilarease-admin-action-button view-button">View</a>
-                        <a href="{% url 'download_dataset' dataset.id %}" class="pilarease-admin-action-button download-button">Download</a>
-                        <a href="{% url 'delete_dataset' dataset.id %}" class="pilarease-admin-action-button delete-button" onclick="return confirm('Are you sure you want to delete this dataset?');">Delete</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="9" class="pilarease-admin-no-data">No datasets found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+    {% for dataset in page_obj %}
+    <tr>
+        <td>{{ dataset.name }}</td>
+        <td>{{ dataset.uploaded_at|date:"Y-m-d H:i" }}</td>
+        <td>{{ dataset.user.get_full_name }}</td>
+        <td>
+            {% if dataset.status == 'processing' %}
+            <span class="pilarease-admin-status-label processing">Processing</span>
+            {% elif dataset.status == 'completed' %}
+            <span class="pilarease-admin-status-label completed">Completed</span>
+            {% elif dataset.status == 'failed' %}
+            <span class="pilarease-admin-status-label failed">Failed</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if dataset.status == 'completed' and dataset.performance_result %}
+                {{ dataset.performance_result.accuracy|floatformat:2 }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if dataset.status == 'completed' and dataset.performance_result %}
+                {{ dataset.performance_result.precision|floatformat:2 }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if dataset.status == 'completed' and dataset.performance_result %}
+                {{ dataset.performance_result.recall|floatformat:2 }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            {% if dataset.status == 'completed' and dataset.performance_result %}
+                {{ dataset.performance_result.f1_score|floatformat:2 }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </td>
+        <td>
+            <!-- Actions such as View, Download, Delete -->
+            <a href="{% url 'dataset_detail' dataset.id %}" class="pilarease-admin-action-button view-button">View</a>
+            <a href="{% url 'download_dataset' dataset.id %}" class="pilarease-admin-action-button download-button">Download</a>
+            <a href="{% url 'delete_dataset' dataset.id %}" class="pilarease-admin-action-button delete-button" onclick="return confirm('Are you sure you want to delete this dataset?');">Delete</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="9" class="pilarease-admin-no-data">No datasets found.</td>
+    </tr>
+    {% endfor %}
+</tbody>
         </table>
 
         <!-- Pagination -->
