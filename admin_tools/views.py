@@ -98,73 +98,67 @@ def get_progress(request, dataset_id):
 @login_required
 @user_passes_test(is_counselor)
 def performance_dashboard(request):
-    form = DatasetUploadForm()
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+
     dataset_id = request.GET.get('dataset_id')
     performance_result = None
-    dataset = None  # Ensure dataset is initialized
+    search_query = request.GET.get('search', '')
+    page_number = request.GET.get('page', 1)
+    page_size = 10
+    page_obj = None  # Initialize page_obj to ensure it has a value
 
     if request.method == 'POST':
+        # Handle dataset upload
         form = DatasetUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            csv_file = form.cleaned_data['csv_file']
             dataset = form.save(commit=False)
             dataset.user = request.user
-            dataset.progress = {'current_task': 'Uploading', 'percentage': 0}
+            dataset.status = 'processing'
+            dataset.name = os.path.splitext(os.path.basename(dataset.csv_file.name))[0]
             dataset.save()
 
-            # Start background thread for processing
-            thread = threading.Thread(target=process_dataset, args=(dataset.id,))
-            thread.start()
+            # Start dataset processing in background
+            threading.Thread(target=process_dataset, args=(dataset.id,)).start()
 
-            # Redirect to the same page with dataset_id
-            return redirect(f"{reverse('performance_dashboard')}?dataset_id={dataset.id}")
-
-    elif dataset_id:
-        dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
-        # Check if processing is complete
-        if dataset.progress.get('percentage') == 100:
-            try:
-                performance_result = PerformanceResult.objects.get(dataset=dataset)
-            except PerformanceResult.DoesNotExist:
-                messages.error(request, "Performance results not found.")
-        # Processing is still in progress; the template will handle displaying the progress bar
-
+            messages.success(request, 'Dataset uploaded and processing started.')
+            return redirect(f'{reverse("performance_dashboard")}?dataset_id={dataset.id}')
+        else:
+            messages.error(request, 'Invalid form submission.')
     else:
-        # Optionally, check for the latest performance result
-        try:
-            latest_dataset = Dataset.objects.filter(user=request.user).latest('uploaded_at')
-            if latest_dataset.progress.get('percentage') == 100:
-                dataset = latest_dataset
-                performance_result = PerformanceResult.objects.get(dataset=latest_dataset)
-        except (Dataset.DoesNotExist, PerformanceResult.DoesNotExist):
+        form = DatasetUploadForm()
+
+    if dataset_id:
+        dataset = get_object_or_404(Dataset, id=dataset_id, user=request.user)
+        if dataset.status == 'completed':
+            performance_result = PerformanceResult.objects.get(dataset=dataset)
+            
+            text_analyses = TextAnalysis.objects.filter(dataset=dataset)
+            if search_query:
+                text_analyses = text_analyses.filter(
+                    Q(analysis_data__text__icontains=search_query) |
+                    Q(analysis_data__actual_label__icontains=search_query) |
+                    Q(analysis_data__predicted_label__icontains=search_query)
+                )
+
+            paginator = Paginator(text_analyses, page_size)
+            page_obj = paginator.get_page(page_number)
+        elif dataset.status == 'processing':
+            # Handle processing status
+            pass
+        elif dataset.status == 'failed':
+            # Handle failed status
+            messages.error(request, f'Dataset processing failed: {dataset.error_log}')
+        else:
+            # Handle any other statuses if applicable
             pass
 
-    # Handle search and pagination if performance_result and dataset are available
-    page_obj = None
-    search_query = ''
-    if performance_result and dataset:
-        # Read the processed dataset and its TextAnalysis records
-        text_analyses = TextAnalysis.objects.filter(dataset=dataset)
-
-        # Apply search filter if provided
-        search_query = request.GET.get('search', '')
-        if search_query:
-            text_analyses = text_analyses.filter(
-                Q(analysis_data__text__icontains=search_query) |
-                Q(analysis_data__actual_label__icontains=search_query) |
-                Q(analysis_data__predicted_label__icontains=(search_query))
-            )
-
-        # Paginate the data
-        paginator = Paginator(text_analyses, 10)  # Show 10 entries per page
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-
+    # The context includes page_obj regardless of the dataset status
     context = {
         'form': form,
         'dataset_id': dataset_id,
         'performance_result': performance_result,
-        'page_obj': page_obj,
+        'page_obj': page_obj,  # Will be None if not assigned above
         'search_query': search_query,
     }
     return render(request, 'admin_tools/performance_dashboard.html', context)
@@ -176,6 +170,7 @@ def process_dataset(dataset_id):
     """
     try:
         dataset = Dataset.objects.get(id=dataset_id)
+        dataset.status = 'processing'
         dataset.progress = {'current_task': 'Reading CSV', 'percentage': 10}
         dataset.save()
 
@@ -193,6 +188,8 @@ def process_dataset(dataset_id):
         # Check for null values
         if X.isnull().any() or y.isnull().any():
             dataset.progress = {'current_task': 'Error: Null values found', 'percentage': 100}
+            dataset.status = 'failed'
+            dataset.error_log = 'Null values found in the dataset.'
             dataset.save()
             return
 
@@ -231,7 +228,7 @@ def process_dataset(dataset_id):
                         'happiness': scores[3],
                         'neutral': scores[4],
                         'sadness': scores[5],
-                        'surprise': scores[6]
+                        'surprise': scores[6],
                     }
 
                     # Get the emotion with the highest score
@@ -240,9 +237,12 @@ def process_dataset(dataset_id):
             else:
                 y_pred.append(None)
 
-            # Update progress every 10%
+            # Update progress
             current_percentage = 40 + int((len(y_pred) / total) * 60)
-            dataset.progress = {'current_task': 'Making Predictions', 'percentage': current_percentage}
+            dataset.progress = {
+                'current_task': 'Making Predictions',
+                'percentage': min(current_percentage, 99),
+            }
             dataset.save()
 
         # Clean predictions
@@ -263,12 +263,14 @@ def process_dataset(dataset_id):
         # Generate classification report as HTML and CSV
         class_report = classification_report(y_test_clean, y_pred_clean, output_dict=True)
         report_df = pd.DataFrame(class_report).transpose().round(2)
-        report_html = report_df.to_html(classes='pilarease-admin-classification-report-table', border=0)
+        report_html = report_df.to_html(
+            classes='pilarease-admin-classification-report-table', border=0
+        )
         report_csv = report_df.to_csv(index=True)
         report_csv_base64 = base64.b64encode(report_csv.encode('utf-8')).decode('utf-8')
 
         # Plot confusion matrix
-        plt.figure(figsize=(8,6))
+        plt.figure(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
         plt.title('Confusion Matrix')
         plt.ylabel('Actual Labels')
@@ -285,17 +287,17 @@ def process_dataset(dataset_id):
         df['Predicted Label'] = pd.NA  # Initialize with NA
         df.loc[y_test_clean.index, 'Predicted Label'] = y_pred_clean
 
-        # Save individual analyses to the database using JSONB
+        # Save individual analyses to the database using JSONField
         for idx, actual_label, predicted_label in zip(y_test_clean.index, y_test_clean, y_pred_clean):
             text = df.loc[idx, 'Text']
             analysis_data = {
                 "text": text,
                 "actual_label": actual_label,
-                "predicted_label": predicted_label
+                "predicted_label": predicted_label,
             }
             analysis = TextAnalysis(
                 dataset=dataset,
-                analysis_data=analysis_data  # Save all data in JSONB
+                analysis_data=analysis_data,  # Save all data in JSONField
             )
             analysis.save()
 
@@ -321,18 +323,25 @@ def process_dataset(dataset_id):
         performance_result.processed_csv_file.save(
             f"processed_dataset_{dataset_id}.csv",
             ContentFile(processed_csv_content.encode('utf-8')),
-            save=True
+            save=True,
         )
 
         # Final progress update
-        dataset.progress = {'current_task': 'Completed', 'percentage': 100, 'result_id': performance_result.id}
+        dataset.progress = {
+            'current_task': 'Completed',
+            'percentage': 100,
+            'result_id': performance_result.id,
+        }
+        dataset.status = 'completed'
         dataset.save()
 
     except Exception as e:
         logger.exception(f"Error processing dataset {dataset_id}: {e}")
         try:
             dataset = Dataset.objects.get(id=dataset_id)
+            dataset.status = 'failed'
             dataset.progress = {'current_task': f'Error: {str(e)}', 'percentage': 100}
+            dataset.error_log = str(e)
             dataset.save()
         except Dataset.DoesNotExist:
             logger.error(f"Dataset {dataset_id} does not exist.")

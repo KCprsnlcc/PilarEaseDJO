@@ -7,7 +7,7 @@ import pandas as pd
 class DatasetUploadForm(forms.ModelForm):
     class Meta:
         model = Dataset
-        fields = ['csv_file']
+        fields = ['csv_file']  # Exclude 'name' field here
         widgets = {
             'csv_file': forms.ClearableFileInput(attrs={'accept': '.csv'}),
         }
@@ -15,7 +15,7 @@ class DatasetUploadForm(forms.ModelForm):
     def clean_csv_file(self):
         csv_file = self.cleaned_data.get('csv_file')
         if csv_file:
-            # Validate file size (e.g., max 5MB)
+            # Validate file size (e.g., max 15MB)
             if csv_file.size > 15 * 1024 * 1024:
                 raise forms.ValidationError("CSV file size must be under 15MB.")
             

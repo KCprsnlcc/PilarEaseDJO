@@ -285,6 +285,14 @@
         </div>
     </div>
 
+    <!-- Export Buttons -->
+    <div class="pilarease-admin-export-buttons">
+        <a href="?export=csv&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Export to CSV</a>
+        <a href="?export=zip&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download All Datasets (ZIP)</a>
+        <a href="?export=performance&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Performance Report</a>
+        <a href="?export=error_logs&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Error Logs</a>
+    </div>
+    
     <!-- Recent Activity Section -->
     <div class="pilarease-admin-recent-activity">
         <h2 class="pilarease-admin-section-title">
@@ -307,13 +315,6 @@
         {% endif %}
     </div>
 
-    <!-- Export Buttons -->
-    <div class="pilarease-admin-export-buttons">
-        <a href="?export=csv&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Export to CSV</a>
-        <a href="?export=zip&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download All Datasets (ZIP)</a>
-        <a href="?export=performance&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Performance Report</a>
-        <a href="?export=error_logs&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Error Logs</a>
-    </div>
 </div>
 
 <!-- Include daterangepicker CSS from CDN -->

@@ -1,4 +1,7 @@
-{% extends "admin_tools/base_admin.html" %} {% load static %} {%block content%}
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load custom_filters %}  {# Load custom filters #}
+{% block content %}
 <div class="pilarease-admin-performance-dashboard-container">
   <h3 class="pilarease-admin-section-title">
     Performance Metrics
@@ -21,9 +24,12 @@
   {% if form.errors %}
   <div class="pilarease-admin-form-errors">
     <ul>
-      {% for field in form %} {% for error in field.errors %}
+      {% for field in form %}
+      {% for error in field.errors %}
       <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-      {% endfor %} {% endfor %} {% for error in form.non_field_errors %}
+      {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
       <li>{{ error }}</li>
       {% endfor %}
     </ul>
@@ -37,7 +43,8 @@
     class="pilarease-admin-performance-form"
     id="performance-form"
   >
-    {% csrf_token %} {{ form.as_p }}
+    {% csrf_token %}
+    {{ form.as_p }}
     <button type="submit" class="pilarease-admin-filter-button">
       Upload & Calculate
     </button>
@@ -57,54 +64,56 @@
     </div>
     <p id="progress-percentage">0%</p>
   </div>
-  {% endif %} {% if performance_result %}
+  {% endif %}
 
-        <!-- Overall Metrics Section -->
-    <div class="pilarease-admin-metrics-section elevated-container">
-      <h3 class="pilarease-admin-section-title">
-        Overall Metrics
-        <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Overall Metrics" tabindex="0"></i>
-        <span class="pilarease-admin-tooltip">
-          Overall performance metrics of the model including Accuracy, Precision, Recall, and F1 Score.
-        </span>
-      </h3>
-      <ul class="pilarease-admin-metrics-list">
-        <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
-        <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
-        <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
-        <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
-      </ul>
-    </div>
+  {% if performance_result %}
+  <!-- Display Dataset Name -->
+  <div class="pilarease-admin-dataset-name">
+    <h3>Dataset: {{ performance_result.dataset.name }}</h3>
+  </div>
 
-    
-    <!-- Confusion Matrix Section -->
-    <div class="pilarease-admin-confusion-matrix-section elevated-container">
-      <h3 class="pilarease-admin-section-title">
-        Confusion Matrix
-        <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Confusion Matrix" tabindex="0"></i>
-        <span class="pilarease-admin-tooltip">
-          Visual representation of the performance of the classification model, showing true vs. predicted labels.
-        </span>
-      </h3>
-      <img
-        src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
-        alt="Confusion Matrix"
-        class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
-      />
-    </div>
+  <!-- Overall Metrics Section -->
+  <div class="pilarease-admin-metrics-section elevated-container">
+    <h3 class="pilarease-admin-section-title">
+      Overall Metrics
+      <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Overall Metrics" tabindex="0"></i>
+      <span class="pilarease-admin-tooltip">
+        Overall performance metrics of the model including Accuracy, Precision, Recall, and F1 Score.
+      </span>
+    </h3>
+    <ul class="pilarease-admin-metrics-list">
+      <li><strong>Accuracy:</strong> {{ performance_result.accuracy }}%</li>
+      <li><strong>Precision:</strong> {{ performance_result.precision }}%</li>
+      <li><strong>Recall:</strong> {{ performance_result.recall }}%</li>
+      <li><strong>F1 Score:</strong> {{ performance_result.f1_score }}%</li>
+    </ul>
+  </div>
 
-    
+  <!-- Confusion Matrix Section -->
+  <div class="pilarease-admin-confusion-matrix-section elevated-container">
+    <h3 class="pilarease-admin-section-title">
+      Confusion Matrix
+      <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Confusion Matrix" tabindex="0"></i>
+      <span class="pilarease-admin-tooltip">
+        Visual representation of the performance of the classification model, showing true vs. predicted labels.
+      </span>
+    </h3>
+    <img
+      src="data:image/png;base64,{{ performance_result.confusion_matrix_image }}"
+      alt="Confusion Matrix"
+      class="pilarease-admin-confusion-matrix-image animate__animated animate__fadeIn"
+    />
+  </div>
 
-    
-
+  <!-- Classification Report Section -->
   <div class="pilarease-admin-classification-report-section">
     <h2 class="pilarease-admin-subtitle">
-    Classification Report
-    <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Classification Report" tabindex="0"></i>
-    <span class="pilarease-admin-tooltip">
-      Detailed classification metrics including precision, recall, F1 score, and support for each class.
-    </span>
-  </h2>
+      Classification Report
+      <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Classification Report" tabindex="0"></i>
+      <span class="pilarease-admin-tooltip">
+        Detailed classification metrics including precision, recall, F1 score, and support for each class.
+      </span>
+    </h2>
     <div
       class="pilarease-admin-classification-report-table-container animate__animated animate__fadeIn"
     >
@@ -123,12 +132,12 @@
   <!-- Processed Dataset Section -->
   <div class="pilarease-admin-processed-dataset-section">
     <h2 class="pilarease-admin-subtitle">
-    Processed Dataset
-    <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Processed Dataset" tabindex="0"></i>
-    <span class="pilarease-admin-tooltip">
-      View and download the dataset after processing, including all relevant metrics and classifications.
-    </span>
-  </h2>
+      Processed Dataset
+      <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Processed Dataset" tabindex="0"></i>
+      <span class="pilarease-admin-tooltip">
+        View and download the dataset after processing, including all relevant metrics and classifications.
+      </span>
+    </h2>
 
     <!-- Search Form -->
     <form method="get" class="pilarease-admin-filter-form">
@@ -220,13 +229,13 @@
 
     <!-- Download Processed Dataset -->
     {% if performance_result.processed_csv_file %}
-    <a
-      href="{{ performance_result.processed_csv_file.url }}"
-      download="processed_dataset_{{ performance_result.dataset.id }}.csv"
-      class="pilarease-admin-action-button download-report-button"
-    >
-      <i class="bx bxs-download"></i> Download Processed Dataset
-    </a>
+<a
+    href="{{ performance_result.processed_csv_file.url }}"
+    download="{{ performance_result.processed_csv_file.name|basename }}"
+    class="pilarease-admin-action-button download-report-button"
+>
+    <i class="bx bxs-download"></i> Download Processed Dataset
+</a>
     {% endif %}
   </div>
   {% endif %}
@@ -291,4 +300,5 @@
     updateProgress();
   });
 </script>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}

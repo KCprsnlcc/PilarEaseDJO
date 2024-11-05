@@ -243,15 +243,16 @@ class Dataset(models.Model):
         ('failed', 'Failed'),
     ]
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, null=True)  # Added this line
     csv_file = models.FileField(upload_to='datasets/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     error_log = models.TextField(blank=True, null=True)
     progress = models.JSONField(default=dict)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
-    
-    def __str__(self):
-        return f"Dataset {self.id} uploaded by {self.user.username}"
 
+    def __str__(self):
+        return f"Dataset {self.id} ({self.name}) uploaded by {self.user.username}"
+    
 class PerformanceResult(models.Model):
     dataset = models.OneToOneField(Dataset, on_delete=models.CASCADE, related_name='performance_result')
     accuracy = models.FloatField()
