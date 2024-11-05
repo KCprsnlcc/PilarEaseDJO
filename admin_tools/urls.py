@@ -12,6 +12,10 @@ urlpatterns = [
     path('statistics/download_statistics_report/', views.download_statistics_report, name='download_statistics_report'),
     path('sentiment-analytics/', views.sentiment_analytics_view, name='sentiment_analytics'),
     path('generate-wordcloud/', views.generate_wordcloud, name='generate_wordcloud'),
+    
+    # Notification
+    path('fetch_counselor_notifications/', views.fetch_counselor_notifications, name='fetch_counselor_notifications'),
+    path('mark_counselor_notification_as_read/<int:notification_id>/', views.mark_counselor_notification_as_read, name='mark_counselor_notification_as_read'),
 
     # Replies
     path('replies/', views.replies_view, name='replies'),

@@ -46,6 +46,7 @@ from main.models import (
     ProfanityWord,
     Questionnaire,
     TextAnalysis,
+    NotificationCounselor,
 )
 import torch
 from django.contrib import messages
@@ -1540,6 +1541,42 @@ def generate_wordcloud_image(text):
     buf.close()
     return image_base64
 
+@login_required
+@user_passes_test(is_counselor)
+def fetch_counselor_notifications(request):
+    page_number = request.GET.get('page', 1)
+    notifications_qs = NotificationCounselor.objects.filter(user=request.user).order_by('-created_at')
+
+    paginator = Paginator(notifications_qs, 5)  # 5 notifications per page
+    notifications_page = paginator.get_page(page_number)
+
+    notifications = []
+    for notification in notifications_page:
+        notifications.append({
+            'id': notification.id,
+            'message': notification.message,
+            'link': notification.link or '#',
+            'avatar': notification.user.profile.avatar.url if notification.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'timestamp': notification.created_at.strftime('%Y-%m-%d %H:%M'),
+            'is_read': notification.is_read,
+        })
+
+    return JsonResponse({
+        'notifications': notifications,
+        'total_pages': paginator.num_pages,
+    })
+
+
+@login_required
+@csrf_exempt
+def mark_counselor_notification_as_read(request, notification_id):
+    try:
+        notification = NotificationCounselor.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return JsonResponse({'success': True})
+    except NotificationCounselor.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
 
 @login_required
 def statistics_view(request):
