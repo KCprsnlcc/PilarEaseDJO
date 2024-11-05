@@ -1556,13 +1556,13 @@ def fetch_counselor_notifications(request):
         student_avatar_url = (
             student.profile.avatar.url
             if student and student.profile.avatar
-            else '/static/images/placeholder.png'
+            else '/static/images/avatars/placeholder.png'
         )
         notifications.append({
             'id': notification.id,
             'message': notification.message,
             'link': notification.link or '#',
-            'avatar': student_avatar_url,  # Ensuring the avatar URL is directly passed with expected key
+            'avatar': student_avatar_url,  # Ensure the key is 'avatar'
             'timestamp': notification.created_at.strftime('%Y-%m-%d %H:%M'),
             'is_read': notification.is_read,
         })

@@ -180,8 +180,9 @@
             </div>
           </div>
 
+          <!-- Profile Icon with Capitalized Initial -->
           <div class="pilarease-admin-profile-icon profile-icon">
-            {{ request.user.full_name|default:""|slice:":1"|capfirst }}
+            {{ request.user.full_name|default:"M"|slice:":1"|capfirst }}
           </div>
         </div>
       </div>

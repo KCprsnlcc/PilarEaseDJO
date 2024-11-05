@@ -1,3 +1,5 @@
+// static/js/notifications.js
+
 document.addEventListener("DOMContentLoaded", function () {
   const notificationButton = document.getElementById(
     "pilareaseAdminNotificationButton"
@@ -89,7 +91,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!response.ok) {
         console.error("Failed to mark notification as read.");
       } else {
-        renderedNotifications.get(notificationId).is_read = true;
+        const notification = renderedNotifications.get(notificationId);
+        if (notification) {
+          notification.is_read = true;
+        }
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -156,21 +161,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Build notification item structure
         item.innerHTML = `
-  <img class="pilarease-admin-notification-avatar" src="${
-    notification.avatar
-  }" alt="Avatar">
-  <div class="pilarease-admin-notification-content">
-    <div class="message">${notification.message}</div>
-    <div class="timestamp ${notification.is_read ? "" : "timestamp-green"}">
-      ${formatTimestamp(notification.timestamp)}
-    </div>
-  </div>
-  ${
-    notification.is_read
-      ? ""
-      : '<div class="pilarease-admin-notification-dot-green"></div>'
-  }
-`;
+          <img class="pilarease-admin-notification-avatar" src="${
+            notification.avatar
+          }" alt="Avatar">
+          <div class="pilarease-admin-notification-content">
+            <div class="message">${notification.message}</div>
+            <div class="timestamp ${
+              notification.is_read ? "" : "timestamp-green"
+            }">
+              ${formatTimestamp(notification.timestamp)}
+            </div>
+          </div>
+          ${
+            notification.is_read
+              ? ""
+              : '<div class="pilarease-admin-notification-dot-green"></div>'
+          }
+        `;
 
         notificationItems.appendChild(item);
 
@@ -260,8 +267,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Format the timestamp
   function formatTimestamp(timestamp) {
-    // Customize as needed, e.g., using Moment.js for formatting
-    // Ensure Moment.js is included via CDN or locally
     return moment(timestamp).fromNow(); // Example: "5 minutes ago"
   }
 
