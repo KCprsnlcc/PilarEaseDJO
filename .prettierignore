@@ -3,3 +3,4 @@ itrc_tools/templates/itrc_tools/edit_user.html
 itrc_tools/templates/itrc_tools/add_user.html
 admin_tools/templates/admin_tools/profanity_list.html
 admin_tools/templates/admin_tools/performance_dashboard.html
+admin_tools/templates/admin_tools/referral.html

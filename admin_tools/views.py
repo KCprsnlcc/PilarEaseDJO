@@ -706,7 +706,7 @@ def referral(request):
 @login_required
 @user_passes_test(is_counselor)
 def manage_referrals_view(request):
-    referrals = Referral.objects.select_related('status', 'referred_by__profile').all().order_by('-created_at')
+    referrals = Referral.objects.select_related('status', 'referred_by').all().order_by('-created_at')
     profanity_words = ProfanityWord.objects.first()
     profanities = profanity_words.word_list if profanity_words else []
     context = {
@@ -714,6 +714,92 @@ def manage_referrals_view(request):
         'profanities': profanities,
     }
     return render(request, 'admin_tools/referral.html', context)
+
+@login_required
+@user_passes_test(is_counselor)
+def referral_view(request):
+    """
+    Handles the Referral Management page with search and pagination.
+    """
+    search_query = request.GET.get('search', '').strip()
+    category = request.GET.get('category', 'all').strip().lower()
+    page_number = request.GET.get('page', 1)
+
+    # Fetch referrals, optimizing queries with select_related
+    referrals = Referral.objects.select_related('referred_by', 'status').all()
+
+    # Apply search filters if a search query is provided
+    if search_query:
+        referrals = referrals.filter(
+            Q(referral_reason__icontains=search_query) |
+            Q(referred_by__username__icontains=search_query) |
+            Q(status__title__icontains=search_query)
+        )
+
+    # Apply category filter if not 'all'
+    if category and category != 'all':
+        referrals = referrals.filter(status__emotion__iexact=category)
+
+    # Paginate the referrals, 10 per page
+    paginator = Paginator(referrals.order_by('-created_at'), 10)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'referrals': page_obj.object_list,
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'category': category,
+        'profanities': ProfanityWord.objects.first().word_list if ProfanityWord.objects.exists() else [],
+    }
+
+    return render(request, 'admin_tools/referral.html', context)
+
+@require_http_methods(["GET", "POST"])
+@login_required
+@user_passes_test(is_counselor)
+def referral_detail_view(request, referral_id):
+    """
+    Handles fetching and updating referral details via AJAX.
+    """
+    try:
+        referral = Referral.objects.select_related('referred_by', 'status').get(id=referral_id)
+    except Referral.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Referral not found.'}, status=404)
+
+    if request.method == "GET":
+        # Return referral details as JSON
+        data = {
+            'id': referral.id,
+            'status_user_avatar_url': referral.status.user.profile.avatar.url if referral.status.user.profile.avatar else '',
+            'status_user_username': referral.status.user.username,
+            'highlighted_title': referral.highlighted_title or '',
+            'highlighted_description': referral.highlighted_description or '',
+            'referral_reason': referral.referral_reason,
+            'other_reason': referral.other_reason or '',
+            'posted_by_username': referral.status.user.username,
+            'referred_by_username': referral.referred_by.username,
+        }
+        return JsonResponse(data)
+
+    elif request.method == "POST":
+        # Handle updating referral details
+        try:
+            data = json.loads(request.body)
+            highlighted_title = data.get('highlighted_title', '').strip()
+            highlighted_description = data.get('highlighted_description', '').strip()
+
+            if not highlighted_title or not highlighted_description:
+                return JsonResponse({'status': 'error', 'message': 'Fields cannot be empty.'}, status=400)
+
+            referral.highlighted_title = highlighted_title
+            referral.highlighted_description = highlighted_description
+            referral.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Referral updated successfully.'})
+
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest('Invalid JSON')
+
 
 @login_required
 @user_passes_test(is_counselor)
@@ -782,41 +868,35 @@ def manage_profanities_view(request):
         'profanities': profanity_words.word_list,
     }
     return render(request, 'admin_tools/profanity_list.html', context)
-
+@require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_counselor)
-@require_http_methods(["POST"])
 def add_profanity(request):
+    """
+    Handles adding a new profanity word via AJAX.
+    """
     try:
-        payload = json.loads(request.body)
-        new_word = payload.get("word", "").strip().lower()
-        if not new_word:
-            return HttpResponseBadRequest("Word cannot be empty.")
-        
-        profanity_words, created = ProfanityWord.objects.get_or_create(id=1)  # Assuming a single ProfanityWord entry
-        if new_word not in profanity_words.word_list:
-            profanity_words.word_list.append(new_word)
-            profanity_words.save()
-            return JsonResponse({"status": "success", "message": f"'{new_word}' added to profanity list."})
-        else:
-            return HttpResponseBadRequest("Word already exists in the profanity list.")
+        data = json.loads(request.body)
+        word = data.get('word', '').strip().lower()
+        if not word:
+            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
+        if Profanity.objects.filter(word=word).exists():
+            return JsonResponse({'status': 'error', 'message': 'Word already exists.'}, status=400)
+        Profanity.objects.create(word=word)
+        return JsonResponse({'status': 'success', 'message': 'Profanity word added successfully.'})
     except json.JSONDecodeError:
-        return HttpResponseBadRequest("Invalid JSON.")
+        return HttpResponseBadRequest('Invalid JSON')
 
+@require_http_methods(["POST"])
 @login_required
 @user_passes_test(is_counselor)
-@require_http_methods(["POST"])
 def delete_profanity(request, profanity_id):
     try:
-        profanity_words = ProfanityWord.objects.first()
-        if profanity_words and 0 <= profanity_id < len(profanity_words.word_list):
-            removed_word = profanity_words.word_list.pop(profanity_id)
-            profanity_words.save()
-            return JsonResponse({"status": "success", "message": f"'{removed_word}' removed from profanity list."})
-        else:
-            return HttpResponseBadRequest("Invalid profanity ID.")
-    except Exception as e:
-        return HttpResponseBadRequest(str(e))
+        profanity = Profanity.objects.get(id=profanity_id)
+        profanity.delete()
+        return JsonResponse({'status': 'success', 'message': 'Profanity word deleted successfully.'})
+    except Profanity.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Profanity word not found.'}, status=404)
 
 # ==============================
 # API Endpoints for Referrals
@@ -848,13 +928,53 @@ def referrals_api(request):
 @login_required
 @user_passes_test(is_counselor)
 def add_profanity_api(request):
-    return add_profanity(request)
+    """
+    Handles adding a new profanity word via AJAX.
+    """
+    try:
+        data = json.loads(request.body)
+        word = data.get('word', '').strip().lower()
+        if not word:
+            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
+        
+        # Retrieve or create the ProfanityWord instance
+        profanity_word_obj, created = ProfanityWord.objects.get_or_create(id=1, defaults={'word_list': []})
+        if word in profanity_word_obj.word_list:
+            return JsonResponse({'status': 'error', 'message': 'Word already exists.'}, status=400)
+        
+        # Add the word to the word_list
+        profanity_word_obj.word_list.append(word)
+        profanity_word_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Profanity word added successfully.'})
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest('Invalid JSON')
 
 @login_required
 @user_passes_test(is_counselor)
-def delete_profanity_api(request, profanity_id):
-    return delete_profanity(request, profanity_id)
-
+@require_http_methods(["POST"])
+def delete_profanity_api(request):
+    """
+    Handles deleting a profanity word via AJAX.
+    """
+    try:
+        data = json.loads(request.body)
+        word = data.get('word', '').strip().lower()
+        if not word:
+            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
+        
+        # Retrieve the ProfanityWord instance
+        profanity_word_obj = ProfanityWord.objects.first()
+        if not profanity_word_obj or word not in profanity_word_obj.word_list:
+            return JsonResponse({'status': 'error', 'message': 'Word not found.'}, status=404)
+        
+        # Remove the word from the word_list
+        profanity_word_obj.word_list.remove(word)
+        profanity_word_obj.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Profanity word deleted successfully.'})
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest('Invalid JSON')
 
 @login_required
 def delete_feedback(request, feedback_id):

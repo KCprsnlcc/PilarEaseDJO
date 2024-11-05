@@ -35,8 +35,8 @@ urlpatterns = [
     path('delete-contact-us/<int:contact_id>/', views.delete_contact_us, name='delete_contact_us'),
 
     # Referral Management
-    path('referrals/', views.manage_referrals_view, name='manage_referrals'),
-       path('referrals/<int:referral_id>/', views.get_referral_details, name='get_referral_details'),
+    path('referrals/', views.referral_view, name='manage_referrals'),
+    path('referrals/<int:referral_id>/', views.referral_detail_view, name='referral_detail'),
 
     # Profanity Management
     path('profanities/', views.manage_profanities_view, name='manage_profanities'),
@@ -46,8 +46,8 @@ urlpatterns = [
     # API Endpoints
     path('api/referrals/', views.referrals_api, name='referrals_api'),
     path('api/referrals/<int:referral_id>/', views.get_referral_details, name='api_get_referral_details'),
-    path('api/profanities/add/', views.add_profanity_api, name='api_add_profanity'),
-    path('api/profanities/delete/<int:profanity_id>/', views.delete_profanity_api, name='api_delete_profanity'),
+    path('profanities/add/', views.add_profanity_api, name='add_profanity_api'),
+    path('profanities/delete/', views.delete_profanity_api, name='delete_profanity_api'),
     # Performance Matrix
     path('performance_dashboard/', views.performance_dashboard, name='performance_dashboard'),
     path('get_progress/<int:dataset_id>/', views.get_progress, name='get_progress'),

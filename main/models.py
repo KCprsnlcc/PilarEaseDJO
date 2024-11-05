@@ -313,8 +313,9 @@ class Referral(models.Model):
         blank=True
     )
     referred_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
+        CustomUser,  # Directly referencing the CustomUser model
+        on_delete=models.CASCADE,
+        related_name='referrals'  # Optional: allows reverse querying from CustomUser to referrals
     )
     highlighted_title = models.TextField(blank=True)
     highlighted_description = models.TextField(blank=True)
