@@ -64,7 +64,7 @@
                 <td>{{ referral.highlighted_description|default:"N/A" }}</td>
                 <td>{{ referral.referral_reason }}</td>
                 <td>{{ referral.other_reason|default:"N/A" }}</td>
-                <td>{{ referral.posted_by_username }}</td>
+                <td>{{ referral.status.user.username }}</td>
                 <td>
                     <button
                         class="pilarease-admin-button view-button"
@@ -84,26 +84,24 @@
     </table>
 
     <!-- Pagination Controls -->
-    {% if page_obj.has_other_pages %}
-    <div class="pilarease-admin-pagination">
-        <span class="pilarease-admin-step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category != 'all' %}&category={{ category }}{% endif %}" class="pilarease-admin-step-link" aria-label="First page">First</a>
-                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category != 'all' %}&category={{ category }}{% endif %}" class="pilarease-admin-step-link" aria-label="Previous page">Previous</a>
-            {% endif %}
 
-            <span class="pilarease-admin-current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+<div class="pilarease-admin-pagination">
+            <span class="pilarease-admin-step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
+                {% endif %}
+
+                <span class="pilarease-admin-current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
+                {% endif %}
             </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category != 'all' %}&category={{ category }}{% endif %}" class="pilarease-admin-step-link" aria-label="Next page">Next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category != 'all' %}&category={{ category }}{% endif %}" class="pilarease-admin-step-link" aria-label="Last page">Last</a>
-            {% endif %}
-        </span>
-    </div>
-    {% endif %}
-
+</div>
 </div>
 
 <!-- Referral Detail Modal -->

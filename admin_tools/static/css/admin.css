@@ -618,7 +618,6 @@ body {
   transition: background-color 0.3s ease, transform 0.3s ease;
   font-size: 12px;
 }
-
 .pilarease-admin-step-links a:hover {
   background-color: var(--accent-light);
   transform: translateY(-2px);
@@ -631,6 +630,29 @@ body {
   border-radius: 4px;
   font-weight: bold;
   font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pilarease-admin-referral-container {
+    padding: 15px;
+  }
+
+  .pilarease-admin-referrals-table th,
+  .pilarease-admin-referrals-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .pilarease-admin-button {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .pilarease-admin-pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 /* Tooltip Styles (General) */
@@ -2617,210 +2639,64 @@ body {
 
 /* General Container Styling */
 .pilarease-admin-referral-container {
+  background-color: #ffffff;
   padding: 20px;
-  background-color: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
 }
 
-/* Header Styling */
-.pilarease-admin-dashboard-header {
-  margin-bottom: 20px;
-}
-
-.pilarease-admin-title {
-  font-size: 2em;
-  color: #333;
-  position: relative;
-}
-
-.pilarease-admin-info-icon {
-  margin-left: 10px;
-  color: #888;
-  cursor: pointer;
-  font-size: 1.2em;
-}
-
-.pilarease-admin-tooltip {
-  visibility: hidden;
-  width: 220px;
-  background-color: #555;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 8px 0;
-  position: absolute;
-  z-index: 1;
-  bottom: 125%; /* Position above the icon */
-  left: 50%;
-  margin-left: -110px; /* Center the tooltip */
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.pilarease-admin-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%; /* At the bottom of the tooltip */
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #555 transparent transparent transparent;
-}
-
-.pilarease-admin-title:hover .pilarease-admin-tooltip,
-.pilarease-admin-title:focus .pilarease-admin-tooltip {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* Search and Filter Form Styling */
-.pilarease-admin-search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.pilarease-admin-input,
-.pilarease-admin-select {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1em;
-  flex: 1;
-  min-width: 200px;
-}
-
-.pilarease-admin-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background-color 0.3s;
-}
-
-.pilarease-admin-button:hover,
-.pilarease-admin-button:focus {
-  background-color: #0056b3;
-}
-
-.pilarease-admin-reset-button {
-  background-color: #6c757d;
-}
-
-.pilarease-admin-reset-button:hover,
-.pilarease-admin-reset-button:focus {
-  background-color: #5a6268;
+.pilarease-admin-referral-container:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }
 
 /* Referral Table Styling */
 .pilarease-admin-referrals-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 20px;
 }
 
 .pilarease-admin-referrals-table th,
 .pilarease-admin-referrals-table td {
-  border: 1px solid #ddd;
   padding: 12px 15px;
-  text-align: left;
-  vertical-align: middle;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 14px;
 }
 
 .pilarease-admin-referrals-table th {
-  background-color: #f2f2f2;
-  color: #333;
-  font-weight: bold;
+  background-color: var(--accent-color);
+  color: #ffffff;
 }
 
 .pilarease-admin-referrals-table tr:nth-child(even) {
-  background-color: #fafafa;
+  background-color: #f9f9f9;
 }
 
 .pilarease-admin-referrals-table tr:hover {
-  background-color: #f1f1f1;
+  background-color: rgba(104, 158, 75, 0.1);
 }
 
-.pilarease-admin-referrals-table .pilarease-admin-status-body {
-  max-width: 250px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-/* No Data Message Styling */
-.pilarease-admin-no-data {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-  font-style: italic;
-}
-
-/* Action Buttons Styling */
-.pilarease-admin-action-button {
-  padding: 8px 16px;
-  background-color: #dc3545;
+/* Action Buttons in Table */
+.pilarease-admin-referrals-table .pilarease-admin-button {
+  padding: 6px 12px;
   border: none;
   border-radius: 4px;
-  color: #fff;
   cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color 0.3s;
-  text-decoration: none;
+  font-size: 12px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  color: #ffffff;
+}
+.pilarease-admin-referrals-table .pilarease-admin-button.view-button {
+  background-color: var(--approved-color);
 }
 
-.pilarease-admin-action-button:hover,
-.pilarease-admin-action-button:focus {
-  background-color: #c82333;
-}
-
-/* View Button Styling */
-.pilarease-admin-button.view-button {
-  background-color: #28a745;
-}
-
-.pilarease-admin-button.view-button:hover,
-.pilarease-admin-button.view-button:focus {
-  background-color: #218838;
-}
-
-/* Pagination Styling */
-.pilarease-admin-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.pilarease-admin-step-links {
-  display: flex;
-  gap: 10px;
-}
-
-.pilarease-admin-step-link {
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: #fff;
-  border-radius: 4px;
-  text-decoration: none;
-  transition: background-color 0.3s;
-}
-
-.pilarease-admin-step-link:hover,
-.pilarease-admin-step-link:focus {
-  background-color: #0056b3;
-}
-
-.pilarease-admin-current {
-  padding: 8px 12px;
-  color: #555;
-  font-weight: bold;
+.pilarease-admin-referrals-table .pilarease-admin-button.view-button:hover {
+  background-color: #5b8a43;
+  transform: translateY(-2px);
 }
 
 /* Referral Detail Modal Styling */
@@ -2870,15 +2746,6 @@ body {
   display: flex;
   align-items: center;
   margin-bottom: 15px;
-}
-
-.pilarease-admin-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 15px;
-  border: 2px solid #007bff;
 }
 
 .pilarease-admin-referral-detail label {

@@ -726,7 +726,7 @@ def referral_view(request):
     page_number = request.GET.get('page', 1)
 
     # Fetch referrals, optimizing queries with select_related
-    referrals = Referral.objects.select_related('referred_by', 'status').all()
+    referrals = Referral.objects.select_related('referred_by', 'status__user').all()
 
     # Apply search filters if a search query is provided
     if search_query:
