@@ -2,27 +2,104 @@
 {% load static %}
 
 {% block content %}
+
 <div class="pilarease-admin-dashboard-container">
+    <div class="pilarease-admin-dataset-details elevated-container">
     <h2 class="pilarease-admin-section-title">
         Dataset Details
-        <a href="{% url 'admin_data' %}" class="pilarease-admin-button" style="float: right;">Back to Datasets</a>
     </h2>
-    <div class="pilarease-admin-dataset-details">
-        <p><strong>Name:</strong> {{ dataset.name }}</p>
-        <p><strong>Uploaded At:</strong> {{ dataset.uploaded_at|date:"Y-m-d H:i" }}</p>
-        <p><strong>User:</strong> {{ dataset.user.get_full_name }}</p>
-        <p><strong>Status:</strong> {{ dataset.get_status_display }}</p>
-        <p><strong>Performance Metrics:</strong></p>
+        <!-- Dataset Information Section -->
+        <div class="dataset-info">
+            <p><strong>Name:</strong> {{ dataset.name }}</p>
+            <p><strong>Uploaded At:</strong> {{ dataset.uploaded_at|date:"Y-m-d H:i" }}</p>
+            <p><strong>User:</strong> {{ dataset.user.get_full_name }}</p>
+            <p><strong>Status:</strong> {{ dataset.get_status_display }}</p>
+        </div>
+
+        <!-- Performance Metrics Section -->
         {% if performance %}
-        <ul>
-            <li>Accuracy: {{ performance.accuracy|floatformat:2 }}%</li>
-            <li>Precision: {{ performance.precision|floatformat:2 }}%</li>
-            <li>Recall: {{ performance.recall|floatformat:2 }}%</li>
-            <li>F1-Score: {{ performance.f1_score|floatformat:2 }}%</li>
-        </ul>
+        <div class="performance-metrics">
+            <h3 class="pilarease-admin-subtitle">
+                Performance Metrics
+                <span class="pilarease-admin-info-icon">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="pilarease-admin-tooltip">
+                        These metrics show the performance of the model on this dataset.
+                    </span>
+                </span>
+            </h3>
+            <div class="metrics-cards">
+                <div class="metrics-card">
+                    <span class="metrics-value">{{ performance.accuracy|floatformat:2 }}%</span>
+                    <span class="metrics-label">Accuracy</span>
+                </div>
+                <div class="metrics-card">
+                    <span class="metrics-value">{{ performance.precision|floatformat:2 }}%</span>
+                    <span class="metrics-label">Precision</span>
+                </div>
+                <div class="metrics-card">
+                    <span class="metrics-value">{{ performance.recall|floatformat:2 }}%</span>
+                    <span class="metrics-label">Recall</span>
+                </div>
+                <div class="metrics-card">
+                    <span class="metrics-value">{{ performance.f1_score|floatformat:2 }}%</span>
+                    <span class="metrics-label">F1 Score</span>
+                </div>
+            </div>
+        </div>
         {% else %}
         <p>No performance data available.</p>
         {% endif %}
+
+        <!-- Dataset Preview Section -->
+        {% if preview_data %}
+        <div class="dataset-preview">
+            <h3 class="pilarease-admin-subtitle">
+                Dataset Preview
+                <span class="pilarease-admin-info-icon">
+                    <i class="fas fa-info-circle"></i>
+                    <span class="pilarease-admin-tooltip">
+                        A preview of the first few rows of the dataset.
+                    </span>
+                </span>
+            </h3>
+            <div class="pilarease-admin-table-container">
+                <table class="pilarease-admin-data-table">
+                    <thead>
+                        <tr>
+                            {% for column in preview_data.columns %}
+                            <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in preview_data.rows %}
+                        <tr>
+                            {% for cell in row %}
+                            <td>{{ cell }}</td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Dataset Actions -->
+        <div class="dataset-actions">
+            <a href="{% url 'download_dataset' dataset.id %}" class="pilarease-admin-button download-button">
+                <i class="fas fa-download"></i> Download Dataset
+            </a>
+            {% if dataset.report_file %}
+            <a href="{{ dataset.report_file.url }}" class="pilarease-admin-button report-button">
+                <i class="fas fa-file-alt"></i> View Report
+            </a>
+            {% endif %}
+            <a href="{% url 'delete_dataset' dataset.id %}" class="pilarease-admin-button delete-button" onclick="return confirm('Are you sure you want to delete this dataset?');">
+                <i class="fas fa-trash"></i> Delete Dataset
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

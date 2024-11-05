@@ -1257,6 +1257,112 @@ body {
   background-color: #da190b;
   transform: translateY(-2px);
 }
+
+.pilarease-admin-dataset-details {
+  padding: 20px;
+}
+
+.dataset-info p {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--accent-color);
+}
+
+.performance-metrics {
+  margin-top: 30px;
+}
+
+.metrics-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.metrics-card {
+  flex: 1 1 200px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: var(--box-shadow);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.metrics-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
+}
+
+.metrics-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.metrics-label {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--accent-color);
+}
+
+.dataset-preview {
+  margin-top: 30px;
+}
+
+.pilarease-admin-table-container {
+  overflow-x: auto;
+}
+
+.dataset-actions {
+  margin-top: 30px;
+  display: flex;
+  gap: 10px;
+}
+
+.dataset-actions .pilarease-admin-button {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.dataset-actions .download-button {
+  background-color: #2196f3;
+}
+
+.dataset-actions .download-button:hover {
+  background-color: #1976d2;
+}
+
+.dataset-actions .report-button {
+  background-color: #4caf50;
+}
+
+.dataset-actions .report-button:hover {
+  background-color: #388e3c;
+}
+
+.dataset-actions .delete-button {
+  background-color: var(--delete-color);
+}
+
+.dataset-actions .delete-button:hover {
+  background-color: #da190b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .metrics-cards {
+    flex-direction: column;
+  }
+
+  .dataset-actions {
+    flex-direction: column;
+  }
+
+  .dataset-actions .pilarease-admin-button {
+    width: 100%;
+  }
+}
 /* =========================================================
    Analysis Page Specific Styles
    ========================================================= */

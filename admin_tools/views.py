@@ -1889,11 +1889,25 @@ def dataset_detail(request, dataset_id):
         return redirect('admin_login')
 
     dataset = get_object_or_404(Dataset, id=dataset_id)
-    performance = getattr(dataset, 'performance_result', None)  # Updated line
+    performance = getattr(dataset, 'performance_result', None)
+
+    # Generate dataset preview
+    import pandas as pd
+    preview_data = None
+    try:
+        df = pd.read_csv(dataset.csv_file.path)
+        preview_data = {
+            'columns': df.columns.tolist(),
+            'rows': df.head(5).values.tolist()
+        }
+    except Exception as e:
+        # Handle exception if the file cannot be read
+        pass
 
     context = {
         'dataset': dataset,
         'performance': performance,
+        'preview_data': preview_data,
     }
     return render(request, 'admin_tools/dataset_detail.html', context)
 
