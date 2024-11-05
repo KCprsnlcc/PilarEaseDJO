@@ -180,7 +180,9 @@
             </div>
           </div>
 
-          <div class="pilarease-admin-profile-icon profile-icon">M</div>
+          <div class="pilarease-admin-profile-icon profile-icon">
+            {{ request.user.full_name|default:""|slice:":1"|capfirst }}
+          </div>
         </div>
       </div>
       <div class="pilarease-admin-content content">
