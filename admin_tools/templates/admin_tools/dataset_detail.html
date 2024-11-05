@@ -1,0 +1,29 @@
+<!-- admin_tools/templates/admin_tools/dataset_detail.html -->
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+
+{% block content %}
+<div class="pilarease-admin-dashboard-container">
+    <h2 class="pilarease-admin-section-title">
+        Dataset Details
+        <a href="{% url 'admin_data' %}" class="pilarease-admin-button" style="float: right;">Back to Datasets</a>
+    </h2>
+    <div class="pilarease-admin-dataset-details">
+        <p><strong>Name:</strong> {{ dataset.name }}</p>
+        <p><strong>Uploaded At:</strong> {{ dataset.uploaded_at|date:"Y-m-d H:i" }}</p>
+        <p><strong>User:</strong> {{ dataset.user.get_full_name }}</p>
+        <p><strong>Status:</strong> {{ dataset.get_status_display }}</p>
+        <p><strong>Performance Metrics:</strong></p>
+        {% if performance %}
+        <ul>
+            <li>Accuracy: {{ performance.accuracy|floatformat:2 }}%</li>
+            <li>Precision: {{ performance.precision|floatformat:2 }}%</li>
+            <li>Recall: {{ performance.recall|floatformat:2 }}%</li>
+            <li>F1-Score: {{ performance.f1_score|floatformat:2 }}%</li>
+        </ul>
+        {% else %}
+        <p>No performance data available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

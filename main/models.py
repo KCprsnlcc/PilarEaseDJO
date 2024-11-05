@@ -237,11 +237,18 @@ class Status(models.Model):
         return f"{self.title} by {self.user.username}"
     
 class Dataset(models.Model):
+    STATUS_CHOICES = [
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     csv_file = models.FileField(upload_to='datasets/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    progress = models.JSONField(default=dict)  # New field to track progress
-
+    error_log = models.TextField(blank=True, null=True)
+    progress = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
+    
     def __str__(self):
         return f"Dataset {self.id} uploaded by {self.user.username}"
 

@@ -1096,7 +1096,167 @@ body {
     padding: 12px;
   }
 }
+/* =========================================================
+   Data Management Specific Styles
+   ========================================================= */
 
+/* Recent Activity Section */
+.pilarease-admin-recent-activity {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+}
+
+.pilarease-admin-activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pilarease-admin-activity-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pilarease-admin-activity-list li:last-child {
+  border-bottom: none;
+}
+
+.pilarease-admin-activity-list li strong {
+  color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+  .pilarease-admin-statistics-card {
+    flex: 1 1 100%;
+  }
+}
+
+/* Data Table Container */
+.pilarease-admin-data-table-container {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 30px;
+  animation: fadeInUp 0.5s ease-in-out;
+}
+
+/* Data Table Styles */
+.pilarease-admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.pilarease-admin-data-table th,
+.pilarease-admin-data-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.pilarease-admin-data-table th {
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.pilarease-admin-data-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.pilarease-admin-data-table tr:hover {
+  background-color: rgba(14, 35, 38, 0.05);
+}
+
+.pilarease-admin-no-data {
+  text-align: center;
+  color: rgba(14, 35, 38, 0.5);
+  padding: 20px 0;
+}
+
+.pilarease-admin-status-label {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.pilarease-admin-status-label.completed {
+  background-color: #28a745; /* Green */
+}
+
+.pilarease-admin-status-label.failed {
+  background-color: #dc3545; /* Red */
+}
+
+/* Export Buttons */
+.pilarease-admin-export-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.pilarease-admin-button.export-button {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-button.export-button:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+/* Status Labels */
+.pilarease-admin-status-label.processing {
+  padding: 5px 10px;
+  background-color: #ffc107; /* Yellow */
+  color: #ffffff;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Action Buttons */
+.pilarease-admin-action-button.view-button {
+  background-color: var(--accent-light);
+}
+
+.pilarease-admin-action-button.view-button:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.pilarease-admin-action-button.download-button {
+  background-color: #2196f3; /* Blue */
+}
+
+.pilarease-admin-action-button.download-button:hover {
+  background-color: #1976d2;
+  transform: translateY(-2px);
+}
+
+.pilarease-admin-action-button.delete-button {
+  background-color: var(--delete-color);
+}
+
+.pilarease-admin-action-button.delete-button:hover {
+  background-color: #da190b;
+  transform: translateY(-2px);
+}
 /* =========================================================
    Analysis Page Specific Styles
    ========================================================= */

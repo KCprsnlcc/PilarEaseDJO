@@ -1,20 +1,362 @@
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% block content %}
-<p></p>
-<div
-  class="pilarease-admin-dashboard-header"
-  style="display: flex; justify-content: space-between; align-items: center"
->
-  <h1 class="pilarease-admin-title">
-    Data Management
-    <i
-      class="bx bx-info-circle pilarease-admin-info-icon"
-      aria-label="More information about Status Management"
-      tabindex="0"
-    ></i>
-    <span class="pilarease-admin-tooltip">
-      Data Management page content goes here.
-    </span>
-  </h1>
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
+
+{% block content %}
+<div class="pilarease-admin-dashboard-container">
+    <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="pilarease-admin-title">
+            Data Management
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Data Management" tabindex="0"></i>
+            <span class="pilarease-admin-tooltip">
+                Manage datasets and view key performance metrics.
+            </span>
+        </h1>
+    </div>
+
+    <!-- Dashboard Overview Section -->
+    <div class="pilarease-admin-statistics-cards">
+        <!-- Total Datasets -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-folder'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>{{ total_datasets }}</span>
+                    <p>Total Datasets</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Datasets -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-loader-circle'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>{{ datasets_processing }}</span>
+                    <p>Datasets Processing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Datasets -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-check-circle'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>{{ datasets_completed }}</span>
+                    <p>Datasets Completed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Failed Datasets -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-error-circle'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>{{ datasets_failed }}</span>
+                    <p>Datasets Failed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Section -->
+    <div class="pilarease-admin-statistics-cards">
+        <!-- Average Accuracy -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-line-chart'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>
+                        {% if avg_accuracy %}
+                            {{ avg_accuracy|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                    <p>Average Accuracy</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Precision -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-target-lock'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>
+                        {% if avg_precision %}
+                            {{ avg_precision|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                    <p>Average Precision</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Recall -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-refresh'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>
+                        {% if avg_recall %}
+                            {{ avg_recall|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                    <p>Average Recall</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average F1 Score -->
+        <div class="pilarease-admin-statistics-card">
+            <div class="pilarease-admin-statistics-card-content">
+                <div class="pilarease-admin-statistics-card-icon">
+                    <i class='bx bx-analyse'></i>
+                </div>
+                <div class="pilarease-admin-statistics-card-info">
+                    <span>
+                        {% if avg_f1_score %}
+                            {{ avg_f1_score|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
+                    <p>Average F1 Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table with Search and Filtering -->
+    <div class="pilarease-admin-data-table-container">
+        <h2 class="pilarease-admin-section-title">
+            Datasets
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Datasets" tabindex="0"></i>
+            <span class="pilarease-admin-tooltip">
+                View and manage all datasets with advanced search and filtering options.
+            </span>
+        </h2>
+
+        <!-- Search and Filter Form -->
+        <form method="get" class="pilarease-admin-filter-form">
+            <div class="pilarease-admin-filter-group">
+                <label for="search" class="pilarease-admin-filter-label">Search</label>
+                <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by name or user" value="{{ search_query }}">
+            </div>
+            <div class="pilarease-admin-filter-group">
+                <label for="status" class="pilarease-admin-filter-label">Status</label>
+                <select name="status" id="status" class="pilarease-admin-filter-select">
+                    <option value="">All</option>
+                    <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="pilarease-admin-filter-group">
+                <label for="user" class="pilarease-admin-filter-label">User</label>
+                <select name="user" id="user" class="pilarease-admin-filter-select">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if user_filter|add:'' == user.id|stringformat:"s" %}selected{% endif %}>{{ user.get_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="pilarease-admin-filter-group">
+                <label for="date_range" class="pilarease-admin-filter-label">Date Range</label>
+                <input type="text" name="date_range" id="date_range" class="pilarease-admin-filter-input" placeholder="Select Date Range" value="{{ date_range }}">
+            </div>
+            <div class="pilarease-admin-filter-buttons">
+                <button type="submit" class="pilarease-admin-filter-button">Search</button>
+                <a href="{% url 'admin_data' %}" class="pilarease-admin-reset-button">Reset</a>
+            </div>
+        </form>
+
+        <!-- Data Table -->
+        <table class="pilarease-admin-data-table">
+            <thead>
+                <tr>
+                    <th>Dataset Name</th>
+                    <th>Upload Date</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Accuracy</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dataset in page_obj %}
+                <tr>
+                    <td>{{ dataset.name }}</td>
+                    <td>{{ dataset.uploaded_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ dataset.user.get_full_name }}</td>
+                    <td>
+                        {% if dataset.status == 'processing' %}
+                        <span class="pilarease-admin-status-label processing">Processing</span>
+                        {% elif dataset.status == 'completed' %}
+                        <span class="pilarease-admin-status-label completed">Completed</span>
+                        {% elif dataset.status == 'failed' %}
+                        <span class="pilarease-admin-status-label failed">Failed</span>
+                        {% endif %}
+                    </td>
+                    {% with performance=dataset.performanceresult_set.first %}
+                    <td>
+                        {% if performance %}
+                            {{ performance.accuracy|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if performance %}
+                            {{ performance.precision|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if performance %}
+                            {{ performance.recall|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if performance %}
+                            {{ performance.f1_score|floatformat:2 }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    {% endwith %}
+                    <td>
+                        <!-- Actions such as View, Download, Delete -->
+                        <a href="{% url 'dataset_detail' dataset.id %}" class="pilarease-admin-action-button view-button">View</a>
+                        <a href="{% url 'download_dataset' dataset.id %}" class="pilarease-admin-action-button download-button">Download</a>
+                        <a href="{% url 'delete_dataset' dataset.id %}" class="pilarease-admin-action-button delete-button" onclick="return confirm('Are you sure you want to delete this dataset?');">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="pilarease-admin-no-data">No datasets found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pilarease-admin-pagination">
+            <div class="pilarease-admin-step-links">
+                {% if page_obj.has_previous %}
+                <a href="?page=1&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Previous</a>
+                {% endif %}
+
+                <span class="pilarease-admin-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Last</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="pilarease-admin-recent-activity">
+        <h2 class="pilarease-admin-section-title">
+            Recent Activity
+            <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Recent Activity" tabindex="0"></i>
+            <span class="pilarease-admin-tooltip">
+                Recent data management actions performed by users.
+            </span>
+        </h2>
+        {% if recent_activities %}
+        <ul class="pilarease-admin-activity-list">
+            {% for activity in recent_activities %}
+            <li>
+                <strong>{{ activity.user }}</strong> {{ activity.action }} at {{ activity.timestamp|date:"Y-m-d H:i:s" }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No recent activities.</p>
+        {% endif %}
+    </div>
+
+    <!-- Export Buttons -->
+    <div class="pilarease-admin-export-buttons">
+        <a href="?export=csv&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Export to CSV</a>
+        <a href="?export=zip&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download All Datasets (ZIP)</a>
+        <a href="?export=performance&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Performance Report</a>
+        <a href="?export=error_logs&{{ request.GET.urlencode|safe }}" class="pilarease-admin-button export-button">Download Error Logs</a>
+    </div>
 </div>
+
+<!-- Include daterangepicker CSS from CDN -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<!-- Include jQuery from CDN -->
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include Moment.js from CDN -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<!-- Include daterangepicker JS from CDN -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- Initialize the date range picker -->
+<script type="text/javascript">
+$(function() {
+    $('input[name="date_range"]').daterangepicker({
+        locale: {
+            format: 'YYYY-MM-DD'
+        },
+        autoUpdateInput: false,
+        autoApply: true, // Automatically apply the selected dates
+        opens: 'left', // Position the calendar
+    });
+
+    // If there's a value in the input, initialize the picker with those dates
+    var dateRange = "{{ date_range|escapejs }}";
+    if (dateRange) {
+        var dates = dateRange.split(' - ');
+        $('input[name="date_range"]').data('daterangepicker').setStartDate(dates[0]);
+        $('input[name="date_range"]').data('daterangepicker').setEndDate(dates[1]);
+        $('input[name="date_range"]').val(dateRange);
+    }
+
+    $('input[name="date_range"]').on('apply.daterangepicker', function(ev, picker) {
+        $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+    });
+
+    $('input[name="date_range"]').on('cancel.daterangepicker', function(ev, picker) {
+        $(this).val('');
+    });
+});
+</script>
+
 {% endblock %}

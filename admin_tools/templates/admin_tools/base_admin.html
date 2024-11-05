@@ -8,6 +8,13 @@
     {% compress css %}
     <link rel="stylesheet" href="{% static 'css/admin.css' %}" />
     {% endcompress %}
+    <!-- Include daterangepicker CSS from CDN -->
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"
+    />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
@@ -118,7 +125,7 @@
           </a>
         </li>
         <li>
-          <a href="{% url 'data' %}">
+          <a href="{% url 'admin_data' %}">
             <i class="bx bx-data"></i>
             <span class="pilarease-admin-menu-text menu-text">Data</span>
           </a>
@@ -142,6 +149,24 @@
         {% block content %} {% endblock %}
       </div>
     </div>
+
+    <!-- Include jQuery from CDN -->
+    <script
+      type="text/javascript"
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+    ></script>
+
+    <!-- Include Moment.js from CDN -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"
+    ></script>
+
+    <!-- Include daterangepicker JS from CDN -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
+    ></script>
     <script>
       const sidebar = document.querySelector(".pilarease-admin-sidebar");
       sidebar.addEventListener("mouseenter", () => {

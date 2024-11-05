@@ -38,6 +38,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 from wordcloud import WordCloud
+from django.template.loader import render_to_string
+from django.utils.encoding import smart_str
+import zipfile
 from io import BytesIO
 from .forms import DatasetUploadForm
 import base64
@@ -1675,7 +1678,241 @@ def comparison(request):
 def data(request):
     if not request.user.is_counselor:
         return redirect('admin_login')
-    return render(request, 'admin_tools/data.html')
+
+    # Dashboard Overview Data (from previous implementation)
+    total_datasets = Dataset.objects.count()
+    datasets_processing = Dataset.objects.filter(status='processing').count()
+    datasets_completed = Dataset.objects.filter(status='completed').count()
+    datasets_failed = Dataset.objects.filter(status='failed').count()
+
+    performance_results = PerformanceResult.objects.all()
+    if performance_results.exists():
+        avg_accuracy = performance_results.aggregate(Avg('accuracy'))['accuracy__avg']
+        avg_precision = performance_results.aggregate(Avg('precision'))['precision__avg']
+        avg_recall = performance_results.aggregate(Avg('recall'))['recall__avg']
+        avg_f1_score = performance_results.aggregate(Avg('f1_score'))['f1_score__avg']
+    else:
+        avg_accuracy = avg_precision = avg_recall = avg_f1_score = None
+
+    recent_datasets = Dataset.objects.order_by('-uploaded_at')[:5]
+    recent_activities = []
+    for dataset in recent_datasets:
+        recent_activities.append({
+            'user': dataset.user.get_full_name(),
+            'action': 'Uploaded a dataset',
+            'timestamp': dataset.uploaded_at,
+        })
+
+    # Data Table Search and Filtering
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
+    user_filter = request.GET.get('user', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    date_range = request.GET.get('date_range', '')
+
+    datasets = Dataset.objects.all()
+
+    # Filtering by search query
+    if search_query:
+        datasets = datasets.filter(
+            Q(name__icontains=search_query) |
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query)
+        )
+
+    # Filtering by status
+    if status_filter:
+        datasets = datasets.filter(status=status_filter)
+
+    # Filtering by user
+    if user_filter:
+        datasets = datasets.filter(user__id=user_filter)
+
+    # Filtering by date range
+    if date_range:
+        # Parse the date_range string
+        try:
+            start_date_str, end_date_str = date_range.split(' - ')
+            start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d')
+            # Adjust end_date to include the entire day
+            end_date = end_date + datetime.timedelta(days=1)
+            datasets = datasets.filter(uploaded_at__range=(start_date, end_date))
+        except ValueError:
+            # Handle invalid date format
+            pass
+
+    # Check if 'export' parameter is in GET request
+    if 'export' in request.GET:
+        export_format = request.GET.get('export')
+        datasets_to_export = datasets.order_by('-uploaded_at')
+
+        if export_format == 'csv':
+            return export_datasets_csv(datasets_to_export)
+        elif export_format == 'zip':
+            return export_datasets_zip(datasets_to_export)
+        elif export_format == 'performance':
+            return export_performance_report(datasets_to_export)
+        elif export_format == 'error_logs':
+            return export_error_logs(datasets_to_export)
+        else:
+            messages.error(request, 'Invalid export format specified.')
+            return redirect('admin_data')
+
+    # Pagination
+    paginator = Paginator(datasets.order_by('-uploaded_at'), 10)  # 10 datasets per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Users for filtering dropdown
+    users = CustomUser.objects.filter(is_counselor=False)
+
+    context = {
+        # Dashboard Overview Data
+        'total_datasets': total_datasets,
+        'datasets_processing': datasets_processing,
+        'datasets_completed': datasets_completed,
+        'datasets_failed': datasets_failed,
+        'avg_accuracy': avg_accuracy,
+        'avg_precision': avg_precision,
+        'avg_recall': avg_recall,
+        'avg_f1_score': avg_f1_score,
+        'recent_activities': recent_activities,
+
+        # Data Table Context
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'user_filter': user_filter,
+        'date_range': date_range,
+        'users': users,
+    }
+    return render(request, 'admin_tools/data.html', context)
+
+def export_datasets_csv(datasets):
+    # Create the HttpResponse object with CSV header.
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="datasets.csv"'
+
+    writer = csv.writer(response)
+    # Write headers
+    writer.writerow(['Dataset Name', 'Upload Date', 'User', 'Status'])
+    # Write data
+    for dataset in datasets:
+        writer.writerow([
+            dataset.name,
+            dataset.uploaded_at.strftime('%Y-%m-%d %H:%M'),
+            dataset.user.get_full_name(),
+            dataset.get_status_display(),
+        ])
+    return response
+
+def export_datasets_zip(datasets):
+    # Create a zip file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        for dataset in datasets:
+            file_path = dataset.csv_file.path
+            if os.path.exists(file_path):
+                zip_file.write(file_path, arcname=os.path.basename(file_path))
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="datasets.zip"'
+    return response
+
+def export_performance_report(request, datasets):
+    # Collect performance data
+    performance_data = []
+    for dataset in datasets:
+        performance = dataset.performanceresult_set.first()
+        if performance:
+            performance_data.append({
+                'Dataset Name': dataset.name,
+                'Accuracy': performance.accuracy,
+                'Precision': performance.precision,
+                'Recall': performance.recall,
+                'F1 Score': performance.f1_score,
+            })
+    if not performance_data:
+        messages.error(request, 'No performance data available for the selected datasets.')
+        return redirect('admin_data')
+
+    # Create a DataFrame and export to Excel
+    df = pd.DataFrame(performance_data)
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Performance Report')
+    excel_buffer.seek(0)
+    response = HttpResponse(excel_buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="performance_report.xlsx"'
+    return response
+
+def export_error_logs(datasets):
+    # Collect error logs from datasets with 'failed' status
+    error_logs = []
+    for dataset in datasets.filter(status='failed'):
+        error_log = dataset.error_log  # Assuming you have an 'error_log' field
+        if error_log:
+            error_logs.append({
+                'Dataset Name': dataset.name,
+                'Error Log': error_log,
+            })
+
+    if not error_logs:
+        messages.error(request, 'No error logs available for the selected datasets.')
+        return redirect('admin_data')
+
+    # Create a text file with error logs
+    error_logs_content = ''
+    for log in error_logs:
+        error_logs_content += f"Dataset: {log['Dataset Name']}\n"
+        error_logs_content += f"Error Log:\n{log['Error Log']}\n"
+        error_logs_content += '-' * 50 + '\n'
+
+    response = HttpResponse(error_logs_content, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="error_logs.txt"'
+    return response
+
+@login_required
+def dataset_detail(request, dataset_id):
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+
+    dataset = get_object_or_404(Dataset, id=dataset_id)
+    performance = dataset.performanceresult_set.first()
+
+    context = {
+        'dataset': dataset,
+        'performance': performance,
+    }
+    return render(request, 'admin_tools/dataset_detail.html', context)
+
+@login_required
+def download_dataset(request, dataset_id):
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+
+    dataset = get_object_or_404(Dataset, id=dataset_id)
+    file_path = dataset.csv_file.path
+
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="text/csv")
+            response['Content-Disposition'] = f'attachment; filename={os.path.basename(file_path)}'
+            return response
+    else:
+        raise Http404
+
+@login_required
+def delete_dataset(request, dataset_id):
+    if not request.user.is_counselor:
+        return redirect('admin_login')
+
+    dataset = get_object_or_404(Dataset, id=dataset_id)
+    dataset.delete()
+    messages.success(request, 'Dataset deleted successfully.')
+    return redirect('admin_data')
 
 
 @login_required

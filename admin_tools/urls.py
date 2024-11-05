@@ -63,8 +63,13 @@ urlpatterns = [
     path('analysis/', views.analysis_view, name='analysis'),
 
     # Settings
-    path('data/', views.data, name='data'),
+    path('data/', views.data, name='admin_data'),
 
+    # Dataset
+    path('dataset/<int:dataset_id>/', views.dataset_detail, name='dataset_detail'),
+    path('dataset/<int:dataset_id>/download/', views.download_dataset, name='download_dataset'),
+    path('dataset/<int:dataset_id>/delete/', views.delete_dataset, name='delete_dataset'),
+    
     # Authentication
     path('login/', views.admin_login_view, name='admin_login'),
     path('logout/', views.admin_logout, name='admin_logout'),
