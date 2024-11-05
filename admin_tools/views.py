@@ -1889,7 +1889,7 @@ def dataset_detail(request, dataset_id):
         return redirect('admin_login')
 
     dataset = get_object_or_404(Dataset, id=dataset_id)
-    performance = dataset.performanceresult_set.first()
+    performance = getattr(dataset, 'performance_result', None)  # Updated line
 
     context = {
         'dataset': dataset,
