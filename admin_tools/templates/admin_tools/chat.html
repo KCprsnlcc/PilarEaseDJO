@@ -143,14 +143,22 @@
             <p>No questionnaire responses available.</p>
           </div>
         </div>
-        <!-- Connect Button -->
-        <button
-          class="pilarease-admin-chat-connect-button"
-          id="pilarease-admin-chat-connect-button"
-          onclick="connectToUser()"
-        >
-          Connect
-        </button>
+        <div class="pilarease-admin-chat-profile-actions">
+          <button
+            class="pilarease-admin-chat-action-button"
+            id="pilarease-admin-chat-connect-button"
+            onclick="connectToUser()"
+          >
+            Connect
+          </button>
+          <button
+            class="pilarease-admin-chat-action-button"
+            id="pilarease-admin-chat-view-button"
+            onclick="viewChatWithUser()"
+          >
+            View Chat
+          </button>
+        </div>
       </div>
     </div>
   </div>

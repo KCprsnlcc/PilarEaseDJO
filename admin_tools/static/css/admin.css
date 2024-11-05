@@ -3723,6 +3723,34 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 #f1f1f1;
 }
+
+/* Action Buttons Container */
+.pilarease-admin-chat-profile-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* Action Buttons (Connect and View Chat) */
+.pilarease-admin-chat-action-button {
+  padding: 10px 25px;
+  background-color: var(--accent-color, #0e2326);
+  color: #ffffff;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.pilarease-admin-chat-action-button:hover {
+  background-color: #0a1c1f;
+}
+
+.pilarease-admin-chat-action-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 35, 38, 0.3);
+}
 /* =========================================================
    Modal Styles
    ========================================================= */
