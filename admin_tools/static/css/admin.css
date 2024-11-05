@@ -68,7 +68,7 @@ body {
   padding: 20px;
   width: 100%;
   margin-top: -5px;
-  margin-left: -10px;
+  margin-left: 30px;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -76,22 +76,23 @@ body {
 .pilarease-admin-sidebar-logo {
   width: 30px;
   height: 30px;
-  margin-right: 10px;
+  margin-right: 5px;
   transition: transform 0.3s ease;
 }
 
 .pilarease-admin-sidebar-additional-logo {
   width: 30px;
   height: 30px;
-  margin-right: 10px;
+  margin-right: 8px;
   transition: opacity 0.3s ease;
 }
 
 .pilarease-admin-sidebar-title {
   color: #ffffff;
-  font-size: 20px;
-  opacity: 0;
+  margin-top: 8px;
+  font-size: 24px;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
   font-family: "Aguafina Script", cursive;
   transform: scale(0);
 }
