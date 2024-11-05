@@ -1672,10 +1672,10 @@ def comparison(request):
     return render(request, 'admin_tools/comparison.html', context)
 
 @login_required
-def download_data(request):
+def data(request):
     if not request.user.is_counselor:
         return redirect('admin_login')
-    return render(request, 'admin_tools/download_data.html')
+    return render(request, 'admin_tools/data.html')
 
 
 @login_required
