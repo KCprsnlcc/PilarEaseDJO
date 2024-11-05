@@ -5,26 +5,38 @@
 /* Notification Button */
 .pilarease-admin-notification-button {
   position: relative;
-  font-size: 24px;
-  color: var(--header-text-color);
-  background-color: transparent; /* Make background transparent to blend with header */
+  background: none;
+  border: none;
   cursor: pointer;
-  margin-right: 20px; /* Adjust margin as needed */
+  font-size: 24px;
+  color: #ffffff;
+  transition: color 0.3s ease;
 }
 
+.pilarease-admin-notification-button:hover {
+  color: var(--accent-light); /* Subtle color change on hover */
+}
+.pilarease-admin-notification-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+}
 /* Notification Dot */
 .pilarease-admin-notification-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
   width: 10px;
   height: 10px;
-  z-index: 10000;
-  background-color: var(
-    --profanity-color
-  ); /* Using existing variable for red color */
+  background-color: #dc3545; /* Red dot for unread notifications */
   border-radius: 50%;
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: none;
+  display: none; /* Hidden by default */
+}
+
+.pilarease-admin-notification-dot.blink {
+  display: block;
+  animation: blink 1s infinite;
 }
 
 /* Green Dot (if needed) */
@@ -57,10 +69,6 @@
     opacity: 1;
     background-color: var(--profanity-color);
   }
-}
-
-.pilarease-admin-notification-dot.blink {
-  animation: pilarease-admin-blinkDot 1s infinite;
 }
 
 /* Notification List */
@@ -148,7 +156,7 @@
 }
 
 .pilarease-admin-notification-header .pilarease-admin-see-all {
-  color: var(--accent-light);
+  color: #689e4b;
   cursor: pointer;
 }
 
@@ -215,15 +223,38 @@
 }
 
 /* Load More Button */
+
+/* Load More Button */
 .pilarease-admin-notification-load-more {
-  text-align: center;
-  padding: 10px;
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  color: var(--accent-light);
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.pilarease-admin-notification-load-more:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
 }
 
-.pilarease-admin-notification-load-more:hover {
-  text-decoration: underline;
+/* See All Button */
+.pilarease-admin-notification-see-all {
+  padding: 8px 16px;
+  background-color: #17a2b8; /* Teal color for differentiation */
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-notification-see-all:hover {
+  background-color: #138496;
+  transform: translateY(-2px);
 }
 
 .pilarease-admin-notification-item:last-child {

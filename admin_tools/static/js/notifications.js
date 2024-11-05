@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const loadMoreButton = document.getElementById(
     "pilareaseAdminNotificationLoadMore"
   );
+  const seeAllLink = document.querySelector(
+    ".pilarease-admin-notification-header .pilarease-admin-see-all"
+  );
 
   let currentPage = 1;
   let totalPages = 1;
@@ -95,7 +98,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Get CSRF token for Django
   function getCSRFToken() {
-    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
+    return csrfToken ? csrfToken.value : "";
   }
 
   // Render the notifications in the notification list
@@ -249,10 +253,18 @@ document.addEventListener("DOMContentLoaded", function () {
     notificationList.style.overflowY = "auto";
   });
 
+  // Handle "See All" link click in the header
+  if (seeAllLink) {
+    seeAllLink.addEventListener("click", function () {
+      window.location.href = "/admin/notifications/"; // Replace with your actual notifications page URL
+    });
+  }
+
   // Format the timestamp
   function formatTimestamp(timestamp) {
-    // Customize as needed
-    return timestamp;
+    // Customize as needed, e.g., using Moment.js for formatting
+    // Ensure Moment.js is included via CDN or locally
+    return moment(timestamp).fromNow(); // Example: "5 minutes ago"
   }
 
   // Initial rendering of notifications when the page loads
