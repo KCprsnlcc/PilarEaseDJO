@@ -166,6 +166,13 @@ body {
    Main Content Styles
    ========================================================= */
 
+.avatar-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .pilarease-admin-main-content {
   margin-left: var(--sidebar-collapsed-width);
   transition: margin-left 0.3s ease;

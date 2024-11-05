@@ -67,6 +67,8 @@
       <thead>
         <tr>
           <th>No.</th>
+          <th>Avatar</th>
+          <!-- New Column -->
           <th>Student ID</th>
           <th>Title</th>
           <th>Reply</th>
@@ -79,6 +81,13 @@
         {% for reply in replies %}
         <tr class="pilarease-admin-replies-row" data-reply-id="{{ reply.id }}">
           <td>{{ forloop.counter }}</td>
+          <td>
+            <img
+              src="{{ reply.avatar_url }}"
+              alt="Avatar"
+              class="avatar-image"
+            />
+          </td>
           <td>{{ reply.student_id }}</td>
           <td>{{ reply.status_title }}</td>
           <td

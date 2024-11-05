@@ -585,9 +585,9 @@ def generate_base64_image(fig):
 def replies_view(request):
     search_query = request.GET.get('search', '')
     if search_query:
-        replies = Reply.objects.filter(text__icontains=search_query)
+        replies = Reply.objects.filter(text__icontains=search_query).select_related('user', 'user__profile', 'status')
     else:
-        replies = Reply.objects.all()
+        replies = Reply.objects.all().select_related('user', 'user__profile', 'status')
 
     paginator = Paginator(replies, 10)  # Show 10 replies per page
     page_number = request.GET.get('page')
@@ -603,7 +603,8 @@ def replies_view(request):
             'status_title': reply.status.title,
             'text': reply.text,
             'created_at': reply.created_at,
-            'last_sent': timesince(reply.created_at, current_time)
+            'last_sent': timesince(reply.created_at, current_time),
+            'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else 'static/images/placeholder.png',
         }
         for reply in page_obj
     ]
@@ -640,13 +641,13 @@ def status_view(request):
         statuses = Status.objects.filter(
             Q(title__icontains=search_query) |
             Q(plain_description__icontains=search_query)
-        )
+        ).select_related('user', 'user__profile')
     else:
         statuses = Status.objects.filter(
             Q(title__icontains=search_query) |
             Q(plain_description__icontains=search_query),
             emotion=category
-        )
+        ).select_related('user', 'user__profile')
 
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
