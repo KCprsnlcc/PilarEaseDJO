@@ -1417,7 +1417,6 @@ def analysis_view(request):
     """
     Remastered Analysis View:
     - Separates Contextual Emotion Comparison from search filtering.
-    - Compares each user's latest emotion status with their average emotions.
     - Adds independent search filtering and pagination for the comparison table.
     - Maintains Statuses and Keywords or Topics Detection functionalities.
     """
@@ -1467,64 +1466,7 @@ def analysis_view(request):
             'keywords': keywords
         })
 
-    # -------------------------
-    # Contextual Emotion Comparison
-    # -------------------------
-    comparison_search_query = request.GET.get('search_comparison', '')
-    comparison_page_number = request.GET.get('page_comparison', 1)
-    comparison_page_size = 10  # 10 users per page
-
-    # Fetch all users who are not counselors and have at least one status
-    comparison_users = CustomUser.objects.filter(is_counselor=False).annotate(status_count=Count('status')).filter(status_count__gte=1)
-
-    # Apply search filter for comparison
-    if comparison_search_query:
-        comparison_users = comparison_users.filter(
-            Q(username__icontains=comparison_search_query) |
-            Q(full_name__icontains=comparison_search_query)
-        )
-
-    # Paginate the comparison users
-    comparison_paginator = Paginator(comparison_users, comparison_page_size)
-    comparison_page_obj = comparison_paginator.get_page(comparison_page_number)
-
-    # Prepare comparison data
-    comparison_data = []
-    for user in comparison_page_obj:
-        latest_status = Status.objects.filter(user=user).order_by('-created_at').first()
-        if latest_status:
-            # Calculate average emotions across all statuses
-            average_emotions = Status.objects.filter(user=user).aggregate(
-                avg_anger=Avg('anger_percentage'),
-                avg_disgust=Avg('disgust_percentage'),
-                avg_fear=Avg('fear_percentage'),
-                avg_neutral=Avg('neutral_percentage'),
-                avg_happiness=Avg('happiness_percentage'),
-                avg_sadness=Avg('sadness_percentage'),
-                avg_surprise=Avg('surprise_percentage'),
-            )
-            comparison = {
-                'user_full_name': user.full_name,
-                'latest_status': {
-                    'anger': latest_status.anger_percentage,
-                    'disgust': latest_status.disgust_percentage,
-                    'fear': latest_status.fear_percentage,
-                    'neutral': latest_status.neutral_percentage,
-                    'happiness': latest_status.happiness_percentage,
-                    'sadness': latest_status.sadness_percentage,
-                    'surprise': latest_status.surprise_percentage,
-                },
-                'average_emotions': {
-                    'anger': round(average_emotions['avg_anger'] or 0, 2),
-                    'disgust': round(average_emotions['avg_disgust'] or 0, 2),
-                    'fear': round(average_emotions['avg_fear'] or 0, 2),
-                    'neutral': round(average_emotions['avg_neutral'] or 0, 2),
-                    'happiness': round(average_emotions['avg_happiness'] or 0, 2),
-                    'sadness': round(average_emotions['avg_sadness'] or 0, 2),
-                    'surprise': round(average_emotions['avg_surprise'] or 0, 2),
-                }
-            }
-            comparison_data.append(comparison)
+    
 
     context = {
         # Statuses Management
@@ -1535,11 +1477,6 @@ def analysis_view(request):
 
         # Keywords or Topics Detection
         'keywords_data': keywords_data,
-
-        # Contextual Emotion Comparison
-        'comparison_data': comparison_data,
-        'comparison_search_query': comparison_search_query,
-        'comparison_page_obj': comparison_page_obj,
 
         # Any additional context variables as needed
     }
@@ -1659,6 +1596,80 @@ def delete_contact_us(request, contact_id):
     contact = get_object_or_404(ContactUs, id=contact_id)
     contact.delete()
     return redirect('dashboard')
+
+@login_required
+@user_passes_test(is_counselor)
+def comparison(request):
+    """
+    Contextual Emotion Comparison:
+    - Compares each user's latest emotion status with their average emotions.
+    - Includes independent search filtering and pagination for the comparison table.
+    """
+    comparison_search_query = request.GET.get('search_comparison', '')
+    comparison_page_number = request.GET.get('page_comparison', 1)
+    comparison_page_size = 10  # Number of users per page
+
+    # Fetch users who are not counselors and have at least one status
+    comparison_users = CustomUser.objects.filter(is_counselor=False).annotate(
+        status_count=Count('status')
+    ).filter(status_count__gte=1)
+
+    # Apply search filter
+    if comparison_search_query:
+        comparison_users = comparison_users.filter(
+            Q(username__icontains=comparison_search_query) |
+            Q(full_name__icontains=comparison_search_query)
+        )
+
+    # Paginate the comparison users
+    comparison_paginator = Paginator(comparison_users, comparison_page_size)
+    comparison_page_obj = comparison_paginator.get_page(comparison_page_number)
+
+    # Prepare comparison data
+    comparison_data = []
+    for user in comparison_page_obj:
+        latest_status = Status.objects.filter(user=user).order_by('-created_at').first()
+        if latest_status:
+            # Calculate average emotions across all statuses
+            average_emotions = Status.objects.filter(user=user).aggregate(
+                avg_anger=Avg('anger_percentage'),
+                avg_disgust=Avg('disgust_percentage'),
+                avg_fear=Avg('fear_percentage'),
+                avg_neutral=Avg('neutral_percentage'),
+                avg_happiness=Avg('happiness_percentage'),
+                avg_sadness=Avg('sadness_percentage'),
+                avg_surprise=Avg('surprise_percentage'),
+            )
+            comparison = {
+                'user_full_name': user.full_name,
+                'latest_status': {
+                    'anger': latest_status.anger_percentage,
+                    'disgust': latest_status.disgust_percentage,
+                    'fear': latest_status.fear_percentage,
+                    'neutral': latest_status.neutral_percentage,
+                    'happiness': latest_status.happiness_percentage,
+                    'sadness': latest_status.sadness_percentage,
+                    'surprise': latest_status.surprise_percentage,
+                },
+                'average_emotions': {
+                    'anger': round(average_emotions['avg_anger'] or 0, 2),
+                    'disgust': round(average_emotions['avg_disgust'] or 0, 2),
+                    'fear': round(average_emotions['avg_fear'] or 0, 2),
+                    'neutral': round(average_emotions['avg_neutral'] or 0, 2),
+                    'happiness': round(average_emotions['avg_happiness'] or 0, 2),
+                    'sadness': round(average_emotions['avg_sadness'] or 0, 2),
+                    'surprise': round(average_emotions['avg_surprise'] or 0, 2),
+                }
+            }
+            comparison_data.append(comparison)
+
+    context = {
+        'comparison_data': comparison_data,
+        'comparison_search_query': comparison_search_query,
+        'comparison_page_obj': comparison_page_obj,
+    }
+
+    return render(request, 'admin_tools/comparison.html', context)
 
 @login_required
 def download_data(request):

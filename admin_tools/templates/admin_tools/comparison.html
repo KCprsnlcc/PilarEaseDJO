@@ -1,0 +1,129 @@
+{% extends "admin_tools/base_admin.html" %} {% load static %} {% block content %}
+<div
+  class="pilarease-admin-dashboard-header"
+  style="display: flex; justify-content: space-between; align-items: center"
+>
+  <h1 class="pilarease-admin-title">
+    Contextual Emotion Comparison
+    <i
+      class="bx bx-info-circle pilarease-admin-info-icon"
+      aria-label="More information about Contextual Emotion Comparison"
+      tabindex="0"
+    ></i>
+    <span class="pilarease-admin-tooltip">
+      Compare each user's latest emotion status against their average emotions
+      to understand overall emotional trends.
+    </span>
+  </h1>
+</div>
+
+<div class="pilarease-admin-comparison-section">
+  <!-- Search and Filter Form for Contextual Emotion Comparison -->
+  <form
+    method="get"
+    class="pilarease-admin-search-form search-form"
+    id="comparison-search-form"
+  >
+    <input
+      type="text"
+      name="search_comparison"
+      placeholder="Search Users..."
+      value="{{ comparison_search_query }}"
+      class="pilarease-admin-input search-input"
+    />
+    <button
+      type="submit"
+      class="pilarease-admin-button search-button animate__animated animate__pulse"
+    >
+      Search
+    </button>
+    <a
+      href="{% url 'analysis' %}"
+      class="pilarease-admin-button pilarease-admin-reset-button"
+      >Reset</a
+    >
+  </form>
+
+  <!-- Contextual Emotion Comparison Table -->
+  <table class="pilarease-admin-comparison-table comparison-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Anger (Latest)</th>
+        <th>Anger (Avg)</th>
+        <th>Disgust (Latest)</th>
+        <th>Disgust (Avg)</th>
+        <th>Fear (Latest)</th>
+        <th>Fear (Avg)</th>
+        <th>Neutral (Latest)</th>
+        <th>Neutral (Avg)</th>
+        <th>Happiness (Latest)</th>
+        <th>Happiness (Avg)</th>
+        <th>Sadness (Latest)</th>
+        <th>Sadness (Avg)</th>
+        <th>Surprise (Latest)</th>
+        <th>Surprise (Avg)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for comparison in comparison_data %}
+      <tr>
+        <td>{{ comparison.user_full_name }}</td>
+        <td>{{ comparison.latest_status.anger }}%</td>
+        <td>{{ comparison.average_emotions.anger|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.disgust }}%</td>
+        <td>{{ comparison.average_emotions.disgust|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.fear }}%</td>
+        <td>{{ comparison.average_emotions.fear|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.neutral }}%</td>
+        <td>{{ comparison.average_emotions.neutral|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.happiness }}%</td>
+        <td>{{ comparison.average_emotions.happiness|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.sadness }}%</td>
+        <td>{{ comparison.average_emotions.sadness|floatformat:1 }}%</td>
+        <td>{{ comparison.latest_status.surprise }}%</td>
+        <td>{{ comparison.average_emotions.surprise|floatformat:1 }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not comparison_data %}
+  <p class="pilarease-admin-no-data">No comparison data available.</p>
+  {% endif %}
+
+  <!-- Contextual Emotion Comparison Pagination -->
+  <div class="pilarease-admin-pagination pagination">
+    <span class="pilarease-admin-step-links step-links">
+      {% if comparison_page_obj.has_previous %}
+      <a
+        href="?page_comparison=1&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}"
+        class="pilarease-admin-pagination-link"
+        >First</a
+      >
+      <a
+        href="?page_comparison={{ comparison_page_obj.previous_page_number }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}"
+        class="pilarease-admin-pagination-link"
+        >Previous</a
+      >
+      {% endif %}
+
+      <span class="pilarease-admin-current current">
+        Page {{ comparison_page_obj.number }} of {{ comparison_page_obj.paginator.num_pages }}.
+      </span>
+
+      {% if comparison_page_obj.has_next %}
+      <a
+        href="?page_comparison={{ comparison_page_obj.next_page_number }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}"
+        class="pilarease-admin-pagination-link"
+        >Next</a
+      >
+      <a
+        href="?page_comparison={{ comparison_page_obj.paginator.num_pages }}&search_comparison={{ comparison_search_query }}&search_status={{ statuses_search_query }}&category_status={{ category_status }}"
+        class="pilarease-admin-pagination-link"
+        >Last</a
+      >
+      {% endif %}
+    </span>
+  </div>
+  {% endblock %}
+</div>
