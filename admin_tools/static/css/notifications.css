@@ -25,14 +25,14 @@
 /* Notification Dot */
 .pilarease-admin-notification-dot {
   position: absolute;
-  top: -3px; /* Adjust as needed for alignment */
-  right: -3px; /* Adjust as needed for alignment */
+  top: 0px;
+  right: 27px;
   width: 10px;
   height: 10px;
-  background-color: #dc3545; /* Red dot for unread notifications */
+  background-color: #dc3545;
   border-radius: 50%;
-  display: none; /* Hidden by default */
-  z-index: 1; /* Ensure it’s on top */
+  display: none;
+  z-index: 1;
 }
 
 .pilarease-admin-notification-dot.blink {
