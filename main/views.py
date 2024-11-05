@@ -27,7 +27,7 @@ from itrc_tools.models import AuditLog
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
+from .models import Status, Reply, ContactUs, Referral, Questionnaire, NotificationCounselor, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -1758,13 +1758,13 @@ def submit_status(request):
     if request.method == 'POST':
         if request.content_type == 'application/json':
             data = json.loads(request.body)
-            title = data.get('title')
-            description = data.get('description')
-            emotion = data.get('emotion')
+            title = data.get('title', '').strip()
+            description = data.get('description', '').strip()
+            emotion = data.get('emotion', '').strip()
         else:
-            title = request.POST.get('title')
-            description = request.POST.get('description')
-            emotion = request.POST.get('emotion')
+            title = request.POST.get('title', '').strip()
+            description = request.POST.get('description', '').strip()
+            emotion = request.POST.get('emotion', '').strip()
         
         plain_description = strip_html_tags(description)
 
@@ -1812,6 +1812,40 @@ def submit_status(request):
             surprise_percentage=emotion_percentages['surprise'],
             neutral_percentage=emotion_percentages['neutral']
         )
+
+        # Notification Logic
+        # Define thresholds for emotions to trigger notifications
+        emotion_thresholds = {
+            'anger': 70,
+            'disgust': 70,
+            'fear': 70,
+            'happiness': 70,
+            'sadness': 70,
+            'surprise': 70,
+            'neutral': 70,
+        }
+
+        # Check if any emotion exceeds the threshold
+        for emotion_label, threshold in emotion_thresholds.items():
+            if emotion_percentages[emotion_label] >= threshold:
+                # Create a concise, user-friendly notification message
+                emotion_name = emotion_label.capitalize()
+                message = (
+                    f"{request.user.username} posted a status with high {emotion_name} ({emotion_percentages[emotion_label]}%). "
+                    "You may want to check in."
+                )
+
+                # Create a notification entry for all counselors
+                counselors = CustomUser.objects.filter(is_counselor=True)
+                for counselor in counselors:
+                    NotificationCounselor.objects.create(
+                        user=counselor,
+                        message=message,
+                        link=reverse('status_detail', args=[status.id]),
+                        is_read=False,
+                        status=status  # Associate the notification with the status
+                    )
+                break  # Only notify once per status
 
         # Prepare the status data to return
         status_data = {

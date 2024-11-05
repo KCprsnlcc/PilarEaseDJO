@@ -1552,11 +1552,17 @@ def fetch_counselor_notifications(request):
 
     notifications = []
     for notification in notifications_page:
+        student = notification.status.user if notification.status else None
+        student_avatar_url = (
+            student.profile.avatar.url
+            if student and student.profile.avatar
+            else '/static/images/placeholder.png'
+        )
         notifications.append({
             'id': notification.id,
             'message': notification.message,
             'link': notification.link or '#',
-            'avatar': notification.user.profile.avatar.url if notification.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'avatar': student_avatar_url,  # Ensuring the avatar URL is directly passed with expected key
             'timestamp': notification.created_at.strftime('%Y-%m-%d %H:%M'),
             'is_read': notification.is_read,
         })
@@ -1565,7 +1571,6 @@ def fetch_counselor_notifications(request):
         'notifications': notifications,
         'total_pages': paginator.num_pages,
     })
-
 
 @login_required
 @csrf_exempt

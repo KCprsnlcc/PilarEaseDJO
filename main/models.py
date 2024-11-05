@@ -280,16 +280,21 @@ class TextAnalysis(models.Model):
         return f"Text Analysis {self.id} for Dataset {self.dataset.id}"
     
 class NotificationCounselor(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='counselor_notifications')
     message = models.TextField()
     link = models.URLField(max_length=500, blank=True, null=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # Additional fields as needed
+    status = models.ForeignKey(
+        'Status',
+        on_delete=models.CASCADE,
+        related_name='counselor_notifications',  # Updated related_name to avoid conflicts
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
-        return f"Notification for {self.user.username} - {self.message[:20]}"
+        return f"Notification for {self.user.username} - {'Read' if self.is_read else 'Unread'}"
 
 class Notification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

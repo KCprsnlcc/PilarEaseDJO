@@ -4,7 +4,7 @@
 
 /* Notification Button */
 .pilarease-admin-notification-button {
-  position: relative;
+  position: relative; /* Set the button as the reference point for positioning the dot */
   background: none;
   border: none;
   cursor: pointer;
@@ -25,18 +25,19 @@
 /* Notification Dot */
 .pilarease-admin-notification-dot {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: -3px; /* Adjust as needed for alignment */
+  right: -3px; /* Adjust as needed for alignment */
   width: 10px;
   height: 10px;
   background-color: #dc3545; /* Red dot for unread notifications */
   border-radius: 50%;
   display: none; /* Hidden by default */
+  z-index: 1; /* Ensure it’s on top */
 }
 
 .pilarease-admin-notification-dot.blink {
   display: block;
-  animation: blink 1s infinite;
+  animation: blink 0.5s infinite;
 }
 
 /* Green Dot (if needed) */
