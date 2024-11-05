@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Statistics
     path('statistics/', views.statistics_view, name='statistics'),
+    path('statistics/download_statistics_report/', views.download_statistics_report, name='download_statistics_report'),
     path('sentiment-analytics/', views.sentiment_analytics_view, name='sentiment_analytics'),
     path('generate-wordcloud/', views.generate_wordcloud, name='generate_wordcloud'),
 

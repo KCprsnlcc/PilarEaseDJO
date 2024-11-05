@@ -4,16 +4,17 @@
 {% load static %}
 {% load compress %}
 {% block content %}
+
 <div class="pilarease-admin-statistics-container">
-  <div class="pilarease-admin-statistics-header">
-    <div class="pilarease-admin-title">
-      Statistics
-      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
-      <span class="pilarease-admin-tooltip">
-        Overview of key statistics and analyses related to user emotions and engagement.
-      </span>
+    <div class="pilarease-admin-statistics-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="pilarease-admin-title">
+            Statistics
+            <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+            <span class="pilarease-admin-tooltip">
+                Overview of key statistics and analyses related to user emotions and engagement.
+            </span>
+        </h1>
     </div>
-  </div>
 
   <!-- Filter and Sort Section -->
   <div class="pilarease-admin-filters">
@@ -224,7 +225,13 @@
       </div>
     </div>
   </div>
+            <!-- Download Statistics Button -->
+        <a href="download_statistics_report" class="pilarease-admin-button export-button">
+            Download Statistics Report
+        </a>
 </div>
+</div>
+
 
 <!-- Chart.js Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
