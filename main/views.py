@@ -474,6 +474,7 @@ def get_answer_options(request, question_index):
 def submit_answer(request):
     """
     Handles the submission of answers in the questionnaire.
+    Generates a response based on the chosen answer, saves it to the database, and prepares it for restoration.
     """
     try:
         data = json.loads(request.body)
@@ -492,13 +493,13 @@ def submit_answer(request):
 
         if missing_fields:
             error_message = f"Missing required fields: {', '.join(missing_fields)}."
-            logger.warning(error_message)
+            logger.warning(f"User {request.user.username}: {error_message}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Validate that question_index is an integer
         if not isinstance(question_index, int):
             error_message = 'Invalid question_index. It must be an integer.'
-            logger.warning(error_message)
+            logger.warning(f"User {request.user.username}: {error_message}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Validate that answer_id is a valid UUID
@@ -506,7 +507,7 @@ def submit_answer(request):
             uuid_obj = uuid.UUID(answer_id, version=4)
         except ValueError:
             error_message = 'Invalid answer_id. It must be a valid UUID.'
-            logger.warning(error_message)
+            logger.warning(f"User {request.user.username}: {error_message}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Fetch the corresponding question text
@@ -514,29 +515,36 @@ def submit_answer(request):
             question_text = QUESTIONS[question_index]
         else:
             error_message = 'Invalid question index.'
-            logger.warning(error_message)
+            logger.warning(f"User {request.user.username}: {error_message}")
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+
+        # Fetch answer options and responses for the current question
+        try:
+            current_answers = ANSWERS[question_index]
+            response_list = RESPONSES[question_index]
+            answer_idx = current_answers.index(answer_text)
+            response_text = response_list[answer_idx]
+        except (IndexError, ValueError) as e:
+            error_message = 'Invalid answer_text provided.'
+            logger.error(f"User {request.user.username}: {error_message} Error: {e}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Prevent duplicate submissions using answer_id
         try:
-            # Attempt to create the Questionnaire entry
-            questionnaire_entry = Questionnaire.objects.create(
-                user=request.user,
-                question=question_text,
-                answer=answer_text,
-                response=RESPONSES[question_index][ANSWERS[question_index].index(answer_text)],
-                answer_id=answer_id  # Assign the unique answer_id
-            )
-            logger.info(f"Saved answer_id {answer_id} for user {request.user.username}.")
+            with transaction.atomic():
+                # Attempt to create the Questionnaire entry
+                questionnaire_entry = Questionnaire.objects.create(
+                    user=request.user,
+                    question=question_text,
+                    answer=answer_text,
+                    response=response_text,
+                    answer_id=answer_id  # Assign the unique answer_id
+                )
+                logger.info(f"User {request.user.username}: Saved answer_id {answer_id}.")
         except IntegrityError:
             # If a duplicate answer_id exists, respond accordingly
             error_message = 'This answer has already been submitted.'
-            logger.warning(error_message)
-            return JsonResponse({'success': False, 'error': error_message}, status=400)
-        except (IndexError, ValueError) as e:
-            # Handle cases where answer_text does not match any predefined option
-            error_message = 'Invalid answer_text provided.'
-            logger.error(f"Error fetching response text: {e}")
+            logger.warning(f"User {request.user.username}: {error_message}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Save user message to ChatMessage
@@ -547,30 +555,22 @@ def submit_answer(request):
             message_type='user_message',
             question_index=question_index
         )
-        logger.debug(f"Saved user message: {user_message}")
+        logger.debug(f"User {request.user.username}: Saved user message.")
 
         # Update the QuestionnaireProgress
-        try:
-            progress = QuestionnaireProgress.objects.get(user=request.user)
-            logger.debug(f"User progress before update: {progress.last_question_index}, Completed: {progress.completed}")
-        except QuestionnaireProgress.DoesNotExist:
-            # If no progress exists, initialize it
-            progress = QuestionnaireProgress.objects.create(user=request.user, last_question_index=-1)
-            logger.debug("Initialized new QuestionnaireProgress.")
-
-        # Check if the questionnaire is already completed
+        progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
         if progress.completed:
             error_message = 'You have already completed the questionnaire.'
-            logger.warning(error_message)
+            logger.warning(f"User {request.user.username}: {error_message}")
             return JsonResponse({'success': False, 'error': error_message}, status=400)
 
         # Determine the next question index
         next_question_index = question_index + 1
 
         if next_question_index < len(QUESTIONS):
-            # Fetch the next question
+            # Fetch the next question and its answer options
             next_question_text = QUESTIONS[next_question_index]
-            answer_options = ANSWERS[next_question_index]
+            next_answer_options = ANSWERS[next_question_index]
 
             # Save the next question as a bot message
             bot_message = ChatMessage.objects.create(
@@ -580,26 +580,26 @@ def submit_answer(request):
                 message_type='question',
                 question_index=next_question_index
             )
-            logger.debug(f"Sent next question (index {next_question_index}): {next_question_text}")
+            logger.debug(f"User {request.user.username}: Sent next question.")
 
             # Update progress
             progress.last_question_index = next_question_index
             progress.save()
-            logger.debug(f"Updated progress to question_index {next_question_index}.")
+            logger.debug(f"User {request.user.username}: Updated progress to question_index {next_question_index}.")
 
             return JsonResponse({
                 'success': True,
-                'response': questionnaire_entry.response,
+                'response': response_text,
                 'next_question_index': next_question_index,
                 'question': next_question_text,
-                'answer_options': answer_options,
+                'answer_options': next_answer_options,
                 'simulate_typing': True
             })
         else:
             # No more questions; mark the questionnaire as completed
             progress.completed = True
             progress.save()
-            logger.debug("Questionnaire completed.")
+            logger.info(f"User {request.user.username}: Completed the questionnaire.")
 
             # Final bot message
             final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
@@ -610,21 +610,21 @@ def submit_answer(request):
                 message_type='bot_message',
                 question_index=None
             )
-            logger.debug(f"Sent final message: {final_bot_message}")
+            logger.debug(f"User {request.user.username}: Sent final message.")
 
             return JsonResponse({
                 'success': True,
-                'response': questionnaire_entry.response,
+                'response': response_text,
                 'end_of_questions': True,
                 'final_bot_message': final_bot_message,
                 'simulate_typing': True
             })
 
     except json.JSONDecodeError:
-        logger.error(f"JSON decoding error in submit_answer view for user '{request.user.username}'.")
+        logger.error(f"User {request.user.username}: JSON decoding error.")
         return JsonResponse({'success': False, 'error': 'Invalid JSON format.'}, status=400)
     except Exception as e:
-        logger.error(f"Unexpected error in submit_answer view for user '{request.user.username}': {str(e)}")
+        logger.error(f"User {request.user.username}: Unexpected error: {e}")
         return JsonResponse({'success': False, 'error': 'Failed to process your answer. Please try again.'}, status=500)
 @login_required
 @csrf_exempt

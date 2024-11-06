@@ -210,7 +210,6 @@ function loadChatHistory(scrollToBottom = true) {
       showErrorMessage("Failed to load chat history. Please try again.");
     });
 }
-
 // Function to display greeting message with simulated typing and options
 function showGreetingMessage() {
   const greetingMessage =
@@ -423,17 +422,19 @@ function handleAnswerSelection(questionIndex, answerText) {
   const answersWrapper = document.getElementById("answersWrapper");
 
   if (answersWrapper) {
+    // Animate and remove the answer options
     answersWrapper.classList.remove("pop-up");
     answersWrapper.classList.add("pop-down");
     setTimeout(() => answersWrapper.remove(), 300);
   }
 
+  // Display the user's selected answer in the chat
   generateMessage(answerText, "user");
 
   // Generate a unique answer_id
   const answer_id = generateUUID();
 
-  // Send POST request to the /submit_answer/ endpoint
+  // Send the selected answer to the backend
   fetch("/submit_answer/", {
     method: "POST",
     headers: {
@@ -443,37 +444,58 @@ function handleAnswerSelection(questionIndex, answerText) {
     body: JSON.stringify({
       question_index: questionIndex,
       answer_text: answerText,
-      answer_id: answer_id, // Include the unique identifier
+      answer_id: answer_id,
     }),
   })
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        if (
+        if (data.response) {
+          // Display the predefined response first
+          simulateTyping(data.response, "bot", () => {
+            if (
+              data.next_question_index !== undefined &&
+              data.question &&
+              data.answer_options
+            ) {
+              // After response, display the next question
+              simulateTyping(data.question, "bot", () => {
+                displayAnswerOptions(
+                  data.answer_options,
+                  data.next_question_index
+                );
+                currentQuestionIndex = data.next_question_index;
+              });
+            } else if (data.end_of_questions && data.final_bot_message) {
+              // If it's the end of the questionnaire, display the final message
+              simulateTyping(data.final_bot_message, "bot", () => {
+                displayFinalOptions();
+              });
+            }
+          });
+        } else if (
           data.next_question_index !== undefined &&
           data.question &&
           data.answer_options
         ) {
-          // Display the next question with its answer options
+          // Fallback: If no response, proceed to next question
           simulateTyping(data.question, "bot", () => {
             displayAnswerOptions(data.answer_options, data.next_question_index);
             currentQuestionIndex = data.next_question_index;
           });
         } else if (data.end_of_questions && data.final_bot_message) {
-          // Display the final message with options
+          // Handle end of questionnaire without response
           simulateTyping(data.final_bot_message, "bot", () => {
             displayFinalOptions();
           });
-        } else if (data.response) {
-          // Display any bot response associated with the answer
-          simulateTyping(data.response, "bot");
         }
       } else {
-        // Handle errors returned from the server
-        console.error("Error:", data.error);
-        showErrorMessage(
-          data.error || "Failed to submit your choice. Please try again."
-        );
+        // Handle errors returned from the backend
+        if (data.error) {
+          showErrorMessage(data.error);
+        } else {
+          showErrorMessage("An unexpected error occurred.");
+        }
       }
     })
     .catch((error) => {
