@@ -557,6 +557,16 @@ def submit_answer(request):
         )
         logger.debug(f"User {request.user.username}: Saved user message.")
 
+        # Save bot response as ChatMessage
+        bot_message = ChatMessage.objects.create(
+            user=request.user,
+            message=response_text,
+            is_bot_message=True,
+            message_type='bot_message',
+            question_index=question_index
+        )
+        logger.debug(f"User {request.user.username}: Saved bot message.")
+
         # Update the QuestionnaireProgress
         progress, created = QuestionnaireProgress.objects.get_or_create(user=request.user)
         if progress.completed:
@@ -573,7 +583,7 @@ def submit_answer(request):
             next_answer_options = ANSWERS[next_question_index]
 
             # Save the next question as a bot message
-            bot_message = ChatMessage.objects.create(
+            next_bot_message = ChatMessage.objects.create(
                 user=request.user,
                 message=next_question_text,
                 is_bot_message=True,
@@ -602,10 +612,10 @@ def submit_answer(request):
             logger.info(f"User {request.user.username}: Completed the questionnaire.")
 
             # Final bot message
-            final_bot_message = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
-            final_bot = ChatMessage.objects.create(
+            final_bot_message_text = "Thank you for completing the questionnaire! Would you like to talk to a counselor?"
+            final_bot_message = ChatMessage.objects.create(
                 user=request.user,
-                message=final_bot_message,
+                message=final_bot_message_text,
                 is_bot_message=True,
                 message_type='bot_message',
                 question_index=None
@@ -616,7 +626,7 @@ def submit_answer(request):
                 'success': True,
                 'response': response_text,
                 'end_of_questions': True,
-                'final_bot_message': final_bot_message,
+                'final_bot_message': final_bot_message_text,
                 'simulate_typing': True
             })
 
