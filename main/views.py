@@ -277,7 +277,7 @@ def start_chat(request):
         logger.debug(f"Received data for start_chat: {data}")
 
         # Check if "Start" command was received
-        user_message = data.get("message", "").strip().lower()
+        user_message = data.get("message", "").strip()
         if user_message == "start":
             answer_id = data.get('answer_id', str(uuid.uuid4()))
             # Save user message ("Start") to ChatMessage
@@ -645,7 +645,7 @@ def handle_chat(request):
     """
     try:
         data = json.loads(request.body)
-        user_message = data.get('message', '').strip().lower()
+        user_message = data.get('message', '').strip()
         logger.debug(f"Received message from user '{request.user.username}': {user_message}")
 
         # Save user message to ChatMessage
