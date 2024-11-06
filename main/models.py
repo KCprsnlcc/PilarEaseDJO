@@ -357,11 +357,27 @@ class Referral(models.Model):
             return f"Referral by {self.referred_by.username} for {self.status.title}"
         return f"Referral by {self.referred_by.username}"
 
+
+class ProfanityWordManager(models.Manager):
+    def get_instance(self):
+        obj, created = self.get_or_create(id=1)
+        return obj
+
 class ProfanityWord(models.Model):
-    word_list = models.JSONField()
+    word_list = models.JSONField(default=list)
+
+    objects = ProfanityWordManager()
 
     def __str__(self):
         return "Profanity Words"
+
+    def save(self, *args, **kwargs):
+        self.word_list = sorted(list(set(self.word_list)), key=lambda x: x.lower())
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = "Profanity Word"
+        verbose_name_plural = "Profanity Words"
 
 class Reply(models.Model):
     status = models.ForeignKey(

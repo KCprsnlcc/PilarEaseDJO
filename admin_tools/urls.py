@@ -51,8 +51,8 @@ urlpatterns = [
     # API Endpoints
     path('api/referrals/', views.referrals_api, name='referrals_api'),
     path('api/referrals/<int:referral_id>/', views.get_referral_details, name='api_get_referral_details'),
-    path('profanities/add/', views.add_profanity_api, name='add_profanity_api'),
-    path('profanities/delete/', views.delete_profanity_api, name='delete_profanity_api'),
+     path('api/add_profanity/', views.add_profanity_api, name='add_profanity_api'),
+    path('api/delete_profanity/', views.delete_profanity_api, name='delete_profanity_api'),
     # Performance Matrix
     path('performance_dashboard/', views.performance_dashboard, name='performance_dashboard'),
     path('get_progress/<int:dataset_id>/', views.get_progress, name='get_progress'),

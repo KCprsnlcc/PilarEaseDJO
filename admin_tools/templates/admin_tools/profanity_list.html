@@ -44,7 +44,7 @@
             {% for profanity in profanities %}
             <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ profanity }}</td>
+                <td>{{ profanity }}</td> <!-- Corrected to display the word directly -->
                 <td>
                     <button
                         class="pilarease-admin-button delete-button"
@@ -82,7 +82,6 @@
         </span>
     </div>
 
-
     <!-- Add Profanity Form -->
     <form class="pilarease-admin-add-profanity-form" onsubmit="addProfanity(event)">
         <input
@@ -101,61 +100,105 @@
 
 <!-- JavaScript for Profanity Management -->
 <script>
-    // Add Profanity via Form
-    function addProfanity(event) {
-        event.preventDefault();
-        const newWord = document.getElementById("newProfanity").value.trim();
-        if (newWord === "") return;
-
-        fetch("{% url 'add_profanity_api' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify({ word: newWord }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.status === "success") {
-                alert("Profane word added successfully.");
-                location.reload();
-            } else {
-                alert("Error adding profane word: " + data.message);
+    document.addEventListener("DOMContentLoaded", function () {
+        // Function to get CSRF token from cookies
+        function getCSRFToken() {
+            let cookieValue = null;
+            const name = "csrftoken";
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            alert("An error occurred while adding the profane word.");
-        });
-    }
+            return cookieValue;
+        }
 
-    // Delete Profanity
-    function deleteProfanity(word) {
-        if (!confirm(`Are you sure you want to delete the word "${word}" from the profanity list?`)) return;
+        const csrftoken = getCSRFToken();
 
-        fetch("{% url 'delete_profanity_api' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}",
-            },
-            body: JSON.stringify({ word: word }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.status === "success") {
-                alert("Profane word deleted successfully.");
-                location.reload();
-            } else {
-                alert("Error deleting profane word: " + data.message);
+        // Function to add a new profanity word
+        window.addProfanity = function (event) {
+            event.preventDefault();
+            const newWordInput = document.getElementById("newProfanity");
+            const newWord = newWordInput.value.trim().toLowerCase();
+            if (newWord === "") {
+                alert("Please enter a word.");
+                return;
             }
-        })
-        .catch((error) => {
-            console.error("Error:", error);
-            alert("An error occurred while deleting the profane word.");
-        });
-    }
+
+            // Optional: Validate that the word contains only alphabets
+            const regex = /^[a-zA-Z]+$/;
+            if (!regex.test(newWord)) {
+                alert("Invalid word format. Only alphabets are allowed.");
+                return;
+            }
+
+            fetch("{% url 'add_profanity_api' %}", { // Ensure this URL name matches your urlpatterns
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                },
+                body: JSON.stringify({
+                    word: newWord,
+                }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "success") {
+                    alert(data.message);
+                    location.reload(); // Refresh to show the new word
+                } else {
+                    alert("Error adding profane word: " + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error adding profanity:", error);
+                alert("An error occurred while adding the profane word.");
+            });
+        }
+
+        // Function to delete a profanity word
+        window.deleteProfanity = function (word) {
+            if (!word) {
+                alert("Invalid profanity word.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete the profanity word "${word}"?`)) {
+                return;
+            }
+
+            fetch("{% url 'delete_profanity_api' %}", { // Ensure this URL name matches your urlpatterns
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                },
+                body: JSON.stringify({ word: word }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "success") {
+                    alert(data.message);
+                    location.reload(); // Refresh to remove the deleted word
+                } else {
+                    alert("Error deleting profane word: " + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error deleting profanity:", error);
+                alert("An error occurred while deleting the profane word.");
+            });
+        }
+
+        // Optional: Enhance user experience by using inline notifications instead of alerts
+        // You can implement a notification system (e.g., toast messages) for better UX
+    });
 </script>
 
 {% endblock %}

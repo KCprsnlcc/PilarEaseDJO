@@ -84,24 +84,23 @@
     </table>
 
     <!-- Pagination Controls -->
+    <div class="pilarease-admin-pagination">
+        <span class="pilarease-admin-step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
+            {% endif %}
 
-<div class="pilarease-admin-pagination">
-            <span class="pilarease-admin-step-links">
-                {% if page_obj.has_previous %}
-                    <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
-                {% endif %}
-
-                <span class="pilarease-admin-current">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
-                {% endif %}
+            <span class="pilarease-admin-current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
             </span>
-</div>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
+            {% endif %}
+        </span>
+    </div>
 </div>
 
 <!-- Referral Detail Modal -->
@@ -409,7 +408,7 @@
                 return;
             }
 
-            fetch("{% url 'add_profanity_api' %}", {
+            fetch("{% url 'add_profanity_api' %}", { // Updated URL
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -445,7 +444,7 @@
                 return;
             }
 
-            fetch(`/admin/profanities/delete/`, {
+            fetch("{% url 'delete_profanity_api' %}", { // Updated URL
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

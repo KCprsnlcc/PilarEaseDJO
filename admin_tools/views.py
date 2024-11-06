@@ -1027,54 +1027,72 @@ def referrals_api(request):
 @login_required
 @user_passes_test(is_counselor)
 def add_profanity_api(request):
-    """
-    Handles adding a new profanity word via AJAX.
-    """
     try:
         data = json.loads(request.body)
-        word = data.get('word', '').strip().lower()
-        if not word:
+        new_word = data.get('word', '').strip().lower()
+
+        if not new_word:
             return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
-        
-        # Retrieve or create the ProfanityWord instance
-        profanity_word_obj, created = ProfanityWord.objects.get_or_create(id=1, defaults={'word_list': []})
-        if word in profanity_word_obj.word_list:
-            return JsonResponse({'status': 'error', 'message': 'Word already exists.'}, status=400)
-        
-        # Add the word to the word_list
-        profanity_word_obj.word_list.append(word)
-        profanity_word_obj.save()
-        
-        return JsonResponse({'status': 'success', 'message': 'Profanity word added successfully.'})
+
+        # Validate that the word contains only alphabets
+        if not re.match(r'^[a-zA-Z]+$', new_word):
+            return JsonResponse({'status': 'error', 'message': 'Invalid word format. Only alphabets are allowed.'}, status=400)
+
+        profanity_entry = ProfanityWord.objects.get_instance()
+
+        if new_word in [word.lower() for word in profanity_entry.word_list]:
+            return JsonResponse({'status': 'error', 'message': 'Word already exists in the profanity list.'}, status=400)
+
+        profanity_entry.word_list.append(new_word)
+        profanity_entry.save()
+
+        logger.info(f"Added new profane word: {new_word} by user: {request.user.username}")
+
+        return JsonResponse({'status': 'success', 'message': f'Profane word "{new_word}" added successfully.'})
+    
     except json.JSONDecodeError:
-        return HttpResponseBadRequest('Invalid JSON')
+        logger.error(f"JSON decoding error in add_profanity_api by user '{request.user.username}'.")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in add_profanity_api by user '{request.user.username}': {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'An error occurred while adding the profane word.'}, status=500)
 
 @login_required
 @user_passes_test(is_counselor)
 @require_http_methods(["POST"])
 def delete_profanity_api(request):
-    """
-    Handles deleting a profanity word via AJAX.
-    """
     try:
         data = json.loads(request.body)
-        word = data.get('word', '').strip().lower()
-        if not word:
-            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
-        
-        # Retrieve the ProfanityWord instance
-        profanity_word_obj = ProfanityWord.objects.first()
-        if not profanity_word_obj or word not in profanity_word_obj.word_list:
-            return JsonResponse({'status': 'error', 'message': 'Word not found.'}, status=404)
-        
-        # Remove the word from the word_list
-        profanity_word_obj.word_list.remove(word)
-        profanity_word_obj.save()
-        
-        return JsonResponse({'status': 'success', 'message': 'Profanity word deleted successfully.'})
-    except json.JSONDecodeError:
-        return HttpResponseBadRequest('Invalid JSON')
+        word_to_delete = data.get('word', '').strip().lower()
 
+        if not word_to_delete:
+            return JsonResponse({'status': 'error', 'message': 'No word provided.'}, status=400)
+
+        profanity_entry = ProfanityWord.objects.get_instance()
+
+        # Find the word in the list (case-insensitive)
+        word_found = False
+        for word in profanity_entry.word_list:
+            if word.lower() == word_to_delete:
+                profanity_entry.word_list.remove(word)
+                word_found = True
+                break
+
+        if not word_found:
+            return JsonResponse({'status': 'error', 'message': 'Word not found in the profanity list.'}, status=404)
+
+        profanity_entry.save()
+
+        logger.info(f"Deleted profane word: {word_to_delete} by user: {request.user.username}")
+
+        return JsonResponse({'status': 'success', 'message': f'Profane word "{word_to_delete}" deleted successfully.'})
+    
+    except json.JSONDecodeError:
+        logger.error(f"JSON decoding error in delete_profanity_api by user '{request.user.username}'.")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error in delete_profanity_api by user '{request.user.username}': {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'An error occurred while deleting the profane word.'}, status=500)
 @login_required
 def delete_feedback(request, feedback_id):
     feedback = get_object_or_404(Feedback, id=feedback_id)
