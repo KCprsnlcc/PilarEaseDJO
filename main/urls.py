@@ -53,6 +53,7 @@ urlpatterns = [
     path('final_option_selection/', views.final_option_selection, name='final_option_selection'),
     # path('start_chat/', views.start_chat, name='start_chat'),
     path('chat/', views.handle_chat, name='handle_chat'),  # Unified chat handler
+    path('send_chat_message/', views.send_chat_message, name='send_chat_message'),
     path('get_question/<int:question_index>/', views.get_question, name='get_question'),
     path('get_answer_options/<int:question_index>/', views.get_answer_options, name='get_answer_options'),
     path('start_questionnaire/', views.start_questionnaire, name='start_questionnaire'),

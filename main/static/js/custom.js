@@ -217,6 +217,33 @@ function showGreetingMessage() {
 
   simulateTyping(greetingMessage, "bot", () => {
     displayOptions(["Start", "Not Yet"]);
+
+    // Save the greeting message to the backend
+    fetch("/send_chat_message/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        message: greetingMessage,
+        is_bot_message: true,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("Greeting message saved successfully.");
+        } else {
+          console.error("Failed to save greeting message:", data.error);
+          // Optionally, display an error message to the user
+          showErrorMessage("Failed to save greeting message.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error saving greeting message:", error);
+        showErrorMessage("Failed to save greeting message.");
+      });
   });
 }
 
@@ -381,7 +408,7 @@ function handleOptionClick(option, optionsWrapper) {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
       },
-      body: JSON.stringify({ message: option.toLowerCase() }), // "start" or "not yet"
+      body: JSON.stringify({ message: option }), // Send as "Start" or "Not Yet"
     })
       .then((response) => response.json())
       .then((data) => {
@@ -416,7 +443,6 @@ function handleOptionClick(option, optionsWrapper) {
       });
   }
 }
-
 // Function to handle answer selection within the questionnaire
 function handleAnswerSelection(questionIndex, answerText) {
   const answersWrapper = document.getElementById("answersWrapper");
