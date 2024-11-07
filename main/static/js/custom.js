@@ -218,7 +218,7 @@ function showGreetingMessage() {
   simulateTyping(greetingMessage, "bot", () => {
     displayOptions(["Start", "Not Yet"]);
 
-    // Save the greeting message to the backend
+    // Save the greeting message to the backend, associated with the authenticated user
     fetch("/send_chat_message/", {
       method: "POST",
       headers: {
@@ -228,6 +228,7 @@ function showGreetingMessage() {
       body: JSON.stringify({
         message: greetingMessage,
         is_bot_message: true,
+        associate_with_user: true, // Custom flag to associate with user
       }),
     })
       .then((response) => response.json())
@@ -236,7 +237,6 @@ function showGreetingMessage() {
           console.log("Greeting message saved successfully.");
         } else {
           console.error("Failed to save greeting message:", data.error);
-          // Optionally, display an error message to the user
           showErrorMessage("Failed to save greeting message.");
         }
       })
@@ -246,7 +246,6 @@ function showGreetingMessage() {
       });
   });
 }
-
 // Function to prepend messages to chat body
 function prependMessages(messages) {
   // Record the current scroll position

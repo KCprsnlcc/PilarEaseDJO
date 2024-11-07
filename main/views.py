@@ -666,7 +666,7 @@ def handle_chat(request):
                     logger.warning(f"User '{request.user.username}' attempted to start again: {error_message}")
                     bot_message = "You have already completed the questionnaire."
                     ChatMessage.objects.create(
-                        user=None,  # Bot message
+                        user=request.user,  # Bot message
                         message=bot_message,
                         is_bot_message=True,
                         message_type='bot_message'
@@ -686,7 +686,7 @@ def handle_chat(request):
 
                 # Save the first question as a bot message
                 bot_message = ChatMessage.objects.create(
-                    user=None,  # Bot message
+                    user=request.user,  # Bot message
                     message=question_text,
                     is_bot_message=True,
                     message_type='question',
@@ -705,7 +705,7 @@ def handle_chat(request):
             elif user_message.lower() == 'not yet':
                 bot_message = "No worries, take your time."
                 ChatMessage.objects.create(
-                    user=None,  # Bot message
+                    user=request.user,  # Bot message
                     message=bot_message,
                     is_bot_message=True,
                     message_type='bot_message'
@@ -717,7 +717,7 @@ def handle_chat(request):
                 # Handle other messages or unrecognized commands
                 bot_message = "I'm here to help whenever you're ready. Please type 'Start' to begin the questionnaire."
                 ChatMessage.objects.create(
-                    user=None,  # Bot message
+                    user=request.user,  # Bot message
                     message=bot_message,
                     is_bot_message=True,
                     message_type='bot_message'
@@ -892,18 +892,19 @@ def send_message(request):
         else:
             return JsonResponse({'success': False, 'error': 'No message provided'})
     return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
-
 @csrf_exempt
+@login_required
 def send_chat_message(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             message = data.get('message')
             is_bot_message = data.get('is_bot_message', False)
+            associate_with_user = data.get('associate_with_user', False)  # Custom flag if needed
 
             if message:
-                # For bot messages, associate with user=None
-                user = None if is_bot_message else request.user
+                # Associate all messages with the authenticated user
+                user = request.user
 
                 chat_message = ChatMessage.objects.create(
                     user=user,
