@@ -158,22 +158,27 @@ class ChatMessage(models.Model):
         ('greeting', 'Greeting'),
         ('question', 'Question'),
         ('bot_message', 'Bot Message'),
-        ('user_message', 'User Message'),  # Add this
+        ('user_message', 'User Message'),
+        ('counselor_message', 'Counselor Message'),  # New Type
     ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=True,  # Allow null for older messages where user was not recorded
-        blank=True  # Allow blank fields if user is not specified
+        null=True,
+        blank=True
     )
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_bot_message = models.BooleanField(default=False)
-    message_type = models.CharField(max_length=50, blank=True, null=True)
+    message_type = models.CharField(max_length=50, choices=MESSAGE_TYPES, blank=True, null=True)
     question_index = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        sender = "Bot" if self.is_bot_message else self.user.username
+        if self.is_bot_message:
+            sender = "Counselor" if self.message_type == 'counselor_message' else "Bot"
+        else:
+            sender = self.user.username
         return f"{sender}: {self.message[:50]}"
 
 class QuestionnaireProgress(models.Model):

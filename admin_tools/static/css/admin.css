@@ -3296,7 +3296,6 @@ body {
     width: 100%;
   }
 }
-
 /* =========================================================
    Chat Interface Specific Styles
    ========================================================= */
@@ -3422,6 +3421,12 @@ body {
   border: 1px solid #cccccc;
   border-radius: 20px;
   font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.pilarease-admin-chat-input:focus {
+  border-color: var(--accent-color, #0e2326);
 }
 
 .pilarease-admin-chat-send-button {
@@ -3443,6 +3448,49 @@ body {
 .pilarease-admin-chat-input:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+}
+
+/* Message Bubbles */
+.pilarease-admin-chat-message {
+  max-width: 70%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+  position: relative;
+  word-wrap: break-word;
+  font-size: 16px;
+}
+
+.admin-message {
+  background-color: var(--accent-color, #0e2326);
+  color: #ffffff;
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
+}
+
+.user-message {
+  background-color: #e6e6e6;
+  color: #000000;
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
+}
+
+.message-sender {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.message-text {
+  display: block;
+}
+
+.message-timestamp {
+  font-size: 0.8em;
+  color: #555555;
+  position: absolute;
+  bottom: -15px;
+  right: 10px;
 }
 
 /* User Profile Modal */
@@ -3751,6 +3799,7 @@ body {
   outline: none;
   box-shadow: 0 0 0 3px rgba(14, 35, 38, 0.3);
 }
+
 /* =========================================================
    Modal Styles
    ========================================================= */

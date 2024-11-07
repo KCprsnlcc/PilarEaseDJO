@@ -60,6 +60,7 @@ urlpatterns = [
     # Chat
     path('chat/', views.chat_view, name='chat'),
     path('chat/get_user_questionnaire/<int:user_id>/', views.get_user_questionnaire, name='get_user_questionnaire'),
+    path('chat/get_chat_messages/<int:user_id>/', views.get_chat_messages, name='get_chat_messages'),
 
     # Settings
     path('comparison/', views.comparison, name='comparison'),

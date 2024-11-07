@@ -47,6 +47,7 @@ from main.models import (
     Questionnaire,
     TextAnalysis,
     NotificationCounselor,
+    ChatMessage,
 )
 import torch
 from django.contrib import messages
@@ -1172,6 +1173,28 @@ def chat_view(request):
     # Fetch users who are not counselors
     users = CustomUser.objects.filter(is_counselor=False)
     return render(request, 'admin_tools/chat.html', {'users': users})
+
+
+@login_required
+@user_passes_test(is_counselor)
+def get_chat_messages(request, user_id):
+    """
+    Fetch all chat messages between the counselor and the specified user.
+    """
+    user = get_object_or_404(CustomUser, id=user_id, is_counselor=False)
+    messages = ChatMessage.objects.filter(user=user).order_by('timestamp')
+
+    messages_data = []
+    for msg in messages:
+        messages_data.append({
+            'sender': 'Counselor' if msg.is_bot_message else user.full_name,
+            'message': msg.message,
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M'),
+            'message_type': msg.message_type,
+        })
+
+    return JsonResponse({'messages': messages_data})
+
 @login_required
 @user_passes_test(is_counselor)
 def download_statistics_report(request):

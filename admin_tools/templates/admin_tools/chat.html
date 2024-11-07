@@ -1,5 +1,3 @@
-<!-- admin_tools/templates/admin_tools/chat.html -->
-
 {% extends 'admin_tools/base_admin.html' %} {% load static %} {% load compress
 %} {% block content %}
 <div class="pilarease-admin-chat-container">
@@ -164,10 +162,14 @@
   </div>
 </div>
 
-<!-- JavaScript for Fetching and Displaying Questionnaire Data -->
+<!-- JavaScript for Fetching and Displaying Questionnaire and Chat Data -->
 <script>
+  // Global variable to store the selected user ID
+  let selectedUserId = null;
+
   // Function to open user profile and fetch questionnaire data
   function openUserProfile(userId) {
+    selectedUserId = userId;
     // Fetch questionnaire data and profile details from the correct URL
     fetch(`/admin/chat/get_user_questionnaire/${userId}/`, {
       method: "GET",
@@ -298,7 +300,121 @@
     // TODO: Implement the actual connection logic (e.g., initiate a chat, send a request, etc.)
   }
 
-  // Disable chat input and send button initially
+  // Function to handle "View Chat" button click
+  function viewChatWithUser() {
+    if (!selectedUserId) {
+      alert("No user selected.");
+      return;
+    }
+
+    fetch(`/admin/chat/get_chat_messages/${selectedUserId}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.messages) {
+          populateChatWindow(data.messages);
+          // Enable chat input and send button if you plan to add sending functionality
+          document.getElementById(
+            "pilarease-admin-chat-input"
+          ).disabled = false;
+          document.getElementById(
+            "pilarease-admin-chat-send-button"
+          ).disabled = false;
+        } else {
+          alert("No chat messages found.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching chat messages:", error);
+        alert("An error occurred while fetching chat messages.");
+      });
+  }
+
+  // Function to populate the chat window with fetched messages
+  function populateChatWindow(messages) {
+    const chatMessagesDiv = document.getElementById(
+      "pilarease-admin-chat-messages"
+    );
+    chatMessagesDiv.innerHTML = ""; // Clear existing messages
+
+    if (messages.length === 0) {
+      chatMessagesDiv.innerHTML = "<p>No conversation history.</p>";
+      return;
+    }
+
+    messages.forEach((msg) => {
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("pilarease-admin-chat-message");
+
+      if (msg.sender === "Counselor") {
+        messageDiv.classList.add("admin-message");
+      } else {
+        messageDiv.classList.add("user-message");
+      }
+
+      messageDiv.innerHTML = `
+        <span class="message-sender">${msg.sender}</span>
+        <span class="message-text">${msg.message}</span>
+        <span class="message-timestamp">${msg.timestamp}</span>
+      `;
+
+      chatMessagesDiv.appendChild(messageDiv);
+    });
+
+    // Scroll to the bottom of the chat messages
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+  }
+
+  // Function to send a message (Future Implementation)
+  /*
+  function sendMessage() {
+    const messageInput = document.getElementById("pilarease-admin-chat-input")
+    const message = messageInput.value.trim()
+    if (message === "") return
+
+    // TODO: Implement sending message logic (e.g., POST request to server)
+    // For now, append the message to the chat window as a counselor message
+    const chatMessagesDiv = document.getElementById("pilarease-admin-chat-messages")
+    const messageDiv = document.createElement("div")
+    messageDiv.classList.add("pilarease-admin-chat-message", "admin-message")
+
+    const timestamp = new Date().toLocaleString()
+
+    messageDiv.innerHTML = `
+      <span class="message-sender">Counselor</span>
+      <span class="message-text">${message}</span>
+      <span class="message-timestamp">${timestamp}</span>
+    `
+
+    chatMessagesDiv.appendChild(messageDiv)
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight
+
+    // Clear the input field
+    messageInput.value = ""
+  }
+
+  // Event listener for send button
+  document.getElementById("pilarease-admin-chat-send-button").addEventListener("click", sendMessage)
+
+  // Event listener for Enter key in input field
+  document.getElementById("pilarease-admin-chat-input").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      event.preventDefault()
+      sendMessage()
+    }
+  })
+  */
+
+  // Initial state: Disable chat input and send button
   document.getElementById("pilarease-admin-chat-input").disabled = true;
   document.getElementById("pilarease-admin-chat-send-button").disabled = true;
 </script>
