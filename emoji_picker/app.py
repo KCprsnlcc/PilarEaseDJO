@@ -39,10 +39,22 @@ def get_emojis(category=None, search_query="", page=1, per_page=EMOJIS_PER_PAGE)
     offset = (page - 1) * per_page
 
     if category:
-        query = "SELECT emoji, name FROM emojis WHERE \"group\" = ? AND name LIKE ? ORDER BY name LIMIT ? OFFSET ?"
+        query = '''
+            SELECT emoji, name 
+            FROM emojis 
+            WHERE "group" = ? AND name LIKE ? 
+            ORDER BY sub_group, name 
+            LIMIT ? OFFSET ?
+        '''
         cursor.execute(query, (category, f'%{search_query}%', per_page, offset))
     else:
-        query = "SELECT emoji, name FROM emojis WHERE name LIKE ? ORDER BY name LIMIT ? OFFSET ?"
+        query = '''
+            SELECT emoji, name 
+            FROM emojis 
+            WHERE name LIKE ? 
+            ORDER BY sub_group, name 
+            LIMIT ? OFFSET ?
+        '''
         cursor.execute(query, (f'%{search_query}%', per_page, offset))
 
     emojis = cursor.fetchall()
@@ -120,7 +132,7 @@ def index():
                 flex-direction: column;
                 animation: fadeIn 0.5s ease-in-out;
             }
-
+            
             /* Search Bar */
             .search-bar {
                 width: 100%;
@@ -311,34 +323,36 @@ def index():
             }
 
             function loadEmojis() {
-                if (isLoading) return;
-                isLoading = true;
-                
-                fetch(`/load_emojis?page=${page}&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(searchQuery)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const emojiGrid = document.getElementById("emoji-grid");
-                        data.emojis.forEach(item => {
-                            const emojiSpan = document.createElement("span");
-                            emojiSpan.classList.add("emoji", "hvr-grow"); // Hover.css class
-                            emojiSpan.setAttribute("data-aos", "zoom-in"); // AOS attribute
-                            emojiSpan.title = item.name;
-                            emojiSpan.innerText = item.emoji;
-                            emojiSpan.onclick = () => selectEmoji(item.emoji);
-                            emojiGrid.appendChild(emojiSpan);
-                        });
-                        // Refresh AOS to recognize new elements
-                        AOS.refresh();
-                        isLoading = false;
-                        if (data.has_more) {
-                            page++;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading emojis:', error);
-                        isLoading = false;
-                    });
+    if (isLoading) return;
+    isLoading = true;
+    
+    fetch(`/load_emojis?page=${page}&category=${encodeURIComponent(currentCategory)}&search=${encodeURIComponent(searchQuery)}`)
+        .then(response => response.json())
+        .then(data => {
+            const emojiGrid = document.getElementById("emoji-grid");
+            
+            data.emojis.forEach(item => {
+                const emojiSpan = document.createElement("span");
+                emojiSpan.classList.add("emoji", "hvr-grow"); // Hover.css class
+                emojiSpan.setAttribute("data-aos", "zoom-in"); // AOS attribute
+                emojiSpan.title = item.name;
+                emojiSpan.innerText = item.emoji;
+                emojiSpan.onclick = () => selectEmoji(item.emoji);
+                emojiGrid.appendChild(emojiSpan);
+            });
+            
+            // Refresh AOS to recognize new elements
+            AOS.refresh();
+            isLoading = false;
+            if (data.has_more) {
+                page++;
             }
+        })
+        .catch(error => {
+            console.error('Error loading emojis:', error);
+            isLoading = false;
+        });
+}   
 
             function selectEmoji(emoji) {
                 // You can customize this function to handle the selected emoji as needed
