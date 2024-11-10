@@ -1512,6 +1512,15 @@ document.addEventListener("DOMContentLoaded", function () {
       updateCounters();
     });
 
+
+document.querySelector('.emoji-picker').addEventListener('click', () => {
+  const emoji = prompt("Pick an emoji to insert:");
+  if (emoji) {
+    insertTextAtCursor(emoji);
+  }
+});
+
+
   // Utility function to insert text at the cursor position
   function insertTextAtCursor(text) {
     const selection = window.getSelection();
@@ -1523,7 +1532,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const textNode = document.createTextNode(text);
     range.insertNode(textNode);
 
-    // Move the cursor to the end of the inserted text
+    // Move cursor to the end of the inserted emoji
     range.setStartAfter(textNode);
     selection.removeAllRanges();
     selection.addRange(range);

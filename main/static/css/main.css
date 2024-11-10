@@ -4025,6 +4025,58 @@ button[type="submit"]:hover {
   background-color: #e9ecef;
   color: #000;
 }
+/* Emoji picker positioning */
+
+.emoji-picker {
+    position: absolute;
+    bottom: 145px;
+    right: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center
+}
+
+.emoji-picker .bx-smile {
+    font-size: 24px;
+    color: #888;
+    transition: color 0.3s ease
+}
+
+.emoji-picker:hover .bx-smile {
+    color: #689e4b
+}
+
+.tooltip.emoji-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 30px;
+    right:-15px;
+    background-color: white;
+    color: #333;
+    text-align: center;
+    border-radius: 10px;
+    padding: 5px 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    font-size: 12px;
+    z-index: 1;
+    animation: popIn 0.3s ease-in-out forwards
+}
+
+.tooltip.emoji-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: white transparent transparent transparent
+}
+
+.emoji-picker:hover .tooltip.emoji-tooltip {
+    display: block
+}
+
 
 .input-container {
   margin-bottom: 20px;
