@@ -7,3 +7,4 @@ admin_tools/templates/admin_tools/referral.html
 admin_tools/templates/admin_tools/comparison.html
 admin_tools/templates/admin_tools/data.html
 admin_tools/templates/admin_tools/dataset_detail.html
+main/templates/home.html

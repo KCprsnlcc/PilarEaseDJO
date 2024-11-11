@@ -227,6 +227,30 @@
     <div id="statusNotificationErrorContent"></div>
   </div>
 
+   <div class="emoji-picker-modal" id="emojiPickerModal" style="display: none;">
+      <div class="emoji-picker animate__animated animate__fadeIn">
+          <!-- Search Bar -->
+          <input type="text" class="search-bar" placeholder="Search emojis..." 
+                 oninput="searchEmojis(this.value)" aria-label="Search Emojis" value="{{ search_query }}">
+          
+          <!-- Category Icons -->
+          <div class="category-icons">
+              {% for cat, icon in categories %}
+                  <a href="javascript:void(0);" onclick="changeCategory('{{ cat }}')"
+                     class="{% if category == cat %}active{% endif %}"
+                     title="{{ cat }}" aria-label="{{ cat }}">
+                      <i class="{{ icon }}" aria-hidden="true"></i>
+                  </a>
+              {% endfor %}
+          </div>
+          
+          <!-- Emoji Grid with Lazy Loading -->
+          <div class="emoji-grid" id="emoji-grid" aria-label="Emoji List" data-aos="fade-up" tabindex="0">
+              <!-- Emojis will be loaded here dynamically -->
+          </div>
+      </div>
+  </div>
+
   <!-- Confirmation Dialog -->
   <div id="ConfirmStatusModal" class="flat-ui-dialog confirmstatus">
     <p>Are you sure you want to post this?</p>

@@ -27,7 +27,7 @@ from itrc_tools.models import AuditLog
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, ContactUs, Referral, Questionnaire, NotificationCounselor, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
+from .models import Status, Reply, Emoji, ContactUs, Referral, Questionnaire, NotificationCounselor, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -75,7 +75,29 @@ def current_time_view(request):
     return HttpResponse(f"The current time in Manila is: {current_time}")
 
 def home(request):
-    return render(request, 'home.html')
+        categories = [
+        ("Smileys & Emotion", "fa-solid fa-face-smile"),
+        ("People & Body", "fa-solid fa-users"),
+        ("Animals & Nature", "fa-solid fa-leaf"),
+        ("Food & Drink", "fa-solid fa-mug-hot"),
+        ("Activities", "fa-solid fa-futbol"),
+        ("Travel & Places", "fa-solid fa-location-dot"),
+        ("Objects", "fa-solid fa-lightbulb"),
+        ("Symbols", "fa-solid fa-heart"),
+        ("Flags", "fa-solid fa-flag")
+    ]
+
+        # Get selected category and search query from GET parameters
+        category = request.GET.get('category', None)
+        search_query = request.GET.get('search', "")
+
+        context = {
+            'categories': categories,
+            'category': category,
+            'search_query': search_query
+        }
+
+        return render(request, 'home.html', context)
 
 def contact_us(request):
     return render(request, 'contact_us.html')
@@ -2096,7 +2118,37 @@ def add_reply(request, status_id, parent_reply_id=None):
         })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+def load_emojis(request):
+    category = request.GET.get('category', None)
+    search_query = request.GET.get('search', "").strip()
+    page = int(request.GET.get('page', 1))
+    per_page = 50  # Number of emojis per page
 
+    emojis = Emoji.objects.all()
+
+    if category:
+        emojis = emojis.filter(group__iexact=category)
+
+    if search_query:
+        emojis = emojis.filter(name__icontains=search_query)
+
+    # **Add Ordering Here**
+    emojis = emojis.order_by('group', 'sub_group', 'name')
+
+    paginator = Paginator(emojis, per_page)
+    try:
+        emojis_page = paginator.page(page)
+    except:
+        emojis_page = paginator.page(1)
+
+    emojis_data = [
+        {'emoji': emoji.emoji, 'name': emoji.name}
+        for emoji in emojis_page.object_list
+    ]
+
+    has_more = emojis_page.has_next()
+
+    return JsonResponse({'emojis': emojis_data, 'has_more': has_more})
 @login_required
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)
