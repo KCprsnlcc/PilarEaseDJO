@@ -2119,27 +2119,32 @@ def add_reply(request, status_id, parent_reply_id=None):
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 def load_emojis(request):
-    category = request.GET.get('category', None)
+    # Extract request parameters
+    category = request.GET.get('category')
     search_query = request.GET.get('search', "").strip()
     page = request.GET.get('page', 1)
     per_page = 50  # Number of emojis per page
 
-    logger.debug(f"Loading emojis with category: '{category}', search_query: '{search_query}', page: {page}")
+    logger.debug(f"Loading emojis with category: '{category}', search query: '{search_query}', page: {page}")
 
     try:
+        # Base queryset for emojis, ordered by sub_group by default (due to Meta ordering)
         emojis = Emoji.objects.all()
 
+        # Filter by category if provided
         if category:
             emojis = emojis.filter(group__iexact=category)
             logger.debug(f"Filtered by category '{category}', count: {emojis.count()}")
 
+        # Filter by search query if provided
         if search_query:
             emojis = emojis.filter(name__icontains=search_query)
-            logger.debug(f"Filtered by search_query '{search_query}', count: {emojis.count()}")
+            logger.debug(f"Filtered by search query '{search_query}', count: {emojis.count()}")
 
-        # Order emojis by group, sub_group, and name
-        emojis = emojis.order_by('group', 'sub_group', 'name')
+        # Additional ordering if needed (ensures sub_group as primary sort)
+        emojis = emojis.order_by('sub_group', 'name')
 
+        # Paginate the emoji results
         paginator = Paginator(emojis, per_page)
         try:
             emojis_page = paginator.page(page)
@@ -2150,20 +2155,27 @@ def load_emojis(request):
             logger.warning(f"Page '{page}' is out of range. Serving last page.")
             emojis_page = paginator.page(paginator.num_pages)
 
+        # Prepare the emojis data for the response
         emojis_data = [
             {'emoji': emoji.emoji, 'name': emoji.name}
             for emoji in emojis_page.object_list
         ]
 
         has_more = emojis_page.has_next()
-
         logger.debug(f"Emojis returned: {len(emojis_data)}, has_more: {has_more}")
 
-        return JsonResponse({'emojis': emojis_data, 'has_more': has_more})
+        # Return a successful JSON response with UTF-8 content type
+        response = JsonResponse({'emojis': emojis_data, 'has_more': has_more})
+        response['Content-Type'] = 'application/json; charset=utf-8'
+        return response
 
     except Exception as e:
-        logger.error(f"Error in load_emojis view: {e}")
-        return JsonResponse({'emojis': [], 'has_more': False, 'error': 'An error occurred while fetching emojis.'}, status=500)
+        logger.error(f"Error in load_emojis view: {str(e)}")
+        return JsonResponse({
+            'emojis': [],
+            'has_more': False,
+            'error': 'An error occurred while fetching emojis.'
+        }, status=500)
 
 @login_required
 def status_detail(request, status_id):

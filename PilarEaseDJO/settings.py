@@ -69,7 +69,7 @@ INSTALLED_APPS = [
     # 'channels',
 ]
 DEFAULT_CHARSET = 'utf-8'
-
+FILE_CHARSET = 'utf-8'
 AUTH_USER_MODEL = 'main.CustomUser'
 
 CSRF_TRUSTED_ORIGINS = [
@@ -185,9 +185,10 @@ DATABASES = {
         'NAME': 'pilarease_db',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': 'localhost',  # Or the hostname where your MySQL server is running
-        'PORT': '3306',       # Or the port number used by your MySQL server
-                'OPTIONS': {
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         }
     }
