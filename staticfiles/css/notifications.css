@@ -1,0 +1,324 @@
+/* =========================================================
+   Notification Styles
+   ========================================================= */
+
+/* Notification Button */
+.pilarease-admin-notification-button {
+  position: relative; /* Set the button as the reference point for positioning the dot */
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: #ffffff;
+  transition: color 0.3s ease;
+}
+
+.pilarease-admin-notification-button:hover {
+  color: var(--accent-light); /* Subtle color change on hover */
+}
+.pilarease-admin-notification-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+}
+/* Notification Dot */
+.pilarease-admin-notification-dot {
+  position: absolute;
+  top: 0px;
+  right: 27px;
+  width: 10px;
+  height: 10px;
+  background-color: #dc3545;
+  border-radius: 50%;
+  display: none;
+  z-index: 1;
+}
+
+.pilarease-admin-notification-dot.blink {
+  display: block;
+  animation: blink 0.5s infinite;
+}
+
+/* Green Dot (if needed) */
+.pilarease-admin-notification-dot-green {
+  width: 10px;
+  height: 10px;
+  background-color: var(--accent-light); /* Using accent light color */
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.timestamp-green {
+  color: var(--accent-light);
+}
+
+/* Blinking Red Animation for the Dot */
+@keyframes pilarease-admin-blinkDot {
+  0% {
+    opacity: 1;
+    background-color: var(--profanity-color);
+  }
+  50% {
+    opacity: 0.5;
+    background-color: #c0392b; /* Slightly darker red */
+  }
+  100% {
+    opacity: 1;
+    background-color: var(--profanity-color);
+  }
+}
+
+/* Notification List */
+.pilarease-admin-notification-list {
+  position: fixed;
+  top: 60px; /* Adjust based on header height */
+  right: 20px;
+  background: var(--background-color);
+  color: var(--accent-color);
+  width: 300px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  z-index: 1000;
+  display: none;
+  opacity: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Scrollbar Styles */
+.pilarease-admin-notification-list::-webkit-scrollbar {
+  width: 12px;
+}
+
+.pilarease-admin-notification-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+}
+
+.pilarease-admin-notification-list::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  border-radius: 10px;
+  border: 3px solid #f1f1f1;
+}
+
+.pilarease-admin-notification-list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-color);
+}
+
+/* Notification List Animations */
+.pilarease-admin-notification-list.animated {
+  animation: pilarease-admin-popDownNotification 0.3s ease-out forwards;
+}
+
+.pilarease-admin-notification-list.pop-up {
+  animation: pilarease-admin-popUpNotification 0.3s ease-out forwards;
+}
+
+@keyframes pilarease-admin-popDownNotification {
+  from {
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pilarease-admin-popUpNotification {
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Notification Header */
+.pilarease-admin-notification-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.pilarease-admin-notification-header .pilarease-admin-earlier {
+  color: var(--accent-color);
+}
+
+.pilarease-admin-notification-header .pilarease-admin-see-all {
+  color: #689e4b;
+  cursor: pointer;
+}
+
+/* Notification Item */
+.pilarease-admin-notification-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  width: 270px;
+  height: 60px;
+  border-radius: 10px;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  margin: 5px 10px;
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+.pilarease-admin-notification-item.unread {
+  background-color: #fcfcfc;
+}
+
+.pilarease-admin-notification-item.read {
+  background-color: #eaeaea;
+}
+
+.pilarease-admin-notification-item:hover {
+  background-color: #f9f9f9;
+  box-shadow: var(--box-shadow);
+}
+
+/* Notification Avatar */
+.pilarease-admin-notification-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 10px;
+}
+
+/* Notification Content */
+.pilarease-admin-notification-content {
+  flex-grow: 1;
+  white-space: normal;
+  overflow: hidden;
+}
+
+.pilarease-admin-notification-content .message {
+  font-size: 13px;
+  color: var(--accent-color);
+  line-height: 1.2;
+}
+
+.pilarease-admin-notification-content .timestamp {
+  font-size: 12px;
+  color: #9095a0;
+  margin-top: 3px;
+}
+
+.pilarease-admin-notification-content .timestamp-green {
+  color: var(--accent-light);
+}
+
+/* Load More Button */
+
+/* Load More Button */
+.pilarease-admin-notification-load-more {
+  padding: 8px 16px;
+  background-color: var(--accent-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+.pilarease-admin-notification-load-more:hover {
+  background-color: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+/* See All Button */
+.pilarease-admin-notification-see-all {
+  padding: 8px 16px;
+  background-color: #17a2b8; /* Teal color for differentiation */
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.pilarease-admin-notification-see-all:hover {
+  background-color: #138496;
+  transform: translateY(-2px);
+}
+
+.pilarease-admin-notification-item:last-child {
+  border-bottom: none;
+}
+
+.pilarease-admin-notification-item a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.pilarease-admin-notification-item a:hover {
+  text-decoration: underline;
+}
+
+/* Loader Placeholder */
+.pilarease-admin-loader-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 10px;
+}
+
+.pilarease-admin-loader-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #e0e0e0;
+  animation: pilarease-admin-loading 1.5s infinite;
+  height: 60px;
+}
+
+.pilarease-admin-loader-item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #d0d0d0;
+  margin-right: 10px;
+}
+
+.pilarease-admin-loader-item-content {
+  flex-grow: 1;
+  height: 20px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+}
+
+.pilarease-admin-loader-item-timestamp {
+  width: 50px;
+  height: 12px;
+  background-color: #c0c0c0;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+@keyframes pilarease-admin-loading {
+  0% {
+    background-color: #f0f0f0;
+  }
+  50% {
+    background-color: #e0e0e0;
+  }
+  100% {
+    background-color: #f0f0f0;
+  }
+}
