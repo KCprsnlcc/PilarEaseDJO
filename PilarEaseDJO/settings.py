@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'import_export',
     # 'channels',
 ]
+DEFAULT_CHARSET = 'utf-8'
 
 AUTH_USER_MODEL = 'main.CustomUser'
 

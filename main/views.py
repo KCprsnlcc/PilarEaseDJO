@@ -75,7 +75,7 @@ def current_time_view(request):
     return HttpResponse(f"The current time in Manila is: {current_time}")
 
 def home(request):
-        categories = [
+    categories = [
         ("Smileys & Emotion", "fa-solid fa-face-smile"),
         ("People & Body", "fa-solid fa-users"),
         ("Animals & Nature", "fa-solid fa-leaf"),
@@ -87,17 +87,17 @@ def home(request):
         ("Flags", "fa-solid fa-flag")
     ]
 
-        # Get selected category and search query from GET parameters
-        category = request.GET.get('category', None)
-        search_query = request.GET.get('search', "")
+    # Get selected category and search query from GET parameters
+    category = request.GET.get('category', '')
+    search_query = request.GET.get('search', '')
 
-        context = {
-            'categories': categories,
-            'category': category,
-            'search_query': search_query
-        }
+    context = {
+        'categories': categories,
+        'category': category,
+        'search_query': search_query
+    }
 
-        return render(request, 'home.html', context)
+    return render(request, 'home.html', context)
 
 def contact_us(request):
     return render(request, 'contact_us.html')
@@ -2121,34 +2121,50 @@ def add_reply(request, status_id, parent_reply_id=None):
 def load_emojis(request):
     category = request.GET.get('category', None)
     search_query = request.GET.get('search', "").strip()
-    page = int(request.GET.get('page', 1))
+    page = request.GET.get('page', 1)
     per_page = 50  # Number of emojis per page
 
-    emojis = Emoji.objects.all()
+    logger.debug(f"Loading emojis with category: '{category}', search_query: '{search_query}', page: {page}")
 
-    if category:
-        emojis = emojis.filter(group__iexact=category)
-
-    if search_query:
-        emojis = emojis.filter(name__icontains=search_query)
-
-    # **Add Ordering Here**
-    emojis = emojis.order_by('group', 'sub_group', 'name')
-
-    paginator = Paginator(emojis, per_page)
     try:
-        emojis_page = paginator.page(page)
-    except:
-        emojis_page = paginator.page(1)
+        emojis = Emoji.objects.all()
 
-    emojis_data = [
-        {'emoji': emoji.emoji, 'name': emoji.name}
-        for emoji in emojis_page.object_list
-    ]
+        if category:
+            emojis = emojis.filter(group__iexact=category)
+            logger.debug(f"Filtered by category '{category}', count: {emojis.count()}")
 
-    has_more = emojis_page.has_next()
+        if search_query:
+            emojis = emojis.filter(name__icontains=search_query)
+            logger.debug(f"Filtered by search_query '{search_query}', count: {emojis.count()}")
 
-    return JsonResponse({'emojis': emojis_data, 'has_more': has_more})
+        # Order emojis by group, sub_group, and name
+        emojis = emojis.order_by('group', 'sub_group', 'name')
+
+        paginator = Paginator(emojis, per_page)
+        try:
+            emojis_page = paginator.page(page)
+        except PageNotAnInteger:
+            logger.warning(f"Page '{page}' is not an integer. Serving page 1.")
+            emojis_page = paginator.page(1)
+        except EmptyPage:
+            logger.warning(f"Page '{page}' is out of range. Serving last page.")
+            emojis_page = paginator.page(paginator.num_pages)
+
+        emojis_data = [
+            {'emoji': emoji.emoji, 'name': emoji.name}
+            for emoji in emojis_page.object_list
+        ]
+
+        has_more = emojis_page.has_next()
+
+        logger.debug(f"Emojis returned: {len(emojis_data)}, has_more: {has_more}")
+
+        return JsonResponse({'emojis': emojis_data, 'has_more': has_more})
+
+    except Exception as e:
+        logger.error(f"Error in load_emojis view: {e}")
+        return JsonResponse({'emojis': [], 'has_more': False, 'error': 'An error occurred while fetching emojis.'}, status=500)
+
 @login_required
 def status_detail(request, status_id):
     status = get_object_or_404(Status, id=status_id)

@@ -4027,8 +4027,8 @@ button[type="submit"]:hover {
 }
 /* Emoji picker positioning */
 .emoji.selected {
-    background-color: #d1e7dd;
-    border: 1px solid #0f5132;
+  background-color: #d1e7dd;
+  border: 1px solid #0f5132;
 }
 
 .emoji-picker {
@@ -4145,8 +4145,8 @@ button[type="submit"]:hover {
 }
 
 .emoji-picker-modal .emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   overflow-y: auto;
   max-height: 250px;
@@ -4154,6 +4154,8 @@ button[type="submit"]:hover {
 }
 
 .emoji-picker-modal .emoji {
+  flex: 0 0 40px; /* Each emoji takes up 40px width */
+  height: 40px;
   font-size: 24px;
   cursor: pointer;
   display: flex;
