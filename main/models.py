@@ -330,11 +330,11 @@ class ReplyNotification(Notification):
         return f"{self.replied_by.username} replied to {self.status.title}"
 
 class Emoji(models.Model):
-    emoji = models.CharField(max_length=255)  # Increased length
-    name = models.CharField(max_length=255)
-    group = models.CharField(max_length=100)
-    sub_group = models.CharField(max_length=100)
-    codepoints = models.CharField(max_length=255)
+    emoji = models.TextField(null=True)  # Changed to TextField and made nullable
+    name = models.TextField(null=True)  # Changed to TextField and made nullable
+    group = models.TextField(null=True)  # Changed to TextField and made nullable
+    sub_group = models.TextField(null=True)  # Changed to TextField and made nullable
+    codepoints = models.TextField(null=True)  # Changed to TextField and made nullable
 
     def __str__(self):
         return f"{self.emoji} - {self.name}"
