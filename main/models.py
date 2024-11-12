@@ -330,14 +330,19 @@ class ReplyNotification(Notification):
         return f"{self.replied_by.username} replied to {self.status.title}"
 
 class Emoji(models.Model):
-    emoji = models.TextField(null=True)  # Changed to TextField and made nullable
-    name = models.TextField(null=True)  # Changed to TextField and made nullable
-    group = models.TextField(null=True)  # Changed to TextField and made nullable
-    sub_group = models.TextField(null=True)  # Changed to TextField and made nullable
-    codepoints = models.TextField(null=True)  # Changed to TextField and made nullable
+    id = models.AutoField(primary_key=True)
+    emoji = models.TextField(null=True)
+    name = models.TextField(null=True)
+    group = models.TextField(null=True)
+    sub_group = models.TextField(null=True)
+    codepoints = models.TextField(null=True)
 
     def __str__(self):
         return f"{self.emoji} - {self.name}"
+
+    class Meta:
+        ordering = ['sub_group']
+
 
 class UserNotificationSettings(models.Model):
     user = models.OneToOneField(
