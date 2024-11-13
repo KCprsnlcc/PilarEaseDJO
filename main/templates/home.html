@@ -1,5 +1,7 @@
 <!-- templates/home.html -->
-{% extends "base.html" %} {% load static %} {% block content %}
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
 <link
   href="https://fonts.googleapis.com/css?family=Gothic+A1&display=swap"
   rel="stylesheet"
@@ -204,10 +206,11 @@
           contenteditable="true"
           placeholder="Express your feelings..."
         ></div>
+        <!-- Emoji Picker Button -->
         <span class="emoji-picker" id="emojiPickerButton" aria-label="Open Emoji Picker" role="button" tabindex="0">
-  <i class="bx bx-smile" aria-hidden="true"></i>
-  <div class="tooltip emoji-tooltip">Emoji</div>
-</span>
+          <i class="bx bx-smile" aria-hidden="true"></i>
+          <div class="tooltip emoji-tooltip">Emoji</div>
+        </span>
         <div class="counter-container">
           <span id="characterCount">0 characters</span> |
           <span id="wordCount">0 words</span> |
@@ -231,13 +234,12 @@
    <div class="emoji-picker-modal" id="emojiPickerModal" style="display: none;">
       <div class="emoji-picker animate__animated animate__fadeIn">
           <!-- Search Bar -->
-          <input type="text" class="search-bar" placeholder="Search emojis..." 
-                 oninput="searchEmojis(this.value)" aria-label="Search Emojis" value="{{ search_query }}">
+          <input type="text" class="search-bar" id="emojiSearchBar" placeholder="Search emojis..." aria-label="Search Emojis" value="{{ search_query }}">
           
           <!-- Category Icons -->
           <div class="category-icons">
               {% for cat, icon in categories %}
-                  <a href="javascript:void(0);" onclick="changeCategory('{{ cat }}')"
+                  <a href="javascript:void(0);" class="emoji-category" data-category="{{ cat }}"
                      class="{% if category == cat %}active{% endif %}"
                      title="{{ cat }}" aria-label="{{ cat }}">
                       <i class="{{ icon }}" aria-hidden="true"></i>
@@ -362,93 +364,95 @@
       once: true,
     });
 
-    // Reference to the editable div
+    // Reference to the editable div and emoji picker elements
     const descriptionDiv = document.getElementById("description");
     const emojiPickerButton = document.getElementById("emojiPickerButton");
     const emojiPickerModal = document.getElementById("emojiPickerModal");
+    const emojiGrid = document.getElementById("emoji-grid");
+    const searchBar = document.getElementById("emojiSearchBar");
+    const categoryLinks = document.querySelectorAll(".emoji-category");
 
     // Function to save the current caret position within the description div
     function saveSelectionRange() {
-      const selection = window.getSelection();
-      if (selection.rangeCount > 0) {
-        selectionRange = selection.getRangeAt(0).cloneRange();
-      }
-    }
+  const selection = window.getSelection();
+  if (selection.rangeCount > 0) {
+    selectionRange = selection.getRangeAt(0).cloneRange();
+  }
+}
+function restoreSelectionRange() {
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  if (selectionRange) {
+    selection.addRange(selectionRange);
+  }
+}
+// Attach event listeners to save caret position whenever the user interacts with the editable div
+descriptionDiv.addEventListener("keyup", saveSelectionRange);
+descriptionDiv.addEventListener("mouseup", saveSelectionRange);
+descriptionDiv.addEventListener("focus", saveSelectionRange);
 
-    // Function to restore the saved caret position
-    function restoreSelectionRange() {
-      const selection = window.getSelection();
-      if (selectionRange) {
-        selection.removeAllRanges();
-        selection.addRange(selectionRange);
-      }
-    }
+// Prevent caret loss on mousedown for the emoji picker button
+emojiPickerButton.addEventListener("mousedown", saveSelectionRange);
 
-    // Event listeners to capture the caret position whenever the user interacts with the description div
-    descriptionDiv.addEventListener("keyup", saveSelectionRange);
-    descriptionDiv.addEventListener("mouseup", saveSelectionRange);
-    descriptionDiv.addEventListener("focus", saveSelectionRange);
+// Show or hide the emoji picker modal when the button is clicked
+emojiPickerButton.addEventListener("click", function (event) {
+  event.preventDefault(); // Prevent default behavior
+  toggleEmojiPicker();
+});
 
-    // Show/Hide Emoji Picker Modal when Emoji Picker Button is clicked
-    emojiPickerButton.addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent default behavior
-      toggleEmojiPicker();
-    });
+// Function to toggle emoji picker display
+function toggleEmojiPicker() {
+  if (emojiPickerModal.style.display === "block") {
+    emojiPickerModal.style.display = "none";
+  } else {
+    emojiPickerModal.style.display = "block";
+    restoreSelectionRange(); // Restore caret position just before showing the picker
+  }
+}
 
-    // Function to toggle the emoji picker
-    function toggleEmojiPicker() {
-      if (emojiPickerModal.style.display === "block") {
-        emojiPickerModal.style.display = "none";
-      } else {
-        restoreSelectionRange(); // Restore selection before showing picker
-        emojiPickerModal.style.display = "block";
-        descriptionDiv.focus(); // Refocus the editable div
-      }
-    }
 
     // Handle emoji click in emoji picker
     function handleEmojiClick(emoji, event) {
-      event.preventDefault();
-      event.stopPropagation(); // Prevent the event from bubbling up to the window
-      insertEmojiAtCaret(emoji);
-      // Do not hide the emoji picker after selection
-    }
+  event.preventDefault();
+  insertEmojiAtCaret(emoji);
+}
 
-    // Function to insert emoji at the caret position
-    function insertEmojiAtCaret(emoji) {
-      descriptionDiv.focus(); // Ensure the editable div is focused
-      restoreSelectionRange(); // Restore the saved selection range
 
-      const selection = window.getSelection();
-      if (!selection.rangeCount) return;
+// Function to insert emoji at the caret position
+function insertEmojiAtCaret(emoji) {
+  descriptionDiv.focus(); // Ensure the editable div is focused
+  restoreSelectionRange(); // Restore saved caret position
 
-      const range = selection.getRangeAt(0);
-      range.deleteContents();
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
 
-      // Create a text node for the emoji and insert it at the caret position
-      const emojiNode = document.createTextNode(emoji);
-      range.insertNode(emojiNode);
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
 
-      // Move the caret immediately after the emoji
-      range.setStartAfter(emojiNode);
-      range.collapse(true);
+  // Insert the emoji at the caret
+  const emojiNode = document.createTextNode(emoji);
+  range.insertNode(emojiNode);
 
-      // Update the selection range after insertion
-      selection.removeAllRanges();
-      selection.addRange(range);
+  // Move caret after the emoji
+  range.setStartAfter(emojiNode);
+  range.collapse(true);
 
-      // Save the new selection range
-      saveSelectionRange();
-    }
+  // Update selection with new caret position
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  // Save new selection range
+  saveSelectionRange();
+}
 
     // Close Emoji Picker Modal when clicking outside of it
     window.addEventListener("click", function (event) {
-      if (!emojiPickerButton.contains(event.target) && !emojiPickerModal.contains(event.target)) {
-        emojiPickerModal.style.display = "none";
-      }
-    });
+  if (!emojiPickerButton.contains(event.target) && !emojiPickerModal.contains(event.target)) {
+    emojiPickerModal.style.display = "none";
+  }
+});
 
-    // Emoji Grid Navigation
+    // Emoji Grid Navigation for Accessibility
     emojiPickerModal.addEventListener("keydown", function(event) {
       const emojis = Array.from(emojiPickerModal.querySelectorAll(".emoji"));
       const currentIndex = emojis.indexOf(document.activeElement);
@@ -531,14 +535,22 @@
     }
 
     // Lazy load on scroll for the emoji grid
-    const emojiGrid = document.getElementById("emoji-grid");
     emojiGrid.addEventListener("scroll", function () {
       if (emojiGrid.scrollTop + emojiGrid.clientHeight >= emojiGrid.scrollHeight - 10) {
         loadEmojis();
       }
     });
 
-    // Functions for changing emoji category
+    // Attach event listeners to category links
+    categoryLinks.forEach((link) => {
+      link.addEventListener("click", function(event) {
+        event.preventDefault();
+        const selectedCategory = this.getAttribute("data-category");
+        changeCategory(selectedCategory);
+      });
+    });
+
+    // Function to change emoji category
     function changeCategory(category) {
       if (currentEmojiCategory === category) return; // Prevent reloading same category
       currentEmojiCategory = category;
@@ -550,15 +562,24 @@
 
     // Set active category in emoji picker
     function setActiveEmojiCategory(category) {
-      const categoryLinks = emojiPickerModal.querySelectorAll(".category-icons a");
       categoryLinks.forEach((link) => {
-        if (link.getAttribute("onclick").includes(`'${category}'`)) {
+        if (link.getAttribute("data-category") === category) {
           link.classList.add("active");
         } else {
           link.classList.remove("active");
         }
       });
     }
+
+    // Attach event listener to search bar with debounce
+    let debounceTimeout;
+    searchBar.addEventListener("input", function(event) {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        const query = event.target.value.trim();
+        searchEmojis(query);
+      }, 300); // Adjust the delay as needed
+    });
 
     // Search emojis function
     function searchEmojis(query) {
@@ -572,6 +593,5 @@
     loadEmojis();
   });
 </script>
-
 
 {% endblock %}
