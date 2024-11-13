@@ -379,6 +379,7 @@
     selectionRange = selection.getRangeAt(0).cloneRange();
   }
 }
+
 function restoreSelectionRange() {
   const selection = window.getSelection();
   selection.removeAllRanges();
@@ -386,6 +387,10 @@ function restoreSelectionRange() {
     selection.addRange(selectionRange);
   }
 }
+// Save selection range when the editable div loses focus
+descriptionDiv.addEventListener("blur", saveSelectionRange);
+
+
 // Attach event listeners to save caret position whenever the user interacts with the editable div
 descriptionDiv.addEventListener("keyup", saveSelectionRange);
 descriptionDiv.addEventListener("mouseup", saveSelectionRange);
@@ -398,15 +403,15 @@ emojiPickerButton.addEventListener("mousedown", saveSelectionRange);
 emojiPickerButton.addEventListener("click", function (event) {
   event.preventDefault(); // Prevent default behavior
   toggleEmojiPicker();
+  restoreSelectionRange(); // Restore caret position before showing the picker
 });
-
 // Function to toggle emoji picker display
 function toggleEmojiPicker() {
   if (emojiPickerModal.style.display === "block") {
     emojiPickerModal.style.display = "none";
   } else {
     emojiPickerModal.style.display = "block";
-    restoreSelectionRange(); // Restore caret position just before showing the picker
+    restoreSelectionRange(); // Ensure caret position is correct
   }
 }
 
@@ -429,22 +434,21 @@ function insertEmojiAtCaret(emoji) {
   const range = selection.getRangeAt(0);
   range.deleteContents();
 
-  // Insert the emoji at the caret
+  // Insert the emoji at the caret position
   const emojiNode = document.createTextNode(emoji);
   range.insertNode(emojiNode);
 
-  // Move caret after the emoji
+  // Move caret after the inserted emoji
   range.setStartAfter(emojiNode);
   range.collapse(true);
 
-  // Update selection with new caret position
+  // Update selection to reflect the new caret position
   selection.removeAllRanges();
   selection.addRange(range);
 
-  // Save new selection range
+  // Save the new selection range after insertion
   saveSelectionRange();
 }
-
     // Close Emoji Picker Modal when clicking outside of it
     window.addEventListener("click", function (event) {
   if (!emojiPickerButton.contains(event.target) && !emojiPickerModal.contains(event.target)) {
