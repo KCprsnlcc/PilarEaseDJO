@@ -4092,7 +4092,7 @@ button[type="submit"]:hover {
 }
 
 .emoji-picker-modal .emoji-picker {
-  width: 300px; /* Adjust width as needed */
+  width: 280px; /* Adjust width as needed */
   border: 1px solid #ddd;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -4129,24 +4129,23 @@ button[type="submit"]:hover {
 .emoji-picker-modal .category-icons a {
   flex: 1;
   text-align: center;
-  padding: 8px 0;
+  padding: 6px 0; /* Reduced padding for smaller size */
   margin: 0 4px;
   border-radius: 6px;
   color: #0e2326;
   background-color: #ffffff;
   transition: color 0.3s, transform 0.3s;
   text-decoration: none;
-  font-size: 20px;
+  font-size: 20px; /* Ensure this matches the emoji grid font size */
 }
-
 .emoji-picker-modal .category-icons a.active i,
 .emoji-picker-modal .category-icons a:hover i {
   color: #689e4b;
 }
 
 .emoji-picker-modal .emoji-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 6 columns of equal width */
   gap: 10px;
   overflow-y: auto;
   max-height: 250px;
@@ -4154,15 +4153,15 @@ button[type="submit"]:hover {
 }
 
 .emoji-picker-modal .emoji {
-  flex: 0 0 40px; /* Each emoji takes up 40px width */
-  height: 40px;
-  font-size: 24px;
+  flex: 0 0 30px; /* Adjusted to 30px to better match the category icon size */
+  height: 30px;
+  font-size: 20px; /* Reduced to match the category icon font size */
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 5px; /* Reduced padding for smaller size */
+  border-radius: 6px; /* Slightly reduced border radius for consistency */
   transition: background-color 0.3s, transform 0.3s;
 }
 
@@ -4171,9 +4170,9 @@ button[type="submit"]:hover {
 }
 
 .emoji-picker-modal .emoji:active {
-  transform: scale(0.95);
+  /* Removed transform to prevent size change on active state */
+  background-color: #d1e7dd; /* Optional: Provide a subtle feedback */
 }
-
 .emoji-picker-modal .emoji-grid::-webkit-scrollbar {
   width: 6px;
 }
