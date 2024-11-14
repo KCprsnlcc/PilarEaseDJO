@@ -170,7 +170,8 @@
   // Function to open user profile and fetch questionnaire data
   function openUserProfile(userId) {
     selectedUserId = userId;
-    // Fetch questionnaire data and profile details from the correct URL
+
+    // Fetch questionnaire data and profile details
     fetch(`/admin/chat/get_user_questionnaire/${userId}/`, {
       method: "GET",
       headers: {
@@ -219,9 +220,6 @@
     const profileAvatar = document.getElementById(
       "pilarease-admin-chat-profile-avatar"
     );
-    const questionnaireSection = document.getElementById(
-      "pilarease-admin-chat-profile-questionnaire"
-    );
     const questionnaireContent = document.getElementById(
       "questionnaire-content"
     );
@@ -238,7 +236,7 @@
     if (profile.avatar_url) {
       profileAvatar.src = profile.avatar_url;
     } else {
-      profileAvatar.src = "{% static 'images/avatars/placeholder.png' %}";
+      profileAvatar.src = "{% static 'images/avatars/placeholder.png' %}"; // Use Django static tag
     }
 
     // Populate questionnaire responses
@@ -293,7 +291,6 @@
       profileModal.classList.remove("animate__zoomOut");
     }, 500);
   }
-
   // Function to handle "Connect" button click
   function connectToUser() {
     const connectButton = document.getElementById(
@@ -308,17 +305,17 @@
 
     // Update the button to show "Connecting" with a spinner
     connectButton.innerHTML = `
-    Connecting
-    <span class="spinner"></span>
-  `;
+      Connecting
+      <span class="spinner"></span>
+    `;
 
     // Simulate a connection delay (Replace with actual connection logic)
     setTimeout(() => {
       // After connecting, update the button to "Connected" and keep it disabled
       connectButton.innerHTML = `
-      Connected
-      <span class="checkmark">&#10003;</span>
-    `;
+        Connected
+        <span class="checkmark">&#10003;</span>
+      `;
 
       // Optionally, change the button color to indicate success
       connectButton.style.backgroundColor = "#28a745"; // Green color
@@ -351,10 +348,14 @@
         return response.json();
       })
       .then((data) => {
-        if (data.messages) {
+        if (data.messages && data.messages.length > 0) {
           populateChatWindow(data.messages);
         } else {
-          alert("No chat messages found.");
+          // Display "No conversation history." if no messages exist
+          const chatMessagesDiv = document.getElementById(
+            "pilarease-admin-chat-messages"
+          );
+          chatMessagesDiv.innerHTML = "<p>No conversation history.</p>";
         }
       })
       .catch((error) => {
@@ -370,39 +371,16 @@
       return;
     }
 
-    fetch(`/admin/chat/get_chat_messages/${selectedUserId}/`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        if (data.messages) {
-          populateChatWindow(data.messages);
-          // Enable chat input and send button if you plan to add sending functionality
-          document.getElementById(
-            "pilarease-admin-chat-input"
-          ).disabled = false;
-          document.getElementById(
-            "pilarease-admin-chat-send-button"
-          ).disabled = false;
-        } else {
-          alert("No chat messages found.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching chat messages:", error);
-        alert("An error occurred while fetching chat messages.");
-      });
-  }
+    // Fetch all chat messages for the selected user
+    fetchChatMessages(selectedUserId);
 
-  // Function to populate the chat window with fetched messages
+    // Close the user profile modal
+    closeUserProfile();
+
+    // Ensure the message input and send button remain disabled
+    document.getElementById("pilarease-admin-chat-input").disabled = true;
+    document.getElementById("pilarease-admin-chat-send-button").disabled = true;
+  }
   function populateChatWindow(messages) {
     const chatMessagesDiv = document.getElementById(
       "pilarease-admin-chat-messages"
@@ -412,6 +390,15 @@
     if (messages.length === 0) {
       chatMessagesDiv.innerHTML = "<p>No conversation history.</p>";
       return;
+    }
+
+    // Remove any existing "No conversation selected." message
+    const placeholder = chatMessagesDiv.querySelector("p");
+    if (
+      placeholder &&
+      placeholder.textContent.includes("No conversation selected")
+    ) {
+      placeholder.remove();
     }
 
     messages.forEach((msg) => {
@@ -425,10 +412,10 @@
       }
 
       messageDiv.innerHTML = `
-      <span class="message-sender">${msg.sender}</span>
-      <span class="message-text">${msg.message}</span>
-      <span class="message-timestamp">${msg.timestamp}</span>
-    `;
+        <span class="message-sender">${msg.sender}</span>
+        <span class="message-text">${msg.message}</span>
+        <span class="message-timestamp">${msg.timestamp}</span>
+      `;
 
       chatMessagesDiv.appendChild(messageDiv);
     });
@@ -448,7 +435,6 @@
 
     // Send the message to the server via AJAX
     fetch(`/admin/chat/send_message/`, {
-      // Ensure this URL is defined in urls.py and views.py
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -480,10 +466,10 @@
           const timestamp = new Date().toLocaleString();
 
           messageDiv.innerHTML = `
-          <span class="message-sender">Counselor</span>
-          <span class="message-text">${message}</span>
-          <span class="message-timestamp">${timestamp}</span>
-        `;
+            <span class="message-sender">Counselor</span>
+            <span class="message-text">${message}</span>
+            <span class="message-timestamp">${timestamp}</span>
+          `;
 
           chatMessagesDiv.appendChild(messageDiv);
           chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
@@ -506,7 +492,6 @@
         ).disabled = false;
       });
   }
-
   // Event listener for send button
   document
     .getElementById("pilarease-admin-chat-send-button")
