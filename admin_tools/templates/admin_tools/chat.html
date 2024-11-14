@@ -34,17 +34,24 @@
 
   <!-- Chat Window -->
   <div class="pilarease-admin-chat-window">
-    <div class="pilarease-admin-chat-header">
+    <div class="pilarease-admin-chat-header" id="pilarease-admin-chat-header">
       <img
         src="{% static 'images/avatars/placeholder.png' %}"
         alt="Selected User's Avatar"
         class="pilarease-admin-chat-header-avatar"
+        id="pilarease-admin-chat-header-avatar"
       />
       <div class="pilarease-admin-chat-header-info">
-        <span class="pilarease-admin-chat-header-name"
-          >Select a user to start chatting</span
+        <span
+          class="pilarease-admin-chat-header-name"
+          id="pilarease-admin-chat-header-name"
         >
-        <span class="pilarease-admin-chat-header-status"></span>
+          Select a user to start chatting
+        </span>
+        <span
+          class="pilarease-admin-chat-header-status"
+          id="pilarease-admin-chat-header-status"
+        ></span>
       </div>
     </div>
     <div
@@ -58,6 +65,7 @@
           text-align: center;
           margin-top: 20px;
         "
+        id="pilarease-admin-chat-placeholder"
       >
         No conversation selected.
       </p>
@@ -166,6 +174,8 @@
 <script>
   // Global variable to store the selected user ID
   let selectedUserId = null;
+  let selectedUserName = "";
+  let selectedUserAvatar = '{% static "images/avatars/placeholder.png" %}';
 
   // Function to open user profile and fetch questionnaire data
   function openUserProfile(userId) {
@@ -235,9 +245,13 @@
 
     if (profile.avatar_url) {
       profileAvatar.src = profile.avatar_url;
+      selectedUserAvatar = profile.avatar_url;
     } else {
-      profileAvatar.src = "{% static 'images/avatars/placeholder.png' %}"; // Use Django static tag
+      profileAvatar.src = "{% static 'images/avatars/placeholder.png' %}";
+      selectedUserAvatar = "{% static 'images/avatars/placeholder.png' %}";
     }
+
+    selectedUserName = profile.full_name;
 
     // Populate questionnaire responses
     const questionnaires = data.questionnaires;
@@ -291,6 +305,7 @@
       profileModal.classList.remove("animate__zoomOut");
     }, 500);
   }
+
   // Function to handle "Connect" button click
   function connectToUser() {
     const connectButton = document.getElementById(
@@ -320,6 +335,9 @@
       // Optionally, change the button color to indicate success
       connectButton.style.backgroundColor = "#28a745"; // Green color
 
+      // Update the chat header with selected user's avatar and name
+      updateChatHeader();
+
       // Close the user profile modal
       closeUserProfile();
 
@@ -333,6 +351,73 @@
       ).disabled = false;
     }, 2000); // Simulate a 2-second connection delay
   }
+
+  // Function to handle "View Chat" button click
+  function viewChatWithUser() {
+    if (!selectedUserId) {
+      alert("No user selected.");
+      return;
+    }
+
+    // Update the chat header with selected user's avatar and name
+    updateChatHeader();
+
+    // Fetch all chat messages for the selected user
+    fetchChatMessages(selectedUserId);
+
+    // Close the user profile modal
+    closeUserProfile();
+
+    // Ensure the message input and send button remain disabled
+    document.getElementById("pilarease-admin-chat-input").disabled = true;
+    document.getElementById("pilarease-admin-chat-send-button").disabled = true;
+  }
+
+  // Function to update the chat header with selected user's data
+  function updateChatHeader() {
+    const chatHeaderAvatar = document.getElementById(
+      "pilarease-admin-chat-header-avatar"
+    );
+    const chatHeaderName = document.getElementById(
+      "pilarease-admin-chat-header-name"
+    );
+    const chatHeaderStatus = document.getElementById(
+      "pilarease-admin-chat-header-status"
+    );
+
+    // Update avatar
+    chatHeaderAvatar.src = selectedUserAvatar;
+
+    // Update name
+    chatHeaderName.textContent = selectedUserName;
+
+    // Update status (Assuming you have a status field; if not, you can set a default)
+    // For demonstration, let's fetch the user's status from the server
+    fetch(`/admin/chat/get_user_status/${selectedUserId}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.status) {
+          chatHeaderStatus.textContent = data.status;
+        } else {
+          chatHeaderStatus.textContent = "Active"; // Default status
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user status:", error);
+        chatHeaderStatus.textContent = "Active"; // Default status on error
+      });
+  }
+
   // Function to fetch chat messages for a user
   function fetchChatMessages(userId) {
     fetch(`/admin/chat/get_chat_messages/${userId}/`, {
@@ -364,23 +449,6 @@
       });
   }
 
-  // Function to handle "View Chat" button click
-  function viewChatWithUser() {
-    if (!selectedUserId) {
-      alert("No user selected.");
-      return;
-    }
-
-    // Fetch all chat messages for the selected user
-    fetchChatMessages(selectedUserId);
-
-    // Close the user profile modal
-    closeUserProfile();
-
-    // Ensure the message input and send button remain disabled
-    document.getElementById("pilarease-admin-chat-input").disabled = true;
-    document.getElementById("pilarease-admin-chat-send-button").disabled = true;
-  }
   function populateChatWindow(messages) {
     const chatMessagesDiv = document.getElementById(
       "pilarease-admin-chat-messages"
@@ -393,7 +461,9 @@
     }
 
     // Remove any existing "No conversation selected." message
-    const placeholder = chatMessagesDiv.querySelector("p");
+    const placeholder = document.getElementById(
+      "pilarease-admin-chat-placeholder"
+    );
     if (
       placeholder &&
       placeholder.textContent.includes("No conversation selected")
@@ -423,6 +493,7 @@
     // Scroll to the bottom of the chat messages
     chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
   }
+
   function sendMessage() {
     const messageInput = document.getElementById("pilarease-admin-chat-input");
     const message = messageInput.value.trim();
@@ -492,6 +563,7 @@
         ).disabled = false;
       });
   }
+
   // Event listener for send button
   document
     .getElementById("pilarease-admin-chat-send-button")
@@ -510,5 +582,22 @@
   // Initial state: Disable chat input and send button
   document.getElementById("pilarease-admin-chat-input").disabled = true;
   document.getElementById("pilarease-admin-chat-send-button").disabled = true;
+
+  // Function to get CSRF token
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        // Does this cookie string begin with the name we want?
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 </script>
 {% endblock %}
