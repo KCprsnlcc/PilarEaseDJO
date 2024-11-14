@@ -419,6 +419,38 @@ class Reply(models.Model):
     def __str__(self):
         return f"Reply by {self.user.username} on {self.status.title}"
 
+class ChatSession(models.Model):
+    user = models.ForeignKey(CustomUser, related_name='user_chats', on_delete=models.CASCADE)
+    counselor = models.ForeignKey(CustomUser, related_name='counselor_chats', on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    last_message_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"ChatSession between {self.user.username} and {self.counselor.username}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'counselor', 'is_active']),
+            models.Index(fields=['last_message_at']),
+        ]
+
+class CounselorMessage(models.Model):
+    chat_session = models.ForeignKey(ChatSession, related_name='messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(CustomUser, related_name='sent_messages', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(CustomUser, related_name='received_messages', on_delete=models.CASCADE)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender.username} to {self.recipient.username} at {self.timestamp}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['chat_session', 'timestamp']),
+        ]
+
 class ContactUs(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()

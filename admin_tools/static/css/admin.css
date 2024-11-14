@@ -3407,7 +3407,35 @@ body {
   overflow-y: auto;
   background-color: #ffffff;
 }
+.spinner {
+  border: 2px solid #f3f3f3; /* Light gray */
+  border-top: 2px solid #ffffff; /* White */
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 
+/* Spinner Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Checkmark Styles */
+.checkmark {
+  color: #ffffff; /* White color */
+  font-size: 14px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 .pilarease-admin-chat-input-container {
   display: flex;
   padding: 15px;
@@ -3789,6 +3817,21 @@ body {
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pilarease-admin-chat-action-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Ensure that the spinner and checkmark align properly */
+.pilarease-admin-chat-action-button .spinner,
+.pilarease-admin-chat-action-button .checkmark {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .pilarease-admin-chat-action-button:hover {

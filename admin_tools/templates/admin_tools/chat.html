@@ -296,8 +296,71 @@
 
   // Function to handle "Connect" button click
   function connectToUser() {
-    alert("Connect button clicked! Implement connection logic here.");
-    // TODO: Implement the actual connection logic (e.g., initiate a chat, send a request, etc.)
+    const connectButton = document.getElementById(
+      "pilarease-admin-chat-connect-button"
+    );
+
+    // Disable the button to prevent multiple clicks
+    connectButton.disabled = true;
+
+    // Store the original button content
+    const originalContent = connectButton.innerHTML;
+
+    // Update the button to show "Connecting" with a spinner
+    connectButton.innerHTML = `
+    Connecting
+    <span class="spinner"></span>
+  `;
+
+    // Simulate a connection delay (Replace with actual connection logic)
+    setTimeout(() => {
+      // After connecting, update the button to "Connected" and keep it disabled
+      connectButton.innerHTML = `
+      Connected
+      <span class="checkmark">&#10003;</span>
+    `;
+
+      // Optionally, change the button color to indicate success
+      connectButton.style.backgroundColor = "#28a745"; // Green color
+
+      // Close the user profile modal
+      closeUserProfile();
+
+      // Fetch chat messages for the connected user
+      fetchChatMessages(selectedUserId);
+
+      // Enable chat input and send button
+      document.getElementById("pilarease-admin-chat-input").disabled = false;
+      document.getElementById(
+        "pilarease-admin-chat-send-button"
+      ).disabled = false;
+    }, 2000); // Simulate a 2-second connection delay
+  }
+  // Function to fetch chat messages for a user
+  function fetchChatMessages(userId) {
+    fetch(`/admin/chat/get_chat_messages/${userId}/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.messages) {
+          populateChatWindow(data.messages);
+        } else {
+          alert("No chat messages found.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching chat messages:", error);
+        alert("An error occurred while fetching chat messages.");
+      });
   }
 
   // Function to handle "View Chat" button click
@@ -362,10 +425,10 @@
       }
 
       messageDiv.innerHTML = `
-        <span class="message-sender">${msg.sender}</span>
-        <span class="message-text">${msg.message}</span>
-        <span class="message-timestamp">${msg.timestamp}</span>
-      `;
+      <span class="message-sender">${msg.sender}</span>
+      <span class="message-text">${msg.message}</span>
+      <span class="message-timestamp">${msg.timestamp}</span>
+    `;
 
       chatMessagesDiv.appendChild(messageDiv);
     });
@@ -373,46 +436,91 @@
     // Scroll to the bottom of the chat messages
     chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
   }
-
-  // Function to send a message (Future Implementation)
-  /*
   function sendMessage() {
-    const messageInput = document.getElementById("pilarease-admin-chat-input")
-    const message = messageInput.value.trim()
-    if (message === "") return
+    const messageInput = document.getElementById("pilarease-admin-chat-input");
+    const message = messageInput.value.trim();
 
-    // TODO: Implement sending message logic (e.g., POST request to server)
-    // For now, append the message to the chat window as a counselor message
-    const chatMessagesDiv = document.getElementById("pilarease-admin-chat-messages")
-    const messageDiv = document.createElement("div")
-    messageDiv.classList.add("pilarease-admin-chat-message", "admin-message")
+    if (message === "") return;
 
-    const timestamp = new Date().toLocaleString()
+    // Disable the input and send button to prevent multiple sends
+    messageInput.disabled = true;
+    document.getElementById("pilarease-admin-chat-send-button").disabled = true;
 
-    messageDiv.innerHTML = `
-      <span class="message-sender">Counselor</span>
-      <span class="message-text">${message}</span>
-      <span class="message-timestamp">${timestamp}</span>
-    `
+    // Send the message to the server via AJAX
+    fetch(`/admin/chat/send_message/`, {
+      // Ensure this URL is defined in urls.py and views.py
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"), // Function to get CSRF token
+      },
+      body: JSON.stringify({
+        user_id: selectedUserId,
+        message: message,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          // Append the sent message to the chat window
+          const chatMessagesDiv = document.getElementById(
+            "pilarease-admin-chat-messages"
+          );
+          const messageDiv = document.createElement("div");
+          messageDiv.classList.add(
+            "pilarease-admin-chat-message",
+            "admin-message"
+          );
 
-    chatMessagesDiv.appendChild(messageDiv)
-    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight
+          const timestamp = new Date().toLocaleString();
 
-    // Clear the input field
-    messageInput.value = ""
+          messageDiv.innerHTML = `
+          <span class="message-sender">Counselor</span>
+          <span class="message-text">${message}</span>
+          <span class="message-timestamp">${timestamp}</span>
+        `;
+
+          chatMessagesDiv.appendChild(messageDiv);
+          chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+
+          // Clear the input field
+          messageInput.value = "";
+        } else {
+          alert("Failed to send message.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error);
+        alert("An error occurred while sending the message.");
+      })
+      .finally(() => {
+        // Re-enable the input and send button
+        messageInput.disabled = false;
+        document.getElementById(
+          "pilarease-admin-chat-send-button"
+        ).disabled = false;
+      });
   }
 
   // Event listener for send button
-  document.getElementById("pilarease-admin-chat-send-button").addEventListener("click", sendMessage)
+  document
+    .getElementById("pilarease-admin-chat-send-button")
+    .addEventListener("click", sendMessage);
 
   // Event listener for Enter key in input field
-  document.getElementById("pilarease-admin-chat-input").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-      event.preventDefault()
-      sendMessage()
-    }
-  })
-  */
+  document
+    .getElementById("pilarease-admin-chat-input")
+    .addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
 
   // Initial state: Disable chat input and send button
   document.getElementById("pilarease-admin-chat-input").disabled = true;
