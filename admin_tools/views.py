@@ -479,81 +479,6 @@ def silent_nltk_download(resource_name):
         # Save the download status to the database
         save_nltk_resource(resource_name)
 
-@login_required
-def manage_users_view(request):
-    search_query = request.GET.get('search', '')
-    if search_query:
-        users = CustomUser.objects.filter(
-            Q(username__icontains=search_query) |
-            Q(student_id__icontains=search_query) |
-            Q(full_name__icontains=search_query) |
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(academic_year_level__icontains=search_query) |
-            Q(contact_number__icontains=search_query) |
-            Q(email__icontains=search_query)
-        )
-    else:
-        users = CustomUser.objects.all()
-
-    # Optional: Order by date joined descending
-    users = users.order_by('-date_joined')
-
-    paginator = Paginator(users, 10)  # Show 10 users per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'users': page_obj,
-        'search_query': search_query,
-        'page_obj': page_obj,
-    }
-    return render(request, 'admin_tools/manage_users.html', context)
-
-@login_required
-def delete_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    user.is_active = False  # Soft delete
-    user.block_reason = 'Deleted by admin.'
-    user.block_duration = None
-    # user.blocked_at = timezone.now()  # If 'blocked_at' field exists
-    user.save()
-    messages.success(request, f'User "{user.username}" has been deactivated successfully.')
-    return redirect('manage_users')
-
-@login_required
-def block_user(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            user_id = data.get('user_id')
-            reason = data.get('reason')
-            duration = data.get('duration')
-
-            # Validate input
-            if not all([user_id, reason, duration]):
-                return JsonResponse({'success': False, 'error': 'All fields are required.'}, status=400)
-
-            user = CustomUser.objects.get(id=user_id)
-
-            # Update user status
-            user.is_active = False
-            user.block_reason = reason
-            user.block_duration = duration
-            # Note: The model does not have a 'blocked_at' field
-            # If you wish to track when the user was blocked, consider adding a 'blocked_at' DateTimeField
-            # user.blocked_at = timezone.now()
-            user.save()
-
-            return JsonResponse({'success': True, 'message': 'User has been blocked successfully.'})
-        except CustomUser.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
-        except json.JSONDecodeError:
-            return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
-
-
-
 # Ensure required NLTK data is available silently
 silent_nltk_download('punkt')
 silent_nltk_download('stopwords')
@@ -1170,8 +1095,8 @@ def home(request):
 
 @login_required
 def chat_view(request):
-    # Fetch users who are not counselors
-    users = CustomUser.objects.filter(is_counselor=False)
+    # Fetch users who are neither counselors nor ITRC staff
+    users = CustomUser.objects.filter(is_counselor=False, is_itrc_staff=False)
     return render(request, 'admin_tools/chat.html', {'users': users})
 
 
