@@ -302,23 +302,44 @@ class NotificationCounselor(models.Model):
         return f"Notification for {self.user.username} - {'Read' if self.is_read else 'Unread'}"
 
 class Notification(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    NOTIFICATION_TYPES = (
+        ('mention', 'Mention'),
+        ('reply', 'Reply'),
+    )
+    
+    user = models.ForeignKey(
+        CustomUser, 
+        on_delete=models.CASCADE, 
+        related_name='main_notifications'  # Unique related_name
+    )
     status = models.ForeignKey(
         'Status',
         on_delete=models.CASCADE,
-        related_name='notifications',
+        related_name='status_notifications',
         blank=True,
         null=True
     )
+    reply = models.ForeignKey(
+        'Reply',
+        on_delete=models.CASCADE,
+        related_name='reply_notifications',
+        blank=True,
+        null=True
+    )
+    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, null=True, blank=True)
+    message = models.CharField(max_length=255, null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
-        if self.status:
+        if self.notification_type == 'mention' and self.reply:
+            return f"Mention Notification for {self.user.username} - Reply ID: {self.reply.id}"
+        elif self.notification_type == 'reply' and self.reply:
+            return f"Reply Notification for {self.user.username} - Reply ID: {self.reply.id}"
+        elif self.status:
             return f"Notification for {self.user.username} - Status: {self.status.title}"
         else:
             return f"Notification for {self.user.username}"
-
 class ReplyNotification(Notification):
     replied_by = models.ForeignKey(
         CustomUser,

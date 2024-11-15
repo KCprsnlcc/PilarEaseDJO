@@ -2063,61 +2063,86 @@ def check_notification_status(request):
 @csrf_exempt
 def add_reply(request, status_id, parent_reply_id=None):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        text = data.get('text')
-        
-        if not text:
-            return JsonResponse({'success': False, 'error': 'Reply text is required'}, status=400)
-
- # Extract mentioned usernames
-        mentioned_usernames = re.findall(r'@(\w+)', text)
-        mentioned_users = CustomUser.objects.filter(username__in=mentioned_usernames)
-        # Handle notifications for mentioned users
-        for user in mentioned_users:
-            if user != request.user:
-                # Create a notification or send an email
-                pass  # Implement your notification logic here
+        try:
+            data = json.loads(request.body)
+            text = data.get('text', '').strip()
             
-        status = get_object_or_404(Status, id=status_id)
-        parent_reply = None
-        if parent_reply_id:
-            parent_reply = get_object_or_404(Reply, id=parent_reply_id)
+            if not text:
+                return JsonResponse({'success': False, 'error': 'Reply text is required.'}, status=400)
+            
+            # Extract mentioned usernames using regex (e.g., @username)
+            mentioned_usernames = re.findall(r'@(\w+)', text)
+            mentioned_users = CustomUser.objects.filter(username__in=mentioned_usernames).exclude(id=request.user.id)
+            
+            status = get_object_or_404(Status, id=status_id)
+            parent_reply = None
+            if parent_reply_id:
+                parent_reply = get_object_or_404(Reply, id=parent_reply_id)
 
-            # Check nesting level
-            nesting_level = 1
-            current_reply = parent_reply
-            while current_reply.parent_reply is not None:
-                nesting_level += 1
-                current_reply = current_reply.parent_reply
+                # Check nesting level (max 3)
+                nesting_level = 1
+                current_reply = parent_reply
+                while current_reply.parent_reply is not None:
+                    nesting_level += 1
+                    current_reply = current_reply.parent_reply
 
-            if nesting_level >= 3:
-                # Do not nest further
-                parent_reply = None
+                if nesting_level >= 3:
+                    parent_reply = None  # Do not nest further
 
-        reply = Reply.objects.create(
-            status=status,
-            user=request.user,
-            text=text,
-            parent_reply=parent_reply  # If it's a nested reply, this will not be None
-        )
-
-        # Format the timestamp for the reply
-        created_at = format_timestamp(reply.created_at)
-
-        # Return a success response with the reply details
-        return JsonResponse({
-            'success': True,
-            'reply': {
-                'id': reply.id,
-                'username': reply.user.username,
-                'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png',
-                'text': reply.text,
-                'created_at': created_at,  # Formatted timestamp
-                'label': 'Reply'
-            }
-        })
-
-    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+            with transaction.atomic():
+                # Create the Reply object
+                reply = Reply.objects.create(
+                    status=status,
+                    user=request.user,
+                    text=text,
+                    parent_reply=parent_reply
+                )
+            
+                # Handle notifications for mentioned users
+                for user in mentioned_users:
+                    message = f"{request.user.username} mentioned you in a reply."
+                    Notification.objects.create(
+                        user=user,
+                        reply=reply,
+                        notification_type='mention',
+                        message=message
+                    )
+                
+                # If the reply is to another reply, notify the author of the parent reply
+                if parent_reply:
+                    parent_author = parent_reply.user
+                    if parent_author != request.user:
+                        # Avoid duplicate notifications if the parent author is already mentioned
+                        if parent_author not in mentioned_users:
+                            message = f"{request.user.username} replied to your reply."
+                            Notification.objects.create(
+                                user=parent_author,
+                                reply=reply,
+                                notification_type='reply',
+                                message=message
+                            )
+            
+            # Prepare the response data
+            created_at = format_timestamp(reply.created_at)
+            avatar_url = reply.user.profile.avatar.url if reply.user.profile.avatar else '/static/images/avatars/placeholder.png'
+            
+            return JsonResponse({
+                'success': True,
+                'reply': {
+                    'id': reply.id,
+                    'username': reply.user.username,
+                    'avatar_url': avatar_url,
+                    'text': reply.text,
+                    'created_at': created_at,
+                    'label': 'Reply'
+                }
+            })
+        
+        except Exception as e:
+            logger.error(f"Error in add_reply for user '{request.user.username}': {str(e)}")
+            return JsonResponse({'success': False, 'error': 'Failed to add reply. Please try again.'}, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'}, status=400)
 def load_emojis(request):
     # Extract request parameters
     category = request.GET.get('category')
