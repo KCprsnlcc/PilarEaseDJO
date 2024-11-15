@@ -1793,9 +1793,7 @@ document.addEventListener("DOMContentLoaded", function () {
                       ${
                         status.can_delete
                           ? `
-                            <button id="edit-${status.id}" class="edit-button status">
-                              <i class='bx bx-edit'></i>
-                            </button>
+                          
                             <button id="delete-${status.id}" class="delete-button status">
                               <i class='bx bxs-trash bx-flip-horizontal'></i>
                             </button>`
@@ -1815,13 +1813,6 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
-              });
-
-            // Add event listener for the edit button
-            document
-              .getElementById(`edit-${status.id}`)
-              .addEventListener("click", function () {
-                editStatus(status.id);
               });
           } else {
             document
@@ -4808,9 +4799,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </button>
                 ${
                   status.can_edit
-                    ? `<button class="pilarease-action-button" onclick="editPilareaseStatus(${status.id})">
-                        <i class='bx bx-edit'></i> Edit
-                      </button>
+                    ? `
                       <button class="pilarease-action-button" onclick="deletePilareaseStatus(${status.id})">
                         <i class='bx bxs-trash'></i> Delete
                       </button>`
