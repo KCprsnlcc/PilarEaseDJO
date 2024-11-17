@@ -103,8 +103,11 @@ def contact_us(request):
     return render(request, 'contact_us.html')
 
 def about_view(request):
-    # Fetch the 3 most recent approved testimonials
-    approved_feedbacks = Feedback.objects.filter(is_approved=True).order_by('-created_at')[:3]
+    # Fetch the 3 most recent approved and not excluded testimonials
+    approved_feedbacks = Feedback.objects.filter(
+        is_approved=True,
+        is_excluded=False
+    ).order_by('-created_at')[:]
     return render(request, 'about.html', {'feedbacks': approved_feedbacks})
 # Check if username already exists
 
@@ -2463,19 +2466,21 @@ def upload_avatar(request):
 
 def submit_feedback(request):
     if request.method == 'POST':
-        # Assuming the user is authenticated
         message = request.POST.get('message', '')
 
         if message:
             feedback = Feedback(user=request.user, message=message)
-            
+
             # Sentiment analysis with TextBlob
             blob = TextBlob(message)
-            feedback.sentiment_score = blob.sentiment.polarity
+            feedback.sentiment_score = blob.sentiment.polarity * 100  # Normalize score
 
             # Approve feedback if sentiment score is positive
-            if feedback.sentiment_score > 0.1:
+            if feedback.sentiment_score > 10:
                 feedback.is_approved = True
+            else:
+                # Exclude negative feedback from testimonials
+                feedback.is_excluded = True
 
             feedback.save()
 
