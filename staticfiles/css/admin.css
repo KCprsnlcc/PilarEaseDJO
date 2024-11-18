@@ -3375,14 +3375,20 @@ body {
   padding: 15px;
   background-color: #f1f1f1;
   border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.3s ease;
 }
 
 .pilarease-admin-chat-header-avatar {
-  width: 60px; /* Adjusted size */
+  width: 60px;
   height: 60px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 15px;
+  transition: transform 0.3s ease;
+}
+
+.pilarease-admin-chat-header-avatar.updated {
+  transform: scale(1.05);
 }
 
 .pilarease-admin-chat-header-info {
@@ -3393,6 +3399,7 @@ body {
 .pilarease-admin-chat-header-name {
   font-size: 18px;
   font-weight: 600;
+  transition: color 0.3s ease;
 }
 
 .pilarease-admin-chat-header-status {
@@ -3401,13 +3408,52 @@ body {
 }
 
 .pilarease-admin-chat-messages {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
   padding: 20px;
   scroll-behavior: smooth;
   overflow-y: auto;
   background-color: #ffffff;
 }
+@keyframes popIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.spinner {
+  border: 2px solid #f3f3f3; /* Light gray */
+  border-top: 2px solid #ffffff; /* White */
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 
+/* Spinner Animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Checkmark Styles */
+.checkmark {
+  color: #ffffff; /* White color */
+  font-size: 14px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 .pilarease-admin-chat-input-container {
   display: flex;
   padding: 15px;
@@ -3465,16 +3511,43 @@ body {
   background-color: var(--accent-color, #0e2326);
   color: #ffffff;
   align-self: flex-end;
-  border-bottom-right-radius: 0;
+  border-radius: 10px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  max-width: 60%;
+  width: fit-content;
+  animation: popIn 0.3s ease forwards;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* User Message (Left Side) */
 .user-message {
   background-color: #e6e6e6;
   color: #000000;
   align-self: flex-start;
-  border-bottom-left-radius: 0;
+  border-radius: 10px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  max-width: 60%;
+  width: fit-content;
+  animation: popIn 0.3s ease forwards;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Adjustments for responsiveness */
+@media (max-width: 768px) {
+  .admin-message,
+  .user-message {
+    max-width: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-message,
+  .user-message {
+    max-width: 90%;
+  }
+}
 .message-sender {
   font-weight: bold;
   display: block;
@@ -3508,15 +3581,16 @@ body {
 
 .pilarease-admin-chat-profile-modal-content {
   background-color: #ffffff;
-  margin: 5% auto; /* 5% from the top and centered */
+  margin: 5% auto;
   padding: 20px;
   border: 1px solid #888888;
   width: 80%;
   max-width: 600px;
   border-radius: 10px;
   position: relative;
-  overflow-y: auto; /* Enable scrolling if content overflows */
-  max-height: 90vh; /* Ensure modal doesn't exceed viewport height */
+  overflow-y: auto;
+  max-height: 90vh;
+  animation: popIn 0.3s ease forwards;
 }
 
 .pilarease-admin-chat-profile-close {
@@ -3789,6 +3863,21 @@ body {
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pilarease-admin-chat-action-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Ensure that the spinner and checkmark align properly */
+.pilarease-admin-chat-action-button .spinner,
+.pilarease-admin-chat-action-button .checkmark {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .pilarease-admin-chat-action-button:hover {

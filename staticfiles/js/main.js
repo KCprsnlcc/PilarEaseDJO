@@ -1746,157 +1746,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
-  AOS.init({
-    duration: 800,
-    easing: "slide",
-    once: true,
-  });
-
-  let emojiPage = 1;
-  let emojiIsLoading = false;
-  let currentEmojiCategory = "{{ category or '' }}"; // Current selected category
-  let currentEmojiSearch = "{{ search_query or '' }}"; // Current search query
-
-  function searchEmojis(query) {
-    currentEmojiSearch = query;
-    emojiPage = 1;
-    document.getElementById("emoji-grid").innerHTML = "";
-    loadEmojis();
-  }
-
-  function changeCategory(category) {
-    if (currentEmojiCategory === category) return; // Prevent reloading same category
-    currentEmojiCategory = category;
-    emojiPage = 1;
-    document.getElementById("emoji-grid").innerHTML = "";
-    setActiveEmojiCategory(category);
-    loadEmojis();
-  }
-
-  function setActiveEmojiCategory(category) {
-    const categoryLinks = document.querySelectorAll(
-      "#emojiPickerModal .category-icons a"
-    );
-    categoryLinks.forEach((link) => {
-      if (link.getAttribute("onclick").includes(`'${category}'`)) {
-        link.classList.add("active");
-      } else {
-        link.classList.remove("active");
-      }
-    });
-  }
-
-  function loadEmojis() {
-    if (emojiIsLoading) return;
-    emojiIsLoading = true;
-
-    fetch(
-      `/load_emojis/?page=${emojiPage}&category=${encodeURIComponent(
-        currentEmojiCategory
-      )}&search=${encodeURIComponent(currentEmojiSearch)}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        const emojiGrid = document.getElementById("emoji-grid");
-
-        data.emojis.forEach((item) => {
-          const emojiSpan = document.createElement("span");
-          emojiSpan.classList.add("emoji", "hvr-grow"); // Hover.css class
-          emojiSpan.setAttribute("data-aos", "zoom-in"); // AOS attribute
-          emojiSpan.title = item.name;
-          emojiSpan.innerText = item.emoji;
-          emojiSpan.onclick = () => selectEmoji(item.emoji);
-          emojiGrid.appendChild(emojiSpan);
-        });
-
-        // Refresh AOS to recognize new elements
-        AOS.refresh();
-        emojiIsLoading = false;
-        if (data.has_more) {
-          emojiPage++;
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading emojis:", error);
-        emojiIsLoading = false;
-      });
-  }
-
-  function selectEmoji(emoji) {
-    const descriptionDiv = document.getElementById("description");
-    insertEmojiAtCursor(descriptionDiv, emoji);
-    // Optionally, add a 'selected' class to the clicked emoji
-    event.target.classList.add("selected");
-    setTimeout(() => {
-      event.target.classList.remove("selected");
-    }, 300);
-    // Hide the emoji picker after selection
-    document.getElementById("emojiPickerModal").style.display = "none";
-  }
-
-  function insertEmojiAtCursor(element, emoji) {
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    range.deleteContents();
-    const textNode = document.createTextNode(emoji);
-    range.insertNode(textNode);
-    // Move the cursor after the inserted emoji
-    range.setStartAfter(textNode);
-    range.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    element.focus(); // Focus back to the description div
-  }
-
-  // Load initial emojis
-  loadEmojis();
-
-  // Lazy load on scroll
-  document.getElementById("emoji-grid").addEventListener("scroll", function () {
-    const grid = document.getElementById("emoji-grid");
-    if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 10) {
-      loadEmojis();
-    }
-  });
-
-  // Show Emoji Picker Modal when Emoji Picker Button is clicked
-  document
-    .querySelector(".emoji-picker")
-    .addEventListener("click", function (event) {
-      event.preventDefault();
-      const emojiPickerModal = document.getElementById("emojiPickerModal");
-      if (emojiPickerModal.style.display === "block") {
-        emojiPickerModal.style.display = "none";
-      } else {
-        emojiPickerModal.style.display = "block";
-      }
-    });
-
-  // Close Emoji Picker Modal when clicking outside of it
-  window.addEventListener("click", function (event) {
-    const emojiPickerModal = document.getElementById("emojiPickerModal");
-    const emojiPickerButton = document.querySelector(".emoji-picker");
-    if (
-      event.target == emojiPickerModal ||
-      (!emojiPickerButton.contains(event.target) &&
-        !emojiPickerModal.contains(event.target))
-    ) {
-      emojiPickerModal.style.display = "none";
-    }
-  });
-
-  // Optional: Emotion Selection Function
-  function selectEmotion(emotion) {
-    // Implement functionality to highlight selected emotion
-    // For example, add a hidden input to store the selected emotion
-    document.querySelectorAll(".feeling-icon img").forEach((img) => {
-      img.classList.remove("selected");
-    });
-    event.target.classList.add("selected");
-    // You can also set a hidden input value if needed
-  }
-
   function fetchStatuses(page, category) {
     isLoading = true;
     const statusLoader = document.getElementById("statusLoader");
@@ -1944,9 +1793,7 @@ document.addEventListener("DOMContentLoaded", function () {
                       ${
                         status.can_delete
                           ? `
-                            <button id="edit-${status.id}" class="edit-button status">
-                              <i class='bx bx-edit'></i>
-                            </button>
+                          
                             <button id="delete-${status.id}" class="delete-button status">
                               <i class='bx bxs-trash bx-flip-horizontal'></i>
                             </button>`
@@ -1966,13 +1813,6 @@ document.addEventListener("DOMContentLoaded", function () {
               .getElementById(`delete-${status.id}`)
               .addEventListener("click", function () {
                 deleteStatus(status.id);
-              });
-
-            // Add event listener for the edit button
-            document
-              .getElementById(`edit-${status.id}`)
-              .addEventListener("click", function () {
-                editStatus(status.id);
               });
           } else {
             document
@@ -4959,9 +4799,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </button>
                 ${
                   status.can_edit
-                    ? `<button class="pilarease-action-button" onclick="editPilareaseStatus(${status.id})">
-                        <i class='bx bx-edit'></i> Edit
-                      </button>
+                    ? `
                       <button class="pilarease-action-button" onclick="deletePilareaseStatus(${status.id})">
                         <i class='bx bxs-trash'></i> Delete
                       </button>`
