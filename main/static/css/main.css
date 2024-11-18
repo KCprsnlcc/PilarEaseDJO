@@ -2185,6 +2185,11 @@ button[type="submit"]:hover {
   background: #f0f0f0;
 }
 
+.burger input:checked ~ #dropmenu {
+  display: block;
+  max-height: 500px; /* Ensure it aligns with the slide-down animation */
+}
+
 @keyframes slideDown {
   0% {
     max-height: 0;

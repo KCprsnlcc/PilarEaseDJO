@@ -210,4 +210,38 @@
     </div>
   </div>
 </section>
+<script>
+  // Wait for the DOM to load before executing the script
+  document.addEventListener("DOMContentLoaded", () => {
+    const burger = document.getElementById("burger");
+    const dropdown = document.getElementById("dropmenu");
+
+    // Burger Menu Handling
+    burger.addEventListener("change", () => {
+      if (burger.checked) {
+        dropdown.classList.add("slide-down");
+        dropdown.classList.remove("slide-up");
+        dropdown.style.display = "block";
+      } else {
+        dropdown.classList.add("slide-up");
+        dropdown.classList.remove("slide-down");
+        setTimeout(() => {
+          dropdown.style.display = "none"; // Hide after animation
+        }, 500); // Match animation duration
+      }
+    });
+
+    // Close dropdown menu when any link is clicked
+    document.querySelectorAll(".dropdown a").forEach((link) => {
+      link.addEventListener("click", () => {
+        burger.checked = false;
+        dropdown.classList.add("slide-up");
+        dropdown.classList.remove("slide-down");
+        setTimeout(() => {
+          dropdown.style.display = "none";
+        }, 500);
+      });
+    });
+  });
+</script>
 {% endblock %}
