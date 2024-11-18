@@ -471,7 +471,6 @@ class CounselorMessage(models.Model):
         indexes = [
             models.Index(fields=['chat_session', 'timestamp']),
         ]
-
 class ContactUs(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
@@ -481,8 +480,12 @@ class ContactUs(models.Model):
     reply = models.TextField(blank=True, null=True)
     is_replied = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ['-created_at']  # Default ordering by most recent first
+
     def __str__(self):
         return f"Contact Us from {self.name}"
+
     
 class UserSession(models.Model):
     user = models.ForeignKey(

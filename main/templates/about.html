@@ -176,25 +176,45 @@
     </div>
   </div>
 </section>
-
-<!-- Contact Section -->
+{% comment %} contact section {% endcomment %}
 <section class="contact-pilarease" id="contact-pilarease">
   <div class="container-pilarease">
     <h2>Contact Us</h2>
     <div class="contact-container-pilarease">
-      <form
-        action="{% url 'contact_us' %}"
-        method="post"
-        class="contact-form-pilarease"
-      >
+      <form>
         {% csrf_token %}
         <div class="form-group-pilarease">
           <label for="name-pilarease">Name</label>
-          <input type="text" id="name-pilarease" name="name" required />
+          <input
+            type="text"
+            id="name-pilarease"
+            name="name"
+            placeholder="Enter your name"
+            required
+            aria-required="true"
+          />
         </div>
         <div class="form-group-pilarease">
           <label for="email-pilarease">Email</label>
-          <input type="email" id="email-pilarease" name="email" required />
+          <input
+            type="email"
+            id="email-pilarease"
+            name="email"
+            placeholder="Enter your email"
+            required
+            aria-required="true"
+          />
+        </div>
+        <div class="form-group-pilarease">
+          <label for="subject-pilarease">Subject</label>
+          <input
+            type="text"
+            id="subject-pilarease"
+            name="subject"
+            placeholder="Enter your subject"
+            required
+            aria-required="true"
+          />
         </div>
         <div class="form-group-pilarease">
           <label for="message-pilarease">Message</label>
@@ -202,11 +222,27 @@
             id="message-pilarease"
             name="message"
             rows="5"
+            placeholder="Type your message here..."
             required
+            aria-required="true"
           ></textarea>
         </div>
         <button type="submit" class="btn-pilarease">Send Message</button>
       </form>
+      <!-- Success and Error Messages -->
+      <div
+        id="contactSuccessMessage"
+        class="contact-success-message"
+        style="display: none"
+      >
+        Your message has been sent successfully! We will get back to you
+        shortly.
+      </div>
+      <div
+        id="contactErrorMessage"
+        class="contact-error-message"
+        style="display: none"
+      ></div>
     </div>
   </div>
 </section>
