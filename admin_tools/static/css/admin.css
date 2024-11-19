@@ -4398,3 +4398,71 @@ body::-webkit-scrollbar-thumb {
     font-size: 14px;
   }
 }
+/* Emotion Badge */
+.pilarease-emotion-badge {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 14px;
+  display: inline-block;
+}
+
+.pilarease-emotion-happy {
+  background-color: #4caf50; /* Green */
+  color: #ffffff;
+}
+
+.pilarease-emotion-sad {
+  background-color: #2196f3; /* Blue */
+  color: #ffffff;
+}
+
+.pilarease-emotion-angry {
+  background-color: #f44336; /* Red */
+  color: #ffffff;
+}
+
+/* Progress Bar for Emotions */
+.pilarease-emotion-bar-container {
+  width: 100%;
+  height: 10px;
+  background-color: rgba(14, 35, 38, 0.1);
+  border-radius: 5px;
+  position: relative;
+  margin-top: 5px;
+}
+
+.pilarease-emotion-bar {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.pilarease-emotion-bar-happy {
+  background-color: #4caf50; /* Green */
+}
+
+.pilarease-emotion-bar-sad {
+  background-color: #2196f3; /* Blue */
+}
+
+.pilarease-emotion-bar-angry {
+  background-color: #f44336; /* Red */
+}
+
+/* Tooltip */
+.pilarease-emotion-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.pilarease-emotion-bar-container:hover .pilarease-emotion-tooltip {
+  opacity: 1;
+}

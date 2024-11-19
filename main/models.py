@@ -173,6 +173,23 @@ class ChatMessage(models.Model):
     is_bot_message = models.BooleanField(default=False)
     message_type = models.CharField(max_length=50, choices=MESSAGE_TYPES, blank=True, null=True)
     question_index = models.IntegerField(null=True, blank=True)
+    anger = models.FloatField(null=True, blank=True)
+    disgust = models.FloatField(null=True, blank=True)
+    fear = models.FloatField(null=True, blank=True)
+    happiness = models.FloatField(null=True, blank=True)
+    sadness = models.FloatField(null=True, blank=True)
+    surprise = models.FloatField(null=True, blank=True)
+    neutral = models.FloatField(null=True, blank=True)
+
+    # Percentages
+    anger_percentage = models.IntegerField(null=True, blank=True)
+    disgust_percentage = models.IntegerField(null=True, blank=True)
+    fear_percentage = models.IntegerField(null=True, blank=True)
+    happiness_percentage = models.IntegerField(null=True, blank=True)
+    sadness_percentage = models.IntegerField(null=True, blank=True)
+    surprise_percentage = models.IntegerField(null=True, blank=True)
+    neutral_percentage = models.IntegerField(null=True, blank=True)
+
 
     def __str__(self):
         if self.is_bot_message:
@@ -183,11 +200,13 @@ class ChatMessage(models.Model):
 
 class QuestionnaireProgress(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    last_question_index = models.IntegerField(default=-1)  # -1 indicates questionnaire hasn't started
+    last_question_index = models.IntegerField(default=0)
     completed = models.BooleanField(default=False)
+    emotion_data = models.JSONField(null=True, blank=True)  # To store cumulative emotions
+    normalized_emotions = models.JSONField(null=True, blank=True)  # To store normalized emotions
 
     def __str__(self):
-        return f"{self.user.username} - Progress: {self.last_question_index}"
+        return f"{self.user.username}'s progress"
 class NLTKResource(models.Model):
     name = models.CharField(
         default='No nltk downloaded',
