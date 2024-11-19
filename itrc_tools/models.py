@@ -208,7 +208,7 @@ class Notification_System(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications'
+        related_name='itrc_notifications'
     )
     notification_type = models.CharField(
         max_length=10,

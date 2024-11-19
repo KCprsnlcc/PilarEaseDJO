@@ -300,17 +300,20 @@ class NotificationCounselor(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.username} - {'Read' if self.is_read else 'Unread'}"
-
+from django.core.exceptions import ValidationError
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
         ('mention', 'Mention'),
         ('reply', 'Reply'),
+        ('status', 'Status'),
+        ('summary_replies', 'Summary Replies'),
+        # Add other types as needed
     )
     
     user = models.ForeignKey(
         CustomUser, 
         on_delete=models.CASCADE, 
-        related_name='main_notifications'
+        related_name='notifications'  # Unique related_name
     )
     status = models.ForeignKey(
         'Status',
@@ -326,22 +329,30 @@ class Notification(models.Model):
         blank=True,
         null=True
     )
-    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, null=True, blank=True)
-    message = models.CharField(max_length=255, null=True, blank=True)
-    link = models.URLField(max_length=500, blank=True, null=True)  # Add this field
+    notification_type = models.CharField(max_length=100, choices=NOTIFICATION_TYPES, blank=True, null=True)
+    message = models.CharField(max_length=255, blank=True, null=True)
+    link = models.URLField(max_length=500, blank=True, null=True)
+    avatar = models.URLField(max_length=500, blank=True, null=True)  # Added to store avatar URLs
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
-    def __str__(self):
-        if self.notification_type == 'mention' and self.reply:
-            return f"Mention Notification for {self.user.username} - Reply ID: {self.reply.id}"
-        elif self.notification_type == 'reply' and self.reply:
-            return f"Reply Notification for {self.user.username} - Reply ID: {self.reply.id}"
-        elif self.status:
-            return f"Notification for {self.user.username} - Status: {self.status.title}"
-        else:
-            return f"Notification for {self.user.username}"
+    class Meta:
+        unique_together = (
+            ('user', 'notification_type', 'status', 'reply'),
+        )
+        ordering = ['-created_at']  # Ensures that notifications are ordered by creation time
 
+    def __str__(self):
+        return f"{self.get_notification_type_display()} Notification for {self.user.username}"
+    
+    def clean(self):
+        # Ensure that either reply or status is set
+        if not self.reply and not self.status:
+            raise ValidationError('Notification must be associated with either a reply or a status.')
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super(Notification, self).save(*args, **kwargs)
 class ReplyNotification(Notification):
     replied_by = models.ForeignKey(
         CustomUser,

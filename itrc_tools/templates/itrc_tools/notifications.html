@@ -12,7 +12,7 @@
   </button>
 
   <div class="notifications-list">
-    {% for notification in notifications %}
+    {% for notification in itrc_notifications %}
     <div
       class="notification-item {% if not notification.is_read %}unread{% else %}read{% endif %}"
       data-id="{{ notification.id }}"

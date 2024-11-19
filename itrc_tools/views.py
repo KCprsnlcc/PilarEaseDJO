@@ -1701,7 +1701,7 @@ def manage_users_bulk_action(request):
         return JsonResponse({'success': False, 'message': 'Invalid bulk action selected.'}, status=400)
 @login_required
 def notifications_view(request):
-    user_notifications = request.user.notifications.all().order_by('-timestamp')
+    user_notifications = request.user.itrc_notifications.all().order_by('-timestamp')
     context = {
         'notifications': user_notifications
     }
@@ -1727,7 +1727,7 @@ def mark_notification_as_read(request, notification_id):
 @login_required
 @require_POST
 def mark_all_notifications_as_read(request):
-    user_notifications = request.user.notifications.filter(is_read=False)
+    user_notifications = request.user.itrc_notifications.filter(is_read=False)
     user_notifications.update(is_read=True)
 
     AuditLog.objects.create(
