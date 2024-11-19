@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.core.paginator import Paginator
+from django.utils.timezone import localtime
 from django.db.models import Q, Avg
 from django.views.decorators.http import require_http_methods, require_POST
 from sklearn.model_selection import train_test_split
@@ -529,8 +530,8 @@ def replies_view(request):
             'username': reply.user.username,
             'status_title': reply.status.title,
             'text': reply.text,
-            'created_at': reply.created_at,
-            'last_sent': timesince(reply.created_at, current_time),
+            'created_at': localtime(reply.created_at).strftime('%Y-%m-%d %H:%M'),  # Convert to local time
+            'last_sent': timesince(localtime(reply.created_at), current_time),
             'avatar_url': reply.user.profile.avatar.url if reply.user.profile.avatar else 'static/images/placeholder.png',
         }
         for reply in page_obj
@@ -1524,12 +1525,14 @@ def fetch_counselor_notifications(request):
             if student and student.profile.avatar
             else '/static/images/avatars/placeholder.png'
         )
+        # Convert the timestamp to local timezone
+        local_timestamp = localtime(notification.created_at).strftime('%Y-%m-%d %H:%M')
         notifications.append({
             'id': notification.id,
             'message': notification.message,
             'link': notification.link or '#',
             'avatar': student_avatar_url,  # Ensure the key is 'avatar'
-            'timestamp': notification.created_at.strftime('%Y-%m-%d %H:%M'),
+            'timestamp': local_timestamp,  # Use the local timestamp
             'is_read': notification.is_read,
         })
 
@@ -1537,6 +1540,7 @@ def fetch_counselor_notifications(request):
         'notifications': notifications,
         'total_pages': paginator.num_pages,
     })
+
 
 @login_required
 @csrf_exempt
