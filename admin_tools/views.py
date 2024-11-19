@@ -651,7 +651,7 @@ def feedback_view(request):
 @login_required
 def dashboard(request):
     """
-    Dashboard view with Status Management.
+    Dashboard view with optimized elements and real-time data based on main/models.py.
     """
     # Status Management Logic
     search_query = request.GET.get('search', '')
@@ -659,31 +659,98 @@ def dashboard(request):
     page_number = request.GET.get('page', 1)
     page_size = 10
 
+    # Define emotions for filtering
+    emotions = ['anger', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise']
+
     # Filter statuses based on search query and category
-    if category == 'all':
-        statuses = Status.objects.filter(
+    statuses = Status.objects.select_related('user', 'user__profile').order_by('-created_at')
+    if search_query:
+        statuses = statuses.filter(
             Q(title__icontains=search_query) |
             Q(plain_description__icontains=search_query)
-        ).select_related('user', 'user__profile').order_by('-created_at')  # Order by timestamp in descending order
-    else:
-        statuses = Status.objects.filter(
-            Q(title__icontains=search_query) |
-            Q(plain_description__icontains=search_query),
-            emotion=category
-        ).select_related('user', 'user__profile').order_by('-created_at')  # Order by timestamp in descending order
+        )
+    if category != 'all':
+        statuses = statuses.filter(emotion=category)
 
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
 
-    # Include any other dashboard-related context
+    # Dashboard Summary Cards Metrics
+    total_users = CustomUser.objects.filter(is_counselor=False).count()
+    active_users = CustomUser.objects.filter(
+        is_counselor=False,
+        last_login__gte=timezone.now() - timezone.timedelta(days=7)
+    ).count()
+    new_posts = Status.objects.filter(
+        created_at__date=timezone.now().date()
+    ).count()
+    pending_feedbacks = Feedback.objects.filter(is_approved=False).count()
+
+    # Recent Activity Feed (Latest 5 activities)
+    recent_activities = []
+
+    # Latest 5 statuses
+    recent_statuses = Status.objects.select_related('user').order_by('-created_at')[:5]
+    for status in recent_statuses:
+        recent_activities.append(
+            f"{status.user.get_full_name()} posted: {status.title}"
+        )
+
+    # Latest 5 user registrations
+    recent_registrations = CustomUser.objects.filter(is_counselor=False).order_by('-date_joined')[:5]
+    for user in recent_registrations:
+        recent_activities.append(
+            f"New user registered: {user.get_full_name()}"
+        )
+
+    # Limit the recent activities to the latest 5
+    recent_activities = recent_activities[:5]
+
+    # Graphical Data Representation
+    # Data for Posts by Category Chart
+    category_counts = Status.objects.values('emotion').annotate(count=Count('emotion'))
+    category_data_dict = {item['emotion']: item['count'] for item in category_counts}
+    category_labels = json.dumps([emotion.title() for emotion in emotions])
+    category_data = json.dumps([category_data_dict.get(emotion, 0) for emotion in emotions])
+
+    # Data for User Growth Chart (Last 6 months)
+    today = datetime.today()
+    dates = [today - timedelta(days=30 * i) for i in reversed(range(6))]
+    user_growth_labels = [date.strftime('%b %Y') for date in dates]
+    user_growth_data = []
+    for date in dates:
+        count = CustomUser.objects.filter(
+            is_counselor=False,
+            date_joined__year=date.year,
+            date_joined__month=date.month
+        ).count()
+        user_growth_data.append(count)
+    user_growth_labels = json.dumps(user_growth_labels)
+    user_growth_data = json.dumps(user_growth_data)
+
+    # Search Autocomplete Suggestions
+    search_suggestions = list(Status.objects.values_list('title', flat=True).distinct())
+    search_suggestions = json.dumps(search_suggestions)
+
+    # Context
     context = {
         'statuses': page_obj,
         'search_query': search_query,
         'category': category,
         'page_obj': page_obj,
+        'emotions': emotions,
+        'total_users': total_users,
+        'active_users': active_users,
+        'new_posts': new_posts,
+        'pending_feedbacks': pending_feedbacks,
+        'recent_activities': recent_activities,
+        'category_labels': category_labels,
+        'category_data': category_data,
+        'user_growth_labels': user_growth_labels,
+        'user_growth_data': user_growth_data,
+        'search_suggestions': search_suggestions,
     }
     return render(request, 'admin_tools/dashboard.html', context)
-
 
 @login_required
 def exclude_testimonial(request, testimonial_id):

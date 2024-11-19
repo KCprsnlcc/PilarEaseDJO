@@ -4261,3 +4261,140 @@ body::-webkit-scrollbar-thumb {
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(14, 35, 38, 0.2);
 }
+/* Dashboard Summary Cards */
+.dashboard-summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.summary-card {
+  flex: 1 1 150px;
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  text-align: center;
+}
+
+.summary-card h3 {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: var(--accent-color);
+}
+
+.summary-card p {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--accent-light);
+}
+
+/* Charts Container */
+.charts-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.chart {
+  flex: 1 1 250px;
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  position: relative;
+  height: 250px; /* Reduced height */
+}
+
+.chart h3 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--accent-color);
+}
+
+.small-chart canvas {
+  max-height: 180px; /* Adjust canvas height */
+}
+
+/* Recent Activity Feed */
+.recent-activity {
+  background-color: #ffffff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 20px;
+}
+
+.recent-activity h2 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: var(--accent-color);
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+}
+
+.activity-list li {
+  padding: 5px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activity-list li:last-child {
+  border-bottom: none;
+}
+
+/* Autocomplete Suggestions */
+.autocomplete-suggestions {
+  position: absolute;
+  border: 1px solid var(--border-color);
+  background-color: #ffffff;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 9999;
+  width: calc(100% - 2px); /* Adjust for border */
+}
+
+.autocomplete-suggestion {
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.autocomplete-suggestion:hover {
+  background-color: var(--accent-light);
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-summary,
+  .charts-container {
+    flex-direction: column;
+  }
+
+  .summary-card,
+  .chart {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .summary-card p {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-card h3,
+  .chart h3 {
+    font-size: 12px;
+  }
+
+  .summary-card p {
+    font-size: 14px;
+  }
+}

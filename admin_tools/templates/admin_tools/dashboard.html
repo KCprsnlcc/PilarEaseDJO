@@ -6,7 +6,6 @@
 {% load sentiment_tags %}
 
 {% block content %}
-
 <!-- Existing Dashboard Content -->
 <div class="pilarease-admin-dashboard-container">
   <!-- Dashboard Header -->
@@ -20,105 +19,274 @@
         class="bx bx-info-circle pilarease-admin-info-icon"
         aria-label="More information about the Dashboard"
       ></i>
-<span class="pilarease-admin-tooltip">
-    Manage user statuses efficiently. Search, filter by category, and take actions such as deleting or reviewing statuses to maintain system organization.
-</span>
-
+  <span class="pilarease-admin-tooltip" role="tooltip">
+      View system metrics, recent activities, and manage user statuses efficiently.
+    </span>
     </h1>
   </div>
-
-<!-- Status Management Section -->
-<div class="pilarease-admin-status-container">
-  <!-- Search and Filter Form -->
-  <form method="get" action="{% url 'dashboard' %}" class="pilarease-admin-search-form">
-    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input">
-    <select name="category" class="pilarease-admin-select category-select">
-      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
-      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
-      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
-      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
-      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
-      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
-      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
-      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
-    </select>
-    <button type="submit" class="pilarease-admin-button">Search</button>
-    <a href="{% url 'dashboard' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
-  </form>
-
-  <!-- Status Table -->
-  <table class="pilarease-admin-statuses-table">
-    <thead>
-      <tr>
-        <th>No.</th>
-        <th>Avatar</th>
-        <th>Student ID</th>
-        <th>Title</th>
-        <th>Body</th>
-        <th>Category</th>
-        <th>Date Posted</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for status in statuses %}
-      <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
-        <td>{{ forloop.counter }}</td>
-        <td>
-          {% if status.user.profile.avatar %}
-            <img src="{{ status.user.profile.avatar.url }}" alt="Avatar" class="avatar-image"/>
-          {% else %}
-            <img src="{% static 'images/placeholder.png' %}" alt="Default Avatar" class="avatar-image"/>
-          {% endif %}
-        </td>
-        <td>{{ status.user.student_id }}</td>
-        <td>{{ status.title }}</td>
-        <td class="pilarease-admin-status-body" title="{{ status.plain_description|escapejs }}">{{ status.plain_description|truncatewords:10 }}</td>
-        <td>{{ status.emotion|title }}</td>
-        <td>{{ status.created_at|date:"Y-m-d" }}</td>
-        <td>
-          <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
-        </td>
-      </tr>
-      <!-- Expanded View Row -->
-      <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
-        <td colspan="8">
-          <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
-            <h3>{{ status.title }}</h3>
-            <p>{{ status.plain_description }}</p>
-            <p><strong>Category:</strong> {{ status.emotion|title }}</p>
-            <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
-            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  {% if not statuses %}
-  <p class="pilarease-admin-no-data">No status data found.</p>
-  {% endif %}
-
-  <!-- Pagination -->
-  <div class="pilarease-admin-pagination">
-    <span class="pilarease-admin-step-links">
-      {% if page_obj.has_previous %}
-        <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
-        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
-      {% endif %}
-
-      <span class="pilarease-admin-current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-      </span>
-
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
-      {% endif %}
-    </span>
+<!-- Dashboard Summary Cards -->
+<div class="dashboard-summary">
+  <div class="summary-card">
+    <h3>Total Users</h3>
+    <p>{{ total_users }}</p>
+  </div>
+  <div class="summary-card">
+    <h3>Active Users</h3>
+    <p>{{ active_users }}</p>
+  </div>
+  <div class="summary-card">
+    <h3>New Posts Today</h3>
+    <p>{{ new_posts }}</p>
+  </div>
+  <div class="summary-card">
+    <h3>Pending Feedbacks</h3>
+    <p>{{ pending_feedbacks }}</p>
   </div>
 </div>
+
+<!-- Charts Container -->
+<div class="charts-container">
+  <div class="chart small-chart">
+    <h3>Posts by Category</h3>
+    <canvas id="postsByCategoryChart"></canvas>
+  </div>
+  <div class="chart small-chart">
+    <h3>User Growth</h3>
+    <canvas id="userGrowthChart"></canvas>
+  </div>
+</div>
+
+
+
+  <!-- Status Management Section -->
+  <div class="pilarease-admin-status-container">
+    <!-- Search and Filter Form -->
+    <form method="get" action="{% url 'dashboard' %}" class="pilarease-admin-search-form">
+      <input type="text" id="searchInput" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input" autocomplete="off">
+      <select name="category" class="pilarease-admin-select category-select">
+        <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+        {% for emotion in emotions %}
+          <option value="{{ emotion }}" {% if category == emotion %}selected{% endif %}>{{ emotion|title }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="pilarease-admin-button">Search</button>
+      <a href="{% url 'dashboard' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
+    </form>
+
+    <!-- Status Table -->
+    <table class="pilarease-admin-statuses-table">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Avatar</th>
+          <th>Student ID</th>
+          <th>Title</th>
+          <th>Body</th>
+          <th>Category</th>
+          <th>Date Posted</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for status in statuses %}
+        <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
+          <td>{{ forloop.counter }}</td>
+          <td>
+            {% if status.user.profile.avatar %}
+              <img src="{{ status.user.profile.avatar.url }}" alt="Avatar" class="avatar-image"/>
+            {% else %}
+              <img src="{% static 'images/placeholder.png' %}" alt="Default Avatar" class="avatar-image"/>
+            {% endif %}
+          </td>
+          <td>{{ status.user.student_id }}</td>
+          <td>{{ status.title }}</td>
+          <td class="pilarease-admin-status-body" title="{{ status.plain_description|escapejs }}">{{ status.plain_description|truncatewords:10 }}</td>
+          <td>{{ status.emotion|title }}</td>
+          <td>{{ status.created_at|date:"Y-m-d" }}</td>
+          <td>
+            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+          </td>
+        </tr>
+        <!-- Expanded View Row -->
+        <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
+          <td colspan="8">
+            <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
+              <h3>{{ status.title }}</h3>
+              <p>{{ status.plain_description }}</p>
+              <p><strong>Category:</strong> {{ status.emotion|title }}</p>
+              <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
+              <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if not statuses %}
+    <p class="pilarease-admin-no-data">No status data found.</p>
+    {% endif %}
+
+    <!-- Pagination -->
+    <div class="pilarease-admin-pagination">
+      <span class="pilarease-admin-step-links">
+        {% if page_obj.has_previous %}
+          <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
+          <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activity Feed -->
+<div class="recent-activity">
+  <h2>Recent Activity</h2>
+  <ul class="activity-list">
+    {% for activity in recent_activities %}
+      <li>{{ activity }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JavaScript for Charts -->
+<script>
+  // Posts by Category Chart
+  const postsByCategoryCtx = document.getElementById('postsByCategoryChart').getContext('2d');
+  const postsByCategoryChart = new Chart(postsByCategoryCtx, {
+    type: 'pie',
+    data: {
+      labels: {{ category_labels|safe }},
+      datasets: [{
+        data: {{ category_data|safe }},
+        backgroundColor: [
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+          '#9966FF', '#FF9F40', '#E7E9ED'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            font: {
+              size: 10
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // User Growth Chart
+  const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+  const userGrowthChart = new Chart(userGrowthCtx, {
+    type: 'line',
+    data: {
+      labels: {{ user_growth_labels|safe }},
+      datasets: [{
+        label: 'User Registrations',
+        data: {{ user_growth_data|safe }},
+        borderColor: '#36A2EB',
+        backgroundColor: '#9AD0F5',
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { 
+          title: { 
+            display: true, 
+            text: 'Month',
+            font: {
+              size: 10
+            }
+          },
+          ticks: {
+            font: {
+              size: 8
+            }
+          }
+        },
+        y: { 
+          title: { 
+            display: true, 
+            text: 'Number of Users',
+            font: {
+              size: 10
+            }
+          },
+          ticks: {
+            font: {
+              size: 8
+            }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            font: {
+              size: 10
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Autocomplete for Search Input
+  const searchInput = document.getElementById('searchInput');
+  const suggestions = {{ search_suggestions|safe }};
+
+  const suggestionBox = document.createElement('div');
+  suggestionBox.classList.add('autocomplete-suggestions');
+  searchInput.parentNode.appendChild(suggestionBox);
+
+  searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase();
+    suggestionBox.innerHTML = '';
+    if (query.length > 0) {
+      const filteredSuggestions = suggestions.filter(item => item.toLowerCase().includes(query));
+      filteredSuggestions.slice(0, 5).forEach(suggestion => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.classList.add('autocomplete-suggestion');
+        suggestionItem.textContent = suggestion;
+        suggestionItem.addEventListener('click', function() {
+          searchInput.value = suggestion;
+          suggestionBox.innerHTML = '';
+        });
+        suggestionBox.appendChild(suggestionItem);
+      });
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target)) {
+      suggestionBox.innerHTML = '';
+    }
+  });
+</script>
 
 <!-- JavaScript for Expanded View Toggle -->
 <script>
