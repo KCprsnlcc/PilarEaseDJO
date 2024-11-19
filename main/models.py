@@ -310,7 +310,7 @@ class Notification(models.Model):
     user = models.ForeignKey(
         CustomUser, 
         on_delete=models.CASCADE, 
-        related_name='main_notifications'  # Unique related_name
+        related_name='main_notifications'
     )
     status = models.ForeignKey(
         'Status',
@@ -328,6 +328,7 @@ class Notification(models.Model):
     )
     notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, null=True, blank=True)
     message = models.CharField(max_length=255, null=True, blank=True)
+    link = models.URLField(max_length=500, blank=True, null=True)  # Add this field
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -340,6 +341,7 @@ class Notification(models.Model):
             return f"Notification for {self.user.username} - Status: {self.status.title}"
         else:
             return f"Notification for {self.user.username}"
+
 class ReplyNotification(Notification):
     replied_by = models.ForeignKey(
         CustomUser,
