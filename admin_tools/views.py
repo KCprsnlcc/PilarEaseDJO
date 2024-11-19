@@ -647,8 +647,13 @@ def feedback_view(request):
     }
     
     return render(request, 'admin_tools/feedback.html', context)
+
 @login_required
-def status_view(request):
+def dashboard(request):
+    """
+    Dashboard view with Status Management.
+    """
+    # Status Management Logic
     search_query = request.GET.get('search', '')
     category = request.GET.get('category', 'all')
     page_number = request.GET.get('page', 1)
@@ -670,20 +675,12 @@ def status_view(request):
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'admin_tools/status.html', {
+    # Include any other dashboard-related context
+    context = {
         'statuses': page_obj,
         'search_query': search_query,
         'category': category,
         'page_obj': page_obj,
-    })
-
-@login_required
-def dashboard(request):
-    """
-    Dashboard view without Contact Us Queries.
-    """
-    # Example: Add other dashboard-related context here
-    context = {
         # Add other context variables as needed
     }
     return render(request, 'admin_tools/dashboard.html', context)

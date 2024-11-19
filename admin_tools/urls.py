@@ -24,9 +24,6 @@ urlpatterns = [
     path('replies/', views.replies_view, name='replies'),
     path('delete-reply/<int:reply_id>/', views.delete_reply, name='delete_reply'),
 
-    # Status Management
-    path('status/', views.status_view, name='status'),
-
     # Feedback Management
     path('feedback/', views.feedback_view, name='feedback'),
     path('approve-feedback/<int:feedback_id>/', views.approve_feedback, name='approve_feedback'),

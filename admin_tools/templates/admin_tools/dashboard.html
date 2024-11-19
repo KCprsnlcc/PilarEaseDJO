@@ -1,10 +1,13 @@
 <!-- templates/admin_tools/dashboard.html -->
 
-{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
-%} {% load sentiment_tags %}
-<!-- Load the custom sentiment_tags -->
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load compress %}
+{% load sentiment_tags %}
 
 {% block content %}
+
+<!-- Existing Dashboard Content -->
 <div class="pilarease-admin-dashboard-container">
   <!-- Dashboard Header -->
   <div
@@ -24,7 +27,120 @@
     </h1>
   </div>
 
-  <!-- Add other dashboard-related sections here -->
-  <!-- For example: User Feedbacks, Testimonials, etc. -->
+<!-- Status Management Section -->
+<div class="pilarease-admin-status-container">
+  <!-- Search and Filter Form -->
+  <form method="get" action="{% url 'dashboard' %}" class="pilarease-admin-search-form">
+    <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input">
+    <select name="category" class="pilarease-admin-select category-select">
+      <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
+      <option value="anger" {% if category == 'anger' %}selected{% endif %}>Anger</option>
+      <option value="disgust" {% if category == 'disgust' %}selected{% endif %}>Disgust</option>
+      <option value="fear" {% if category == 'fear' %}selected{% endif %}>Fear</option>
+      <option value="happiness" {% if category == 'happiness' %}selected{% endif %}>Happiness</option>
+      <option value="neutral" {% if category == 'neutral' %}selected{% endif %}>Neutral</option>
+      <option value="sadness" {% if category == 'sadness' %}selected{% endif %}>Sadness</option>
+      <option value="surprise" {% if category == 'surprise' %}selected{% endif %}>Surprise</option>
+    </select>
+    <button type="submit" class="pilarease-admin-button">Search</button>
+    <a href="{% url 'dashboard' %}" class="pilarease-admin-button pilarease-admin-reset-button">Reset</a>
+  </form>
+
+  <!-- Status Table -->
+  <table class="pilarease-admin-statuses-table">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Avatar</th>
+        <th>Student ID</th>
+        <th>Title</th>
+        <th>Body</th>
+        <th>Category</th>
+        <th>Date Posted</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for status in statuses %}
+      <tr class="pilarease-admin-status-row" data-status-id="{{ status.id }}">
+        <td>{{ forloop.counter }}</td>
+        <td>
+          {% if status.user.profile.avatar %}
+            <img src="{{ status.user.profile.avatar.url }}" alt="Avatar" class="avatar-image"/>
+          {% else %}
+            <img src="{% static 'default_avatar.png' %}" alt="Default Avatar" class="avatar-image"/>
+          {% endif %}
+        </td>
+        <td>{{ status.user.student_id }}</td>
+        <td>{{ status.title }}</td>
+        <td class="pilarease-admin-status-body" title="{{ status.plain_description|escapejs }}">{{ status.plain_description|truncatewords:10 }}</td>
+        <td>{{ status.emotion|title }}</td>
+        <td>{{ status.created_at|date:"Y-m-d" }}</td>
+        <td>
+          <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+        </td>
+      </tr>
+      <!-- Expanded View Row -->
+      <tr class="pilarease-admin-expanded-view" id="expanded-view-{{ status.id }}" style="display: none;">
+        <td colspan="8">
+          <div class="pilarease-admin-expanded-content animate__animated animate__fadeIn">
+            <h3>{{ status.title }}</h3>
+            <p>{{ status.plain_description }}</p>
+            <p><strong>Category:</strong> {{ status.emotion|title }}</p>
+            <p><strong>Date Posted:</strong> {{ status.created_at|date:"Y-m-d H:i" }}</p>
+            <a href="{% url 'delete_status' status.id %}" class="pilarease-admin-action-button delete-button" aria-label="Delete Status" onclick="return confirm('Are you sure you want to delete this status?');">Delete</a>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not statuses %}
+  <p class="pilarease-admin-no-data">No status data found.</p>
+  {% endif %}
+
+  <!-- Pagination -->
+  <div class="pilarease-admin-pagination">
+    <span class="pilarease-admin-step-links">
+      {% if page_obj.has_previous %}
+        <a href="?page=1&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">First</a>
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Previous</a>
+      {% endif %}
+
+      <span class="pilarease-admin-current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ category }}" class="pilarease-admin-step-link">Last</a>
+      {% endif %}
+    </span>
+  </div>
 </div>
+
+<!-- JavaScript for Expanded View Toggle -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('.pilarease-admin-status-row');
+    rows.forEach(row => {
+      row.addEventListener('click', function(event) {
+        // Prevent triggering when clicking on the Delete button
+        if (event.target.closest('.pilarease-admin-action-button')) {
+          return;
+        }
+
+        const statusId = this.getAttribute('data-status-id');
+        const expandedView = document.getElementById('expanded-view-' + statusId);
+        if (expandedView.style.display === 'table-row') {
+          expandedView.style.display = 'none';
+        } else {
+          expandedView.style.display = 'table-row';
+        }
+      });
+    });
+  });
+</script>
+
 {% endblock %}
