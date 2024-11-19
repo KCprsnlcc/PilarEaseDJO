@@ -806,9 +806,11 @@ def manage_users(request):
 @require_POST
 def activate_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
-    if user.is_itrc_staff or user.is_counselor:
-        return JsonResponse({'success': False, 'message': 'Cannot activate ITRC staff or counselors.'}, status=400)
-
+    
+    # **Prevent activating own account if necessary**
+    if user == request.user:
+        return JsonResponse({'success': False, 'message': 'You cannot activate your own account.'}, status=400)
+    
     user.is_active = True
     user.is_verified = True
     user.verification_status = 'verified'
@@ -825,7 +827,7 @@ def activate_user(request, user_id):
     # Send notification to all ITRC staff
     message = f"User '{user.username}' has been activated and verified by {request.user.username}."
     link = reverse('manage_users')  # Adjust as needed
-    notify_itrc_staff('success', message, link)
+    notify_itrc_staff(request, 'success', message, link)
 
     return JsonResponse({'success': True, 'message': f'User {user.username} has been activated and verified.'})
 @user_passes_test(is_itrc_staff)
@@ -833,9 +835,11 @@ def activate_user(request, user_id):
 @require_POST
 def deactivate_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
-    if user.is_itrc_staff or user.is_counselor:
-        return JsonResponse({'success': False, 'message': 'Cannot deactivate ITRC staff or counselors.'}, status=400)
-
+    
+    # **Prevent deactivating own account if necessary**
+    if user == request.user:
+        return JsonResponse({'success': False, 'message': 'You cannot deactivate your own account.'}, status=400)
+    
     user.is_active = False
     user.is_verified = False
     user.verification_status = 'deactivated'
@@ -852,7 +856,8 @@ def deactivate_user(request, user_id):
     # Send notification to all ITRC staff
     message = f"User '{user.username}' has been deactivated by {request.user.username}."
     link = reverse('manage_users')  # Adjust as needed
-    notify_itrc_staff('warning', message, link)
+    notify_itrc_staff(request, 'warning', message, link)
+
 
     return JsonResponse({'success': True, 'message': f'User {user.username} has been deactivated.'})
 
@@ -885,8 +890,9 @@ def delete_user(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
     username = user.username
 
-    if user.is_itrc_staff or user.is_counselor:
-        return JsonResponse({'success': False, 'message': 'Cannot delete ITRC staff or counselors.'}, status=400)
+    # **Prevent deleting own account**
+    if user == request.user:
+        return JsonResponse({'success': False, 'message': 'You cannot delete your own account.'}, status=400)
 
     user.delete()
 
@@ -894,10 +900,15 @@ def delete_user(request, user_id):
     AuditLog.objects.create(
         user=request.user,
         action='delete_user',
-        details=f"Deleted user {username}."
+        details=f"Deleted user {username}.",
+        timestamp=timezone.now()
     )
 
-    # Cannot send notification since the user is deleted
+    # Send notification to ITRC staff
+    message = f"{request.user.username} deleted user: {username}."
+    link = reverse('manage_users')
+    notify_itrc_staff(request, 'error', message, link)
+
 
     return JsonResponse({'success': True, 'message': f'User {username} has been deleted.'})
 
@@ -1615,9 +1626,6 @@ def manage_users_bulk_action(request):
     bulk_action = request.POST.get('bulk_action')
     selected_users = request.POST.getlist('selected_users')
 
-    logger.debug(f"Received Bulk Action: {bulk_action}")
-    logger.debug(f"Selected Users: {selected_users}")
-
     if not bulk_action:
         return JsonResponse({'success': False, 'message': 'No bulk action selected.'}, status=400)
 
@@ -1629,9 +1637,12 @@ def manage_users_bulk_action(request):
     except ValueError:
         return JsonResponse({'success': False, 'message': 'Invalid user selection.'}, status=400)
 
-    users_qs = CustomUser.objects.filter(id__in=selected_users).exclude(
-        Q(is_itrc_staff=True) | Q(is_counselor=True)
-    )
+    # **Removed exclusion of ITRC staff and counselors**
+    users_qs = CustomUser.objects.filter(id__in=selected_users)
+
+    # **Prevent bulk actions on self**
+    if request.user.id in selected_users:
+        return JsonResponse({'success': False, 'message': 'You cannot perform bulk actions on your own account.'}, status=400)
 
     if bulk_action == 'verify':
         updated_count = users_qs.update(is_verified=True, verification_status='verified')
@@ -1642,7 +1653,7 @@ def manage_users_bulk_action(request):
             timestamp=timezone.now()
         )
         message = f'Successfully verified {updated_count} users.'
-        notify_itrc_staff('success', f"{request.user.username} bulk verified {updated_count} users.", reverse('manage_users'))
+        notify_itrc_staff(request, 'success', f"{request.user.username} bulk verified {updated_count} users.", reverse('manage_users'))
         return JsonResponse({'success': True, 'message': message})
 
     elif bulk_action == 'activate':
@@ -1666,15 +1677,14 @@ def manage_users_bulk_action(request):
             timestamp=timezone.now()
         )
         message = f'Successfully deactivated {updated_count} users.'
-        notify_itrc_staff('warning', f"{request.user.username} bulk deactivated {updated_count} users.", reverse('manage_users'))
+        notify_itrc_staff(request, 'warning', f"{request.user.username} bulk deactivated {updated_count} users.", reverse('manage_users'))
         return JsonResponse({'success': True, 'message': message})
 
     elif bulk_action == 'delete':
-        non_deletable_users = CustomUser.objects.filter(
-            Q(id__in=selected_users) & (Q(is_itrc_staff=True) | Q(is_counselor=True))
-        )
-        if non_deletable_users.exists():
-            return JsonResponse({'success': False, 'message': 'Cannot delete ITRC staff or counselors.'}, status=400)
+        # **Allow deletion of any user, including ITRC staff and counselors**
+        # **Prevent bulk deletion of self**
+        if request.user.id in selected_users:
+            return JsonResponse({'success': False, 'message': 'You cannot delete your own account.'}, status=400)
 
         deleted_count, _ = users_qs.delete()
         AuditLog.objects.create(
@@ -1750,6 +1760,24 @@ def notify_itrc_staff(notification_type, message, link=None):
         timestamp=timezone.now()
     )
 
+def notify_itrc_staff(request, notification_type, message, link=None):
+    itrc_staff = CustomUser.objects.filter(is_itrc_staff=True)
+    notifications = [
+        Notification_System(
+            user=staff,
+            notification_type=notification_type,
+            message=message,
+            link=link
+        ) for staff in itrc_staff
+    ]
+    Notification_System.objects.bulk_create(notifications)
+    # Log the notification event with the requesting user
+    AuditLog.objects.create(
+        user=request.user,
+        action='notify_itrc_staff',
+        details=f"Sent '{notification_type}' notifications to all ITRC staff.",
+        timestamp=timezone.now()
+    )
 @user_passes_test(is_itrc_staff)
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -1780,7 +1808,8 @@ def add_user(request):
                     # Send notification to ITRC staff
                     message = f"{request.user.username} added a new user: {user.username}."
                     link = reverse('manage_users')
-                    notify_itrc_staff('info', message, link)
+                    notify_itrc_staff(request, 'info', message, link)
+
 
                     messages.success(request, f'User "{user.username}" has been added successfully.')
                     return redirect('manage_users')
@@ -1838,7 +1867,8 @@ def edit_user_view(request, user_id):
                 # Send notification to ITRC staff
                 message = f"{request.user.username} edited user: {user_obj.username}."
                 link = reverse('manage_users')
-                notify_itrc_staff('info', message, link)
+                notify_itrc_staff(request, 'info', message, link)
+
 
                 messages.success(request, f'User "{user_obj.username}" has been updated successfully.')
                 return redirect('manage_users')
@@ -1873,6 +1903,10 @@ def change_role(request, user_id):
     if new_role not in ['user', 'counselor', 'itrc_staff']:
         return JsonResponse({'success': False, 'message': 'Invalid role selected.'}, status=400)
 
+    # **Prevent changing own role to avoid self-lockout**
+    if user == request.user and new_role != 'itrc_staff':
+        return JsonResponse({'success': False, 'message': 'You cannot change your own role to a non-ITRC staff.'}, status=400)
+
     # Update role flags
     user.is_itrc_staff = new_role == 'itrc_staff'
     user.is_counselor = new_role == 'counselor'
@@ -1899,6 +1933,6 @@ def change_role(request, user_id):
     # Send notification to ITRC staff
     message = f"{request.user.username} changed role of user: {user.username} to {new_role}."
     link = reverse('manage_users')
-    notify_itrc_staff('info', message, link)
+    notify_itrc_staff(request, 'info', message, link)
 
     return JsonResponse({'success': True, 'message': f"User role updated to {new_role}."})
