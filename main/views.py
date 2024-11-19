@@ -1638,7 +1638,18 @@ model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-e
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 
 def analyze_emotions(text):
-    inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True, padding="max_length")
+    # Remove HTML tags
+    text = strip_html_tags(text)
+    # Replace emojis with their names
+    text = replace_emojis_with_names(text)
+    # Proceed with emotion analysis
+    inputs = tokenizer(
+        text, 
+        return_tensors="pt", 
+        max_length=512, 
+        truncation=True, 
+        padding="max_length"
+    )
     outputs = model(**inputs)
     scores = outputs[0][0].detach().numpy()
     scores = softmax(scores)
@@ -1916,7 +1927,20 @@ def submit_status(request):
         return JsonResponse({'success': True, 'status': status_data, 'message': 'Status shared successfully!'})
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
+def replace_emojis_with_names(text):
+    # Fetch all emojis from the database
+    emojis = Emoji.objects.all()
+    emoji_dict = {e.emoji: e.name.replace('_', ' ') for e in emojis}
 
+    # Compile a regex pattern that matches any emoji in the text
+    pattern = re.compile('|'.join(map(re.escape, emoji_dict.keys())))
+    
+    # Function to replace each emoji with its name
+    def replace(match):
+        return emoji_dict[match.group(0)]
+
+    # Replace emojis in the text
+    return pattern.sub(replace, text)
 def format_timestamp(timestamp):
     now = timezone.now()
     diff = now - timestamp

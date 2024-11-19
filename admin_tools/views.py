@@ -39,10 +39,13 @@ from django.urls import reverse
 import threading
 import seaborn as sns
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import re
+
 from main.models import (
     ContactUs,
     Status,
     CustomUser,
+    Emoji,
     Reply,
     Feedback,
     Referral,
@@ -2035,10 +2038,16 @@ def analysis_view(request):
     # -------------------------
     # Function to extract keywords from text
     def extract_keywords(text, num_keywords=5):
+    # Replace emojis with names
+        text = replace_emojis_with_names(text)
+        # Tokenize the text
         tokens = word_tokenize(text.lower())
+        # Remove stopwords and non-alphabetic tokens
         stop_words_set = set(stopwords.words('english'))
         filtered_tokens = [word for word in tokens if word.isalpha() and word not in stop_words_set]
+        # Count the frequency of each word
         word_counts = Counter(filtered_tokens)
+        # Get the most common words
         common_words = [word for word, count in word_counts.most_common(num_keywords)]
         return common_words
 
@@ -2066,6 +2075,21 @@ def analysis_view(request):
 
     return render(request, 'admin_tools/analysis.html', context)
 
+
+def replace_emojis_with_names(text):
+    # Fetch all emojis from the database
+    emojis = Emoji.objects.all()
+    emoji_dict = {e.emoji: e.name.replace('_', ' ') for e in emojis}
+
+    # Compile a regex pattern that matches any emoji in the text
+    pattern = re.compile('|'.join(map(re.escape, emoji_dict.keys())))
+    
+    # Function to replace each emoji with its name
+    def replace(match):
+        return emoji_dict[match.group(0)]
+    
+    # Replace emojis in the text
+    return pattern.sub(replace, text)
 
 def delete_status(request, status_id):
     """
