@@ -20,10 +20,10 @@
         class="bx bx-info-circle pilarease-admin-info-icon"
         aria-label="More information about the Dashboard"
       ></i>
-      <span class="pilarease-admin-tooltip">
-        Overview of all administrative tools including user feedback,
-        testimonials, and contact queries.
-      </span>
+<span class="pilarease-admin-tooltip">
+    Manage user statuses efficiently. Search, filter by category, and take actions such as deleting or reviewing statuses to maintain system organization.
+</span>
+
     </h1>
   </div>
 
@@ -68,7 +68,7 @@
           {% if status.user.profile.avatar %}
             <img src="{{ status.user.profile.avatar.url }}" alt="Avatar" class="avatar-image"/>
           {% else %}
-            <img src="{% static 'default_avatar.png' %}" alt="Default Avatar" class="avatar-image"/>
+            <img src="{% static 'images/placeholder.png' %}" alt="Default Avatar" class="avatar-image"/>
           {% endif %}
         </td>
         <td>{{ status.user.student_id }}</td>

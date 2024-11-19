@@ -664,13 +664,13 @@ def dashboard(request):
         statuses = Status.objects.filter(
             Q(title__icontains=search_query) |
             Q(plain_description__icontains=search_query)
-        ).select_related('user', 'user__profile')
+        ).select_related('user', 'user__profile').order_by('-created_at')  # Order by timestamp in descending order
     else:
         statuses = Status.objects.filter(
             Q(title__icontains=search_query) |
             Q(plain_description__icontains=search_query),
             emotion=category
-        ).select_related('user', 'user__profile')
+        ).select_related('user', 'user__profile').order_by('-created_at')  # Order by timestamp in descending order
 
     paginator = Paginator(statuses, page_size)
     page_obj = paginator.get_page(page_number)
@@ -681,7 +681,6 @@ def dashboard(request):
         'search_query': search_query,
         'category': category,
         'page_obj': page_obj,
-        # Add other context variables as needed
     }
     return render(request, 'admin_tools/dashboard.html', context)
 
