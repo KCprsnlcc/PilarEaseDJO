@@ -1,5 +1,5 @@
 # itrc_tools/forms.py
-
+from .constants import ROLE_CHOICES
 from django import forms
 from .models import SystemSetting
 from django.core.validators import FileExtensionValidator
@@ -29,6 +29,10 @@ from .models import CustomUser
 CustomUser = get_user_model()
 
 class AddUserForm(forms.ModelForm):
+    role = forms.ChoiceField(choices=ROLE_CHOICES, required=True, label='Role')
+    password = forms.CharField(widget=forms.PasswordInput, label='Password')
+    is_active = forms.BooleanField(required=False, label='Active', initial=True)  # Added is_active
+
     class Meta:
         model = CustomUser
         fields = [
@@ -38,10 +42,9 @@ class AddUserForm(forms.ModelForm):
             'full_name',
             'academic_year_level',
             'contact_number',
-            'is_counselor',
-            'is_itrc_staff',
-            'is_active',
+            'is_active',  # Include is_active in fields
             'password',
+            'role',
         ]
         widgets = {
             'username': forms.TextInput(attrs={'class': 'itrc-add-user-input'}),
@@ -50,9 +53,7 @@ class AddUserForm(forms.ModelForm):
             'full_name': forms.TextInput(attrs={'class': 'itrc-add-user-input'}),
             'academic_year_level': forms.TextInput(attrs={'class': 'itrc-add-user-input'}),
             'contact_number': forms.TextInput(attrs={'class': 'itrc-add-user-input'}),
-            'is_counselor': forms.CheckboxInput(attrs={'class': 'itrc-add-user-input-checkbox'}),
-            'is_itrc_staff': forms.CheckboxInput(attrs={'class': 'itrc-add-user-input-checkbox'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'itrc-add-user-input-checkbox'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'pilarease-itrc-toggle-checkbox'}),
             'password': forms.PasswordInput(attrs={'class': 'itrc-add-user-input'}),
         }
 
@@ -76,8 +77,23 @@ class AddUserForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        role = self.cleaned_data['role']
+        user.is_active = self.cleaned_data['is_active']  # Set is_active
+
+        # Set role-based flags
+        if role == 'student':
+            user.is_counselor = False
+            user.is_itrc_staff = False
+        elif role == 'counselor':
+            user.is_counselor = True
+            user.is_itrc_staff = False
+        elif role == 'itrc_staff':
+            user.is_counselor = False
+            user.is_itrc_staff = True
+
         # Set the password properly
         user.set_password(self.cleaned_data['password'])
+
         if commit:
             user.save()
         return user
@@ -89,78 +105,88 @@ class UserProfileForm(forms.ModelForm):
         widgets = {
             'avatar': forms.FileInput(attrs={'class': 'itrc-add-user-input-file'}),
         }
+
 class EditUserForm(forms.ModelForm):
-    # Include UserProfile fields
-    avatar = forms.ImageField(
+    role = forms.ChoiceField(choices=ROLE_CHOICES, required=True, label='Role')
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'placeholder': 'Leave blank to keep the current password'}),
         required=False,
-        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])],
-        widget=forms.ClearableFileInput(attrs={'class': 'itrc-edit-user-input-field'})
+        label='Password'
     )
-    bio = forms.CharField(
+    student_id = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={'class': 'itrc-edit-user-input-field', 'rows': 4}),
-        label='Bio'
+        label='Student ID',
+        disabled=True,
+        widget=forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'})
     )
+    avatar = forms.ImageField(required=False, label='Avatar')  # Added avatar field
+    is_active = forms.BooleanField(required=False, label='Active')  # Added is_active
 
     class Meta:
         model = CustomUser
         fields = [
             'username',
             'email',
+            'student_id',
             'full_name',
             'academic_year_level',
             'contact_number',
-            'is_counselor',
-            'is_itrc_staff',
-            'is_active',
+            'is_active',  # Include is_active in fields
             'password',
+            'role',
+            'avatar',  # Include avatar in fields
         ]
         widgets = {
-            'password': forms.PasswordInput(attrs={'placeholder': 'Leave blank to keep the current password'}),
+            'username': forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'}),
+            'email': forms.EmailInput(attrs={'class': 'itrc-edit-user-input-field'}),
+            'full_name': forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'}),
+            'academic_year_level': forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'}),
+            'contact_number': forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'pilarease-itrc-toggle-checkbox'}),
+            'role': forms.Select(attrs={'class': 'itrc-edit-user-input-dropdown'}),
         }
         help_texts = {
             'password': 'Enter a new password if you want to change it.',
         }
 
     def __init__(self, *args, **kwargs):
-        # Pop the user instance if provided
-        self.user = kwargs.pop('instance', None)
-        super(EditUserForm, self).__init__(*args, instance=self.user, **kwargs)
-        
-        # Make student_id read-only
-        if self.user:
-            self.fields['student_id'] = forms.CharField(
-                initial=self.user.student_id,
-                required=False,
-                label='Student ID',
-                disabled=True,
-                widget=forms.TextInput(attrs={'class': 'itrc-edit-user-input-field'})
-            )
-        
-        # Populate initial values for UserProfile fields
+        super(EditUserForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            # Set initial role based on flags
+            if self.instance.is_itrc_staff:
+                self.fields['role'].initial = 'itrc_staff'
+            elif self.instance.is_counselor:
+                self.fields['role'].initial = 'counselor'
+            else:
+                self.fields['role'].initial = 'student'
+            
+            # Set initial is_active value
+            self.fields['is_active'].initial = self.instance.is_active
+
+            # Populate initial values for UserProfile fields
             try:
-                profile = self.user.profile
+                profile = self.instance.profile
                 self.fields['avatar'].initial = profile.avatar
-                self.fields['bio'].initial = profile.bio
+                # If you have a 'bio' field, uncomment the next line
+                # self.fields['bio'].initial = profile.bio
             except UserProfile.DoesNotExist:
                 pass
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if CustomUser.objects.filter(email=email).exclude(pk=self.user.pk).exists():
+        if CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("This email is already in use by another user.")
         return email
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if CustomUser.objects.filter(username=username).exclude(pk=self.user.pk).exists():
+        if CustomUser.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("This username is already taken.")
         return username
 
     def clean_password(self):
         password = self.cleaned_data.get('password')
         if password:
-            # You can add more password validations here if needed
             if len(password) < 8:
                 raise forms.ValidationError("Password must be at least 8 characters long.")
         return password
@@ -168,15 +194,28 @@ class EditUserForm(forms.ModelForm):
     def save(self, commit=True):
         user = super(EditUserForm, self).save(commit=False)
         password = self.cleaned_data.get('password')
+        role = self.cleaned_data['role']
+        user.is_active = self.cleaned_data['is_active']  # Set is_active
+
+        # Set role-based flags
+        if role == 'student':
+            user.is_counselor = False
+            user.is_itrc_staff = False
+        elif role == 'counselor':
+            user.is_counselor = True
+            user.is_itrc_staff = False
+        elif role == 'itrc_staff':
+            user.is_counselor = False
+            user.is_itrc_staff = True
+
         if password:
             user.set_password(password)
+
         if commit:
             user.save()
             # Update UserProfile fields
             profile, created = UserProfile.objects.get_or_create(user=user)
-            profile.bio = self.cleaned_data.get('bio')
-            avatar = self.cleaned_data.get('avatar')
-            if avatar:
-                profile.avatar = avatar
+            if self.cleaned_data.get('avatar'):
+                profile.avatar = self.cleaned_data.get('avatar')
             profile.save()
         return user

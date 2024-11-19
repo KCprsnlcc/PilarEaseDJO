@@ -4,7 +4,8 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 from .models import SessionLog
 from django.utils import timezone
-
+from django.db.models.signals import post_save
+from main.models import CustomUser, UserProfile
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
     # Create a new SessionLog entry when a user logs in
@@ -21,3 +22,6 @@ def log_user_logout(sender, request, user, **kwargs):
         except SessionLog.DoesNotExist:
             # No active session found; you might want to handle this case
             pass
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)

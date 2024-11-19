@@ -105,37 +105,13 @@
 
       <!-- Fourth Row -->
       <div class="itrc-edit-user-form-row">
-        <!-- Is Counselor -->
+        <!-- Role Dropdown -->
         <div class="itrc-edit-user-form-group">
-          {{ form.is_counselor.label_tag }}
-          <div class="itrc-edit-user-input-checkbox">
-            {{ form.is_counselor }}
+          {{ form.role.label_tag }}
+          <div class="itrc-edit-user-input-dropdown">
+            {{ form.role }}
           </div>
-          {% for error in form.is_counselor.errors %}
-            <div class="itrc-edit-user-error">{{ error }}</div>
-          {% endfor %}
-        </div>
-        <!-- Is ITRC Staff -->
-        <div class="itrc-edit-user-form-group">
-          {{ form.is_itrc_staff.label_tag }}
-          <div class="itrc-edit-user-input-checkbox">
-            {{ form.is_itrc_staff }}
-          </div>
-          {% for error in form.is_itrc_staff.errors %}
-            <div class="itrc-edit-user-error">{{ error }}</div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Fifth Row -->
-      <div class="itrc-edit-user-form-row">
-        <!-- Is Active -->
-        <div class="itrc-edit-user-form-group">
-          {{ form.is_active.label_tag }}
-          <div class="itrc-edit-user-input-checkbox">
-            {{ form.is_active }}
-          </div>
-          {% for error in form.is_active.errors %}
+          {% for error in form.role.errors %}
             <div class="itrc-edit-user-error">{{ error }}</div>
           {% endfor %}
         </div>
@@ -147,6 +123,21 @@
             {{ form.password }}
           </div>
           {% for error in form.password.errors %}
+            <div class="itrc-edit-user-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Active Checkbox Row -->
+      <div class="itrc-edit-user-form-row">
+        <!-- Active Checkbox -->
+        <div class="itrc-edit-user-form-group">
+          {{ form.is_active.label_tag }}
+          <div class="itrc-edit-user-input-checkbox">
+            <i class="bx bx-check-circle"></i>
+            {{ form.is_active }}
+          </div>
+          {% for error in form.is_active.errors %}
             <div class="itrc-edit-user-error">{{ error }}</div>
           {% endfor %}
         </div>
@@ -179,5 +170,6 @@
 {% endblock %}
 
 {% block extra_js %}
-
+<!-- If you have any additional JS for edit user, include here -->
+<script src="{% static 'js/edit_user_validation.js' %}"></script>
 {% endblock %}

@@ -26,7 +26,7 @@
       <!-- User Form Fields -->
       <h2>User Information</h2>
       {{ user_form.non_field_errors }}
-      
+
       <!-- First Row -->
       <div class="itrc-add-user-form-row">
         <!-- Username -->
@@ -107,37 +107,13 @@
 
       <!-- Fourth Row -->
       <div class="itrc-add-user-form-row">
-        <!-- Is Counselor -->
+        <!-- Role Dropdown -->
         <div class="itrc-add-user-form-group">
-          {{ user_form.is_counselor.label_tag }}
-          <div class="itrc-add-user-input-checkbox">
-            {{ user_form.is_counselor }}
+          {{ user_form.role.label_tag }}
+          <div class="itrc-add-user-input-dropdown">
+            {{ user_form.role }}
           </div>
-          {% for error in user_form.is_counselor.errors %}
-            <div class="itrc-add-user-error">{{ error }}</div>
-          {% endfor %}
-        </div>
-        <!-- Is ITRC Staff -->
-        <div class="itrc-add-user-form-group">
-          {{ user_form.is_itrc_staff.label_tag }}
-          <div class="itrc-add-user-input-checkbox">
-            {{ user_form.is_itrc_staff }}
-          </div>
-          {% for error in user_form.is_itrc_staff.errors %}
-            <div class="itrc-add-user-error">{{ error }}</div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Fifth Row -->
-      <div class="itrc-add-user-form-row">
-        <!-- Is Active -->
-        <div class="itrc-add-user-form-group">
-          {{ user_form.is_active.label_tag }}
-          <div class="itrc-add-user-input-checkbox">
-            {{ user_form.is_active }}
-          </div>
-          {% for error in user_form.is_active.errors %}
+          {% for error in user_form.role.errors %}
             <div class="itrc-add-user-error">{{ error }}</div>
           {% endfor %}
         </div>
@@ -149,6 +125,21 @@
             {{ user_form.password }}
           </div>
           {% for error in user_form.password.errors %}
+            <div class="itrc-add-user-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Active Checkbox Row -->
+      <div class="itrc-add-user-form-row">
+        <!-- Active Checkbox -->
+        <div class="itrc-add-user-form-group">
+          {{ user_form.is_active.label_tag }}
+          <div class="itrc-add-user-input-checkbox">
+            <i class="bx bx-check-circle"></i>
+            {{ user_form.is_active }}
+          </div>
+          {% for error in user_form.is_active.errors %}
             <div class="itrc-add-user-error">{{ error }}</div>
           {% endfor %}
         </div>

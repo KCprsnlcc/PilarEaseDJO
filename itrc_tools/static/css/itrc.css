@@ -941,6 +941,51 @@ a:hover {
   border-color: var(--danger-color) !important;
   box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
 }
+/* itrc-add-user Dropdown Styling */
+.itrc-add-user-input-dropdown select {
+  width: 100%;
+  padding: 10px 10px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 1em;
+  background-color: #ffffff;
+  appearance: none;
+  background-image: url("path_to_dropdown_arrow_icon");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  transition: border-color var(--transition-speed),
+    box-shadow var(--transition-speed);
+}
+
+.itrc-add-user-input-dropdown select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+}
+
+/* itrc-add-user Dropdown Styling */
+.itrc-edit-user-input-dropdown select {
+  width: 100%;
+  padding: 10px 10px;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+  font-size: 1em;
+  background-color: #ffffff;
+  appearance: none;
+  background-image: url("path_to_dropdown_arrow_icon");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  transition: border-color var(--transition-speed),
+    box-shadow var(--transition-speed);
+}
+
+.itrc-edit-user-input-dropdown select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+}
 
 .itrc-add-user-error-message,
 .itrc-add-user-error {
