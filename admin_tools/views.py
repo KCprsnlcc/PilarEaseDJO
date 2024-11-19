@@ -556,7 +556,44 @@ def delete_reply(request, reply_id):
             return JsonResponse({'success': False, 'message': 'Reply not found.'}, status=404)
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
 
-
+@login_required
+def feedback_view(request):
+    # Handling User Feedbacks
+    feedback_search_query = request.GET.get('feedback_search', '')
+    feedbacks_queryset = Feedback.objects.all()
+    
+    if feedback_search_query:
+        feedbacks_queryset = feedbacks_queryset.filter(
+            Q(user__full_name__icontains=feedback_search_query) |
+            Q(message__icontains=feedback_search_query)
+        )
+    
+    feedbacks_paginator = Paginator(feedbacks_queryset.order_by('-created_at'), 10)  # Show 10 feedbacks per page
+    feedback_page_number = request.GET.get('page_feedback')
+    feedbacks = feedbacks_paginator.get_page(feedback_page_number)
+    
+    # Handling User Testimonials
+    testimonial_search_query = request.GET.get('testimonial_search', '')
+    testimonials_queryset = Feedback.objects.filter(is_approved=True)
+    
+    if testimonial_search_query:
+        testimonials_queryset = testimonials_queryset.filter(
+            Q(user__full_name__icontains=testimonial_search_query) |
+            Q(message__icontains=testimonial_search_query)
+        )
+    
+    testimonials_paginator = Paginator(testimonials_queryset.order_by('-created_at'), 10)  # Show 10 testimonials per page
+    testimonial_page_number = request.GET.get('page_testimonial')
+    testimonials = testimonials_paginator.get_page(testimonial_page_number)
+    
+    context = {
+        'feedbacks': feedbacks,
+        'feedback_search_query': feedback_search_query,
+        'testimonials': testimonials,
+        'testimonial_search_query': testimonial_search_query,
+    }
+    
+    return render(request, 'admin_tools/feedback.html', context)
 @login_required
 def status_view(request):
     search_query = request.GET.get('search', '')
@@ -589,33 +626,10 @@ def status_view(request):
 
 @login_required
 def dashboard(request):
-    # Feedbacks
-    feedback_search_query = request.GET.get('feedback_search', '')
-    feedbacks_queryset = Feedback.objects.all()
-    if feedback_search_query:
-        feedbacks_queryset = feedbacks_queryset.filter(
-            Q(user__full_name__icontains=feedback_search_query) |
-            Q(message__icontains=feedback_search_query)
-        )
-    feedbacks_paginator = Paginator(feedbacks_queryset, 10)  # Show 10 feedbacks per page
-    feedback_page_number = request.GET.get('page_feedback')
-    feedbacks = feedbacks_paginator.get_page(feedback_page_number)
-
-    # Testimonials (approved feedbacks, including excluded)
-    testimonial_search_query = request.GET.get('testimonial_search', '')
-    testimonials_queryset = Feedback.objects.filter(is_approved=True)  # Removed is_excluded=False
-    if testimonial_search_query:
-        testimonials_queryset = testimonials_queryset.filter(
-            Q(user__full_name__icontains=testimonial_search_query) |
-            Q(message__icontains=testimonial_search_query)
-        )
-    testimonials_paginator = Paginator(testimonials_queryset, 10)  # Show 10 testimonials per page
-    testimonial_page_number = request.GET.get('page_testimonial')
-    testimonials = testimonials_paginator.get_page(testimonial_page_number)
-
     # Contact Us Queries
     contact_search_query = request.GET.get('contact_search', '')
     contacts_queryset = ContactUs.objects.all()
+    
     if contact_search_query:
         contacts_queryset = contacts_queryset.filter(
             Q(name__icontains=contact_search_query) |
@@ -623,15 +637,12 @@ def dashboard(request):
             Q(subject__icontains=contact_search_query) |
             Q(message__icontains=contact_search_query)
         )
-    contacts_paginator = Paginator(contacts_queryset, 10)  # Show 10 contacts per page
+    
+    contacts_paginator = Paginator(contacts_queryset.order_by('-created_at'), 10)  # Show 10 contacts per page
     contact_page_number = request.GET.get('page_contact')
     contacts = contacts_paginator.get_page(contact_page_number)
-
+    
     context = {
-        'feedbacks': feedbacks,
-        'feedback_search_query': feedback_search_query,
-        'testimonials': testimonials,
-        'testimonial_search_query': testimonial_search_query,
         'contacts': contacts,
         'contact_search_query': contact_search_query,
     }

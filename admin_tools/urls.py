@@ -25,6 +25,7 @@ urlpatterns = [
     path('status/', views.status_view, name='status'),
 
     # Feedback Management
+    path('feedback/', views.feedback_view, name='feedback'),
     path('approve-feedback/<int:feedback_id>/', views.approve_feedback, name='approve_feedback'),
     path('delete-feedback/<int:feedback_id>/', views.delete_feedback, name='delete_feedback'),
 
