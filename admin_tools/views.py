@@ -1849,7 +1849,6 @@ def contains_custom_profanity(text):
         if re.search(rf'\b{re.escape(profanity_word)}\b', text, re.IGNORECASE):
             return True
     return False
-
 @login_required
 def analysis_view(request):
     """
@@ -1871,13 +1870,13 @@ def analysis_view(request):
         statuses_queryset = Status.objects.filter(
             Q(title__icontains=statuses_search_query) |
             Q(plain_description__icontains=statuses_search_query)
-        )
+        ).order_by('-created_at')  # Order by timestamp in descending order
     else:
         statuses_queryset = Status.objects.filter(
             Q(title__icontains=statuses_search_query) |
             Q(plain_description__icontains=statuses_search_query),
             emotion=category_status
-        )
+        ).order_by('-created_at')  # Order by timestamp in descending order
 
     # Paginate statuses
     statuses_paginator = Paginator(statuses_queryset, statuses_page_size)
@@ -1904,8 +1903,6 @@ def analysis_view(request):
             'keywords': keywords
         })
 
-    
-
     context = {
         # Statuses Management
         'statuses': statuses_page_obj,
@@ -1920,6 +1917,7 @@ def analysis_view(request):
     }
 
     return render(request, 'admin_tools/analysis.html', context)
+
 
 def delete_status(request, status_id):
     """
