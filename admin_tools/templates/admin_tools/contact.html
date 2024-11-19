@@ -1,0 +1,140 @@
+<!-- templates/admin_tools/dashboard.html -->
+
+{% extends "admin_tools/base_admin.html" %} {% load static %} {% load compress
+%} {% load sentiment_tags %}
+<!-- Load the custom sentiment_tags -->
+
+{% block content %}
+<div class="pilarease-admin-dashboard-container">
+  <!-- Dashboard Header -->
+  <div
+    class="pilarease-admin-dashboard-header"
+    style="display: flex; justify-content: space-between; align-items: center"
+  >
+    <h1 class="pilarease-admin-dashboard-title">
+      Contact Management
+      <i
+        class="bx bx-info-circle pilarease-admin-info-icon"
+        aria-label="More information about the Dashboard"
+      ></i>
+      <span class="pilarease-admin-tooltip">
+        Manage and respond to queries submitted through the Contact Us form.
+      </span>
+    </h1>
+  </div>
+
+  <!-- Contact Us Queries Section -->
+  <div class="pilarease-admin-contactus-container">
+    <div class="pilarease-admin-contactus-header">
+      <form method="get" class="pilarease-admin-contactus-search-form">
+        <input
+          type="text"
+          name="contact_search"
+          placeholder="Search Contacts..."
+          value="{{ contact_search_query }}"
+          class="pilarease-admin-contactus-search-input"
+        />
+        <button type="submit" class="pilarease-admin-contactus-search-button">
+          Search
+        </button>
+      </form>
+    </div>
+
+    <table class="pilarease-admin-contactus-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Subject</th>
+          <th>Message</th>
+          <th>Reply</th>
+          <th>Approval Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contact in contacts.object_list %}
+        <tr>
+          <td>{{ contact.name }}</td>
+          <td>{{ contact.email }}</td>
+          <td>{{ contact.subject }}</td>
+          <td>{{ contact.message }}</td>
+          <td>
+            {% if contact.is_replied %}
+            <p>{{ contact.reply }}</p>
+            {% else %}
+            <form
+              method="post"
+              action="{% url 'contact_us_reply' contact.id %}"
+              class="pilarease-admin-reply-form"
+            >
+              {% csrf_token %}
+              <textarea
+                name="reply_text"
+                rows="2"
+                placeholder="Enter your reply..."
+                required
+              ></textarea>
+              <button
+                type="submit"
+                class="pilarease-admin-action-button approve-button"
+              >
+                Reply
+              </button>
+            </form>
+            {% endif %}
+          </td>
+          <td>
+            {% if contact.is_replied %}
+            <span class="pilarease-admin-approved-label">Replied</span>
+            {% else %}
+            <span class="pilarease-admin-pending-label">Pending</span>
+            {% endif %}
+          </td>
+          <td>{{ contact.created_at|date:"Y-m-d" }}</td>
+          <td>
+            <a
+              href="{% url 'delete_contact_us' contact.id %}"
+              class="pilarease-admin-action-button delete-button"
+              >Delete</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not contacts.object_list %}
+    <p class="pilarease-admin-no-contact">No contact us queries found.</p>
+    {% endif %}
+    <div class="pilarease-admin-pagination">
+      <span class="pilarease-admin-step-links">
+        {% if contacts.has_previous %}
+        <a href="?contact_search={{ contact_search_query }}&page=1"
+          >&laquo; first</a
+        >
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.previous_page_number }}"
+          >previous</a
+        >
+        {% endif %}
+
+        <span class="pilarease-admin-current">
+          Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
+        </span>
+
+        {% if contacts.has_next %}
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.next_page_number }}"
+          >next</a
+        >
+        <a
+          href="?contact_search={{ contact_search_query }}&page={{ contacts.paginator.num_pages }}"
+          >last &raquo;</a
+        >
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+{% endblock %}

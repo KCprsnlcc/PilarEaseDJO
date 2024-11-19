@@ -17,6 +17,9 @@ urlpatterns = [
     path('fetch_counselor_notifications/', views.fetch_counselor_notifications, name='fetch_counselor_notifications'),
     path('mark_counselor_notification_as_read/<int:notification_id>/', views.mark_counselor_notification_as_read, name='mark_counselor_notification_as_read'),
 
+    # Contact
+    path('contact/', views.contact, name='contact'),
+
     # Replies
     path('replies/', views.replies_view, name='replies'),
     path('delete-reply/<int:reply_id>/', views.delete_reply, name='delete_reply'),

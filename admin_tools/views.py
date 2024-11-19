@@ -557,6 +557,59 @@ def delete_reply(request, reply_id):
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=400)
 
 @login_required
+def contact(request):
+    """
+    Handles the Contact Us Queries, including search, pagination, reply, and delete functionalities.
+    """
+    search_query = request.GET.get('search', '')
+    page_number = request.GET.get('page', 1)
+    page_size = 10  # Adjust as needed
+
+    # Filter Contact Us queries based on search query
+    contacts = ContactUs.objects.filter(
+        Q(name__icontains=search_query) |
+        Q(email__icontains=search_query) |
+        Q(subject__icontains=search_query) |
+        Q(message__icontains=search_query)
+    ).order_by('-created_at')
+
+    paginator = Paginator(contacts, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    if request.method == 'POST':
+        # Handle reply to contact query
+        contact_id = request.POST.get('contact_id')
+        reply_text = request.POST.get('reply_text')
+        if contact_id and reply_text:
+            try:
+                contact = ContactUs.objects.get(id=contact_id)
+                contact.reply = reply_text
+                contact.is_replied = True
+                contact.save()
+                
+                # Optionally, send an email to the user
+                from django.core.mail import send_mail
+                send_mail(
+                    f"Re: {contact.subject}",
+                    reply_text,
+                    'admin@pilarease.com',  # Replace with your admin email
+                    [contact.email],
+                    fail_silently=False,
+                )
+                
+                messages.success(request, 'Reply sent successfully.')
+                return redirect('contact_view')
+            except ContactUs.DoesNotExist:
+                messages.error(request, 'Contact Us query does not exist.')
+
+    context = {
+        'contacts': page_obj,
+        'search_query': search_query,
+        'page_obj': page_obj,
+    }
+    return render(request, 'admin_tools/contact.html', context)
+
+@login_required
 def feedback_view(request):
     # Handling User Feedbacks
     feedback_search_query = request.GET.get('feedback_search', '')
@@ -626,25 +679,12 @@ def status_view(request):
 
 @login_required
 def dashboard(request):
-    # Contact Us Queries
-    contact_search_query = request.GET.get('contact_search', '')
-    contacts_queryset = ContactUs.objects.all()
-    
-    if contact_search_query:
-        contacts_queryset = contacts_queryset.filter(
-            Q(name__icontains=contact_search_query) |
-            Q(email__icontains=contact_search_query) |
-            Q(subject__icontains=contact_search_query) |
-            Q(message__icontains=contact_search_query)
-        )
-    
-    contacts_paginator = Paginator(contacts_queryset.order_by('-created_at'), 10)  # Show 10 contacts per page
-    contact_page_number = request.GET.get('page_contact')
-    contacts = contacts_paginator.get_page(contact_page_number)
-    
+    """
+    Dashboard view without Contact Us Queries.
+    """
+    # Example: Add other dashboard-related context here
     context = {
-        'contacts': contacts,
-        'contact_search_query': contact_search_query,
+        # Add other context variables as needed
     }
     return render(request, 'admin_tools/dashboard.html', context)
 
