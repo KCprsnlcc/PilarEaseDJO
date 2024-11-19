@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
-
+    path('delete-status/<int:status_id>/', views.delete_status, name='delete_status'),
     # Statistics
     path('statistics/', views.statistics_view, name='statistics'),
     path('statistics/download_statistics_report/', views.download_statistics_report, name='download_statistics_report'),
