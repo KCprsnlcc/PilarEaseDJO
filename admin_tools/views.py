@@ -7,12 +7,14 @@ from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadReque
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.utils.timezone import localtime
-from django.db.models import Q, Avg
+from django.db.models import Count, Q, Avg
 from django.views.decorators.http import require_http_methods, require_POST
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, classification_report
 from django.db.models import Count, Case, When, Value, DurationField
+from dateutil.relativedelta import relativedelta
 import matplotlib
+from django.db.models.functions import TruncMonth
 matplotlib.use('Agg')  # Must be set before importing pyplot
 from reportlab.lib.pagesizes import A4, landscape  
 from reportlab.lib import colors
@@ -65,7 +67,7 @@ import base64
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.utils.timesince import timesince
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
@@ -660,7 +662,7 @@ def dashboard(request):
     page_size = 10
 
     # Define emotions for filtering
-    emotions = ['anger', 'disgust', 'fear', 'happiness', 'neutral', 'sadness', 'surprise']
+    emotions = ['Anger', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Surprise']
 
     # Filter statuses based on search query and category
     statuses = Status.objects.select_related('user', 'user__profile').order_by('-created_at')
@@ -681,8 +683,12 @@ def dashboard(request):
         is_counselor=False,
         last_login__gte=timezone.now() - timezone.timedelta(days=7)
     ).count()
+    # Calculate the timestamp for 24 hours ago
+    last_24_hours = timezone.now() - timedelta(hours=24)
+
+    # Update the new_posts count to include statuses created within the last 24 hours
     new_posts = Status.objects.filter(
-        created_at__date=timezone.now().date()
+        created_at__gte=last_24_hours
     ).count()
     pending_feedbacks = Feedback.objects.filter(is_approved=False).count()
 
@@ -705,28 +711,56 @@ def dashboard(request):
 
     # Limit the recent activities to the latest 5
     recent_activities = recent_activities[:5]
-
+    # Data for Posts Over Time Chart (Last 6 months)
+    today = timezone.now().date()
+    six_months_ago = today - timedelta(days=180)
+    months = []
+    current_month = six_months_ago.replace(day=1)
+    while current_month <= today:
+        months.append(current_month)
+        current_month += relativedelta(months=1)
     # Graphical Data Representation
     # Data for Posts by Category Chart
     category_counts = Status.objects.values('emotion').annotate(count=Count('emotion'))
-    category_data_dict = {item['emotion']: item['count'] for item in category_counts}
-    category_labels = json.dumps([emotion.title() for emotion in emotions])
-    category_data = json.dumps([category_data_dict.get(emotion, 0) for emotion in emotions])
+    category_data_dict = {item['emotion'].strip().capitalize(): item['count'] for item in category_counts}
 
-    # Data for User Growth Chart (Last 6 months)
-    today = datetime.today()
-    dates = [today - timedelta(days=30 * i) for i in reversed(range(6))]
-    user_growth_labels = [date.strftime('%b %Y') for date in dates]
-    user_growth_data = []
-    for date in dates:
-        count = CustomUser.objects.filter(
-            is_counselor=False,
-            date_joined__year=date.year,
-            date_joined__month=date.month
-        ).count()
-        user_growth_data.append(count)
-    user_growth_labels = json.dumps(user_growth_labels)
-    user_growth_data = json.dumps(user_growth_data)
+    category_labels = json.dumps([emotion for emotion in emotions])
+    category_data = json.dumps([category_data_dict.get(emotion, 0) for emotion in emotions])
+     # Data for Emotion Trends Chart (Last 6 months)
+    emotion_columns = [
+        'anger_percentage',
+        'disgust_percentage',
+        'fear_percentage',
+        'happiness_percentage',
+        'neutral_percentage',
+        'sadness_percentage',
+        'surprise_percentage'
+    ]
+
+
+    # Fetch statuses and group by month
+    statuses_per_month = Status.objects.filter(
+        created_at__date__gte=six_months_ago
+    ).annotate(month=TruncMonth('created_at')).order_by('month')
+
+    # Aggregate average emotions per month
+    monthly_data = statuses_per_month.values('month').annotate(
+        **{f'avg_{emotion}': Avg(emotion) for emotion in emotion_columns}
+    ).order_by('month')
+# Initialize labels and data
+    emotion_trend_labels = []
+    emotion_trend_data = {emotion: [] for emotion in emotion_columns}
+
+    for data in monthly_data:
+        month = data['month']
+        emotion_trend_labels.append(month.strftime('%b %Y'))
+        for emotion in emotion_columns:
+            avg_value = data[f'avg_{emotion}'] or 0
+            emotion_trend_data[emotion].append(round(avg_value, 2))
+
+    # Convert labels and data to JSON
+    emotion_trend_labels = json.dumps(emotion_trend_labels)
+    emotion_trend_data = json.dumps(emotion_trend_data)
 
     # Search Autocomplete Suggestions
     search_suggestions = list(Status.objects.values_list('title', flat=True).distinct())
@@ -746,8 +780,8 @@ def dashboard(request):
         'recent_activities': recent_activities,
         'category_labels': category_labels,
         'category_data': category_data,
-        'user_growth_labels': user_growth_labels,
-        'user_growth_data': user_growth_data,
+        'emotion_trend_labels': emotion_trend_labels,
+        'emotion_trend_data': emotion_trend_data,
         'search_suggestions': search_suggestions,
     }
     return render(request, 'admin_tools/dashboard.html', context)

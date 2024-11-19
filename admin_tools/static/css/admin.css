@@ -1465,12 +1465,6 @@ body {
   align-items: center;
 }
 
-.pilarease-admin-search-form {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
 .pilarease-admin-input.search-input {
   padding: 8px 12px;
   border: 1px solid var(--border-color);
@@ -2795,14 +2789,6 @@ body {
   opacity: 1;
 }
 
-/* Search and Filter Form */
-.pilarease-admin-search-form {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
 .pilarease-admin-input.search-input {
   padding: 8px 12px;
   border: 1px solid var(--border-color);
@@ -2868,6 +2854,7 @@ body {
 /* Statuses Table */
 .pilarease-admin-status-container {
   background-color: #ffffff;
+  margin-top: 15px;
   padding: 20px;
   border-radius: 8px;
   box-shadow: var(--box-shadow);
@@ -4290,32 +4277,45 @@ body::-webkit-scrollbar-thumb {
   color: var(--accent-light);
 }
 
-/* Charts Container */
 .charts-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 10px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .chart {
-  flex: 1 1 250px;
+  display: inline-block; /* Keeps each chart inline */
+  width: 45%; /* Set a fixed width for each chart */
+  margin: 0 2%; /* Space between the charts */
+  vertical-align: top; /* Align charts at the top */
   background-color: #ffffff;
   padding: 10px;
   border-radius: 5px;
   box-shadow: var(--box-shadow);
+  height: 250px; /* Adjusted height for consistent appearance */
   position: relative;
-  height: 250px; /* Reduced height */
 }
 
 .chart h3 {
   margin-bottom: 10px;
   font-size: 14px;
   color: var(--accent-color);
+  text-align: center; /* Center align the chart title */
 }
 
 .small-chart canvas {
   max-height: 180px; /* Adjust canvas height */
+  width: 100%; /* Ensure canvas adapts to chart width */
+}
+
+/* Ensure no overflow on small screens */
+@media (max-width: 768px) {
+  .chart {
+    width: 45%; /* Maintain the same width for smaller screens */
+    margin: 0 2%; /* Adjust margins for spacing */
+  }
 }
 
 /* Recent Activity Feed */

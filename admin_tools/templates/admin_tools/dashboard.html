@@ -50,19 +50,17 @@
     <h3>Posts by Category</h3>
     <canvas id="postsByCategoryChart"></canvas>
   </div>
-  <div class="chart small-chart">
-    <h3>User Growth</h3>
-    <canvas id="userGrowthChart"></canvas>
-  </div>
+<div class="chart small-chart">
+  <h3>Emotion Trends Over Time</h3>
+  <canvas id="emotionTrendChart"></canvas>
 </div>
-
 
 
   <!-- Status Management Section -->
   <div class="pilarease-admin-status-container">
     <!-- Search and Filter Form -->
     <form method="get" action="{% url 'dashboard' %}" class="pilarease-admin-search-form">
-      <input type="text" id="searchInput" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input" autocomplete="off">
+      <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="pilarease-admin-input search-input" autocomplete="off">
       <select name="category" class="pilarease-admin-select category-select">
         <option value="all" {% if category == 'all' %}selected{% endif %}>All</option>
         {% for emotion in emotions %}
@@ -164,6 +162,7 @@
 
 <!-- JavaScript for Charts -->
 <script>
+    document.addEventListener("DOMContentLoaded", function() {
   // Posts by Category Chart
   const postsByCategoryCtx = document.getElementById('postsByCategoryChart').getContext('2d');
   const postsByCategoryChart = new Chart(postsByCategoryCtx, {
@@ -195,65 +194,90 @@
     }
   });
 
-  // User Growth Chart
-  const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-  const userGrowthChart = new Chart(userGrowthCtx, {
-    type: 'line',
-    data: {
-      labels: {{ user_growth_labels|safe }},
-      datasets: [{
-        label: 'User Registrations',
-        data: {{ user_growth_data|safe }},
-        borderColor: '#36A2EB',
-        backgroundColor: '#9AD0F5',
-        fill: true,
+   // Emotion Trends Chart
+  const emotionTrendCtx = document.getElementById('emotionTrendChart').getContext('2d');
+    const emotionTrendLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
+    const emotionTrendData = {
+      'anger_percentage': [10, 15, 12, 8, 7, 9, 5],
+      'disgust_percentage': [5, 6, 7, 8, 5, 4, 3],
+      'fear_percentage': [12, 11, 13, 14, 15, 16, 17],
+      'happiness_percentage': [30, 35, 40, 45, 50, 55, 60],
+      'neutral_percentage': [20, 18, 16, 15, 14, 13, 12],
+      'sadness_percentage': [15, 12, 10, 9, 8, 7, 5],
+      'surprise_percentage': [8, 9, 7, 6, 5, 4, 3],
+    };
+
+    const emotionTrendDatasets = [];
+    const emotionColors = {
+      'anger_percentage': '#f44336',
+      'disgust_percentage': '#9c27b0',
+      'fear_percentage': '#3f51b5',
+      'happiness_percentage': '#ffeb3b',
+      'neutral_percentage': '#9e9e9e',
+      'sadness_percentage': '#2196f3',
+      'surprise_percentage': '#ff9800',
+    }; for (const emotion in emotionTrendData) {
+      emotionTrendDatasets.push({
+        label: emotion.replace('_percentage', '').charAt(0).toUpperCase() + emotion.replace('_percentage', '').slice(1),
+        data: emotionTrendData[emotion],
+        borderColor: emotionColors[emotion],
+        fill: false,
         tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { 
-          title: { 
-            display: true, 
-            text: 'Month',
-            font: {
-              size: 10
-            }
-          },
-          ticks: {
-            font: {
-              size: 8
-            }
-          }
-        },
-        y: { 
-          title: { 
-            display: true, 
-            text: 'Number of Users',
-            font: {
-              size: 10
-            }
-          },
-          ticks: {
-            font: {
-              size: 8
-            }
-          }
-        }
+      });
+    }
+
+    const emotionTrendChart = new Chart(emotionTrendCtx, {
+      type: 'line',
+      data: {
+        labels: emotionTrendLabels,
+        datasets: emotionTrendDatasets
       },
-      plugins: {
-        legend: {
-          labels: {
-            font: {
-              size: 10
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { 
+            title: { 
+              display: true, 
+              text: 'Month',
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 8
+              }
+            }
+          },
+          y: { 
+            title: { 
+              display: true, 
+              text: 'Average Emotion Percentage',
+              font: {
+                size: 10
+              }
+            },
+            ticks: {
+              font: {
+                size: 8
+              },
+              beginAtZero: true,
+              max: 100
+            }
+          },
+        },
+        plugins: {
+          legend: {
+            labels: {
+              font: {
+                size: 10
+              }
             }
           }
         }
       }
-    }
-  });
+    });
 
   // Autocomplete for Search Input
   const searchInput = document.getElementById('searchInput');
@@ -286,6 +310,7 @@
       suggestionBox.innerHTML = '';
     }
   });
+    });
 </script>
 
 <!-- JavaScript for Expanded View Toggle -->
