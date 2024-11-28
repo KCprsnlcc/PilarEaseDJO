@@ -518,9 +518,13 @@ def generate_base64_image(fig):
 def replies_view(request):
     search_query = request.GET.get('search', '')
     if search_query:
-        replies = Reply.objects.filter(text__icontains=search_query).select_related('user', 'user__profile', 'status')
+        replies = Reply.objects.filter(text__icontains=search_query)\
+            .select_related('user', 'user__profile', 'status')\
+            .order_by('-created_at')  # Descending Order by timestamp
     else:
-        replies = Reply.objects.all().select_related('user', 'user__profile', 'status')
+        replies = Reply.objects.all()\
+            .select_related('user', 'user__profile', 'status')\
+            .order_by('-created_at')  # Descending Order by timestamp
 
     paginator = Paginator(replies, 10)  # Show 10 replies per page
     page_number = request.GET.get('page')
@@ -1744,7 +1748,10 @@ def statistics_view(request):
     statuses = statuses.values()
 
     # Fetch all users
-    users = CustomUser.objects.all().values()
+    # **Updated User Queryset: Filter to include only students**
+    # Exclude users who are counselors or ITRC staff
+    users = CustomUser.objects.filter(is_counselor=False, is_itrc_staff=False).values()
+
 
     # Create DataFrames from the statuses and users
     df_statuses = pd.DataFrame(statuses)
@@ -1861,9 +1868,22 @@ def statistics_view(request):
         line_datasets = []
 
     # New: Emotion Frequency (Bar Chart)
+        # Calculate average intensity for each emotion
+    emotion_percentage_columns = [
+        'anger_percentage',
+        'disgust_percentage',
+        'fear_percentage',
+        'neutral_percentage',
+        'happiness_percentage',
+        'sadness_percentage',
+        'surprise_percentage'
+    ]
+
     frequency_labels = [label.replace('_percentage', '').capitalize() for label in emotion_percentage_columns]
+
+    # Calculate the average intensity for each emotion
     if not df_statuses.empty:
-        frequency_data = df_statuses[emotion_percentage_columns].count().tolist()
+        frequency_data = df_statuses[emotion_percentage_columns].mean().round(2).tolist()
     else:
         frequency_data = [0 for _ in emotion_percentage_columns]
 
