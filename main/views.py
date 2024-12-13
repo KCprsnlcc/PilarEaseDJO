@@ -580,8 +580,39 @@ def submit_answer(request):
             message=answer_text,
             is_bot_message=False,
             message_type='user_message',
-            question_index=question_index
+            question_index=question_index,
         )
+
+        # Analyze emotions
+        bot_emotions = analyze_emotions(response_text)
+
+        # Convert emotions to percentages
+        bot_emotion_percentages = {key: int(value * 100) for key, value in bot_emotions.items()}
+
+        # Save bot response as ChatMessage with emotion data
+        bot_message = ChatMessage.objects.create(
+            user=request.user,
+            message=response_text,
+            is_bot_message=True,
+            message_type='bot_message',
+            question_index=question_index,
+            # Emotion fields
+            anger=bot_emotions.get('anger'),
+            disgust=bot_emotions.get('disgust'),
+            fear=bot_emotions.get('fear'),
+            happiness=bot_emotions.get('happiness'),
+            sadness=bot_emotions.get('sadness'),
+            surprise=bot_emotions.get('surprise'),
+            neutral=bot_emotions.get('neutral'),
+            anger_percentage=bot_emotion_percentages.get('anger'),
+            disgust_percentage=bot_emotion_percentages.get('disgust'),
+            fear_percentage=bot_emotion_percentages.get('fear'),
+            happiness_percentage=bot_emotion_percentages.get('happiness'),
+            sadness_percentage=bot_emotion_percentages.get('sadness'),
+            surprise_percentage=bot_emotion_percentages.get('surprise'),
+            neutral_percentage=bot_emotion_percentages.get('neutral'),
+        )
+
         logger.debug(f"User {request.user.username}: Saved user message.")
 
         # Save bot response as ChatMessage
@@ -627,6 +658,7 @@ def submit_answer(request):
             return JsonResponse({
                 'success': True,
                 'response': response_text,
+                'bot_emotions': bot_emotion_percentages,
                 'next_question_index': next_question_index,
                 'question': next_question_text,
                 'answer_options': next_answer_options,
@@ -652,6 +684,7 @@ def submit_answer(request):
             return JsonResponse({
                 'success': True,
                 'response': response_text,
+                'bot_emotions': bot_emotion_percentages,
                 'end_of_questions': True,
                 'final_bot_message': final_bot_message_text,
                 'simulate_typing': True
