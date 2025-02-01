@@ -24,7 +24,7 @@ id2label = {
     "5": "sadness",
     "6": "surprise"
 }
-
+kl; ''
 # Initialize SQLite and load the emojis if not already loaded
 def init_db():
     conn = sqlite3.connect('emojis.db')
