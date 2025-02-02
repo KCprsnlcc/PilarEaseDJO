@@ -42,7 +42,7 @@ django-axes==6.5.0
 django-cachebuster==0.2.1
 django-compressor==4.4
 django-cors-headers==4.3.1
-django-crispy-forms
+django-crispy-forms==2.3
 django-debug-toolbar==4.4.2
 django-extensions==3.2.3
 django-import-export==4.1.1
@@ -208,3 +208,5 @@ xyzservices==2024.9.0
 yarl==1.9.4
 zope.interface==7.0.3
 zopfli==0.2.3
+## The following requirements were added by pip freeze:
+amqp==5.3.1
