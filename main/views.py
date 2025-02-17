@@ -65,9 +65,32 @@ from django.utils.html import strip_tags
 from django.utils.timezone import now
 from itrc_tools.models import EnrollmentMasterlist, VerificationRequest
 from django.contrib import messages
+import threading
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import time
+from tqdm import tqdm
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
+
+def load_model_with_progress():
+    logger.info("Starting to load the model and tokenizer...")
+
+    # Simulate a progress bar (this loop only gives a visual indicator)
+    for _ in tqdm(range(20), desc="Loading progress", ncols=70):
+        time.sleep(0.1)  # simulate work; adjust timing as needed
+
+    # Now load the actual model and tokenizer
+    model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+    tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
+    
+    logger.info("Model and tokenizer loaded successfully!")
+    return model, tokenizer
+
+# Call the function at the module level (or wherever appropriate)
+model, tokenizer = load_model_with_progress()
 
 def current_time_view(request):
     tz = pytz.timezone('Asia/Manila')
