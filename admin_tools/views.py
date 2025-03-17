@@ -486,8 +486,8 @@ def silent_nltk_download(resource_name):
         save_nltk_resource(resource_name)
 
 # Ensure required NLTK data is available silently
-silent_nltk_download('punkt')
-silent_nltk_download('stopwords')
+# silent_nltk_download('punkt')
+# silent_nltk_download('stopwords')
 
 # Now you can use NLTK in your views like this
 def my_nltk_view(request):
@@ -2007,7 +2007,7 @@ class ProfanityFilter:
         return any(word in self.profanities for word in tokens)
 
 profanity = ProfanityFilter()
-profanity.load_censor_words()
+# profanity.load_censor_words()
 
 def load_custom_profanities():
     """Load custom profanities from the Referral model."""

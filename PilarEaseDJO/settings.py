@@ -60,12 +60,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main', 
-    'admin_tools',
     'itrc_tools',
     'corsheaders',
     'debug_toolbar',
     'compressor',
     'import_export',
+    'admin_tools.apps.AdminToolsConfig',
     # 'channels',
 ]
 DEFAULT_CHARSET = 'utf-8'
@@ -184,15 +184,17 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pilarease_db',
         'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'PASSWORD': 'root',
+        'HOST': '127.0.0.1',  # Use 127.0.0.1 to force a TCP connection
+        'PORT': '8889',
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         }
     }
 }
+import pymysql
+pymysql.install_as_MySQLdb()
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

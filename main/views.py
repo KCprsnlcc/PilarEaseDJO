@@ -1721,7 +1721,7 @@ def analyze_emotions(text):
     return emotions
 
 # Load the profanity word list
-profanity.load_censor_words()
+# profanity.load_censor_words()
 
 def load_custom_profanities():
     """Load custom profanities from a text file in the main app's static directory."""

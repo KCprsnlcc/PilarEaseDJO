@@ -219,22 +219,19 @@ class NLTKResource(models.Model):
     def __str__(self):
         return self.name
 
+
 class Questionnaire(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
-    question = models.TextField()
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    question = models.CharField(max_length=255)  # Changed from TextField to CharField with max_length=255
     answer = models.TextField(default='No answer provided')
     response = models.TextField(default='No response provided')
-    timestamp = models.DateTimeField(auto_now=True)  # Updated to auto_now to capture updates
-    answer_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Changed to UUIDField
+    timestamp = models.DateTimeField(auto_now=True)
+    answer_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     class Meta:
-        unique_together = ('user', 'question')  # Enforce uniqueness per user-question pair
+        unique_together = ('user', 'question')
 
-    def __str__(self):
-        return f"Question: {self.question[:50]}... - User: {self.user.username}"
+
 class Status(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
