@@ -1,0 +1,54 @@
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+
+{% block content %}
+<div class="pilarease-admin-dashboard-container animate__animated animate__fadeIn">
+  <h1 class="pilarease-admin-title">
+    User Analysis: {{ user.full_name }}
+    <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More info about User Analysis"></i>
+    <span class="pilarease-admin-tooltip">
+      This page shows the latest status of the user and flags any critical emotional states.
+    </span>
+  </h1>
+
+  {% if latest_status %}
+    <div class="elevated-container" style="margin-bottom:20px;">
+      <h2 class="pilarease-admin-subtitle">
+        Latest Status
+        <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More info about this status"></i>
+        <span class="pilarease-admin-tooltip">
+          The latest status submitted by the user with its emotion metrics.
+        </span>
+      </h2>
+      <p><strong>Title:</strong> {{ latest_status.title }}</p>
+      <p><strong>Overall Emotion:</strong> {{ latest_status.emotion }}</p>
+      <ul>
+        <li>Anger: {{ latest_status.anger_percentage }}%</li>
+        <li>Disgust: {{ latest_status.disgust_percentage }}%</li>
+        <li>Fear: {{ latest_status.fear_percentage }}%</li>
+        <li>Happiness: {{ latest_status.happiness_percentage }}%</li>
+        <li>Sadness: {{ latest_status.sadness_percentage }}%</li>
+        <li>Neutral: {{ latest_status.neutral_percentage }}%</li>
+        <li>Surprise: {{ latest_status.surprise_percentage }}%</li>
+      </ul>
+    </div>
+
+    {% if critical %}
+      <div class="elevated-container" style="background-color: #f8d7da; color: #721c24;">
+        <strong>Critical Alert:</strong> Concerning emotional states detected:
+        {{ concerning_emotions|join:", " }}.
+      </div>
+    {% else %}
+      <div class="elevated-container" style="background-color: #d4edda; color: #155724;">
+        No critical emotional states detected.
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="pilarease-admin-no-data">No status available for this user.</div>
+  {% endif %}
+
+  <p style="margin-top:20px;">
+    <a href="{% url 'insights_dashboard' %}" class="pilarease-admin-action-button view-button">Back to Insights Dashboard</a>
+  </p>
+</div>
+{% endblock %}

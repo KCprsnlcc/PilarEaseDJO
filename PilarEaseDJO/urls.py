@@ -29,4 +29,5 @@ urlpatterns = [
     path('itrc/', RedirectView.as_view(url='/itrc/login/', permanent=True)),  # Default to login
     path('admin/', RedirectView.as_view(url='/admin/login/', permanent=True)),
     path('__debug__/', include('debug_toolbar.urls')),
+    path('admin/insights/', include('insights.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

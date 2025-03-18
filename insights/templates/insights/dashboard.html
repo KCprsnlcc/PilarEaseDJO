@@ -1,0 +1,133 @@
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+{% load insights_extras %}
+
+{% block content %}
+<div class="pilarease-admin-dashboard-container animate__animated animate__fadeIn">
+  <!-- Dashboard Header with Tooltip -->
+  <h1 class="pilarease-admin-title">
+    Insights Dashboard
+    <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More information about Insights"></i>
+    <span class="pilarease-admin-tooltip">
+      Browse the latest emotion analysis for each user. Use the search box below to filter by name or username.
+    </span>
+  </h1>
+
+  <!-- Search and Filter Form -->
+  <form method="get" class="pilarease-admin-filter-form" style="margin-bottom:20px;">
+    <div class="pilarease-admin-filter-group">
+      <label for="search" class="pilarease-admin-filter-label">Search</label>
+      <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by name or username" value="{{ search_query }}">
+    </div>
+    <div class="pilarease-admin-filter-buttons">
+      <button type="submit" class="pilarease-admin-filter-button animate__animated animate__pulse">Search</button>
+      <a href="{% url 'insights_dashboard' %}" class="pilarease-admin-reset-button">Reset</a>
+    </div>
+  </form>
+
+  <!-- Data Table -->
+  <div class="pilarease-admin-data-table-container animate__animated animate__fadeInUp">
+    <h2 class="pilarease-admin-section-title">
+      User Analysis Table
+      <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More information about the table"></i>
+      <span class="pilarease-admin-tooltip">
+        This table lists each user's latest status details. Critical emotional states are flagged.
+      </span>
+    </h2>
+    <table class="pilarease-admin-data-table">
+      <thead>
+        <tr>
+          <th>User Name</th>
+          <th>Username</th>
+          <th>Latest Status</th>
+          <th>Overall Emotion</th>
+          <th>Critical</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in page_obj %}
+        <tr class="animate__animated animate__fadeIn">
+          <td>{{ user.full_name }}</td>
+          <td>{{ user.username }}</td>
+          <td>
+            {% if latest_status_map|get_item:user.id %}
+              {{ latest_status_map|get_item:user.id.title }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if latest_status_map|get_item:user.id %}
+              {{ latest_status_map|get_item:user.id.emotion }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            {% if latest_status_map|get_item:user.id %}
+              {% with status=latest_status_map|get_item:user.id %}
+                {% if status.anger_percentage >= 70 or status.sadness_percentage >= 70 or status.fear_percentage >= 70 or status.disgust_percentage >= 70 %}
+                  <span class="pilarease-emotion-badge pilarease-emotion-angry">Yes</span>
+                {% else %}
+                  <span class="pilarease-emotion-badge pilarease-emotion-happy">No</span>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'user_analysis' user.id %}" class="pilarease-admin-action-button view-button">View Analysis</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="pilarease-admin-no-data">No users found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pilarease-admin-pagination">
+      <div class="pilarease-admin-step-links">
+        {% if page_obj.has_previous %}
+          <a href="?page=1&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">First</a>
+          <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Previous</a>
+        {% endif %}
+
+        <span class="pilarease-admin-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Next</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode|safe }}" class="pilarease-admin-pagination-link">Last</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Optional: JavaScript to enhance tooltip visibility on focus -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const infoIcons = document.querySelectorAll('.pilarease-admin-info-icon');
+    infoIcons.forEach(icon => {
+      icon.addEventListener('focus', function() {
+        const tooltip = this.nextElementSibling;
+        if (tooltip && tooltip.classList.contains('pilarease-admin-tooltip')) {
+          tooltip.style.opacity = '1';
+          tooltip.style.pointerEvents = 'auto';
+        }
+      });
+      icon.addEventListener('blur', function() {
+        const tooltip = this.nextElementSibling;
+        if (tooltip && tooltip.classList.contains('pilarease-admin-tooltip')) {
+          tooltip.style.opacity = '0';
+          tooltip.style.pointerEvents = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

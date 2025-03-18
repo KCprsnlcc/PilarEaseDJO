@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'compressor',
     'import_export',
     'admin_tools.apps.AdminToolsConfig',
+    'insights',
     # 'channels',
 ]
 DEFAULT_CHARSET = 'utf-8'
