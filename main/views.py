@@ -2449,7 +2449,7 @@ def delete_status(request, status_id):
 
 @login_required
 def get_user_profile(request):
-    user_profile = request.user.profile
+    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     default_avatar_url = "/static/images/avatars/placeholder.png"
     avatar_url = user_profile.avatar.url if user_profile.avatar else default_avatar_url
     data = {
@@ -2460,9 +2460,10 @@ def get_user_profile(request):
         'contact_number': request.user.contact_number,
         'email': request.user.email,
         'avatar': avatar_url,
-        'bio': user_profile.bio,  # Include bio in the response
+        'bio': user_profile.bio,
     }
     return JsonResponse(data)
+
 
 @login_required
 @csrf_exempt
