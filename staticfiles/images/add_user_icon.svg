@@ -1,0 +1,14 @@
+<!-- static/images/add_user_icon.svg -->
+<svg class="itrc-add-user-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <circle class="itrc-add-user-circle" cx="60" cy="60" r="50" stroke="#4a90e2" stroke-width="5" fill="none">
+    <animate attributeName="stroke-dasharray" from="0,314" to="314,0" dur="2s" repeatCount="indefinite" />
+  </circle>
+  <line class="itrc-add-user-line-vertical" x1="60" y1="40" x2="60" y2="80" stroke="#4a90e2" stroke-width="5">
+    <animate attributeName="y1" values="40;30;40" dur="1s" repeatCount="indefinite" />
+    <animate attributeName="y2" values="80;90;80" dur="1s" repeatCount="indefinite" />
+  </line>
+  <line class="itrc-add-user-line-horizontal" x1="40" y1="60" x2="80" y2="60" stroke="#4a90e2" stroke-width="5">
+    <animate attributeName="x1" values="40;30;40" dur="1s" repeatCount="indefinite" />
+    <animate attributeName="x2" values="80;90;80" dur="1s" repeatCount="indefinite" />
+  </line>
+</svg>
