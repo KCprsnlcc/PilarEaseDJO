@@ -106,6 +106,18 @@ os.environ['NLTK_DATA'] = nltk_data_path
 nltk_logger = logging.getLogger('nltk')
 nltk_logger.setLevel(logging.CRITICAL)
 
+
+ # Ensure required NLTK data is available
+# silent_nltk_download('punkt')
+# silent_nltk_download('punkt_tab')  # <-- Add this line
+# silent_nltk_download('stopwords')
+# For Mac OS
+# nltk.download('punkt_tab', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# nltk.download('punkt', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# nltk.download('punkt', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# Now you can use NLTK in your views like this
+
+
 def is_counselor(user):
     return user.is_authenticated and user.is_counselor
 
@@ -462,34 +474,19 @@ def save_nltk_resource(resource_name):
 # Silent download function for NLTK resources if they are missing
 def silent_nltk_download(resource_name):
     try:
-        # Check if the resource exists in the database
         resource = NLTKResource.objects.filter(name=resource_name, is_downloaded=True).first()
         if resource:
             print(f"{resource_name} already downloaded.")
             return
         
-        # Check if the resource is already downloaded in nltk_data_path
-        if resource_name == 'punkt':
-            nltk.data.find('tokenizers/punkt/english.pickle')
-        elif resource_name == 'stopwords':
-            nltk.data.find('corpora/stopwords.zip')
-        
-        # Save the resource to the database as downloaded
+        nltk.data.find(f'tokenizers/{resource_name}/english.pickle')
         save_nltk_resource(resource_name)
-        
+
     except LookupError:
-        # If the resource is not found, download it silently
         print(f"Downloading {resource_name}...")
         nltk.download(resource_name, download_dir=nltk_data_path)
-        
-        # Save the download status to the database
         save_nltk_resource(resource_name)
 
-# Ensure required NLTK data is available silently
-# silent_nltk_download('punkt')
-# silent_nltk_download('stopwords')
-
-# Now you can use NLTK in your views like this
 def my_nltk_view(request):
     text = request.GET.get('text', '')
     words = nltk.word_tokenize(text.lower())
