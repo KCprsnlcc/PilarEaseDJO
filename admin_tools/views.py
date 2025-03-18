@@ -45,7 +45,7 @@ from main.models import (
     ContactUs,
     Status,
     CustomUser,
-    Emoji,
+    Emojis,
     Reply,
     Feedback,
     Referral,
@@ -2098,7 +2098,7 @@ def analysis_view(request):
 
 def replace_emojis_with_names(text):
     # Fetch all emojis from the database
-    emojis = Emoji.objects.all()
+    emojis = Emojis.objects.all()
     emoji_dict = {e.emoji: e.name.replace('_', ' ') for e in emojis}
 
     # Compile a regex pattern that matches any emoji in the text

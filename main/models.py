@@ -379,7 +379,7 @@ class ReplyNotification(Notification):
     def __str__(self):
         return f"{self.replied_by.username} replied to {self.status.title}"
 
-class Emoji(models.Model):
+class Emojis(models.Model):
     id = models.AutoField(primary_key=True)
     emoji = models.TextField(null=True)
     name = models.TextField(null=True)

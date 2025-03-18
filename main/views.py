@@ -27,7 +27,7 @@ from itrc_tools.models import AuditLog
 from PIL import Image
 from io import BytesIO
 import os
-from .models import Status, Reply, Emoji, ContactUs, Referral, Questionnaire, NotificationCounselor, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
+from .models import Status, Reply, Emojis, ContactUs, Referral, Questionnaire, NotificationCounselor, CustomUser, EmailHistory, Notification, UserNotificationSettings, ChatMessage, ProfanityWord, QuestionnaireProgress
 import re
 from django.utils.timesince import timesince
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -1984,19 +1984,19 @@ def submit_status(request):
 
     return JsonResponse({'success': False, 'errors': {'non_field_errors': 'Invalid request method'}}, status=400)
 def replace_emojis_with_names(text):
-    # Fetch all emojis from the database
-    emojis = Emoji.objects.all()
+    emojis = Emojis.objects.all()
     emoji_dict = {e.emoji: e.name.replace('_', ' ') for e in emojis}
 
-    # Compile a regex pattern that matches any emoji in the text
+    # Compile regex pattern
     pattern = re.compile('|'.join(map(re.escape, emoji_dict.keys())))
-    
-    # Function to replace each emoji with its name
-    def replace(match):
-        return emoji_dict[match.group(0)]
 
-    # Replace emojis in the text
+    # Function to replace emojis
+    def replace(match):
+        emoji = match.group(0)  # Extract matched emoji
+        return emoji_dict.get(emoji, emoji)  # Return the emoji name or the emoji itself if not found
+
     return pattern.sub(replace, text)
+
 def format_timestamp(timestamp):
     now = timezone.now()
     diff = now - timestamp
@@ -2237,7 +2237,7 @@ def load_emojis(request):
 
     try:
         # Base queryset for emojis, ordered by sub_group by default (due to Meta ordering)
-        emojis = Emoji.objects.all()
+        emojis = Emojis.objects.all()
 
         # Filter by category if provided
         if category:
