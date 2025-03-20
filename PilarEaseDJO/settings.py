@@ -179,21 +179,23 @@ WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pilarease_db',
         'USER': 'root',
         'PASSWORD': 'root',
-        'HOST': '127.0.0.1',  # Use 127.0.0.1 to force a TCP connection
+        # Optionally, you can remove or comment out HOST and PORT if you're only using the socket
+         'HOST': '127.0.0.1',
         'PORT': '8889',
         'OPTIONS': {
+            'unix_socket': '/Applications/MAMP/tmp/mysql/mysql.socßßk',
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        }
+        },
     }
 }
+
 import pymysql
 pymysql.install_as_MySQLdb()
 
