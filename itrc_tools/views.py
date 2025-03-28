@@ -1936,3 +1936,45 @@ def change_role(request, user_id):
     notify_itrc_staff(request, 'info', message, link)
 
     return JsonResponse({'success': True, 'message': f"User role updated to {new_role}."})
+
+@user_passes_test(is_itrc_staff)
+@login_required
+@require_POST
+def add_student_to_masterlist(request):
+    """
+    Add a single student to the enrollment masterlist.
+    """
+    student_id = request.POST.get('student_id')
+    full_name = request.POST.get('full_name')
+    academic_year_level = request.POST.get('academic_year_level')
+    
+    # Validate the input
+    if not student_id or not full_name or not academic_year_level:
+        messages.error(request, 'All fields are required.')
+        return redirect('upload_masterlist')
+    
+    try:
+        # Check if the student already exists
+        if EnrollmentMasterlist.objects.filter(student_id=student_id).exists():
+            messages.error(request, f'Student with ID {student_id} already exists in the masterlist.')
+            return redirect('upload_masterlist')
+        
+        # Create the new student entry
+        EnrollmentMasterlist.objects.create(
+            student_id=student_id,
+            full_name=full_name,
+            academic_year_level=academic_year_level
+        )
+        
+        # Log the action
+        AuditLog.objects.create(
+            user=request.user,
+            action='add_student_to_masterlist',
+            details=f"Added student {student_id} - {full_name} to the enrollment masterlist."
+        )
+        
+        messages.success(request, f'Successfully added {full_name} to the enrollment masterlist.')
+    except Exception as e:
+        messages.error(request, f'An error occurred while adding the student: {e}')
+    
+    return redirect('upload_masterlist')

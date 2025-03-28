@@ -184,17 +184,16 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pilarease_db',
         'USER': 'root',
-        'PASSWORD': 'root',
-        # Optionally, you can remove or comment out HOST and PORT if you're only using the socket
-         'HOST': '127.0.0.1',
+        'PASSWORD': 'root',  # Add your MySQL root password if you have one, otherwise leave it empty
+        'HOST': '127.0.0.1',
         'PORT': '8889',
         'OPTIONS': {
-            'unix_socket': '/Applications/MAMP/tmp/mysql/mysql.socßßk',
-            'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+            'charset': 'utf8mb4'
+        }
     }
 }
+
 
 import pymysql
 pymysql.install_as_MySQLdb()

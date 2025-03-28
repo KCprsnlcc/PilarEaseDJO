@@ -29,6 +29,9 @@ Masterlist {% endblock %} {% block itrc_content %}
     <button type="submit" class="pilarease-itrc-action-button upload-button">
       <i class="bx bxs-cloud-upload"></i> Upload
     </button>
+    <button type="button" class="pilarease-itrc-action-button" id="addStudentBtn">
+      <i class="bx bxs-user-plus"></i> Add Student
+    </button>
   </form>
 
   <!-- Search and Filter -->
@@ -113,4 +116,121 @@ Masterlist {% endblock %} {% block itrc_content %}
   <p class="pilarease-itrc-no-data">No enrollment data available.</p>
   {% endif %}
 </div>
+
+<!-- Add Student Modal -->
+<div class="modal" id="addStudentModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content pilarease-itrc-modal">
+      <div class="modal-header">
+        <h5 class="modal-title pilarease-itrc-modal-title">Add Student to Masterlist</h5>
+        <button type="button" class="close" id="closeModalBtn">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="post" action="{% url 'add_student_to_masterlist' %}">
+        <div class="modal-body">
+          {% csrf_token %}
+          <div class="form-group pilarease-itrc-form-group">
+            <label for="student_id">Student ID</label>
+            <input type="text" class="form-control pilarease-itrc-input" id="student_id" name="student_id" required>
+          </div>
+          <div class="form-group pilarease-itrc-form-group">
+            <label for="full_name">Full Name</label>
+            <input type="text" class="form-control pilarease-itrc-input" id="full_name" name="full_name" required>
+          </div>
+          <div class="form-group pilarease-itrc-form-group">
+            <label for="academic_year_level">Academic Year Level</label>
+            <select class="form-control pilarease-itrc-select" id="academic_year_level" name="academic_year_level" required>
+              <option value="">Select Year Level</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelBtn">Close</button>
+          <button type="submit" class="btn btn-primary pilarease-itrc-action-button">Add Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for the modal -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get the modal
+    var modal = document.getElementById('addStudentModal');
+    
+    // Get buttons
+    var addBtn = document.getElementById('addStudentBtn');
+    var closeBtn = document.getElementById('closeModalBtn');
+    var cancelBtn = document.getElementById('cancelBtn');
+    
+    // When the user clicks the button, open the modal
+    addBtn.onclick = function() {
+      modal.style.display = "block";
+    }
+    
+    // When the user clicks close (x) or cancel button, close the modal
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+    
+    cancelBtn.onclick = function() {
+      modal.style.display = "none";
+    }
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+  });
+</script>
+
+<style>
+  /* Modal styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+  }
+  
+  .modal-dialog {
+    margin: 10% auto;
+    width: 50%;
+  }
+  
+  .modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    border-radius: 5px;
+  }
+  
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+</style>
 {% endblock %}

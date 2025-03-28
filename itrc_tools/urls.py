@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/', views.itrc_dashboard, name='itrc_dashboard'),
     path('verify-user/<int:user_id>/', views.verify_user, name='verify_user'),
     path('upload-masterlist/', views.upload_masterlist, name='upload_masterlist'),
+    path('add-student-to-masterlist/', views.add_student_to_masterlist, name='add_student_to_masterlist'),
     path('manage-users/', views.manage_users, name='manage_users'),
     path('manage-users/bulk-action/', views.manage_users_bulk_action, name='manage_users_bulk_action'),
     path('activate-user/<int:user_id>/', views.activate_user, name='activate_user'),

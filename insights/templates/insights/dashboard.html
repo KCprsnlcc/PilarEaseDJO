@@ -52,14 +52,18 @@
           <td>{{ user.username }}</td>
           <td>
             {% if latest_status_map|get_item:user.id %}
-              {{ latest_status_map|get_item:user.id.title }}
+              {% with status=latest_status_map|get_item:user.id %}
+                {{ status.title|default:"" }}
+              {% endwith %}
             {% else %}
               N/A
             {% endif %}
           </td>
           <td>
             {% if latest_status_map|get_item:user.id %}
-              {{ latest_status_map|get_item:user.id.emotion }}
+              {% with status=latest_status_map|get_item:user.id %}
+                {{ status.emotion|default:"" }}
+              {% endwith %}
             {% else %}
               N/A
             {% endif %}
