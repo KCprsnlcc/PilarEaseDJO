@@ -1,0 +1,80 @@
+{% extends "admin_tools/base_admin.html" %}
+{% load static %}
+
+{% block title %}{% block page_title %}Appointment Management{% endblock %} | Pilar Ease Admin{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+<div class="pilarease-admin-dashboard-container animate__animated animate__fadeIn">
+  <!-- Dashboard Header with Tooltip -->
+  <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="pilarease-admin-dashboard-title">
+      {% block content_title %}Appointment Management{% endblock %}
+      <i class="bx bx-info-circle pilarease-admin-info-icon" aria-label="More information about Appointments"></i>
+      <span class="pilarease-admin-tooltip">
+        Manage appointment requests, schedule consultations, and track feedback.
+      </span>
+    </h1>
+  </div>
+
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show animate__animated animate__fadeIn" role="alert">
+          <i class="bx 
+            {% if message.tags == 'success' %}bx-check-circle
+            {% elif message.tags == 'error' %}bx-x-circle
+            {% elif message.tags == 'warning' %}bx-error
+            {% else %}bx-info-circle{% endif %}
+          "></i>
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Module Navigation -->
+  <div class="pilarease-admin-filter-form appointment-pilarease-nav">
+    <a href="{% url 'appointment:dashboard' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="bx bx-tachometer"></i>
+      <span>Dashboard</span>
+    </a>
+    <a href="{% url 'appointment:calendar' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+      <i class="bx bx-calendar"></i>
+      <span>Calendar</span>
+    </a>
+    <a href="{% url 'appointment:appointment_requests' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_requests' %}active{% endif %}">
+      <i class="bx bx-list-check"></i>
+      <span>Requests</span>
+      {% if pending_count > 0 %}
+        <span class="pilarease-admin-badge">{{ pending_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
+      <i class="bx bx-calendar-event"></i>
+      <span>Upcoming</span>
+    </a>
+    <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
+      <i class="bx bx-calendar-check"></i>
+      <span>Past</span>
+    </a>
+    <a href="{% url 'appointment:feedback' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'feedback' %}active{% endif %}">
+      <i class="bx bx-star"></i>
+      <span>Feedback</span>
+    </a>
+  </div>
+
+  {% block appointment_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ block.super }}
+<script src="{% static 'js/appointment.js' %}"></script>
+{% block extra_js %}{% endblock %}
+{% endblock %}

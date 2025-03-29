@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'import_export',
     'admin_tools.apps.AdminToolsConfig',
     'insights',
+    'appointment.apps.AppointmentConfig',
     # 'channels',
 ]
 DEFAULT_CHARSET = 'utf-8'
@@ -147,6 +148,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'main', 'templates'),
             os.path.join(BASE_DIR, 'admin_tools', 'templates'),
             os.path.join(BASE_DIR, 'itrc_tools', 'templates'),
+            os.path.join(BASE_DIR, 'appointment', 'templates'),
             # Add other template directories if necessary
         ],
         'APP_DIRS': True,
@@ -249,6 +251,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'admin_tools', 'static'),
     os.path.join(BASE_DIR, 'itrc_tools', 'static'),
+    os.path.join(BASE_DIR, 'appointment', 'static'),
     # Add other static directories if necessary
 ]
 

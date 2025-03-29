@@ -1,0 +1,230 @@
+{% extends 'appointment/base_appointment.html' %}
+{% load static %}
+
+{% block page_title %}Appointment Dashboard{% endblock %}
+{% block content_title %}Appointment Dashboard{% endblock %}
+
+{% block appointment_content %}
+<!-- Dashboard Summary Cards -->
+<div class="dashboard-summary appointment-pilarease-summary">
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Total Appointments</h3>
+    <p>{{ total_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Pending Requests</h3>
+    <p>{{ pending_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Upcoming Appointments</h3>
+    <p>{{ upcoming_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Available Slots</h3>
+    <p>{{ available_slots }}</p>
+  </div>
+</div>
+
+<!-- Charts Container -->
+<div class="pilarease-admin-statistics-charts appointment-pilarease-charts">
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Appointments by Status
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Distribution of appointments by their current status
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="appointmentsByStatusChart"></canvas>
+    </div>
+  </div>
+
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Appointments Over Time
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Number of appointments by month
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="appointmentsTrendChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Appointments -->
+<div class="pilarease-admin-data-table-container appointment-pilarease-recent">
+  <h2 class="pilarease-admin-section-title">
+    Recent Appointments
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <span class="pilarease-admin-tooltip">
+      Most recent appointments in the system
+    </span>
+  </h2>
+  
+  {% if recent_appointments %}
+    <table class="pilarease-admin-data-table appointment-pilarease-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>User</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appointment in recent_appointments %}
+          <tr>
+            <td>{{ appointment.date|date:"M d, Y" }}</td>
+            <td>{{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}</td>
+            <td>{{ appointment.user.full_name }}</td>
+            <td>{{ appointment.title }}</td>
+            <td>
+              <span class="pilarease-admin-status-label {% if appointment.status == 'pending' %}processing{% elif appointment.status == 'approved' %}completed{% elif appointment.status == 'cancelled' %}failed{% endif %}">
+                {{ appointment.status|title }}
+              </span>
+            </td>
+            <td>
+              <a href="{% url 'appointment:appointment_detail' appointment_id=appointment.id %}" class="pilarease-admin-action-button view-button">
+                <i class="bx bx-detail"></i> View
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="pilarease-admin-no-data">
+      <i class="bx bx-info-circle"></i> No recent appointments.
+    </div>
+  {% endif %}
+</div>
+
+<!-- Upcoming Blocked Time Slots -->
+<div class="pilarease-admin-data-table-container appointment-pilarease-blocked">
+  <h2 class="pilarease-admin-section-title">
+    Upcoming Blocked Time Slots
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <span class="pilarease-admin-tooltip">
+      Time slots that are currently marked as unavailable
+    </span>
+  </h2>
+  
+  {% if blocked_slots %}
+    <table class="pilarease-admin-data-table appointment-pilarease-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Reason</th>
+          <th>Created By</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for slot in blocked_slots %}
+          <tr>
+            <td>{{ slot.date|date:"M d, Y" }}</td>
+            <td>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</td>
+            <td>{{ slot.reason }}</td>
+            <td>{{ slot.created_by.full_name }}</td>
+            <td>
+              <form method="post" action="{% url 'appointment:remove_blocked_slot' blocked_id=slot.id %}">
+                {% csrf_token %}
+                <button type="submit" class="pilarease-admin-action-button delete-button">
+                  <i class="bx bx-trash"></i> Remove
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="pilarease-admin-no-data">
+      <i class="bx bx-info-circle"></i> No blocked time slots.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Appointments by Status Chart
+    const statusCtx = document.getElementById('appointmentsByStatusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pending', 'Approved', 'Completed', 'Cancelled'],
+        datasets: [{
+          data: [
+            {{ status_counts.pending|default:0 }}, 
+            {{ status_counts.approved|default:0 }}, 
+            {{ status_counts.completed|default:0 }}, 
+            {{ status_counts.cancelled|default:0 }}
+          ],
+          backgroundColor: [
+            '#ff9800',  // Pending - Orange
+            '#4caf50',  // Approved - Green
+            '#2196f3',  // Completed - Blue
+            '#f44336'   // Cancelled - Red
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          }
+        }
+      }
+    });
+
+    // Appointments Trend Chart
+    const trendCtx = document.getElementById('appointmentsTrendChart').getContext('2d');
+    const trendChart = new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: {{ trend_labels|safe }},
+        datasets: [{
+          label: 'Appointments',
+          data: {{ trend_data|safe }},
+          borderColor: '#3f51b5',
+          backgroundColor: 'rgba(63, 81, 181, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Appointments'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Month'
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
