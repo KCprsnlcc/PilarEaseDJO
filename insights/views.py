@@ -3,7 +3,15 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from main.models import CustomUser, Status
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+import json
+from datetime import datetime
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.lib.units import inch
 
 @login_required
 def insights_dashboard(request):
@@ -238,3 +246,299 @@ def status_details_api(request, status_id):
     }
     
     return JsonResponse(status_data)
+
+@login_required
+def generate_user_report(request, user_id):
+    """
+    Generates a PDF report for a user's emotional analysis.
+    """
+    user = get_object_or_404(CustomUser, id=user_id)
+    
+    # Get all statuses for this user, ordered by creation date
+    statuses = Status.objects.filter(user=user).order_by('-created_at')
+    latest_status = statuses.first()
+    statuses_count = statuses.count()
+    
+    # Count critical emotional states
+    CRITICAL_THRESHOLD = 70
+    critical = False
+    concerning_emotions = []
+    critical_count = 0
+    
+    # Calculate average time between statuses if there are multiple statuses
+    avg_days_between_statuses = None
+    if statuses_count > 1:
+        # Convert QuerySet to list to access by index
+        statuses_list = list(statuses)
+        total_days = 0
+        for i in range(statuses_count - 1):
+            days_diff = (statuses_list[i].created_at - statuses_list[i + 1].created_at).days
+            total_days += days_diff
+        avg_days_between_statuses = round(total_days / (statuses_count - 1), 1)
+    
+    if latest_status:
+        if latest_status.anger_percentage >= CRITICAL_THRESHOLD:
+            concerning_emotions.append('Anger')
+        if latest_status.sadness_percentage >= CRITICAL_THRESHOLD:
+            concerning_emotions.append('Sadness')
+        if latest_status.fear_percentage >= CRITICAL_THRESHOLD:
+            concerning_emotions.append('Fear')
+        if latest_status.disgust_percentage >= CRITICAL_THRESHOLD:
+            concerning_emotions.append('Disgust')
+        if concerning_emotions:
+            critical = True
+        
+        # Count all critical statuses
+        for status in statuses:
+            if (status.anger_percentage >= CRITICAL_THRESHOLD or 
+                status.sadness_percentage >= CRITICAL_THRESHOLD or 
+                status.fear_percentage >= CRITICAL_THRESHOLD or 
+                status.disgust_percentage >= CRITICAL_THRESHOLD):
+                critical_count += 1
+    
+    # Calculate average emotions across all statuses
+    avg_emotions = {
+        'anger': 0,
+        'disgust': 0,
+        'fear': 0,
+        'happiness': 0,
+        'sadness': 0,
+        'surprise': 0,
+        'neutral': 0
+    }
+    
+    if statuses_count > 0:
+        for status in statuses:
+            avg_emotions['anger'] += status.anger_percentage
+            avg_emotions['disgust'] += status.disgust_percentage
+            avg_emotions['fear'] += status.fear_percentage
+            avg_emotions['happiness'] += status.happiness_percentage
+            avg_emotions['sadness'] += status.sadness_percentage
+            avg_emotions['surprise'] += status.surprise_percentage
+            avg_emotions['neutral'] += status.neutral_percentage
+        
+        for emotion in avg_emotions:
+            avg_emotions[emotion] = round(avg_emotions[emotion] / statuses_count)
+    
+    # Create PDF report
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    # Get styles
+    styles = getSampleStyleSheet()
+    title_style = styles["Title"]
+    heading_style = styles["Heading1"]
+    subheading_style = styles["Heading2"]
+    normal_style = styles["Normal"]
+    
+    # Custom styles
+    warning_style = ParagraphStyle(
+        'WarningStyle', 
+        parent=normal_style,
+        textColor=colors.red,
+        spaceAfter=12
+    )
+    
+    timestamp_style = ParagraphStyle(
+        'TimestampStyle',
+        parent=normal_style,
+        fontSize=8,
+        textColor=colors.grey,
+        alignment=1  # Center alignment
+    )
+    
+    # Create elements list for the PDF
+    elements = []
+    
+    # Add title
+    elements.append(Paragraph(f"Emotional Analysis Report: {user.full_name}", title_style))
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Add timestamp
+    report_date = datetime.now().strftime("%B %d, %Y, %I:%M %p")
+    elements.append(Paragraph(f"Generated on: {report_date}", timestamp_style))
+    elements.append(Spacer(1, 0.5*inch))
+    
+    # User overview section
+    elements.append(Paragraph("User Overview", heading_style))
+    
+    # Summary data in a table
+    summary_data = [
+        ["Total Statuses", str(statuses_count)],
+        ["Avg. Days Between", str(avg_days_between_statuses) if avg_days_between_statuses else "N/A"],
+        ["Current Emotion", latest_status.emotion if latest_status else "N/A"],
+        ["Critical States", str(critical_count)]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Latest status section if available
+    if latest_status:
+        elements.append(Paragraph("Latest Status Analysis", heading_style))
+        elements.append(Paragraph(f"Title: {latest_status.title}", subheading_style))
+        elements.append(Paragraph(f"Created on: {latest_status.created_at.strftime('%B %d, %Y, %I:%M %p')}", normal_style))
+        elements.append(Spacer(1, 0.1*inch))
+        elements.append(Paragraph("Description:", normal_style))
+        elements.append(Paragraph(latest_status.plain_description, normal_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Critical alert if any
+        if critical:
+            elements.append(Paragraph(f"CRITICAL ALERT: Concerning emotional states detected: {', '.join(concerning_emotions)}", warning_style))
+        
+        # Emotion percentages in a table
+        elements.append(Paragraph("Emotion Analysis", subheading_style))
+        
+        emotion_data = [
+            ["Emotion", "Percentage"],
+            ["Anger", f"{latest_status.anger_percentage}%"],
+            ["Sadness", f"{latest_status.sadness_percentage}%"],
+            ["Fear", f"{latest_status.fear_percentage}%"],
+            ["Disgust", f"{latest_status.disgust_percentage}%"],
+            ["Happiness", f"{latest_status.happiness_percentage}%"],
+            ["Surprise", f"{latest_status.surprise_percentage}%"],
+            ["Neutral", f"{latest_status.neutral_percentage}%"]
+        ]
+        
+        emotion_table = Table(emotion_data, colWidths=[2*inch, 2*inch])
+        emotion_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            # Highlight critical emotions
+            ('BACKGROUND', (1, 1), (1, 1), colors.lightcoral if latest_status.anger_percentage >= CRITICAL_THRESHOLD else colors.white),
+            ('BACKGROUND', (1, 2), (1, 2), colors.lightcoral if latest_status.sadness_percentage >= CRITICAL_THRESHOLD else colors.white),
+            ('BACKGROUND', (1, 3), (1, 3), colors.lightcoral if latest_status.fear_percentage >= CRITICAL_THRESHOLD else colors.white),
+            ('BACKGROUND', (1, 4), (1, 4), colors.lightcoral if latest_status.disgust_percentage >= CRITICAL_THRESHOLD else colors.white)
+        ]))
+        
+        elements.append(emotion_table)
+        elements.append(Spacer(1, 0.25*inch))
+    
+    # Historical averages
+    elements.append(Paragraph("Historical Emotion Averages", heading_style))
+    avg_emotion_data = [
+        ["Emotion", "Average Percentage"],
+        ["Anger", f"{avg_emotions['anger']}%"],
+        ["Sadness", f"{avg_emotions['sadness']}%"],
+        ["Fear", f"{avg_emotions['fear']}%"],
+        ["Disgust", f"{avg_emotions['disgust']}%"],
+        ["Happiness", f"{avg_emotions['happiness']}%"],
+        ["Surprise", f"{avg_emotions['surprise']}%"],
+        ["Neutral", f"{avg_emotions['neutral']}%"]
+    ]
+    
+    avg_emotion_table = Table(avg_emotion_data, colWidths=[2*inch, 2*inch])
+    avg_emotion_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(avg_emotion_table)
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Status history section
+    elements.append(Paragraph("Status History", heading_style))
+    
+    if statuses_count > 0:
+        # Create table header
+        history_data = [["Date", "Title", "Emotion", "Critical"]]
+        
+        # Add status data (limit to 15 most recent for space)
+        for status in statuses[:15]:
+            is_critical = (status.anger_percentage >= CRITICAL_THRESHOLD or 
+                          status.sadness_percentage >= CRITICAL_THRESHOLD or 
+                          status.fear_percentage >= CRITICAL_THRESHOLD or 
+                          status.disgust_percentage >= CRITICAL_THRESHOLD)
+            
+            history_data.append([
+                status.created_at.strftime('%m/%d/%Y'),
+                status.title,
+                status.emotion,
+                "Yes" if is_critical else "No"
+            ])
+        
+        # If there are more statuses than we showed
+        if statuses_count > 15:
+            history_data.append(["...", "...", "...", "..."])
+            history_data.append([f"Total: {statuses_count} statuses", "", "", ""])
+        
+        # Create and style table
+        history_table = Table(history_data, colWidths=[1*inch, 3*inch, 1*inch, 1*inch])
+        history_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            # Handle truncation for long titles
+            ('FONTSIZE', (1, 1), (1, -1), 8)
+        ]))
+        
+        elements.append(history_table)
+    else:
+        elements.append(Paragraph("No status history available.", normal_style))
+    
+    # Recommendations or observations section
+    elements.append(Spacer(1, 0.5*inch))
+    elements.append(Paragraph("Observations & Recommendations", heading_style))
+    
+    recommendations = []
+    
+    # Generate observations based on data
+    if critical:
+        recommendations.append(Paragraph("⚠️ Critical emotional states detected in the latest status. Consider scheduling a follow-up session.", warning_style))
+    
+    if statuses_count == 0:
+        recommendations.append(Paragraph("No status data available. Encourage the user to share their emotional state.", normal_style))
+    elif statuses_count < 3:
+        recommendations.append(Paragraph("Limited status history. More data would help establish patterns.", normal_style))
+    
+    if avg_days_between_statuses and avg_days_between_statuses > 14:
+        recommendations.append(Paragraph(f"Status updates are infrequent (average {avg_days_between_statuses} days apart). Consider encouraging more regular check-ins.", normal_style))
+    
+    if avg_emotions['happiness'] < 30:
+        recommendations.append(Paragraph("Low average happiness detected across statuses. Consider using positive reinforcement techniques.", normal_style))
+    
+    if critical_count > statuses_count / 2:
+        recommendations.append(Paragraph(f"High proportion of critical states ({critical_count} out of {statuses_count}). Consider intervention strategies.", warning_style))
+    
+    if not recommendations:
+        recommendations.append(Paragraph("No specific observations at this time. Continue regular monitoring.", normal_style))
+    
+    for recommendation in recommendations:
+        elements.append(recommendation)
+    
+    # Build the PDF
+    doc.build(elements)
+    
+    # Prepare response
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"user_analysis_{user.username}_{timestamp}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response

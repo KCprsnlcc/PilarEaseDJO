@@ -254,7 +254,11 @@
     {% endif %}
   </div>
 
-  <div style="margin-top:20px; text-align: center;">
+  <!-- Report and Action Buttons -->
+  <div style="margin-top:20px; display: flex; justify-content: space-between; align-items: center;">
+    <a href="{% url 'generate_user_report' user_id=user.id %}" class="pilarease-admin-button export-button" target="_blank">
+      <i class="bx bx-file-pdf"></i> Download Analysis Report
+    </a>
     <a href="{% url 'insights_dashboard' %}" class="pilarease-admin-action-button view-button">
       <i class="bx bx-arrow-back"></i> Back to Insights Dashboard
     </a>
@@ -643,6 +647,36 @@
         white-space: pre-wrap;
         line-height: 1.6;
         margin-bottom: 20px;
+      }
+      
+      .pilarease-admin-button.export-button {
+        background-color: #4e73df;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        transition: background-color 0.3s;
+        border: none;
+        cursor: pointer;
+      }
+      
+      .pilarease-admin-button.export-button:hover {
+        background-color: #375bd2;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      
+      .pilarease-admin-button.export-button i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+      }
+      
+      .pilarease-admin-error-details {
+        font-size: 0.85rem;
+        color: #999;
+        margin-top: 5px;
       }
     `;
     document.head.appendChild(style);
