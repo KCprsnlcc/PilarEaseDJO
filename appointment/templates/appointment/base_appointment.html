@@ -89,15 +89,15 @@
 
   <!-- Module Navigation -->
   <div class="appointment-pilarease-nav">
-    <a href="{% url 'appointment:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <a href="{% url 'appointment:dashboard' %}" {% if '/appointment/dashboard/' in request.path or request.path == '/appointment/' %}class="active"{% endif %}>
       <i class="bx bx-tachometer"></i>
       <span>Dashboard</span>
     </a>
-    <a href="{% url 'appointment:calendar' %}" class="{% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+    <a href="{% url 'appointment:calendar' %}" {% if '/appointment/calendar/' in request.path %}class="active"{% endif %}>
       <i class="bx bx-calendar"></i>
       <span>Calendar</span>
     </a>
-    <a href="{% url 'appointment:appointment_history' %}" class="{% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
+    <a href="{% url 'appointment:appointment_history' %}" {% if '/appointment/history/' in request.path %}class="active"{% endif %}>
       <i class="bx bx-history"></i>
       <span>History</span>
     </a>

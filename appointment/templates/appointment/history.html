@@ -372,21 +372,24 @@
         </div>
       </div>
     
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="pilarease-admin-filter-group">
           <label for="search" class="pilarease-admin-filter-label">Search</label>
           <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by title, user or appointment details..." value="{{ request.GET.search }}">
         </div>
       </div>
     
-      <div class="col-md-2">
-        <div class="pilarease-admin-filter-buttons">
-          <button type="submit" class="pilarease-admin-filter-button">
-            <i class="bx bx-filter"></i> Search
-          </button>
-          <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-reset-button">
-            <i class="bx bx-reset"></i> Reset
-          </a>
+      <div class="col-md-3">
+        <div class="pilarease-admin-filter-group">
+          <label class="pilarease-admin-filter-label">&nbsp;</label>
+          <div class="pilarease-admin-filter-buttons" style="display: flex; flex-direction: row; width: 100%;">
+            <button type="submit" class="pilarease-admin-filter-button" style="margin-right: 10px;">
+              <i class="bx bx-filter"></i> Search
+            </button>
+            <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-reset-button">
+              <i class="bx bx-reset"></i> Reset
+            </a>
+          </div>
         </div>
       </div>
     </div>

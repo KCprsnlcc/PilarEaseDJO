@@ -388,17 +388,20 @@
   
   <!-- Search Form -->
   <form method="get" class="pilarease-admin-filter-form">
-    <div class="pilarease-admin-filter-group">
+    <div class="pilarease-admin-filter-group" style="flex: 3;">
       <label for="search" class="pilarease-admin-filter-label">Search</label>
       <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by title, user or status" value="{{ search_query }}">
     </div>
-    <div class="pilarease-admin-filter-buttons">
-      <button type="submit" class="pilarease-admin-filter-button">
-        <i class="bx bx-search"></i> Search
-      </button>
-      <a href="{% url 'appointment:dashboard' %}" class="pilarease-admin-reset-button">
-        <i class="bx bx-reset"></i> Reset
-      </a>
+    <div class="pilarease-admin-filter-group" style="flex: 1;">
+      <label class="pilarease-admin-filter-label">&nbsp;</label>
+      <div style="display: flex; flex-direction: row; gap: 10px;">
+        <button type="submit" class="pilarease-admin-filter-button">
+          <i class="bx bx-search"></i> Search
+        </button>
+        <a href="{% url 'appointment:dashboard' %}" class="pilarease-admin-reset-button">
+          <i class="bx bx-reset"></i> Reset
+        </a>
+      </div>
     </div>
   </form>
   
