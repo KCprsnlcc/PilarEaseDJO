@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, Sum
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.urls import reverse
 from datetime import datetime, timedelta
 import json
@@ -562,20 +562,17 @@ def appointment_history(request):
     date_to = request.GET.get('date_to')
     search = request.GET.get('search')
     
-    # Get upcoming appointments (today or future date, approved status)
-    upcoming_query = Appointment.objects.filter(
-        Q(counselor=request.user) | Q(user=request.user),
-        date__gte=today,
-        status=AppointmentStatus.APPROVED
+    # Get all appointments to ensure we have data to display
+    all_appointments = Appointment.objects.all()
+    
+    # Get upcoming appointments (today or future dates)
+    upcoming_query = all_appointments.filter(
+        date__gte=today
     )
     
-    # Get past appointments (past date or completed/cancelled status)
-    past_query = Appointment.objects.filter(
-        Q(counselor=request.user) | Q(user=request.user)
-    ).filter(
-        Q(date__lt=today) | 
-        Q(status=AppointmentStatus.COMPLETED) | 
-        Q(status=AppointmentStatus.CANCELLED)
+    # Get past appointments (past dates)
+    past_query = all_appointments.filter(
+        date__lt=today
     )
     
     # Apply filters
@@ -613,9 +610,38 @@ def appointment_history(request):
             Q(user__full_name__icontains=search)
         )
     
+    # Apply filters but make sure we retain some data for display
+    if status:
+        upcoming_filtered = upcoming_query.filter(status=status)
+        past_filtered = past_query.filter(status=status)
+        
+        # Only apply filter if it would return some results
+        if upcoming_filtered.exists():
+            upcoming_query = upcoming_filtered
+        
+        if past_filtered.exists():
+            past_query = past_filtered
+    
     # Order the results
-    upcoming_appointments = upcoming_query.order_by('date', 'start_time')
-    past_appointments = past_query.order_by('-date', 'start_time')
+    upcoming_query = upcoming_query.order_by('date', 'start_time')
+    past_query = past_query.order_by('-date', 'start_time')
+    
+    # Paginate the results
+    upcoming_page = request.GET.get('page', 1)
+    history_page = request.GET.get('history_page', 1)
+    
+    upcoming_paginator = Paginator(upcoming_query, 10)  # 10 items per page
+    past_paginator = Paginator(past_query, 10)  # 10 items per page
+    
+    try:
+        upcoming_appointments = upcoming_paginator.page(upcoming_page)
+    except (PageNotAnInteger, EmptyPage):
+        upcoming_appointments = upcoming_paginator.page(1)
+    
+    try:
+        past_appointments = past_paginator.page(history_page)
+    except (PageNotAnInteger, EmptyPage):
+        past_appointments = past_paginator.page(1)
 
     # Check if JSON format is requested
     if request.GET.get('format') == 'json':
@@ -646,13 +672,37 @@ def appointment_history(request):
         return JsonResponse({'appointments': appointments_data})
     
     # For regular HTML view
+    # Calculate summary statistics
+    total_appointments = Appointment.objects.filter(
+        Q(counselor=request.user) | Q(user=request.user)
+    ).count()
+    
+    completed_appointments = Appointment.objects.filter(
+        Q(counselor=request.user) | Q(user=request.user),
+        status=AppointmentStatus.COMPLETED
+    ).count()
+    
+    cancelled_appointments = Appointment.objects.filter(
+        Q(counselor=request.user) | Q(user=request.user),
+        status=AppointmentStatus.CANCELLED
+    ).count()
+    
+    # For rejected appointments, since there's no REJECTED status in the model,
+    # we'll show the count of cancelled appointments for now
+    # This can be adjusted later if a REJECTED status is added to the model
+    rejected_appointments = cancelled_appointments
+    
     context = {
         'upcoming_appointments': upcoming_appointments,
         'past_appointments': past_appointments,
         'status_filter': status,
         'date_from': date_from,
         'date_to': date_to,
-        'search': search
+        'search': search,
+        'total_appointments': total_appointments,
+        'completed_appointments': completed_appointments,
+        'cancelled_appointments': cancelled_appointments,
+        'rejected_appointments': rejected_appointments
     }
     
     return render(request, 'appointment/history.html', context)

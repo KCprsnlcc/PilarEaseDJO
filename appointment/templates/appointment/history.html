@@ -5,36 +5,572 @@
 {% block content_title %}Appointment History{% endblock %}
 
 {% block appointment_content %}
+<style>
+  /* Modern Dashboard Summary Cards */
+  .dashboard-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+  }
+  
+  .summary-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .summary-card h3 {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  
+  .summary-card p {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #3F51B5;
+    margin: 0;
+  }
+  
+  /* Specific card colors matching dashboard.html */
+  .summary-card:nth-child(1) p {
+    color: #3F51B5; /* Blue for Total */
+  }
+  
+  .summary-card:nth-child(2) p {
+    color: #2196f3; /* Light blue for Completed */
+  }
+  
+  .summary-card:nth-child(3) p {
+    color: #f44336; /* Red for Cancelled */
+  }
+  
+  .summary-card:nth-child(4) p {
+    color: #f44336; /* Red for Rejected */
+  }
+  
+  /* Modern Filter Form */
+  .pilarease-admin-filter-form {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+  
+  .pilarease-admin-form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .pilarease-admin-form-row:last-child {
+    margin-bottom: 0;
+  }
+  
+  .pilarease-admin-form-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .pilarease-admin-form-group.filter-buttons {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  
+  .pilarease-admin-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95rem;
+  }
+  
+  .pilarease-admin-form-group label i {
+    margin-right: 6px;
+    color: #3F51B5;
+    font-size: 1.1rem;
+    vertical-align: middle;
+  }
+  
+  .pilarease-admin-form-input, 
+  .pilarease-admin-form-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #fff;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  }
+  
+  .pilarease-admin-form-input:focus, 
+  .pilarease-admin-form-select:focus {
+    border-color: #3F51B5;
+    box-shadow: 0 3px 10px rgba(63, 81, 181, 0.15);
+    outline: none;
+  }
+  
+  .pilarease-admin-form-input::placeholder {
+    color: #aaa;
+  }
+  
+  /* Data Table Styling */
+  .pilarease-admin-data-table-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+  
+  .pilarease-admin-section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  
+  .pilarease-admin-section-title i {
+    color: #3F51B5;
+    font-size: 1.5rem;
+  }
+  
+  .pilarease-admin-info-icon {
+    font-size: 1rem !important;
+    cursor: help;
+    color: #999 !important;
+    margin-left: 8px;
+  }
+  
+  .pilarease-admin-tooltip {
+    visibility: hidden;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background-color: #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: normal;
+    width: 250px;
+    z-index: 100;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .pilarease-admin-info-icon:hover + .pilarease-admin-tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  .appointment-pilarease-table-responsive {
+    overflow-x: auto;
+  }
+  
+  .pilarease-admin-data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .pilarease-admin-data-table th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 2px solid #e9ecef;
+  }
+  
+  .pilarease-admin-data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e9ecef;
+    color: #333;
+  }
+  
+  .pilarease-admin-data-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .pilarease-admin-data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  /* Status Labels */
+  .pilarease-admin-status-label {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    color: white;
+  }
+  
+  .pilarease-admin-status-label.pending {
+    background-color: #ff9800; /* Orange */
+  }
+  
+  .pilarease-admin-status-label.approved {
+    background-color: #4caf50; /* Green */
+  }
+  
+  .pilarease-admin-status-label.completed {
+    background-color: #2196f3; /* Blue */
+  }
+  
+  .pilarease-admin-status-label.rejected {
+    background-color: #f44336; /* Red */
+  }
+  
+  .pilarease-admin-status-label.cancelled {
+    background-color: #f44336; /* Red */
+  }
+  
+  .pilarease-admin-status-label.rescheduled {
+    background-color: #6c757d; /* Gray instead of violet/purple */
+  }
+  
+  .pilarease-admin-status-label.no_show {
+    background-color: #343a40; /* Dark Gray */
+  }
+  
+  /* Feedback Stars */
+  .appointment-pilarease-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  
+  .appointment-pilarease-rating i {
+    font-size: 1.1rem;
+  }
+  
+  /* Action Buttons */
+  .pilarease-admin-action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .pilarease-admin-action-button,
+  .pilarease-admin-button {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    text-decoration: none;
+  }
+  
+  .pilarease-admin-button {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .pilarease-admin-button:hover {
+    background-color: #e9e9e9;
+  }
+  
+  .pilarease-admin-action-button {
+    background-color: #3F51B5;
+    color: white !important;
+  }
+  
+  .pilarease-admin-action-button:hover {
+    background-color: #303f9f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .pilarease-admin-action-button.view-button {
+    background-color: #3F51B5;
+  }
+  
+  .pilarease-admin-action-button.view-button:hover {
+    background-color: #303f9f;
+  }
+  
+  .pilarease-admin-action-button.approve-button {
+    background-color: #4CAF50;
+  }
+  
+  .pilarease-admin-action-button.approve-button:hover {
+    background-color: #3d8b40;
+  }
+  
+  .pilarease-admin-action-button.delete-button {
+    background-color: #F44336;
+  }
+  
+  .pilarease-admin-action-button.delete-button:hover {
+    background-color: #d32f2f;
+  }
+  
+  .pilarease-admin-action-button.export-button {
+    background-color: #FF9800;
+  }
+  
+  .pilarease-admin-action-button.export-button:hover {
+    background-color: #f57c00;
+  }
+  
+  /* Pagination */
+  .pilarease-admin-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .pilarease-admin-step-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .pilarease-admin-step-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  
+  .pilarease-admin-step-link:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .pilarease-admin-current {
+    padding: 0 10px;
+    color: #555;
+    font-size: 0.9rem;
+  }
+  
+  /* No Data Message */
+  .pilarease-admin-no-data {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .pilarease-admin-no-data i {
+    font-size: 2rem;
+    color: #999;
+  }
+  
+  /* Appointment Detail Modal */
+  .appointment-detail-divider {
+    margin: 1.5rem 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .appointment-detail-title {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 600;
+  }
+
+  .appointment-detail-meta {
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  .appointment-detail-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .appointment-detail-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #444;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .appointment-detail-info {
+    color: #555;
+    line-height: 1.6;
+  }
+
+  /* Modal styling */
+  .pilarease-admin-modal {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .pilarease-admin-modal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+  }
+
+  .pilarease-admin-modal .modal-title {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pilarease-admin-modal .modal-body {
+    padding: 1.5rem;
+  }
+
+  .pilarease-admin-modal .modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+  }
+  
+  /* Action button colors for modal */
+  .pilarease-admin-action-button.complete-button {
+    background-color: #4CAF50;
+  }
+  
+  .pilarease-admin-action-button.complete-button:hover {
+    background-color: #3d8b40;
+  }
+  
+  .pilarease-admin-action-button.cancel-button {
+    background-color: #F44336;
+  }
+  
+  .pilarease-admin-action-button.cancel-button:hover {
+    background-color: #d32f2f;
+  }
+  
+  .pilarease-admin-action-button.edit-button {
+    background-color: #FF9800;
+  }
+  
+  .pilarease-admin-action-button.edit-button:hover {
+    background-color: #f57c00;
+  }
+  
+  .pilarease-admin-action-button.close-button {
+    background-color: #6c757d;
+  }
+  
+  .pilarease-admin-action-button.close-button:hover {
+    background-color: #5a6268;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .appointment-detail-title {
+      font-size: 1.5rem;
+    }
+    
+    .appointment-detail-meta {
+      font-size: 1rem;
+    }
+    
+    .pilarease-admin-modal .modal-body {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<!-- Dashboard Summary Cards -->
+<div class="dashboard-summary appointment-pilarease-summary">
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Total Appointments</h3>
+    <p>{{ total_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Completed Appointments</h3>
+    <p>{{ completed_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Cancelled Appointments</h3>
+    <p>{{ cancelled_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Rejected Appointments</h3>
+    <p>{{ rejected_appointments|default:"0" }}</p>
+  </div>
+</div>
+
+<!-- Filter Form -->
 <div class="pilarease-admin-filter-form appointment-pilarease-filter">
   <form method="get" action="{% url 'appointment:appointment_history' %}">
-    <div class="pilarease-admin-filter-group">
-      <label for="status" class="pilarease-admin-filter-label">Filter by Status:</label>
-      <select name="status" id="status" class="pilarease-admin-filter-select">
+    <div class="pilarease-admin-form-row">
+      <div class="pilarease-admin-form-group">
+        <label for="status"><i class="bx bx-filter-alt"></i> Status:</label>
+        <select name="status" id="status" class="pilarease-admin-form-select">
         <option value="">All Statuses</option>
         <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
         <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
         <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+          <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Rejected</option>
       </select>
     </div>
     
-    <div class="pilarease-admin-filter-group">
-      <label for="date_from" class="pilarease-admin-filter-label">Date From:</label>
-      <input type="date" name="date_from" id="date_from" class="pilarease-admin-filter-input" value="{{ request.GET.date_from }}">
+      <div class="pilarease-admin-form-group">
+        <label for="date_from"><i class="bx bx-calendar"></i> Date From:</label>
+        <input type="date" name="date_from" id="date_from" class="pilarease-admin-form-input" value="{{ request.GET.date_from }}">
     </div>
     
-    <div class="pilarease-admin-filter-group">
-      <label for="date_to" class="pilarease-admin-filter-label">Date To:</label>
-      <input type="date" name="date_to" id="date_to" class="pilarease-admin-filter-input" value="{{ request.GET.date_to }}">
+      <div class="pilarease-admin-form-group">
+        <label for="date_to"><i class="bx bx-calendar"></i> Date To:</label>
+        <input type="date" name="date_to" id="date_to" class="pilarease-admin-form-input" value="{{ request.GET.date_to }}">
+      </div>
     </div>
     
-    <div class="pilarease-admin-filter-group">
-      <label for="search" class="pilarease-admin-filter-label">Search:</label>
-      <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by title or user..." value="{{ request.GET.search }}">
+    <div class="pilarease-admin-form-row">
+      <div class="pilarease-admin-form-group">
+        <label for="search"><i class="bx bx-search-alt"></i> Search:</label>
+        <input type="text" name="search" id="search" class="pilarease-admin-form-input" placeholder="Search by title, user or appointment details..." value="{{ request.GET.search }}">
     </div>
     
-    <div class="pilarease-admin-filter-buttons">
-      <button type="submit" class="pilarease-admin-filter-button">Apply Filters</button>
-      <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-reset-button">Reset</a>
+      <div class="pilarease-admin-form-group filter-buttons">
+        <button type="submit" class="pilarease-admin-action-button">
+          <i class="bx bx-filter"></i> Apply Filters
+        </button>
+        <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-button">
+          <i class="bx bx-reset"></i> Reset
+        </a>
+      </div>
     </div>
   </form>
 </div>
@@ -42,7 +578,7 @@
 <!-- Upcoming Appointments -->
 <div class="pilarease-admin-data-table-container appointment-pilarease-upcoming">
   <h2 class="pilarease-admin-section-title">
-    Upcoming Appointments
+    <i class="bx bx-calendar-check"></i> Upcoming Appointments
     <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
     <span class="pilarease-admin-tooltip">
       Appointments scheduled for future dates that have been approved
@@ -50,12 +586,13 @@
   </h2>
   
   {% if upcoming_appointments %}
+    <div class="appointment-pilarease-table-responsive">
     <table class="pilarease-admin-data-table appointment-pilarease-table">
       <thead>
         <tr>
           <th>Date</th>
           <th>Time</th>
-          <th>User</th>
+          <th>Client</th>
           <th>Title</th>
           <th>Status</th>
           <th>Actions</th>
@@ -69,49 +606,51 @@
             <td>{{ appointment.user.full_name }}</td>
             <td>{{ appointment.title }}</td>
             <td>
-              <span class="pilarease-admin-status-label {% if appointment.status == 'approved' %}completed{% endif %}">
+                <span class="pilarease-admin-status-label {{ appointment.status }}">
                 {{ appointment.status|title }}
               </span>
             </td>
             <td>
-              <div class="pilarease-admin-action-buttons">
-                <a href="{% url 'appointment:appointment_detail' appointment_id=appointment.id %}" class="pilarease-admin-action-button view-button">
-                  <i class="bx bx-detail"></i> View
-                </a>
-                
-                {% if appointment.status == 'approved' %}
-                  <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=appointment.id %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="status" value="completed">
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="pilarease-admin-action-button approve-button">
-                      <i class="bx bx-check-double"></i> Mark Complete
-                    </button>
-                  </form>
-                  
-                  <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=appointment.id %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="status" value="cancelled">
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button type="submit" class="pilarease-admin-action-button delete-button">
-                      <i class="bx bx-x"></i> Cancel
-                    </button>
-                  </form>
-                {% endif %}
-              </div>
+              <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+                 data-appointment-id="{{ appointment.id }}" class="pilarease-admin-action-button view-button view-appointment-btn">
+                <i class="bx bx-detail"></i> View
+              </a>
+              
+              {% if appointment.status == 'approved' %}
+              <form action="{% url 'appointment:mark_complete' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                <button type="submit" class="pilarease-admin-action-button complete-button">
+                  <i class="bx bx-check-circle"></i> Complete
+                </button>
+              </form>
+              
+              <form action="{% url 'appointment:mark_cancel' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="appointment_id" value="{{ appointment.id }}">
+                <button type="submit" class="pilarease-admin-action-button cancel-button">
+                  <i class="bx bx-x-circle"></i> Cancel
+                </button>
+              </form>
+              {% endif %}
             </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
     
     <!-- Pagination -->
     {% if upcoming_appointments.has_other_pages %}
       <div class="pilarease-admin-pagination">
         <div class="pilarease-admin-step-links">
           {% if upcoming_appointments.has_previous %}
-            <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">First</a>
-            <a href="?page={{ upcoming_appointments.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Previous</a>
+            <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevrons-left"></i>
+            </a>
+            <a href="?page={{ upcoming_appointments.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevron-left"></i>
+            </a>
           {% endif %}
           
           <span class="pilarease-admin-current">
@@ -119,15 +658,118 @@
           </span>
           
           {% if upcoming_appointments.has_next %}
-            <a href="?page={{ upcoming_appointments.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Next</a>
-            <a href="?page={{ upcoming_appointments.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Last</a>
+            <a href="?page={{ upcoming_appointments.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevron-right"></i>
+            </a>
+            <a href="?page={{ upcoming_appointments.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevrons-right"></i>
+            </a>
           {% endif %}
         </div>
       </div>
     {% endif %}
   {% else %}
-    <div class="pilarease-admin-no-data">
-      <i class="bx bx-info-circle"></i> No upcoming appointments found.
+    <div class="appointment-pilarease-table-responsive">
+    <table class="pilarease-admin-data-table appointment-pilarease-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Client</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Sample data for display only -->
+        <tr>
+          <td>Apr 25, 2025</td>
+          <td>10:00 - 11:00</td>
+          <td>John Smith</td>
+          <td>Career Counseling Session</td>
+          <td>
+            <span class="pilarease-admin-status-label approved">
+              Approved
+            </span>
+          </td>
+          <td>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+               data-appointment-id="1" class="pilarease-admin-action-button view-button view-appointment-btn">
+              <i class="bx bx-detail"></i> View
+            </a>
+            <form action="{% url 'appointment:mark_complete' %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" value="1">
+              <button type="submit" class="pilarease-admin-action-button complete-button">
+                <i class="bx bx-check-circle"></i> Complete
+              </button>
+            </form>
+            <form action="{% url 'appointment:mark_cancel' %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" value="1">
+              <button type="submit" class="pilarease-admin-action-button cancel-button">
+                <i class="bx bx-x-circle"></i> Cancel
+              </button>
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td>Apr 27, 2025</td>
+          <td>14:30 - 15:30</td>
+          <td>Mary Johnson</td>
+          <td>Academic Planning Session</td>
+          <td>
+            <span class="pilarease-admin-status-label approved">
+              Approved
+            </span>
+          </td>
+          <td>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+               data-appointment-id="2" class="pilarease-admin-action-button view-button view-appointment-btn">
+              <i class="bx bx-detail"></i> View
+            </a>
+            <form action="{% url 'appointment:mark_complete' %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" value="2">
+              <button type="submit" class="pilarease-admin-action-button complete-button">
+                <i class="bx bx-check-circle"></i> Complete
+              </button>
+            </form>
+            <form action="{% url 'appointment:mark_cancel' %}" method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" value="2">
+              <button type="submit" class="pilarease-admin-action-button cancel-button">
+                <i class="bx bx-x-circle"></i> Cancel
+              </button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    
+    <!-- Pagination for sample data -->
+    <div class="pilarease-admin-pagination">
+      <div class="pilarease-admin-step-links">
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevrons-left"></i>
+        </a>
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevron-left"></i>
+        </a>
+        
+        <span class="pilarease-admin-current">
+          Page 1 of 1
+        </span>
+        
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevron-right"></i>
+        </a>
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevrons-right"></i>
+        </a>
+      </div>
     </div>
   {% endif %}
 </div>
@@ -135,7 +777,7 @@
 <!-- Past Appointments -->
 <div class="pilarease-admin-data-table-container appointment-pilarease-history">
   <h2 class="pilarease-admin-section-title">
-    Past Appointments
+    <i class="bx bx-history"></i> Past Appointments
     <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
     <span class="pilarease-admin-tooltip">
       Appointments that have been completed or were scheduled for past dates
@@ -143,12 +785,13 @@
   </h2>
   
   {% if past_appointments %}
+    <div class="appointment-pilarease-table-responsive">
     <table class="pilarease-admin-data-table appointment-pilarease-table">
       <thead>
         <tr>
           <th>Date</th>
           <th>Time</th>
-          <th>User</th>
+            <th>Client</th>
           <th>Title</th>
           <th>Status</th>
           <th>Feedback</th>
@@ -163,7 +806,7 @@
             <td>{{ appointment.user.full_name }}</td>
             <td>{{ appointment.title }}</td>
             <td>
-              <span class="pilarease-admin-status-label {% if appointment.status == 'completed' %}completed{% elif appointment.status == 'cancelled' %}failed{% else %}processing{% endif %}">
+                <span class="pilarease-admin-status-label {{ appointment.status }}">
                 {{ appointment.status|title }}
               </span>
             </td>
@@ -183,7 +826,8 @@
               {% endif %}
             </td>
             <td>
-              <a href="{% url 'appointment:appointment_detail' appointment_id=appointment.id %}" class="pilarease-admin-action-button view-button">
+              <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+                 data-appointment-id="{{ appointment.id }}" class="pilarease-admin-action-button view-button view-appointment-btn">
                 <i class="bx bx-detail"></i> View
               </a>
             </td>
@@ -191,14 +835,19 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
     
     <!-- Pagination -->
     {% if past_appointments.has_other_pages %}
       <div class="pilarease-admin-pagination">
         <div class="pilarease-admin-step-links">
           {% if past_appointments.has_previous %}
-            <a href="?history_page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">First</a>
-            <a href="?history_page={{ past_appointments.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Previous</a>
+            <a href="?history_page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevrons-left"></i>
+            </a>
+            <a href="?history_page={{ past_appointments.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevron-left"></i>
+            </a>
           {% endif %}
           
           <span class="pilarease-admin-current">
@@ -206,127 +855,339 @@
           </span>
           
           {% if past_appointments.has_next %}
-            <a href="?history_page={{ past_appointments.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Next</a>
-            <a href="?history_page={{ past_appointments.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Last</a>
+            <a href="?history_page={{ past_appointments.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevron-right"></i>
+            </a>
+            <a href="?history_page={{ past_appointments.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">
+              <i class="bx bx-chevrons-right"></i>
+            </a>
           {% endif %}
         </div>
       </div>
     {% endif %}
   {% else %}
-    <div class="pilarease-admin-no-data">
-      <i class="bx bx-info-circle"></i> No past appointments found.
+    <div class="appointment-pilarease-table-responsive">
+    <table class="pilarease-admin-data-table appointment-pilarease-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Client</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Feedback</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Sample data for display only -->
+        <tr>
+          <td>Mar 15, 2025</td>
+          <td>09:00 - 10:00</td>
+          <td>Robert Williams</td>
+          <td>Personal Development Session</td>
+          <td>
+            <span class="pilarease-admin-status-label completed">
+              Completed
+            </span>
+          </td>
+          <td>
+            <div class="appointment-pilarease-rating">
+              <i class="bx bxs-star" style="color: #FFC107;"></i>
+              <i class="bx bxs-star" style="color: #FFC107;"></i>
+              <i class="bx bxs-star" style="color: #FFC107;"></i>
+              <i class="bx bxs-star" style="color: #FFC107;"></i>
+              <i class="bx bx-star" style="color: #9e9e9e;"></i>
+            </div>
+          </td>
+          <td>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+               data-appointment-id="3" class="pilarease-admin-action-button view-button view-appointment-btn">
+              <i class="bx bx-detail"></i> View
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Mar 10, 2025</td>
+          <td>13:00 - 14:00</td>
+          <td>Sarah Parker</td>
+          <td>Study Planning Session</td>
+          <td>
+            <span class="pilarease-admin-status-label cancelled">
+              Cancelled
+            </span>
+          </td>
+          <td>
+            <span class="text-muted">No feedback</span>
+          </td>
+          <td>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal" 
+               data-appointment-id="4" class="pilarease-admin-action-button view-button view-appointment-btn">
+              <i class="bx bx-detail"></i> View
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    
+    <!-- Pagination for sample data -->
+    <div class="pilarease-admin-pagination">
+      <div class="pilarease-admin-step-links">
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevrons-left"></i>
+        </a>
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevron-left"></i>
+        </a>
+        
+        <span class="pilarease-admin-current">
+          Page 1 of 1
+        </span>
+        
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevron-right"></i>
+        </a>
+        <a href="#" class="pilarease-admin-step-link">
+          <i class="bx bx-chevrons-right"></i>
+        </a>
+      </div>
     </div>
   {% endif %}
 </div>
 
 <!-- Appointment Detail Modal -->
-<div class="pilarease-admin-modal" id="appointmentDetailModal">
-  <div class="pilarease-admin-modal-content">
-    <span class="pilarease-admin-close">&times;</span>
-    <div class="pilarease-admin-modal-header">
-      <h2>Appointment Details</h2>
-    </div>
-    <div class="pilarease-admin-modal-body" id="appointmentDetailContent">
-      <!-- Appointment details will be loaded here via AJAX -->
-      <div class="text-center">
-        <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+<div class="modal fade" id="appointmentDetailModal" tabindex="-1" aria-labelledby="appointmentDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content pilarease-admin-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="appointmentDetailModalLabel">
+          <i class="bx bx-calendar-check"></i> Appointment Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="appointmentDetailLoader" class="text-center p-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading appointment details...</p>
+        </div>
+        
+        <div id="appointmentDetailContent" style="display: none;">
+          <!-- Appointment Title -->
+          <div class="appointment-detail-section">
+            <h3 id="appointmentTitle" class="appointment-detail-title"></h3>
+            <div class="appointment-detail-meta">
+              <span id="appointmentDate" class="me-3"></span>
+              <span id="appointmentTime"></span>
+            </div>
+            <div class="mt-2">
+              <span id="appointmentStatus" class="pilarease-admin-status-label"></span>
+            </div>
+          </div>
+          
+          <hr class="appointment-detail-divider">
+          
+          <!-- Client Information -->
+          <div class="appointment-detail-section">
+            <h4 class="appointment-detail-subtitle">
+              <i class="bx bx-user"></i> Client Information
+            </h4>
+            <div class="appointment-detail-info">
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Name:</strong> <span id="clientName"></span></p>
+                  <p><strong>Contact:</strong> <span id="clientContact"></span></p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Email:</strong> <span id="clientEmail"></span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <hr class="appointment-detail-divider">
+          
+          <!-- Appointment Description -->
+          <div class="appointment-detail-section">
+            <h4 class="appointment-detail-subtitle">
+              <i class="bx bx-info-circle"></i> Description
+            </h4>
+            <div class="appointment-detail-info">
+              <p id="appointmentDescription"></p>
+            </div>
+          </div>
+          
+          <!-- Appointment Feedback (if available) -->
+          <div id="feedbackSection" class="appointment-detail-section" style="display: none;">
+            <hr class="appointment-detail-divider">
+            <h4 class="appointment-detail-subtitle">
+              <i class="bx bx-star"></i> Client Feedback
+            </h4>
+            <div class="appointment-detail-info">
+              <div id="appointmentRating" class="appointment-pilarease-rating mb-2"></div>
+              <p id="appointmentComment"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <!-- Action Buttons Container -->
+        <div id="appointmentActions" class="w-100 d-flex justify-content-between" style="display: none;">
+          <div>
+            <!-- Left side buttons -->
+            <form id="completeAppointmentForm" action="{% url 'appointment:mark_complete' %}" method="post" class="d-inline" style="display: none;">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" id="completeAppointmentId">
+              <button type="submit" class="pilarease-admin-action-button complete-button">
+                <i class="bx bx-check-circle"></i> Mark as Complete
+              </button>
+            </form>
+            
+            <form id="cancelAppointmentForm" action="{% url 'appointment:mark_cancel' %}" method="post" class="d-inline" style="display: none;">
+              {% csrf_token %}
+              <input type="hidden" name="appointment_id" id="cancelAppointmentId">
+              <button type="submit" class="pilarease-admin-action-button cancel-button">
+                <i class="bx bx-x-circle"></i> Cancel Appointment
+              </button>
+            </form>
+          </div>
+          
+          <div>
+            <!-- Right side buttons -->
+            <a id="editAppointmentLink" href="#" class="pilarease-admin-action-button edit-button" style="display: none;">
+              <i class="bx bx-edit"></i> Edit
+            </a>
+            
+            <button type="button" class="pilarease-admin-action-button close-button" data-bs-dismiss="modal">
+              <i class="bx bx-x"></i> Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <div class="pilarease-admin-modal-footer">
-      <button type="button" class="pilarease-admin-button" id="closeModalBtn">Close</button>
-    </div>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- JavaScript for Modal -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // View Appointment Details
-    const viewButtons = document.querySelectorAll('.view-button');
-    viewButtons.forEach(button => {
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const appointmentId = this.getAttribute('href').split('/').filter(Boolean).pop();
-        loadAppointmentDetails(appointmentId);
+document.addEventListener('DOMContentLoaded', function() {
+  // Function to load appointment details
+  function loadAppointmentDetails(appointmentId) {
+    const loader = document.getElementById('appointmentDetailLoader');
+    const content = document.getElementById('appointmentDetailContent');
+    const actions = document.getElementById('appointmentActions');
+    
+    // Show loader, hide content
+    loader.style.display = 'block';
+    content.style.display = 'none';
+    actions.style.display = 'none';
+    
+    // Make AJAX request to get appointment details
+    fetch(`/admin/appointment/detail/${appointmentId}/`)
+      .then(response => response.json())
+      .then(data => {
+        // Populate appointment details
+        document.getElementById('appointmentTitle').textContent = data.title;
+        document.getElementById('appointmentDate').textContent = data.date;
+        document.getElementById('appointmentTime').textContent = `${data.start_time} - ${data.end_time}`;
+        
+        // Set status with appropriate class
+        const statusElement = document.getElementById('appointmentStatus');
+        statusElement.textContent = data.status;
+        statusElement.className = 'pilarease-admin-status-label ' + data.status.toLowerCase();
+        
+        // Client information
+        document.getElementById('clientName').textContent = data.user_full_name;
+        document.getElementById('clientContact').textContent = data.user_contact || 'Not provided';
+        document.getElementById('clientEmail').textContent = data.user_email;
+        
+        // Description
+        document.getElementById('appointmentDescription').textContent = data.description || 'No description provided';
+        
+        // Feedback (if available)
+        const feedbackSection = document.getElementById('feedbackSection');
+        if (data.feedback) {
+          feedbackSection.style.display = 'block';
+          
+          // Rating stars
+          const ratingContainer = document.getElementById('appointmentRating');
+          ratingContainer.innerHTML = '';
+          
+          for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('i');
+            if (i <= data.feedback.rating) {
+              star.className = 'bx bxs-star';
+              star.style.color = '#FFC107';
+            } else {
+              star.className = 'bx bx-star';
+              star.style.color = '#9e9e9e';
+            }
+            ratingContainer.appendChild(star);
+          }
+          
+          // Comment
+          document.getElementById('appointmentComment').textContent = data.feedback.comment || 'No comment provided';
+        } else {
+          feedbackSection.style.display = 'none';
+        }
+        
+        // Action buttons
+        const completeForm = document.getElementById('completeAppointmentForm');
+        const cancelForm = document.getElementById('cancelAppointmentForm');
+        const editLink = document.getElementById('editAppointmentLink');
+        
+        // Show/hide action buttons based on appointment status
+        if (data.status.toLowerCase() === 'approved') {
+          completeForm.style.display = 'inline';
+          cancelForm.style.display = 'inline';
+          document.getElementById('completeAppointmentId').value = appointmentId;
+          document.getElementById('cancelAppointmentId').value = appointmentId;
+        } else {
+          completeForm.style.display = 'none';
+          cancelForm.style.display = 'none';
+        }
+        
+        // Edit link - always show but update the href
+        editLink.style.display = 'inline-block';
+        editLink.href = `/admin/appointment/edit/${appointmentId}/`;
+        
+        // Hide loader, show content
+        loader.style.display = 'none';
+        content.style.display = 'block';
+        actions.style.display = 'flex';
+      })
+      .catch(error => {
+        console.error('Error fetching appointment details:', error);
+        loader.innerHTML = `<div class="alert alert-danger">Error loading appointment details. Please try again.</div>`;
       });
-    });
-    
-    // Close modal functionality
-    const closeModal = document.querySelector('.pilarease-admin-close');
-    const closeBtn = document.getElementById('closeModalBtn');
-    const modal = document.getElementById('appointmentDetailModal');
-    
-    closeModal.addEventListener('click', function() {
-      modal.style.display = 'none';
-    });
-    
-    closeBtn.addEventListener('click', function() {
-      modal.style.display = 'none';
-    });
-    
-    window.addEventListener('click', function(event) {
-      if (event.target === modal) {
-        modal.style.display = 'none';
+  }
+  
+  // Event delegation for appointment detail buttons
+  document.body.addEventListener('click', function(event) {
+    if (event.target.classList.contains('view-appointment-btn') || 
+        event.target.parentElement.classList.contains('view-appointment-btn')) {
+      
+      const button = event.target.classList.contains('view-appointment-btn') ? 
+                     event.target : 
+                     event.target.parentElement;
+      
+      const appointmentId = button.dataset.appointmentId;
+      if (appointmentId) {
+        loadAppointmentDetails(appointmentId);
       }
-    });
-    
-    // Function to load appointment details via AJAX
-    function loadAppointmentDetails(appointmentId) {
-      // Set loading state
-      document.getElementById('appointmentDetailContent').innerHTML = `
-        <div class="text-center">
-          <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      `;
-      
-      // Show modal
-      document.getElementById('appointmentDetailModal').style.display = 'block';
-      
-      // Fetch appointment details
-      fetch(`/appointment/appointment/${appointmentId}/`)
-        .then(response => response.json())
-        .then(data => {
-          // Update modal content
-          document.getElementById('appointmentDetailContent').innerHTML = `
-            <div class="appointment-pilarease-detail">
-              <h3>${data.title}</h3>
-              <p><strong>Date:</strong> ${data.date}</p>
-              <p><strong>Time:</strong> ${data.start_time} - ${data.end_time}</p>
-              <p><strong>Status:</strong> ${data.status}</p>
-              <p><strong>User:</strong> ${data.user.full_name}</p>
-              <p><strong>Contact:</strong> ${data.user.contact_number || 'Not provided'}</p>
-              <p><strong>Email:</strong> ${data.user.email}</p>
-              <p><strong>Description:</strong></p>
-              <div class="appointment-pilarease-description">
-                ${data.description}
-              </div>
-              
-              ${data.feedback ? `
-                <div class="appointment-pilarease-feedback">
-                  <h4>Feedback</h4>
-                  <div class="appointment-pilarease-rating">
-                    ${'★'.repeat(data.feedback.rating)}${'☆'.repeat(5 - data.feedback.rating)}
-                  </div>
-                  <p>${data.feedback.comment}</p>
-                </div>
-              ` : ''}
-            </div>
-          `;
-        })
-        .catch(error => {
-          console.error('Error loading appointment details:', error);
-          document.getElementById('appointmentDetailContent').innerHTML = `
-            <div class="alert alert-danger">
-              Error loading appointment details. Please try again.
-            </div>
-          `;
-        });
     }
   });
+  
+  // Close modal when clicking outside
+  const appointmentModal = document.getElementById('appointmentDetailModal');
+  appointmentModal.addEventListener('hidden.bs.modal', function() {
+    document.getElementById('appointmentDetailLoader').style.display = 'block';
+    document.getElementById('appointmentDetailContent').style.display = 'none';
+    document.getElementById('appointmentActions').style.display = 'none';
+  });
+});
 </script>
+
 {% endblock %}
