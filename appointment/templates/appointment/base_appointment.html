@@ -48,21 +48,9 @@
       <i class="bx bx-calendar"></i>
       <span>Calendar</span>
     </a>
-    <a href="{% url 'appointment:appointment_requests' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_requests' %}active{% endif %}">
-      <i class="bx bx-list-check"></i>
-      <span>Requests</span>
-      {% if pending_count > 0 %}
-        <span class="pilarease-admin-badge">{{ pending_count }}</span>
-      {% endif %}
-    </a>
     <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
       <i class="bx bx-history"></i>
       <span>History</span>
-    </a>
-
-    <a href="{% url 'appointment:reports' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-      <i class="bx bx-bar-chart-alt-2"></i>
-      <span>Reports</span>
     </a>
   </div>
 

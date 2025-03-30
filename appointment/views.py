@@ -352,6 +352,33 @@ def appointment_detail(request, appointment_id):
     """View details of a specific appointment"""
     appointment = get_object_or_404(Appointment, id=appointment_id)
     
+    # Check if JSON response is requested
+    if request.GET.get('format') == 'json' or 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+        # Return appointment details as JSON
+        appointment_data = {
+            'id': appointment.id,
+            'title': appointment.title,
+            'description': appointment.description,
+            'date': appointment.date.isoformat(),
+            'start_time': appointment.start_time.strftime('%H:%M'),
+            'end_time': appointment.end_time.strftime('%H:%M'),
+            'status': appointment.status,
+            'counselor_notes': appointment.counselor_notes,
+            'user': {
+                'id': appointment.user.id,
+                'full_name': appointment.user.full_name,
+                'email': appointment.user.email,
+                'contact_number': getattr(appointment.user, 'contact_number', None)
+            },
+            'counselor': {
+                'id': appointment.counselor.id,
+                'full_name': appointment.counselor.full_name
+            },
+            'created_at': appointment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': appointment.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        return JsonResponse(appointment_data)
+    
     # Form for updating appointment status
     form = UpdateAppointmentStatusForm(instance=appointment)
     
@@ -570,6 +597,7 @@ def reports(request):
             
             # Calculate appointments in this month
             month_start = current_date.replace(day=1)
+            next_month = None
             if current_date.month == 12:
                 next_month = current_date.replace(year=current_date.year + 1, month=1, day=1)
         else:
@@ -591,8 +619,8 @@ def reports(request):
         'date_from': start_date,
         'date_to': end_date,
         'today': today.strftime('%Y-%m-%d'),
-        'time_labels': time_labels,
-        'time_data': time_data,
+        'time_labels': json.dumps(time_labels),
+        'time_data': json.dumps(time_data),
         'total_appointments': total_appointments,
         'completed_appointments': completed_appointments,
         'cancelled_appointments': cancelled_appointments,
@@ -607,11 +635,11 @@ def reports(request):
     
     # Generate report or return template
     if request.GET.get('generate') == 'true':
-        report = Report.objects.create(
+        report = AppointmentReport.objects.create(
             title=f"Appointment Report {start_date} to {end_date}",
             report_type=report_type,
-            date_range_start=start_date,
-            date_range_end=end_date,
+            start_date=start_date,
+            end_date=end_date,
             generated_by=request.user,
             data=json.dumps(context, default=str)
         )
@@ -887,7 +915,7 @@ def create_appointment(request):
                     'message': 'Appointment created successfully!'
                 })
             else:
-                messages.success(request, 'Appointment created successfully.')
+              messages.success(request, 'Appointment created successfully.')
             return redirect('appointment:calendar')
         else:
             if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
@@ -896,9 +924,9 @@ def create_appointment(request):
                     'message': 'Invalid form data',
                     'errors': form.errors
                 })
-            else:
-                messages.error(request, 'There was an error creating the appointment.')
-            return redirect('appointment:calendar')
+    else:
+            messages.error(request, 'There was an error creating the appointment.')
+    return redirect('appointment:calendar')
 
     form = AppointmentForm(initial={'counselor': request.user} if request.user.is_counselor else {})
     return render(request, 'appointment/appointment_form.html', {'form': form})
@@ -1077,20 +1105,20 @@ def available_time_slots(request):
             continue
         
         # Check blocked time slots
-        blocked_slots = BlockedTimeSlot.objects.filter(
+    blocked_slots = BlockedTimeSlot.objects.filter(
             counselor=counselor,
             date=selected_date
         )
         
         # Check existing appointments
-        existing_appointments = Appointment.objects.filter(
+    existing_appointments = Appointment.objects.filter(
             counselor=counselor,
             date=selected_date,
             status__in=['pending', 'approved']
         )
         
         # Mark slots as available if not blocked or already booked
-        for i, slot in enumerate(available_slots):
+    for i, slot in enumerate(available_slots):
             slot_start = datetime.strptime(slot['start_time'], '%H:%M').time()
             slot_end = datetime.strptime(slot['end_time'], '%H:%M').time()
             
@@ -1157,19 +1185,19 @@ def available_dates(request):
             # Check if there are any blocked slots for this date and counselor
             blocked_slots = BlockedTimeSlot.objects.filter(
                 date=current_date,
-                counselor=counselor
-            )
-            
+        counselor=counselor
+    )
+    
             # Check if there are existing appointments for this date and counselor
-            existing_appointments = Appointment.objects.filter(
+    existing_appointments = Appointment.objects.filter(
                 date=current_date,
-                counselor=counselor
-            ).exclude(status=AppointmentStatus.CANCELLED)
-            
+        counselor=counselor
+    ).exclude(status=AppointmentStatus.CANCELLED)
+    
             # Generate time slots (9 AM to 5 PM in 30 minute increments)
-            start_hour, end_hour = 9, 17
+    start_hour, end_hour = 9, 17
             
-            for hour in range(start_hour, end_hour):
+    for hour in range(start_hour, end_hour):
                 for minute in [0, 30]:
                     start_time = timezone.datetime.combine(
                         current_date, 
@@ -1207,15 +1235,15 @@ def available_dates(request):
                 if has_available_slot:
                     break
             
-            if has_available_slot:
-                break
+                if has_available_slot:
+                      break
         
         # If at least one time slot is available, add this date to the list
-        if has_available_slot:
-            available_dates.append(current_date.isoformat())
+                if has_available_slot:
+                 available_dates.append(current_date.isoformat())
         
         # Move to next day
-        current_date += timedelta(days=1)
+                current_date += timedelta(days=1)
     
     return JsonResponse({'available_dates': available_dates})
 
@@ -1269,43 +1297,43 @@ def api_available_dates(request):
             
             # Generate time slots (9 AM to 5 PM in 30 minute increments)
             start_hour, end_hour = 9, 17
+    
+    for hour in range(start_hour, end_hour):
+        for minute in [0, 30]:
+            start_time = timezone.datetime.combine(
+                        current_date, 
+                timezone.time(hour, minute)
+            ).time()
             
-            for hour in range(start_hour, end_hour):
-                for minute in [0, 30]:
-                    start_time = timezone.datetime.combine(
+            end_minute = (minute + 30) % 60
+            end_hour = hour + 1 if minute + 30 >= 60 else hour
+            end_time = timezone.datetime.combine(
                         current_date, 
-                        timezone.time(hour, minute)
-                    ).time()
-                    
-                    end_minute = (minute + 30) % 60
-                    end_hour = hour + 1 if minute + 30 >= 60 else hour
-                    end_time = timezone.datetime.combine(
-                        current_date, 
-                        timezone.time(end_hour, end_minute)
-                    ).time()
-                    
-                    # Check if this time slot is blocked
-                    is_blocked = any(
-                        blocked.start_time <= start_time < blocked.end_time or
-                        blocked.start_time < end_time <= blocked.end_time or
-                        (start_time <= blocked.start_time and end_time >= blocked.end_time)
-                        for blocked in blocked_slots
-                    )
-                    
-                    # Check if there's an existing appointment
-                    is_booked = any(
-                        appt.start_time <= start_time < appt.end_time or
-                        appt.start_time < end_time <= appt.end_time or
-                        (start_time <= appt.start_time and end_time >= appt.end_time)
-                        for appt in existing_appointments
-                    )
-                    
+                timezone.time(end_hour, end_minute)
+            ).time()
+            
+            # Check if this time slot is blocked
+            is_blocked = any(
+                blocked.start_time <= start_time < blocked.end_time or
+                blocked.start_time < end_time <= blocked.end_time or
+                (start_time <= blocked.start_time and end_time >= blocked.end_time)
+                for blocked in blocked_slots
+            )
+            
+            # Check if there's an existing appointment
+            is_booked = any(
+                appt.start_time <= start_time < appt.end_time or
+                appt.start_time < end_time <= appt.end_time or
+                (start_time <= appt.start_time and end_time >= appt.end_time)
+                for appt in existing_appointments
+            )
+            
                     # If not blocked or booked, this time slot is available
-                    if not (is_blocked or is_booked):
+            if not (is_blocked or is_booked):
                         has_available_slot = True
                         break
                 
-                if has_available_slot:
+            if has_available_slot:
                     break
             
             if has_available_slot:

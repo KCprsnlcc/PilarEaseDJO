@@ -12,7 +12,7 @@ class AppointmentSchedule(models.Model):
         related_name='available_schedules',
         limit_choices_to={'is_counselor': True}
     )
-    date = models.DateField()
+    date = models.DateField(null=True, blank=True)
     day_of_week = models.IntegerField(choices=[
         (0, 'Monday'),
         (1, 'Tuesday'),

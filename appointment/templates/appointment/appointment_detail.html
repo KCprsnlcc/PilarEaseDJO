@@ -1,0 +1,171 @@
+{% extends 'appointment/base_appointment.html' %}
+{% load static %}
+
+{% block title %}Appointment Details{% endblock %}
+{% block content_title %}Appointment Details{% endblock %}
+
+{% block appointment_content %}
+<div class="pilarease-admin-back-button">
+  <a href="{% url 'appointment:appointment_requests' %}" class="pilarease-admin-button">
+    <i class="bx bx-arrow-back"></i> Back to Requests
+  </a>
+</div>
+
+<!-- Appointment Details Card -->
+<div class="pilarease-admin-card appointment-pilarease-detail-card">
+  <div class="pilarease-admin-card-header">
+    <h2 class="pilarease-admin-card-title">
+      <i class="bx bx-calendar-check"></i> Appointment Information
+    </h2>
+  </div>
+  
+  <div class="pilarease-admin-card-body">
+    <div class="appointment-pilarease-detail">
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Title:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.title }}</div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Date:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.date }}</div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Time:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}</div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Status:</div>
+        <div class="appointment-pilarease-detail-value">
+          <span class="pilarease-admin-status-label {% if appointment.status == 'approved' %}completed{% elif appointment.status == 'rejected' %}failed{% elif appointment.status == 'pending' %}processing{% elif appointment.status == 'cancelled' %}cancelled{% elif appointment.status == 'completed' %}completed{% endif %}">
+            {{ appointment.get_status_display }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Requested By:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.user.full_name }}</div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Counselor:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.counselor.full_name }}</div>
+      </div>
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Requested On:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.created_at|date:"M d, Y H:i" }}</div>
+      </div>
+      
+      {% if appointment.updated_at != appointment.created_at %}
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Last Updated:</div>
+        <div class="appointment-pilarease-detail-value">{{ appointment.updated_at|date:"M d, Y H:i" }}</div>
+      </div>
+      {% endif %}
+      
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Description:</div>
+        <div class="appointment-pilarease-detail-value appointment-pilarease-description">
+          {{ appointment.description|linebreaks }}
+        </div>
+      </div>
+      
+      {% if appointment.counselor_notes %}
+      <div class="appointment-pilarease-detail-row">
+        <div class="appointment-pilarease-detail-label">Counselor Notes:</div>
+        <div class="appointment-pilarease-detail-value appointment-pilarease-description">
+          {{ appointment.counselor_notes|linebreaks }}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Update Status Form -->
+{% if appointment.status == 'pending' or appointment.status == 'approved' %}
+<div class="pilarease-admin-card appointment-pilarease-update-card">
+  <div class="pilarease-admin-card-header">
+    <h2 class="pilarease-admin-card-title">
+      <i class="bx bx-edit"></i> Update Appointment
+    </h2>
+  </div>
+  
+  <div class="pilarease-admin-card-body">
+    <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=appointment.id %}">
+      {% csrf_token %}
+      
+      <div class="pilarease-admin-form-group">
+        <label for="id_status" class="pilarease-admin-form-label">Status:</label>
+        <select name="status" id="id_status" class="pilarease-admin-form-select">
+          <option value="pending" {% if appointment.status == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="approved" {% if appointment.status == 'approved' %}selected{% endif %}>Approved</option>
+          <option value="rejected" {% if appointment.status == 'rejected' %}selected{% endif %}>Rejected</option>
+          <option value="completed" {% if appointment.status == 'completed' %}selected{% endif %}>Completed</option>
+          <option value="cancelled" {% if appointment.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      
+      <div class="pilarease-admin-form-group">
+        <label for="id_counselor_notes" class="pilarease-admin-form-label">Counselor Notes:</label>
+        <textarea name="counselor_notes" id="id_counselor_notes" rows="4" class="pilarease-admin-form-textarea">{{ appointment.counselor_notes }}</textarea>
+      </div>
+      
+      <div class="pilarease-admin-form-group">
+        <div class="pilarease-admin-form-checkbox">
+          <input type="checkbox" name="send_notification" id="id_send_notification" checked>
+          <label for="id_send_notification" class="pilarease-admin-form-checkbox-label">Send notification to student</label>
+        </div>
+      </div>
+      
+      <div class="pilarease-admin-form-buttons">
+        <button type="submit" class="pilarease-admin-action-button approve-button">
+          <i class="bx bx-check"></i> Update Appointment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  .appointment-pilarease-detail-card {
+    margin-bottom: 20px;
+  }
+  
+  .appointment-pilarease-detail {
+    display: grid;
+    gap: 15px;
+  }
+  
+  .appointment-pilarease-detail-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+  
+  .appointment-pilarease-detail-label {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .appointment-pilarease-detail-value {
+    color: #333;
+  }
+  
+  .appointment-pilarease-description {
+    white-space: pre-line;
+    line-height: 1.5;
+  }
+  
+  .appointment-pilarease-update-card {
+    background-color: #f9f9f9;
+  }
+</style>
+{% endblock %} 
