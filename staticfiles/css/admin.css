@@ -41,11 +41,10 @@ body {
 /* =========================================================
    Sidebar Styles
    ========================================================= */
-
 .pilarease-admin-sidebar {
+  width: var(--sidebar-collapsed-width); /* Explicitly set collapsed width */
   background-color: var(--sidebar-background);
-  width: var(--sidebar-collapsed-width);
-  transition: width 0.3s ease, all 0.3s ease;
+  transition: width 0.3s ease, background-position 1s ease; /* Adjusted transition */
   overflow: hidden;
   position: fixed;
   top: 0;
@@ -55,10 +54,22 @@ body {
   flex-direction: column;
   align-items: center;
   z-index: 10000;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='%23122b2e' d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2z' fill-opacity='0.1'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+@keyframes sidebarBgAnimation {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 100px 100px;
+  }
 }
 
 .pilarease-admin-sidebar-expanded {
-  width: var(--sidebar-expanded-width);
+  width: var(--sidebar-expanded-width) !important;
 }
 
 .pilarease-admin-sidebar-header {
@@ -109,6 +120,8 @@ body {
   margin: 0;
   margin-top: -15px;
   width: 100%;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .pilarease-admin-sidebar-menu li {
@@ -121,34 +134,100 @@ body {
   padding: 15px;
   color: #ffffff;
   text-decoration: none;
-  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+  transition: all 0.3s ease;
   position: relative;
+  border-left: 3px solid transparent;
 }
 
 .pilarease-admin-sidebar-menu li a:hover {
-  background-color: var(--accent-light);
-  transform: translateX(5px);
+  background-color: rgba(104, 158, 75, 0.2);
+  border-left: 3px solid var(--accent-light);
+  transform: translateX(0);
 }
 
 .pilarease-admin-sidebar-menu li a i {
-  font-size: 24px;
+  font-size: 22px;
   margin-right: 10px;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pilarease-admin-sidebar-menu li a:hover i {
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.1);
+  animation: iconShine 0.5s ease;
+}
+
+@keyframes iconShine {
+  0% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
 }
 
 .pilarease-admin-menu-text {
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: scale(0);
+  transform: translateX(-10px);
+  white-space: nowrap;
 }
 
 .pilarease-admin-sidebar-expanded .pilarease-admin-menu-text {
   opacity: 1;
-  transform: scale(1);
+  transform: translateX(0);
 }
 
 /* Active Link Styles */
 .pilarease-admin-sidebar-menu li a.active {
-  background-color: var(--accent-light);
+  background-color: rgba(104, 158, 75, 0.3);
+  border-left: 3px solid var(--accent-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.pilarease-admin-sidebar-menu li a.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+                               rgba(104, 158, 75, 0) 0%, 
+                               rgba(104, 158, 75, 0.1) 50%, 
+                               rgba(104, 158, 75, 0) 100%);
+  animation: activeGlow 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes activeGlow {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.pilarease-admin-sidebar-menu li a.active i {
+  color: #ffffff;
+  animation: pulseActiveIcon 2s infinite alternate ease-in-out;
+}
+
+@keyframes pulseActiveIcon {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  100% {
+    transform: scale(1.15);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
 }
 
 /* SVG Icon Animations */
@@ -160,6 +239,140 @@ body {
 .pilarease-admin-sidebar-menu li a:hover svg {
   fill: var(--accent-light);
   transform: rotate(20deg);
+}
+
+/* Sidebar Toggle Button Styles */
+.pilarease-admin-sidebar-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 15px 0;
+  margin-top: auto;
+  position: relative;
+}
+
+.pilarease-admin-sidebar-toggle-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #0e2326;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.pilarease-admin-sidebar-toggle-button:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M20 0c11.046 0 20 8.954 20 20s-8.954 20-20 20S0 31.046 0 20 8.954 0 20 0zm0 2c-9.941 0-18 8.059-18 18s8.059 18 18 18 18-8.059 18-18S29.941 2 20 2zm0 4c7.732 0 14 6.268 14 14s-6.268 14-14 14S6 27.732 6 20 12.268 6 20 6zm0 2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S26.627 8 20 8zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S10 25.523 10 20s4.477-10 10-10zm0 2c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 2c3.314 0 6 2.686 6 6s-2.686 6-6 6-6-2.686-6-6 2.686-6 6-6zm0 2c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 2c1.105 0 2 .895 2 2s-.895 2-2 2-2-.895-2-2 .895-2 2-2z' fill='white' fill-opacity='0.1'/%3E%3C/svg%3E");
+  background-size: cover;
+  z-index: -1;
+  opacity: 0.2;
+  animation: rotateBackground 12s linear infinite;
+}
+
+.pilarease-admin-sidebar-toggle-button:after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+  transition: opacity 0.5s ease;
+  z-index: -1;
+}
+
+.pilarease-admin-sidebar-toggle-button:hover:after {
+  opacity: 1;
+  animation: pulseToggle 2s infinite;
+}
+
+@keyframes pulseToggle {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+@keyframes rotateBackground {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.pilarease-admin-sidebar-toggle-button:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pilarease-admin-sidebar-toggle-button i {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+  color: #ffffff;
+}
+
+.pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-toggle-button i.bx-chevron-left {
+  transform: rotate(180deg);
+}
+
+.pilarease-admin-sidebar-toggle-button:hover i {
+  animation: wiggle 0.5s ease;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-toggle-button:hover i.bx-chevron-left {
+  animation: wiggleRotated 0.5s ease;
+}
+
+@keyframes wiggleRotated {
+  0%, 100% { transform: rotate(180deg) translateX(0); }
+  25% { transform: rotate(180deg) translateX(3px); }
+  75% { transform: rotate(180deg) translateX(-3px); }
+}
+
+/* Active menu item indicator */
+.pilarease-admin-sidebar-menu li a.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: var(--accent-light);
+  transform: scaleY(1);
+  transition: transform 0.2s, width 0.4s cubic-bezier(1, 0, 0, 1) 0.2s;
+  z-index: 1;
 }
 
 /* =========================================================
@@ -176,6 +389,9 @@ body {
 .pilarease-admin-main-content {
   margin-left: var(--sidebar-collapsed-width);
   transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  position: relative;
 }
 
 .pilarease-admin-sidebar-expanded ~ .pilarease-admin-main-content {
@@ -196,6 +412,7 @@ body {
   height: 60px;
   transition: left 0.3s ease, background-color 0.3s ease;
   z-index: 9999;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .pilarease-admin-sidebar-expanded ~ .pilarease-admin-header {
@@ -205,6 +422,7 @@ body {
 .pilarease-admin-header-right {
   display: flex;
   align-items: center;
+  gap: 15px;
 }
 
 .pilarease-admin-header-right i {
@@ -238,9 +456,13 @@ body {
 }
 
 .pilarease-admin-content {
-  margin-top: 60px;
-  padding: 20px;
-  animation: fadeIn 0.5s ease-in-out;
+  padding: 80px 20px 20px 20px;
+  min-height: calc(100vh - 80px);
+  transition: padding 0.3s ease;
+}
+
+.pilarease-admin-sidebar-expanded ~ .pilarease-admin-main-content .pilarease-admin-content {
+  padding-left: 40px;
 }
 
 /* =========================================================
@@ -4013,26 +4235,52 @@ body {
 /* Mobile View Adjustments */
 @media (max-width: 768px) {
   .pilarease-admin-sidebar {
-    width: var(--sidebar-expanded-width);
+    width: 0;
+    box-shadow: none;
   }
-
+  
   .pilarease-admin-sidebar-expanded {
     width: var(--sidebar-expanded-width);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   }
-
+  
   .pilarease-admin-main-content,
   .pilarease-admin-header {
-    margin-left: var(--sidebar-expanded-width);
+    left: 0;
+    margin-left: 0;
   }
-
+  
+  .pilarease-admin-sidebar-expanded ~ .pilarease-admin-main-content,
+  .pilarease-admin-sidebar-expanded ~ .pilarease-admin-header {
+    margin-left: 0;
+    left: 0;
+  }
+  
   .pilarease-admin-header {
-    left: var(--sidebar-expanded-width);
+    padding: 10px;
   }
-
-  .pilarease-admin-feedback-search-input,
-  .pilarease-admin-testimonial-search-input,
-  .pilarease-admin-contactus-search-input {
-    width: 100%;
+  
+  .pilarease-admin-content {
+    padding: 80px 10px 10px 10px;
+  }
+  
+  .pilarease-admin-sidebar-toggle-button {
+    position: fixed;
+    bottom: 20px;
+    left: 10px;
+    z-index: 10001;
+    opacity: 1;
+    background-color: var(--sidebar-background);
+  }
+  
+  .pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-toggle {
+    position: static;
+  }
+  
+  .pilarease-admin-sidebar-expanded .pilarease-admin-sidebar-toggle-button {
+    position: static;
+    bottom: auto;
+    left: auto;
   }
 }
 
