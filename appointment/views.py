@@ -1031,150 +1031,91 @@ def delete_blocked_time(request, blocked_time_id):
 
 @login_required
 def available_time_slots(request):
-    """API endpoint to get available time slots for a specific date"""
+    """Return available time slots for a specific date"""
     date_str = request.GET.get('date')
     
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except (ValueError, TypeError):
-        # If date is invalid, use today
-        date = timezone.now().date()
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
     
-    # For counselors, get their own slots
-    if request.user.is_counselor:
-        counselor = request.user
-    # For students, get slots from all counselors
-    else:
-        # Get all counselors and find available slots from any of them
-        User = get_user_model()
-        counselors = User.objects.filter(is_counselor=True)
-        available_slots = []
+    # Get day of week (0=Monday, 6=Sunday)
+    day_of_week = selected_date.weekday()
+    
+    # Get all counselors
+    counselors = get_user_model().objects.filter(is_counselor=True)
+    if not counselors.exists():
+        return JsonResponse([], safe=False)
+    
+    # Time slots in 30-minute increments from 9 AM to 5 PM
+    default_slots = []
+    start_time = datetime.strptime('09:00', '%H:%M').time()
+    end_time = datetime.strptime('17:00', '%H:%M').time()
+    
+    current_time = start_time
+    while current_time < end_time:
+        slot_end = (datetime.combine(datetime.today(), current_time) + timedelta(minutes=30)).time()
+        default_slots.append({
+            'start_time': current_time.strftime('%H:%M'),
+            'end_time': slot_end.strftime('%H:%M'),
+            'available': False
+        })
+        current_time = slot_end
+    
+    # Check availability for each counselor
+    available_slots = default_slots.copy()
+    
+    for counselor in counselors:
+        # Check if counselor has regular availability for this day
+        regular_schedule = AppointmentSchedule.objects.filter(
+            counselor=counselor,
+            day_of_week=day_of_week
+        ).first()
         
-        for counselor in counselors:
-            # Get blocked time slots for this date and counselor
-            blocked_slots = BlockedTimeSlot.objects.filter(
-                date=date,
-                counselor=counselor
-            )
-            
-            # Get existing appointments for this date and counselor
-            existing_appointments = Appointment.objects.filter(
-                date=date,
-                counselor=counselor
-            ).exclude(status=AppointmentStatus.CANCELLED)
-            
-            # Generate time slots (9 AM to 5 PM in 30 minute increments)
-            start_hour, end_hour = 9, 17
-            
-            for hour in range(start_hour, end_hour):
-                for minute in [0, 30]:
-                    start_time = timezone.datetime.combine(
-                        date, 
-                        timezone.time(hour, minute)
-                    ).time()
-                    
-                    end_minute = (minute + 30) % 60
-                    end_hour = hour + 1 if minute + 30 >= 60 else hour
-                    end_time = timezone.datetime.combine(
-                        date, 
-                        timezone.time(end_hour, end_minute)
-                    ).time()
-                    
-                    # Check if this time slot is blocked
-                    is_blocked = any(
-                        blocked.start_time <= start_time < blocked.end_time or
-                        blocked.start_time < end_time <= blocked.end_time or
-                        (start_time <= blocked.start_time and end_time >= blocked.end_time)
-                        for blocked in blocked_slots
-                    )
-                    
-                    # Check if there's an existing appointment
-                    is_booked = any(
-                        appt.start_time <= start_time < appt.end_time or
-                        appt.start_time < end_time <= appt.end_time or
-                        (start_time <= appt.start_time and end_time >= appt.end_time)
-                        for appt in existing_appointments
-                    )
-                    
-                    # Check if slot already exists in available_slots
-                    slot_exists = any(
-                        slot['start_time'] == start_time.strftime('%H:%M') and 
-                        slot['end_time'] == end_time.strftime('%H:%M')
-                        for slot in available_slots
-                    )
-                    
-                    # Add to available slots if not blocked or booked and not already added
-                    if not (is_blocked or is_booked) and not slot_exists:
-                        slot = {
-                            'start_time': start_time.strftime('%H:%M'),
-                            'end_time': end_time.strftime('%H:%M'),
-                            'available': True
-                        }
-                        available_slots.append(slot)
+        # If counselor has no regular schedule for this day, skip
+        if not regular_schedule:
+            continue
         
-        return JsonResponse(available_slots, safe=False)
-    
-    # Original code for counselor-specific slots
-    # Get blocked time slots for this date and counselor
-    blocked_slots = BlockedTimeSlot.objects.filter(
-        date=date,
-        counselor=counselor
-    )
-    
-    # Get existing appointments for this date and counselor
-    existing_appointments = Appointment.objects.filter(
-        date=date,
-        counselor=counselor
-    ).exclude(status=AppointmentStatus.CANCELLED)
-    
-    # Generate available time slots
-    # Default business hours: 9 AM to 5 PM in 30 minute increments
-    available_slots = []
-    
-    # Start at 9 AM
-    start_hour = 9
-    # End at 5 PM
-    end_hour = 17
-    
-    for hour in range(start_hour, end_hour):
-        for minute in [0, 30]:
-            start_time = timezone.datetime.combine(
-                date, 
-                timezone.time(hour, minute)
-            ).time()
+        # Check blocked time slots
+        blocked_slots = BlockedTimeSlot.objects.filter(
+            counselor=counselor,
+            date=selected_date
+        )
+        
+        # Check existing appointments
+        existing_appointments = Appointment.objects.filter(
+            counselor=counselor,
+            date=selected_date,
+            status__in=['pending', 'approved']
+        )
+        
+        # Mark slots as available if not blocked or already booked
+        for i, slot in enumerate(available_slots):
+            slot_start = datetime.strptime(slot['start_time'], '%H:%M').time()
+            slot_end = datetime.strptime(slot['end_time'], '%H:%M').time()
             
-            # Each slot is 30 minutes
-            end_minute = (minute + 30) % 60
-            end_hour = hour + 1 if minute + 30 >= 60 else hour
-            end_time = timezone.datetime.combine(
-                date, 
-                timezone.time(end_hour, end_minute)
-            ).time()
-            
-            # Check if this time slot is blocked
-            is_blocked = any(
-                blocked.start_time <= start_time < blocked.end_time or
-                blocked.start_time < end_time <= blocked.end_time or
-                (start_time <= blocked.start_time and end_time >= blocked.end_time)
-                for blocked in blocked_slots
+            # Check if slot is within counselor's working hours
+            if not (regular_schedule.start_time <= slot_start and slot_end <= regular_schedule.end_time):
+                continue
+                
+            # Check if slot overlaps with blocked slots
+            blocked = any(
+                max(blocked_slot.start_time, slot_start) < min(blocked_slot.end_time, slot_end)
+                for blocked_slot in blocked_slots
             )
             
-            # Check if there's an existing appointment
-            is_booked = any(
-                appt.start_time <= start_time < appt.end_time or
-                appt.start_time < end_time <= appt.end_time or
-                (start_time <= appt.start_time and end_time >= appt.end_time)
-                for appt in existing_appointments
+            if blocked:
+                continue
+                
+            # Check if slot overlaps with existing appointments
+            booked = any(
+                max(appointment.start_time, slot_start) < min(appointment.end_time, slot_end)
+                for appointment in existing_appointments
             )
             
-            # Add to available slots if not blocked or booked
-            slot = {
-                'start_time': start_time.strftime('%H:%M'),
-                'end_time': end_time.strftime('%H:%M'),
-                'available': not (is_blocked or is_booked)
-            }
-            
-            available_slots.append(slot)
+            if not booked:
+                # This slot is available with this counselor
+                available_slots[i]['available'] = True
     
     return JsonResponse(available_slots, safe=False)
 

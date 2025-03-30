@@ -2,300 +2,340 @@
 {% load static %}
 
 {% block title %}Appointment Reports{% endblock %}
+{% block content_title %}Appointment Reports{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+<style>
+  .appointment-pilarease-filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .appointment-pilarease-form-group {
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .appointment-pilarease-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  
+  .appointment-pilarease-card-header {
+    background-color: #f7f7f7;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .appointment-pilarease-card-body {
+    padding: 20px;
+  }
+  
+  .appointment-pilarease-card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .appointment-pilarease-card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 10px 0;
+    color: #3F51B5;
+  }
+  
+  .appointment-pilarease-card-info {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+  }
+  
+  .appointment-pilarease-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .appointment-pilarease-table th,
+  .appointment-pilarease-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .appointment-pilarease-table th {
+    background-color: #f7f7f7;
+    font-weight: 600;
+  }
+  
+  .appointment-pilarease-table tbody tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  
+  .status-pending {
+    background-color: #FFF8E1;
+    color: #FF8F00;
+  }
+  
+  .status-approved {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+  }
+  
+  .status-rejected {
+    background-color: #FFEBEE;
+    color: #C62828;
+  }
+  
+  .status-completed {
+    background-color: #E3F2FD;
+    color: #1565C0;
+  }
+  
+  .status-cancelled {
+    background-color: #EEEEEE;
+    color: #616161;
+  }
+</style>
 {% endblock %}
 
-{% block content %}
-<div class="appointment-pilarease-content-wrapper">
-    <div class="appointment-pilarease-content-header">
-        <h1>Appointment Reports</h1>
-        <div class="appointment-pilarease-filters">
-            <form method="GET" class="appointment-pilarease-filter-form">
-                <div class="form-row">
-                    <div class="form-group col-md-3">
-                        <label for="report_type">Report Type</label>
-                        <select name="report_type" id="report_type" class="form-control">
-                            <option value="appointments" {% if report_type == 'appointments' %}selected{% endif %}>Appointments</option>
-                            <option value="feedback" {% if report_type == 'feedback' %}selected{% endif %}>Feedback</option>
-                            <option value="availability" {% if report_type == 'availability' %}selected{% endif %}>Availability</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label for="daterange">Date Range</label>
-                        <input type="text" id="daterange" name="daterange" class="form-control" 
-                            value="{{ date_from|default:'' }} - {{ date_to|default:'' }}">
-                        <input type="hidden" name="date_from" id="date_from" value="{{ date_from|default:'' }}">
-                        <input type="hidden" name="date_to" id="date_to" value="{{ date_to|default:'' }}">
-                    </div>
-                    <div class="form-group col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    </div>
-                    <div class="form-group col-md-3 d-flex align-items-end justify-content-end">
-                        <button type="button" class="btn btn-success" id="exportReport">
-                            <i class="fas fa-download"></i> Export Report
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+{% block appointment_content %}
+<!-- Dashboard Summary Cards -->
+<div class="dashboard-summary appointment-pilarease-summary">
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Total Appointments</h3>
+    <p>{{ total_appointments }}</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Avg. Duration</h3>
+    <p>{{ avg_duration }} min</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Booking Rate</h3>
+    <p>{{ booking_rate }}%</p>
+  </div>
+  <div class="summary-card appointment-pilarease-card">
+    <h3>Cancellation Rate</h3>
+    <p>{{ cancellation_rate|default:"0" }}%</p>
+  </div>
+</div>
+
+<div class="appointment-pilarease-filter-form">
+  <form method="GET" id="reportFilterForm">
+    <div class="pilarease-admin-filter-group">
+      <label for="report_type">Report Type</label>
+      <select name="report_type" id="report_type" class="pilarease-admin-filter-select">
+        <option value="appointments" {% if report_type == 'appointments' %}selected{% endif %}>Appointments</option>
+        <option value="availability" {% if report_type == 'availability' %}selected{% endif %}>Availability</option>
+      </select>
     </div>
-
-    <div class="appointment-pilarease-content-body">
-        <!-- Report Overview Stats -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-body">
-                        <h5 class="appointment-pilarease-card-title">Total Appointments</h5>
-                        <h2 class="appointment-pilarease-card-value">{{ stats.total_appointments }}</h2>
-                        <p class="appointment-pilarease-card-info">
-                            <i class="fas fa-calendar-check"></i> In selected period
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-body">
-                        <h5 class="appointment-pilarease-card-title">Avg. Duration</h5>
-                        <h2 class="appointment-pilarease-card-value">{{ stats.average_duration }} min</h2>
-                        <p class="appointment-pilarease-card-info">
-                            <i class="fas fa-clock"></i> Per appointment
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-body">
-                        <h5 class="appointment-pilarease-card-title">Avg. Rating</h5>
-                        <h2 class="appointment-pilarease-card-value">{{ stats.average_rating }}
-                            <small class="text-muted">/ 5</small>
-                        </h2>
-                        <p class="appointment-pilarease-card-info">
-                            <i class="fas fa-star"></i> From {{ stats.total_feedback }} feedback(s)
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-body">
-                        <h5 class="appointment-pilarease-card-title">Booking Rate</h5>
-                        <h2 class="appointment-pilarease-card-value">{{ stats.booking_rate }}%</h2>
-                        <p class="appointment-pilarease-card-info">
-                            <i class="fas fa-chart-line"></i> Of available slots
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamic report content based on type -->
-        {% if report_type == 'appointments' or not report_type %}
-        <!-- Appointments Report -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Appointments by Status</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="appointmentStatusChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Appointments Over Time</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="appointmentTimeChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="appointment-pilarease-card mt-4">
-            <div class="appointment-pilarease-card-header">
-                <h3>Appointment Details</h3>
-            </div>
-            <div class="appointment-pilarease-card-body">
-                <table class="appointment-pilarease-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>User</th>
-                            <th>Counselor</th>
-                            <th>Status</th>
-                            <th>Duration</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
-                        <tr>
-                            <td>{{ appointment.date }}</td>
-                            <td>{{ appointment.start_time }} - {{ appointment.end_time }}</td>
-                            <td>{{ appointment.user.full_name }}</td>
-                            <td>{{ appointment.counselor.full_name }}</td>
-                            <td>
-                                <span class="badge
-                                    {% if appointment.status == 'PENDING' %}bg-warning
-                                    {% elif appointment.status == 'APPROVED' %}bg-success
-                                    {% elif appointment.status == 'REJECTED' %}bg-danger
-                                    {% elif appointment.status == 'CANCELLED' %}bg-secondary
-                                    {% elif appointment.status == 'COMPLETED' %}bg-info
-                                    {% endif %}">
-                                    {{ appointment.get_status_display }}
-                                </span>
-                            </td>
-                            <td>
-                                {% with start=appointment.start_time|time:'H:i'|stringformat:'s' %}
-                                {% with end=appointment.end_time|time:'H:i'|stringformat:'s' %}
-                                {{ start }} to {{ end }}
-                                {% endwith %}
-                                {% endwith %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">No appointments found in the selected period.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if report_type == 'feedback' %}
-        <!-- Feedback Report -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Rating Distribution</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="ratingDistributionChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Feedback Over Time</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="feedbackTimeChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="appointment-pilarease-card mt-4">
-            <div class="appointment-pilarease-card-header">
-                <h3>Feedback Details</h3>
-            </div>
-            <div class="appointment-pilarease-card-body">
-                <table class="appointment-pilarease-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>User</th>
-                            <th>Appointment</th>
-                            <th>Rating</th>
-                            <th>Comment</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for feedback in feedback_list %}
-                        <tr>
-                            <td>{{ feedback.created_at|date:"M d, Y" }}</td>
-                            <td>{{ feedback.appointment.user.full_name }}</td>
-                            <td>{{ feedback.appointment.date }} {{ feedback.appointment.start_time|time:"H:i" }}</td>
-                            <td>
-                                <div class="star-rating">
-                                    {% for i in "12345" %}
-                                        <i class="fas fa-star {% if forloop.counter <= feedback.rating %}text-warning{% else %}text-muted{% endif %}"></i>
-                                    {% endfor %}
-                                </div>
-                            </td>
-                            <td>{{ feedback.comment|truncatechars:50 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center">No feedback found in the selected period.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if report_type == 'availability' %}
-        <!-- Availability Report -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Availability by Day of Week</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="availabilityDayChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="appointment-pilarease-card">
-                    <div class="appointment-pilarease-card-header">
-                        <h3>Booking Rate Over Time</h3>
-                    </div>
-                    <div class="appointment-pilarease-card-body">
-                        <canvas id="bookingRateChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="appointment-pilarease-card mt-4">
-            <div class="appointment-pilarease-card-header">
-                <h3>Blocked Time Slots</h3>
-            </div>
-            <div class="appointment-pilarease-card-body">
-                <table class="appointment-pilarease-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Counselor</th>
-                            <th>Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for slot in blocked_slots %}
-                        <tr>
-                            <td>{{ slot.date }}</td>
-                            <td>{{ slot.start_time }} - {{ slot.end_time }}</td>
-                            <td>{{ slot.counselor.full_name }}</td>
-                            <td>{{ slot.reason }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center">No blocked slots found in the selected period.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
+    
+    <div class="pilarease-admin-filter-group">
+      <label for="daterange">Date Range</label>
+      <input type="text" id="daterange" name="daterange" class="pilarease-admin-filter-input" 
+          value="{{ date_from|default:'' }} - {{ date_to|default:'' }}">
+      <input type="hidden" name="date_from" id="date_from" value="{{ date_from|default:'' }}">
+      <input type="hidden" name="date_to" id="date_to" value="{{ date_to|default:'' }}">
     </div>
+    
+    <div class="pilarease-admin-filter-buttons">
+      <button type="submit" class="pilarease-admin-filter-button">Apply Filters</button>
+      <button type="button" id="exportReportBtn" class="pilarease-admin-action-button export-button">
+        <i class="bx bx-download"></i> Export Report
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Charts Container -->
+<div class="pilarease-admin-statistics-charts appointment-pilarease-charts">
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Appointments by Status
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Distribution of appointments by their current status
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="appointmentStatusChart"></canvas>
+    </div>
+  </div>
+
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Appointments Over Time
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Number of appointments by month
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="appointmentTimeChart"></canvas>
+    </div>
+  </div>
+</div>
+
+{% if report_type == 'appointments' or not report_type %}
+<!-- Appointments Report -->
+<div class="pilarease-admin-data-table-container">
+  <h2 class="pilarease-admin-section-title">
+    Appointment Details
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <span class="pilarease-admin-tooltip">
+      Detailed list of all appointments in the selected period
+    </span>
+  </h2>
+  
+  <table class="pilarease-admin-data-table appointment-pilarease-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>User</th>
+        <th>Counselor</th>
+        <th>Status</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in appointments %}
+      <tr>
+        <td>{{ appointment.date }}</td>
+        <td>{{ appointment.start_time }} - {{ appointment.end_time }}</td>
+        <td>{{ appointment.user.full_name }}</td>
+        <td>{{ appointment.counselor.full_name }}</td>
+        <td>
+          <span class="pilarease-admin-status-label {% if appointment.status == 'pending' %}processing{% elif appointment.status == 'approved' %}completed{% elif appointment.status == 'rejected' %}failed{% elif appointment.status == 'cancelled' %}cancelled{% endif %}">
+            {{ appointment.get_status_display }}
+          </span>
+        </td>
+        <td>
+          {% with start=appointment.start_time|time:'H:i'|stringformat:'s' %}
+          {% with end=appointment.end_time|time:'H:i'|stringformat:'s' %}
+          {{ start }} to {{ end }}
+          {% endwith %}
+          {% endwith %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center">No appointments found in the selected period.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if report_type == 'availability' %}
+<!-- Availability Report -->
+<div class="pilarease-admin-statistics-charts appointment-pilarease-charts">
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Availability by Day of Week
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Available, booked, and blocked hours by day of week
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="availabilityDayChart"></canvas>
+    </div>
+  </div>
+
+  <div class="pilarease-admin-statistics-chart appointment-pilarease-chart">
+    <div class="pilarease-admin-chart-header">
+      Booking Rate Over Time
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Booking rate percentage by month
+      </span>
+    </div>
+    <div class="pilarease-admin-chart-content">
+      <canvas id="bookingRateChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="pilarease-admin-data-table-container">
+  <h2 class="pilarease-admin-section-title">
+    Blocked Time Slots
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+    <span class="pilarease-admin-tooltip">
+      List of manually blocked time slots in the selected period
+    </span>
+  </h2>
+  
+  <table class="pilarease-admin-data-table appointment-pilarease-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Counselor</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for slot in blocked_slots %}
+      <tr>
+        <td>{{ slot.date }}</td>
+        <td>{{ slot.start_time }} - {{ slot.end_time }}</td>
+        <td>{{ slot.counselor.full_name }}</td>
+        <td>{{ slot.reason }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="text-center">No blocked slots found in the selected period.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Export Modal -->
+<div class="pilarease-admin-modal" id="exportModal">
+  <div class="pilarease-admin-modal-content">
+    <span class="pilarease-admin-close">&times;</span>
+    <div class="pilarease-admin-modal-header">
+      <h2>Export Report</h2>
+    </div>
+    <div class="pilarease-admin-modal-body">
+      <form id="exportForm" method="GET" action="{% url 'appointment:export_csv' %}">
+        <input type="hidden" name="report_type" id="export_report_type" value="{{ report_type }}">
+        <input type="hidden" name="date_from" id="export_date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to" id="export_date_to" value="{{ date_to }}">
+        
+        <div class="pilarease-admin-form-group">
+          <label for="export_format">Export Format:</label>
+          <select id="export_format" name="format" class="pilarease-admin-form-select">
+            <option value="csv">CSV</option>
+            <option value="excel">Excel</option>
+            <option value="pdf">PDF</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="pilarease-admin-modal-footer">
+      <button type="button" class="pilarease-admin-button" id="cancelExportBtn">Cancel</button>
+      <button type="button" class="pilarease-admin-action-button approve-button" id="confirmExportBtn">
+        <i class="bx bx-download"></i> Export
+      </button>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -304,260 +344,199 @@
 <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
     // Initialize date range picker
-    $(function() {
-        $('#daterange').daterangepicker({
-            opens: 'left',
-            maxDate: new Date(),
-            locale: {
-                format: 'YYYY-MM-DD'
-            },
-            ranges: {
-               'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-               'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-               'This Month': [moment().startOf('month'), moment().endOf('month')],
-               'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-            }
-        }, function(start, end, label) {
-            $('#date_from').val(start.format('YYYY-MM-DD'));
-            $('#date_to').val(end.format('YYYY-MM-DD'));
-        });
+    $('#daterange').daterangepicker({
+      opens: 'left',
+      maxDate: new Date(),
+      locale: {
+        format: 'YYYY-MM-DD'
+      },
+      ranges: {
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+        'This Month': [moment().startOf('month'), moment().endOf('month')],
+        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+      }
+    }, function(start, end, label) {
+      $('#date_from').val(start.format('YYYY-MM-DD'));
+      $('#date_to').val(end.format('YYYY-MM-DD'));
     });
-
-    // Charts initialization
-    document.addEventListener('DOMContentLoaded', function() {
-        {% if report_type == 'appointments' or not report_type %}
-        // Appointment Status Chart
-        const statusCtx = document.getElementById('appointmentStatusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Pending', 'Approved', 'Completed', 'Cancelled', 'Rejected'],
-                datasets: [{
-                    data: [
-                        {{ stats.pending_appointments }},
-                        {{ stats.approved_appointments }},
-                        {{ stats.completed_appointments }},
-                        {{ stats.cancelled_appointments }},
-                        0 // Placeholder for rejected
-                    ],
-                    backgroundColor: [
-                        '#ffc107', // Pending (warning)
-                        '#28a745', // Approved (success)
-                        '#17a2b8', // Completed (info)
-                        '#6c757d', // Cancelled (secondary)
-                        '#dc3545'  // Rejected (danger)
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    }
-                }
-            }
-        });
-
-        // Appointments Over Time Chart
-        const timeCtx = document.getElementById('appointmentTimeChart').getContext('2d');
-        new Chart(timeCtx, {
-            type: 'line',
-            data: {
-                labels: {{ time_labels|safe }},
-                datasets: [{
-                    label: 'Appointments',
-                    data: {{ time_data|safe }},
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
-        {% endif %}
-
-        {% if report_type == 'feedback' %}
-        // Rating Distribution Chart
-        const ratingCtx = document.getElementById('ratingDistributionChart').getContext('2d');
-        new Chart(ratingCtx, {
-            type: 'bar',
-            data: {
-                labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
-                datasets: [{
-                    label: 'Number of Ratings',
-                    data: [
-                        {{ rating_distribution.1 }},
-                        {{ rating_distribution.2 }},
-                        {{ rating_distribution.3 }},
-                        {{ rating_distribution.4 }},
-                        {{ rating_distribution.5 }}
-                    ],
-                    backgroundColor: [
-                        '#dc3545', // 1 star
-                        '#ff9800', // 2 stars
-                        '#ffc107', // 3 stars
-                        '#4caf50', // 4 stars
-                        '#28a745'  // 5 stars
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
-
-        // Feedback Over Time Chart
-        const feedbackTimeCtx = document.getElementById('feedbackTimeChart').getContext('2d');
-        new Chart(feedbackTimeCtx, {
-            type: 'line',
-            data: {
-                labels: {{ time_labels|safe }},
-                datasets: [{
-                    label: 'Feedback Count',
-                    data: {{ feedback_count_by_time|safe }},
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    borderWidth: 2,
-                    fill: false,
-                    yAxisID: 'y',
-                    tension: 0.4
-                }, {
-                    label: 'Average Rating',
-                    data: {{ avg_rating_by_time|safe }},
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 2,
-                    fill: false,
-                    yAxisID: 'y1',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        position: 'left',
-                        ticks: {
-                            precision: 0
-                        }
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        position: 'right',
-                        min: 0,
-                        max: 5,
-                        grid: {
-                            drawOnChartArea: false
-                        }
-                    }
-                }
-            }
-        });
-        {% endif %}
-
-        {% if report_type == 'availability' %}
-        // Availability by Day Chart
-        const availabilityDayCtx = document.getElementById('availabilityDayChart').getContext('2d');
-        new Chart(availabilityDayCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: [{
-                    label: 'Available Hours',
-                    data: {{ available_hours_by_day|safe }},
-                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                    borderColor: '#007bff',
-                    borderWidth: 1
-                }, {
-                    label: 'Booked Hours',
-                    data: {{ booked_hours_by_day|safe }},
-                    backgroundColor: 'rgba(40, 167, 69, 0.5)',
-                    borderColor: '#28a745',
-                    borderWidth: 1
-                }, {
-                    label: 'Blocked Hours',
-                    data: {{ blocked_hours_by_day|safe }},
-                    backgroundColor: 'rgba(108, 117, 125, 0.5)',
-                    borderColor: '#6c757d',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    }
-                }
-            }
-        });
-
-        // Booking Rate Over Time Chart
-        const bookingRateCtx = document.getElementById('bookingRateChart').getContext('2d');
-        new Chart(bookingRateCtx, {
-            type: 'line',
-            data: {
-                labels: {{ time_labels|safe }},
-                datasets: [{
-                    label: 'Booking Rate (%)',
-                    data: {{ booking_rate_by_time|safe }},
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        {% endif %}
+    
+    // Export functionality
+    const exportModal = document.getElementById('exportModal');
+    const exportBtn = document.getElementById('exportReportBtn');
+    const cancelExportBtn = document.getElementById('cancelExportBtn');
+    const confirmExportBtn = document.getElementById('confirmExportBtn');
+    const closeExportModal = exportModal.querySelector('.pilarease-admin-close');
+    
+    exportBtn.addEventListener('click', function() {
+      // Set current values in the export form
+      document.getElementById('export_report_type').value = document.getElementById('report_type').value;
+      document.getElementById('export_date_from').value = document.getElementById('date_from').value;
+      document.getElementById('export_date_to').value = document.getElementById('date_to').value;
+      
+      // Show modal
+      exportModal.style.display = 'block';
     });
-
-    // Export report functionality
-    document.getElementById('exportReport').addEventListener('click', function() {
-        // In a real application, this would call a backend API to generate a PDF/CSV
-        alert('Export functionality would be implemented here in a production environment');
+    
+    cancelExportBtn.addEventListener('click', function() {
+      exportModal.style.display = 'none';
     });
+    
+    closeExportModal.addEventListener('click', function() {
+      exportModal.style.display = 'none';
+    });
+    
+    confirmExportBtn.addEventListener('click', function() {
+      document.getElementById('exportForm').submit();
+    });
+    
+    window.addEventListener('click', function(event) {
+      if (event.target === exportModal) {
+        exportModal.style.display = 'none';
+      }
+    });
+    
+    // Appointment Status Chart
+    const statusCtx = document.getElementById('appointmentStatusChart').getContext('2d');
+    new Chart(statusCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Pending', 'Approved', 'Completed', 'Cancelled', 'Rejected'],
+        datasets: [{
+          data: [
+            {{ pending_appointments|default:0 }},
+            {{ approved_appointments|default:0 }},
+            {{ completed_appointments|default:0 }},
+            {{ cancelled_appointments|default:0 }},
+            {{ rejected_appointments|default:0 }}
+          ],
+          backgroundColor: [
+            '#ffc107', // Pending (warning)
+            '#28a745', // Approved (success)
+            '#17a2b8', // Completed (info)
+            '#6c757d', // Cancelled (secondary)
+            '#dc3545'  // Rejected (danger)
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+          }
+        }
+      }
+    });
+    
+    // Appointments Over Time Chart
+    const timeCtx = document.getElementById('appointmentTimeChart').getContext('2d');
+    new Chart(timeCtx, {
+      type: 'line',
+      data: {
+        labels: {{ time_labels|safe }},
+        datasets: [{
+          label: 'Appointments',
+          data: {{ time_data|safe }},
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0, 123, 255, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+    
+    {% if report_type == 'availability' %}
+    // Availability by Day Chart
+    const availabilityDayCtx = document.getElementById('availabilityDayChart').getContext('2d');
+    new Chart(availabilityDayCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        datasets: [{
+          label: 'Available Hours',
+          data: [8, 8, 8, 8, 8, 0, 0], // Example data
+          backgroundColor: 'rgba(0, 123, 255, 0.5)',
+          borderColor: '#007bff',
+          borderWidth: 1
+        }, {
+          label: 'Booked Hours',
+          data: [4, 5, 3, 6, 2, 0, 0], // Example data
+          backgroundColor: 'rgba(40, 167, 69, 0.5)',
+          borderColor: '#28a745',
+          borderWidth: 1
+        }, {
+          label: 'Blocked Hours',
+          data: [1, 0, 2, 1, 1, 0, 0], // Example data
+          backgroundColor: 'rgba(108, 117, 125, 0.5)',
+          borderColor: '#6c757d',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+    
+    // Booking Rate Over Time Chart
+    const bookingRateCtx = document.getElementById('bookingRateChart').getContext('2d');
+    new Chart(bookingRateCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], // Example data
+        datasets: [{
+          label: 'Booking Rate (%)',
+          data: [65, 72, 80, 68, 75, 82], // Example data
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+    {% endif %}
+  });
 </script>
 {% endblock %}
