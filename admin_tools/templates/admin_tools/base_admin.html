@@ -158,6 +158,11 @@
           </a>
         </li>
       </ul>
+      <div class="pilarease-admin-sidebar-toggle">
+        <button id="sidebarToggleBtn" class="pilarease-admin-sidebar-toggle-button">
+          <i class="bx bx-chevron-right"></i>
+        </button>
+      </div>
     </div>
     <div class="pilarease-admin-main-content main-content">
       <!-- Header -->
@@ -232,12 +237,89 @@
     ></script>
     <script>
       const sidebar = document.querySelector(".pilarease-admin-sidebar");
+      const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+      const sidebarToggleIcon = sidebarToggleBtn.querySelector("i");
+      
+      // Function to toggle sidebar
+      function toggleSidebar() {
+        sidebar.classList.toggle("pilarease-admin-sidebar-expanded");
+        
+        // Change button icon based on sidebar state
+        if (sidebar.classList.contains("pilarease-admin-sidebar-expanded")) {
+          sidebarToggleIcon.classList.remove("bx-chevron-right");
+          sidebarToggleIcon.classList.add("bx-chevron-left");
+        } else {
+          sidebarToggleIcon.classList.remove("bx-chevron-left");
+          sidebarToggleIcon.classList.add("bx-chevron-right");
+        }
+        
+        // Save sidebar state to localStorage
+        localStorage.setItem("sidebarExpanded", sidebar.classList.contains("pilarease-admin-sidebar-expanded"));
+      }
+      
+      // Initialize sidebar state from localStorage
+      document.addEventListener("DOMContentLoaded", function() {
+        const savedState = localStorage.getItem("sidebarExpanded");
+        
+        // If there's a saved state, apply it
+        if (savedState === "true") {
+          sidebar.classList.add("pilarease-admin-sidebar-expanded");
+          sidebarToggleIcon.classList.remove("bx-chevron-right");
+          sidebarToggleIcon.classList.add("bx-chevron-left");
+        } else {
+          sidebar.classList.remove("pilarease-admin-sidebar-expanded");
+          sidebarToggleIcon.classList.remove("bx-chevron-left");
+          sidebarToggleIcon.classList.add("bx-chevron-right");
+        }
+        
+        // Set active page in the sidebar based on URL path
+        const currentPath = window.location.pathname;
+        
+        // Map URL patterns to their respective menu items using text content
+        const menuMap = {
+          '/dashboard': 'Dashboard',
+          '/statistics': 'Statistics',
+          '/analysis': 'Analysis',
+          '/insights': 'Insights',
+          '/comparison': 'Comparison',
+          '/performance': 'Performance',
+          '/appointment': 'Appointment',
+          '/contact': 'Contact',
+          '/feedback': 'Feedback',
+          '/replies': 'Replies',
+          '/chat': 'Chat',
+          '/referrals': 'Referral',
+          '/profanities': 'Profanity',
+          '/data': 'Data',
+          '/logout': 'Logout'
+        };
+        
+        // Find matching menu item and add active class
+        Object.keys(menuMap).forEach(key => {
+          if (currentPath.includes(key)) {
+            const menuItems = document.querySelectorAll('.pilarease-admin-sidebar-menu li a');
+            menuItems.forEach(item => {
+              const menuText = item.querySelector('.pilarease-admin-menu-text');
+              if (menuText && menuText.textContent === menuMap[key]) {
+                item.classList.add('active');
+              }
+            });
+          }
+        });
+      });
+      
+      // Toggle sidebar when button is clicked
+      sidebarToggleBtn.addEventListener("click", toggleSidebar);
+      
+      // Remove hover event listeners to prevent auto-expanding
+      /*
       sidebar.addEventListener("mouseenter", () => {
         sidebar.classList.add("pilarease-admin-sidebar-expanded");
       });
       sidebar.addEventListener("mouseleave", () => {
         sidebar.classList.remove("pilarease-admin-sidebar-expanded");
       });
+      */
 
       // Modal Handling
       const modals = document.querySelectorAll(".pilarease-admin-modal");
