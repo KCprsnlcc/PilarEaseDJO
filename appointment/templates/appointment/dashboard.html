@@ -10,20 +10,20 @@
   <div class="summary-card appointment-pilarease-card">
     <h3>Total Appointments</h3>
     <p>{{ total_appointments }}</p>
-  </div>
+        </div>
   <div class="summary-card appointment-pilarease-card">
     <h3>Pending Requests</h3>
     <p>{{ pending_appointments }}</p>
-  </div>
+        </div>
   <div class="summary-card appointment-pilarease-card">
     <h3>Upcoming Appointments</h3>
     <p>{{ upcoming_appointments }}</p>
-  </div>
+      </div>
   <div class="summary-card appointment-pilarease-card">
     <h3>Available Slots</h3>
     <p>{{ available_slots }}</p>
-  </div>
-</div>
+        </div>
+      </div>
 
 <!-- Charts Container -->
 <div class="pilarease-admin-statistics-charts appointment-pilarease-charts">
@@ -47,13 +47,13 @@
       <span class="pilarease-admin-tooltip">
         Number of appointments by month
       </span>
-    </div>
+        </div>
     <div class="pilarease-admin-chart-content">
       <canvas id="appointmentsTrendChart"></canvas>
     </div>
   </div>
-</div>
-
+        </div>
+        
 <!-- Recent Appointments -->
 <div class="pilarease-admin-data-table-container appointment-pilarease-recent">
   <h2 class="pilarease-admin-section-title">
@@ -66,44 +66,44 @@
   
   {% if recent_appointments %}
     <table class="pilarease-admin-data-table appointment-pilarease-table">
-      <thead>
-        <tr>
+              <thead>
+                <tr>
           <th>Date</th>
-          <th>Time</th>
-          <th>User</th>
-          <th>Title</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+                  <th>Time</th>
+                  <th>User</th>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
         {% for appointment in recent_appointments %}
-          <tr>
+                  <tr>
             <td>{{ appointment.date|date:"M d, Y" }}</td>
-            <td>{{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}</td>
-            <td>{{ appointment.user.full_name }}</td>
-            <td>{{ appointment.title }}</td>
-            <td>
+                    <td>{{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}</td>
+                    <td>{{ appointment.user.full_name }}</td>
+                    <td>{{ appointment.title }}</td>
+                    <td>
               <span class="pilarease-admin-status-label {% if appointment.status == 'pending' %}processing{% elif appointment.status == 'approved' %}completed{% elif appointment.status == 'cancelled' %}failed{% endif %}">
                 {{ appointment.status|title }}
-              </span>
-            </td>
-            <td>
+                      </span>
+                    </td>
+                    <td>
               <a href="{% url 'appointment:appointment_detail' appointment_id=appointment.id %}" class="pilarease-admin-action-button view-button">
-                <i class="bx bx-detail"></i> View
-              </a>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
+                        <i class="bx bx-detail"></i> View
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        {% else %}
     <div class="pilarease-admin-no-data">
       <i class="bx bx-info-circle"></i> No recent appointments.
+          </div>
+        {% endif %}
     </div>
-  {% endif %}
-</div>
-
+    
 <!-- Upcoming Blocked Time Slots -->
 <div class="pilarease-admin-data-table-container appointment-pilarease-blocked">
   <h2 class="pilarease-admin-section-title">
@@ -116,16 +116,16 @@
   
   {% if blocked_slots %}
     <table class="pilarease-admin-data-table appointment-pilarease-table">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Time</th>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
           <th>Reason</th>
           <th>Created By</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
         {% for slot in blocked_slots %}
           <tr>
             <td>{{ slot.date|date:"M d, Y" }}</td>
@@ -139,16 +139,16 @@
                   <i class="bx bx-trash"></i> Remove
                 </button>
               </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        {% else %}
     <div class="pilarease-admin-no-data">
       <i class="bx bx-info-circle"></i> No blocked time slots.
-    </div>
-  {% endif %}
+          </div>
+        {% endif %}
 </div>
 {% endblock %}
 
@@ -199,10 +199,11 @@
         datasets: [{
           label: 'Appointments',
           data: {{ trend_data|safe }},
-          borderColor: '#3f51b5',
-          backgroundColor: 'rgba(63, 81, 181, 0.1)',
-          tension: 0.4,
-          fill: true
+          borderColor: '#4e73df',
+          backgroundColor: 'rgba(78, 115, 223, 0.1)',
+          pointBackgroundColor: '#4e73df',
+          borderWidth: 2,
+          tension: 0.3
         }]
       },
       options: {
@@ -211,15 +212,8 @@
         scales: {
           y: {
             beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Number of Appointments'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Month'
+            ticks: {
+              precision: 0
             }
           }
         }

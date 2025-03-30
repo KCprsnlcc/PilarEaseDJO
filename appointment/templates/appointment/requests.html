@@ -94,17 +94,17 @@
   
   {% if pending_requests %}
     <table class="pilarease-admin-data-table appointment-pilarease-table">
-      <thead>
-        <tr>
+          <thead>
+            <tr>
           <th>Date Requested</th>
           <th>Appointment Date</th>
-          <th>Time</th>
-          <th>User</th>
-          <th>Title</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+              <th>Time</th>
+              <th>User</th>
+              <th>Title</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
         {% for request in pending_requests %}
           <tr>
             <td>{{ request.created_at|date:"M d, Y" }}</td>
@@ -115,40 +115,40 @@
             <td>
               <div class="pilarease-admin-action-buttons">
                 <button class="pilarease-admin-action-button view-button" data-request-id="{{ request.id }}">
-                  <i class="bx bx-detail"></i> View
+                      <i class="bx bx-detail"></i> View
                 </button>
                 <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=request.id %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="status" value="approved">
-                  <input type="hidden" name="next" value="{{ request.path }}">
+                      {% csrf_token %}
+                      <input type="hidden" name="status" value="approved">
+                      <input type="hidden" name="next" value="{{ request.path }}">
                   <button type="submit" class="pilarease-admin-action-button approve-button">
-                    <i class="bx bx-check"></i> Approve
-                  </button>
-                </form>
+                        <i class="bx bx-check"></i> Approve
+                      </button>
+                    </form>
                 <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=request.id %}">
-                  {% csrf_token %}
+                      {% csrf_token %}
                   <input type="hidden" name="status" value="rejected">
-                  <input type="hidden" name="next" value="{{ request.path }}">
+                      <input type="hidden" name="next" value="{{ request.path }}">
                   <button type="submit" class="pilarease-admin-action-button delete-button">
                     <i class="bx bx-x"></i> Reject
-                  </button>
-                </form>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    
-    <!-- Pagination -->
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      
+      <!-- Pagination -->
     {% if pending_requests.has_other_pages %}
       <div class="pilarease-admin-pagination">
         <div class="pilarease-admin-step-links">
           {% if pending_requests.has_previous %}
             <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">First</a>
             <a href="?page={{ pending_requests.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Previous</a>
-          {% endif %}
-          
+            {% endif %}
+            
           <span class="pilarease-admin-current">
             Page {{ pending_requests.number }} of {{ pending_requests.paginator.num_pages }}
           </span>
@@ -156,17 +156,17 @@
           {% if pending_requests.has_next %}
             <a href="?page={{ pending_requests.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Next</a>
             <a href="?page={{ pending_requests.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="pilarease-admin-step-link">Last</a>
-          {% endif %}
+            {% endif %}
         </div>
-      </div>
-    {% endif %}
-  {% else %}
+        </div>
+      {% endif %}
+    {% else %}
     <div class="pilarease-admin-no-data">
       <i class="bx bx-info-circle"></i> No pending requests found.
-    </div>
-  {% endif %}
-</div>
-
+      </div>
+    {% endif %}
+  </div>
+  
 <!-- All Requests Section -->
 <div class="pilarease-admin-data-table-container appointment-pilarease-all-requests">
   <h2 class="pilarease-admin-section-title">
@@ -228,7 +228,7 @@
                     </button>
                   </form>
                 {% endif %}
-              </div>
+    </div>
             </td>
           </tr>
         {% endfor %}
@@ -268,15 +268,15 @@
     <span class="pilarease-admin-close">&times;</span>
     <div class="pilarease-admin-modal-header">
       <h2>Appointment Request Details</h2>
-    </div>
+      </div>
     <div class="pilarease-admin-modal-body" id="requestDetailContent">
       <!-- Request details will be loaded here via AJAX -->
-      <div class="text-center">
-        <div class="spinner-border" role="status">
-          <span class="sr-only">Loading...</span>
+          <div class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
     <div class="pilarease-admin-modal-footer">
       <button type="button" class="pilarease-admin-button" id="closeModalBtn">Close</button>
       <form id="modalApproveForm" method="post" style="display: inline-block;">
@@ -333,26 +333,26 @@
     
     // Function to load request details via AJAX
     function loadRequestDetails(requestId) {
-      // Set loading state
+    // Set loading state
       document.getElementById('requestDetailContent').innerHTML = `
-        <div class="text-center">
-          <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
+      <div class="text-center">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
         </div>
-      `;
+      </div>
+    `;
       
       // Update form actions
       document.getElementById('modalApproveForm').action = `/appointment/appointment/${requestId}/update-status/`;
       document.getElementById('modalRejectForm').action = `/appointment/appointment/${requestId}/update-status/`;
-      
-      // Show modal
+    
+    // Show modal
       document.getElementById('requestDetailModal').style.display = 'block';
-      
+    
       // Fetch request details
       fetch(`/appointment/appointment/${requestId}/`)
-        .then(response => response.json())
-        .then(data => {
+      .then(response => response.json())
+      .then(data => {
           // Update modal forms visibility based on status
           if (data.status === 'pending') {
             document.getElementById('modalApproveForm').style.display = 'inline-block';
@@ -362,7 +362,7 @@
             document.getElementById('modalRejectForm').style.display = 'none';
           }
           
-          // Update modal content
+        // Update modal content
           document.getElementById('requestDetailContent').innerHTML = `
             <div class="appointment-pilarease-detail">
               <div class="appointment-pilarease-detail-row">
@@ -417,16 +417,16 @@
               </div>
             </div>
           `;
-        })
-        .catch(error => {
+      })
+      .catch(error => {
           console.error('Error loading request details:', error);
           document.getElementById('requestDetailContent').innerHTML = `
-            <div class="alert alert-danger">
+          <div class="alert alert-danger">
               Error loading request details. Please try again.
-            </div>
-          `;
-        });
-    }
+          </div>
+        `;
+      });
+  }
   });
 </script>
 {% endblock %}

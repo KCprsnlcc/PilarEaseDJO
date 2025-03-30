@@ -94,12 +94,6 @@
     margin-bottom: 20px;
   }
   
-  .appointment-pilarease-action-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-  
   .appointment-pilarease-time-slots {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -154,10 +148,10 @@
       <button class="pilarease-admin-filter-button" id="month-btn">Month</button>
       <button class="pilarease-admin-filter-button" id="week-btn">Week</button>
       <button class="pilarease-admin-filter-button" id="day-btn">Day</button>
-    </div>
-  </div>
-  
-  <div id="calendar"></div>
+          </div>
+        </div>
+        
+        <div id="calendar"></div>
   
   <div class="appointment-pilarease-legend">
     <div class="appointment-pilarease-legend-item">
@@ -184,9 +178,9 @@
       <div class="appointment-pilarease-legend-color" style="background-color: #673AB7;"></div>
       <span>Blocked Time</span>
     </div>
-  </div>
-</div>
-
+      </div>
+    </div>
+    
 <!-- Block Time Modal -->
 <div class="pilarease-admin-modal" id="blockTimeModal">
   <div class="pilarease-admin-modal-content">
@@ -195,7 +189,7 @@
       <h2>Block Time Slot</h2>
     </div>
     <div class="pilarease-admin-modal-body">
-      <form id="blockTimeForm" method="post" action="{% url 'appointment:block_time' %}">
+      <form id="blockTimeForm" method="post" action="{% url 'appointment:add_blocked_slot' %}">
         {% csrf_token %}
         <div class="pilarease-admin-form-group">
           <label for="block_date">Date:</label>
@@ -211,34 +205,10 @@
           <label for="block_end_time">End Time:</label>
           <input type="time" id="block_end_time" name="end_time" class="pilarease-admin-form-input" required>
         </div>
-        
+      
         <div class="pilarease-admin-form-group">
           <label for="block_reason">Reason:</label>
           <textarea id="block_reason" name="reason" rows="3" class="pilarease-admin-form-input" required></textarea>
-        </div>
-        
-        <div class="pilarease-admin-form-group">
-          <label>Repeat:</label>
-          <div class="pilarease-admin-checkbox-group">
-            <input type="checkbox" id="block_repeat" name="repeat" class="pilarease-admin-checkbox">
-            <label for="block_repeat">Repeat this block</label>
-          </div>
-        </div>
-        
-        <div id="repeatOptions" style="display: none;">
-          <div class="pilarease-admin-form-group">
-            <label for="repeat_frequency">Frequency:</label>
-            <select id="repeat_frequency" name="repeat_frequency" class="pilarease-admin-form-select">
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </div>
-          
-          <div class="pilarease-admin-form-group">
-            <label for="repeat_until">Repeat Until:</label>
-            <input type="date" id="repeat_until" name="repeat_until" class="pilarease-admin-form-input">
-          </div>
         </div>
       </form>
     </div>
@@ -248,9 +218,9 @@
         <i class="bx bx-save"></i> Save
       </button>
     </div>
-  </div>
-</div>
-
+        </div>
+      </div>
+      
 <!-- Create Appointment Modal -->
 <div class="pilarease-admin-modal" id="createAppointmentModal">
   <div class="pilarease-admin-modal-content">
@@ -274,13 +244,13 @@
               <option value="{{ user.id }}">{{ user.full_name }}</option>
             {% endfor %}
           </select>
-        </div>
-        
+          </div>
+          
         <div class="pilarease-admin-form-group">
           <label for="appointment_date">Date:</label>
           <input type="date" id="appointment_date" name="date" class="pilarease-admin-form-input" required>
-        </div>
-        
+          </div>
+          
         <div class="pilarease-admin-form-group">
           <label>Available Time Slots:</label>
           <div class="appointment-pilarease-time-slots" id="timeSlots">
@@ -291,22 +261,24 @@
           </div>
           <input type="hidden" id="appointment_start_time" name="start_time" required>
           <input type="hidden" id="appointment_end_time" name="end_time" required>
-        </div>
-        
+          </div>
+          
         <div class="pilarease-admin-form-group">
           <label for="appointment_description">Description:</label>
           <textarea id="appointment_description" name="description" rows="3" class="pilarease-admin-form-input" required></textarea>
-        </div>
-        
+      </div>
+      
         <div class="pilarease-admin-form-group">
           <label for="appointment_status">Status:</label>
           <select id="appointment_status" name="status" class="pilarease-admin-form-select" required>
-            <option value="pending">Pending</option>
-            <option value="approved" selected>Approved</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED" selected>Approved</option>
           </select>
         </div>
-      </form>
-    </div>
+        
+        <input type="hidden" name="counselor_id" value="{{ request.user.id }}">
+        </form>
+      </div>
     <div class="pilarease-admin-modal-footer">
       <button type="button" class="pilarease-admin-button" id="closeAppointmentModalBtn">Cancel</button>
       <button type="button" class="pilarease-admin-action-button approve-button" id="saveAppointmentBtn">
@@ -322,10 +294,10 @@
     <span class="pilarease-admin-close">&times;</span>
     <div class="pilarease-admin-modal-header">
       <h2 id="eventTitle">Event Details</h2>
-    </div>
+      </div>
     <div class="pilarease-admin-modal-body" id="eventDetailContent">
       <!-- Event details will be loaded here dynamically -->
-    </div>
+        </div>
     <div class="pilarease-admin-modal-footer">
       <button type="button" class="pilarease-admin-button" id="closeEventModalBtn">Close</button>
       <div id="eventActions"></div>
@@ -351,6 +323,12 @@
       events: '{% url "appointment:calendar_events" %}',
       eventClassNames: function(arg) {
         return [arg.event.extendedProps.status];
+      },
+      eventDidMount: function(info) {
+        // Add status class to the event
+        const eventEl = info.el;
+        const status = info.event.extendedProps.status || 'pending';
+        eventEl.classList.add(status);
       },
       eventClick: function(info) {
         showEventDetails(info.event);
@@ -389,8 +367,6 @@
     const blockTimeModal = document.getElementById('blockTimeModal');
     const closeBlockModalBtn = document.getElementById('closeBlockModalBtn');
     const saveBlockBtn = document.getElementById('saveBlockBtn');
-    const blockRepeatCheckbox = document.getElementById('block_repeat');
-    const repeatOptions = document.getElementById('repeatOptions');
     
     blockTimeBtn.addEventListener('click', function() {
       // Set today's date as default
@@ -403,14 +379,6 @@
     
     closeBlockModalBtn.addEventListener('click', function() {
       blockTimeModal.style.display = 'none';
-    });
-    
-    blockRepeatCheckbox.addEventListener('change', function() {
-      if (this.checked) {
-        repeatOptions.style.display = 'block';
-      } else {
-        repeatOptions.style.display = 'none';
-      }
     });
     
     saveBlockBtn.addEventListener('click', function() {
@@ -504,20 +472,19 @@
       // Show loading
       timeSlotsContainer.innerHTML = '<div class="appointment-pilarease-time-slot"><span>Loading time slots...</span></div>';
       
-      // Fetch available time slots
-      fetch(`{% url 'appointment:available_time_slots' %}?date=${date}`)
+      // Call API to get available time slots
+      fetch(`/appointment/available-time-slots/?date=${date}`)
         .then(response => response.json())
         .then(data => {
-          // Clear the container
           timeSlotsContainer.innerHTML = '';
           
-          if (data.time_slots.length === 0) {
-            timeSlotsContainer.innerHTML = '<div class="appointment-pilarease-time-slot unavailable"><span>No available time slots</span></div>';
+          if (data.length === 0) {
+            timeSlotsContainer.innerHTML = '<div class="appointment-pilarease-time-slot unavailable"><span>No available time slots for this date.</span></div>';
             return;
           }
           
-          // Add time slots
-          data.time_slots.forEach(slot => {
+          // Generate time slots
+          data.forEach(slot => {
             const timeSlot = document.createElement('div');
             timeSlot.className = 'appointment-pilarease-time-slot';
             
@@ -549,14 +516,64 @@
         })
         .catch(error => {
           console.error('Error loading time slots:', error);
-          timeSlotsContainer.innerHTML = '<div class="appointment-pilarease-time-slot unavailable"><span>Error loading time slots</span></div>';
+          // Fallback to generating dummy time slots
+          generateDummyTimeSlots(timeSlotsContainer);
         });
+    }
+    
+    // Function to generate dummy time slots (fallback)
+    function generateDummyTimeSlots(container) {
+      container.innerHTML = '';
+      
+      // Generate time slots between 9 AM and 5 PM in 30 minute increments
+      const startHour = 9;
+      const endHour = 17;
+      
+      for (let hour = startHour; hour < endHour; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          const startTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          const endTimeMinute = (minute + 30) % 60;
+          const endTimeHour = minute + 30 >= 60 ? hour + 1 : hour;
+          const endTime = `${endTimeHour.toString().padStart(2, '0')}:${endTimeMinute.toString().padStart(2, '0')}`;
+          
+          // Check if this time is already booked (demonstration)
+          const isBooked = (hour === 12); // Example: 12 PM is lunch time
+          
+          const timeSlot = document.createElement('div');
+          timeSlot.className = 'appointment-pilarease-time-slot';
+          
+          if (isBooked) {
+            timeSlot.className += ' unavailable';
+          }
+          
+          timeSlot.innerHTML = `<span>${startTime} - ${endTime}</span>`;
+          
+          // Add click event to select time slot
+          if (!isBooked) {
+            timeSlot.addEventListener('click', function() {
+              // Remove selected class from all slots
+              document.querySelectorAll('.appointment-pilarease-time-slot').forEach(s => {
+                s.classList.remove('selected');
+              });
+              
+              // Add selected class to this slot
+              this.classList.add('selected');
+              
+              // Set the start and end time values in hidden inputs
+              document.getElementById('appointment_start_time').value = startTime;
+              document.getElementById('appointment_end_time').value = endTime;
+            });
+          }
+          
+          container.appendChild(timeSlot);
+        }
+      }
     }
     
     // Function to show event details
     function showEventDetails(event) {
       const eventId = event.id;
-      const eventType = event.extendedProps.type; // 'appointment' or 'blocked'
+      const eventType = event.extendedProps.type || 'appointment';
       const eventTitle = document.getElementById('eventTitle');
       const eventDetailContent = document.getElementById('eventDetailContent');
       const eventActions = document.getElementById('eventActions');
@@ -576,176 +593,131 @@
       // Show modal
       eventDetailModal.style.display = 'block';
       
+      // Display event details directly from the event object
       if (eventType === 'appointment') {
         // Set title
         eventTitle.innerText = 'Appointment Details';
         
-        // Fetch appointment details
-        fetch(`/appointment/appointment/${eventId}/`)
-          .then(response => response.json())
-          .then(data => {
-            // Update content
-            eventDetailContent.innerHTML = `
-              <div class="appointment-pilarease-detail">
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Title:</div>
-                  <div class="appointment-pilarease-detail-value">${data.title}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Date:</div>
-                  <div class="appointment-pilarease-detail-value">${data.date}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Time:</div>
-                  <div class="appointment-pilarease-detail-value">${data.start_time} - ${data.end_time}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Status:</div>
-                  <div class="appointment-pilarease-detail-value">
-                    <span class="pilarease-admin-status-label ${data.status === 'approved' ? 'completed' : data.status === 'rejected' ? 'failed' : data.status === 'completed' ? 'completed' : data.status === 'cancelled' ? 'failed' : 'processing'}">
-                      ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">User:</div>
-                  <div class="appointment-pilarease-detail-value">${data.user.full_name}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Contact:</div>
-                  <div class="appointment-pilarease-detail-value">${data.user.contact_number || 'Not provided'}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Email:</div>
-                  <div class="appointment-pilarease-detail-value">${data.user.email}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Description:</div>
-                  <div class="appointment-pilarease-detail-value appointment-pilarease-description">
-                    ${data.description}
-                  </div>
-                </div>
-              </div>
-            `;
+        // Create content from event data
+        eventDetailContent.innerHTML = `
+          <div class="appointment-pilarease-detail">
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Title:</div>
+              <div class="appointment-pilarease-detail-value">${event.title}</div>
+            </div>
             
-            // Add actions based on status
-            if (data.status === 'pending') {
-              eventActions.innerHTML = `
-                <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
-                  {% csrf_token %}
-                  <input type="hidden" name="status" value="approved">
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="pilarease-admin-action-button approve-button">
-                    <i class="bx bx-check"></i> Approve
-                  </button>
-                </form>
-                <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
-                  {% csrf_token %}
-                  <input type="hidden" name="status" value="rejected">
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="pilarease-admin-action-button delete-button">
-                    <i class="bx bx-x"></i> Reject
-                  </button>
-                </form>
-              `;
-            } else if (data.status === 'approved') {
-              eventActions.innerHTML = `
-                <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
-                  {% csrf_token %}
-                  <input type="hidden" name="status" value="completed">
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="pilarease-admin-action-button approve-button">
-                    <i class="bx bx-check-double"></i> Mark Complete
-                  </button>
-                </form>
-                <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
-                  {% csrf_token %}
-                  <input type="hidden" name="status" value="cancelled">
-                  <input type="hidden" name="next" value="{{ request.path }}">
-                  <button type="submit" class="pilarease-admin-action-button delete-button">
-                    <i class="bx bx-x"></i> Cancel
-                  </button>
-                </form>
-              `;
-            }
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Date:</div>
+              <div class="appointment-pilarease-detail-value">${new Date(event.start).toLocaleDateString()}</div>
+            </div>
             
-            // Add edit and delete actions for all appointment types
-            eventActions.innerHTML += `
-              <a href="{% url 'appointment:edit_appointment' appointment_id=0 %}".replace('0', eventId) class="pilarease-admin-action-button export-button">
-                <i class="bx bx-edit"></i> Edit
-              </a>
-            `;
-          })
-          .catch(error => {
-            console.error('Error loading appointment details:', error);
-            eventDetailContent.innerHTML = `
-              <div class="alert alert-danger">
-                Error loading appointment details. Please try again.
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Time:</div>
+              <div class="appointment-pilarease-detail-value">
+                ${new Date(event.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
+                ${new Date(event.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
-            `;
-          });
-      } else {
+            </div>
+            
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Status:</div>
+              <div class="appointment-pilarease-detail-value">
+                <span class="pilarease-admin-status-label ${event.extendedProps.status}">
+                  ${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Add actions based on status
+        const status = event.extendedProps.status;
+        if (status === 'pending') {
+          eventActions.innerHTML = `
+            <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="APPROVED">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="pilarease-admin-action-button approve-button">
+                <i class="bx bx-check"></i> Approve
+              </button>
+            </form>
+            <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="REJECTED">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="pilarease-admin-action-button delete-button">
+                <i class="bx bx-x"></i> Reject
+              </button>
+            </form>
+          `;
+        } else if (status === 'approved') {
+          eventActions.innerHTML = `
+            <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="COMPLETED">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="pilarease-admin-action-button approve-button">
+                <i class="bx bx-check-double"></i> Mark Complete
+              </button>
+            </form>
+            <form method="post" action="{% url 'appointment:update_appointment_status' appointment_id=0 %}".replace('0', eventId) style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="CANCELLED">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <button type="submit" class="pilarease-admin-action-button delete-button">
+                <i class="bx bx-x"></i> Cancel
+              </button>
+            </form>
+          `;
+        }
+        
+        // Add edit action for all appointment types
+        eventActions.innerHTML += `
+          <a href="{% url 'appointment:edit_appointment' appointment_id=0 %}".replace('0', eventId) class="pilarease-admin-action-button export-button">
+            <i class="bx bx-edit"></i> Edit
+          </a>
+        `;
+      } else if (eventType === 'blocked') {
         // Set title for blocked time
         eventTitle.innerText = 'Blocked Time Slot';
         
-        // Fetch blocked time details
-        fetch(`/appointment/blocked-time/${eventId}/`)
-          .then(response => response.json())
-          .then(data => {
-            // Update content
-            eventDetailContent.innerHTML = `
-              <div class="appointment-pilarease-detail">
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Date:</div>
-                  <div class="appointment-pilarease-detail-value">${data.date}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Time:</div>
-                  <div class="appointment-pilarease-detail-value">${data.start_time} - ${data.end_time}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Reason:</div>
-                  <div class="appointment-pilarease-detail-value">${data.reason}</div>
-                </div>
-                
-                <div class="appointment-pilarease-detail-row">
-                  <div class="appointment-pilarease-detail-label">Created By:</div>
-                  <div class="appointment-pilarease-detail-value">${data.created_by.full_name}</div>
-                </div>
-              </div>
-            `;
+        // Create content from event data
+        eventDetailContent.innerHTML = `
+          <div class="appointment-pilarease-detail">
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Date:</div>
+              <div class="appointment-pilarease-detail-value">${new Date(event.start).toLocaleDateString()}</div>
+            </div>
             
-            // Add actions
-            eventActions.innerHTML = `
-              <a href="{% url 'appointment:edit_blocked_time' blocked_time_id=0 %}".replace('0', eventId) class="pilarease-admin-action-button export-button">
-                <i class="bx bx-edit"></i> Edit
-              </a>
-              <form method="post" action="{% url 'appointment:delete_blocked_time' blocked_time_id=0 %}".replace('0', eventId) style="display: inline-block;">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ request.path }}">
-                <button type="submit" class="pilarease-admin-action-button delete-button">
-                  <i class="bx bx-trash"></i> Delete
-                </button>
-              </form>
-            `;
-          })
-          .catch(error => {
-            console.error('Error loading blocked time details:', error);
-            eventDetailContent.innerHTML = `
-              <div class="alert alert-danger">
-                Error loading blocked time details. Please try again.
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Time:</div>
+              <div class="appointment-pilarease-detail-value">
+                ${new Date(event.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
+                ${new Date(event.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
-            `;
-          });
+            </div>
+            
+            <div class="appointment-pilarease-detail-row">
+              <div class="appointment-pilarease-detail-label">Reason:</div>
+              <div class="appointment-pilarease-detail-value">${event.title.replace('Blocked: ', '')}</div>
+            </div>
+          </div>
+        `;
+        
+        // Add actions
+        eventActions.innerHTML = `
+          <a href="{% url 'appointment:edit_blocked_time' blocked_time_id=0 %}".replace('0', eventId) class="pilarease-admin-action-button export-button">
+            <i class="bx bx-edit"></i> Edit
+          </a>
+          <form method="post" action="{% url 'appointment:delete_blocked_time' blocked_time_id=0 %}".replace('0', eventId) style="display: inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="pilarease-admin-action-button delete-button">
+              <i class="bx bx-trash"></i> Delete
+            </button>
+          </form>
+        `;
       }
     }
   });
