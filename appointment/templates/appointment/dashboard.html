@@ -64,6 +64,18 @@
     </span>
   </h2>
   
+  <!-- Search Form -->
+  <form method="get" class="pilarease-admin-filter-form" style="margin-bottom:20px;">
+    <div class="pilarease-admin-filter-group">
+      <label for="search" class="pilarease-admin-filter-label">Search</label>
+      <input type="text" name="search" id="search" class="pilarease-admin-filter-input" placeholder="Search by title, user or status" value="{{ search_query }}">
+    </div>
+    <div class="pilarease-admin-filter-buttons">
+      <button type="submit" class="pilarease-admin-filter-button">Search</button>
+      <a href="{% url 'appointment:dashboard' %}" class="pilarease-admin-reset-button">Reset</a>
+    </div>
+  </form>
+  
   {% if recent_appointments %}
     <table class="pilarease-admin-data-table appointment-pilarease-table">
               <thead>
@@ -84,7 +96,14 @@
                     <td>{{ appointment.user.full_name }}</td>
                     <td>{{ appointment.title }}</td>
                     <td>
-              <span class="pilarease-admin-status-label {% if appointment.status == 'pending' %}processing{% elif appointment.status == 'approved' %}completed{% elif appointment.status == 'cancelled' %}failed{% endif %}">
+              <span class="pilarease-admin-status-label" style="
+                  {% if appointment.status == 'pending' %}background-color: #ff9800;{% endif %}
+                  {% if appointment.status == 'approved' %}background-color: #4caf50;{% endif %}
+                  {% if appointment.status == 'completed' %}background-color: #2196f3;{% endif %}
+                  {% if appointment.status == 'cancelled' %}background-color: #f44336;{% endif %}
+                  {% if appointment.status == 'rescheduled' %}background-color: #9c27b0;{% endif %}
+                  {% if appointment.status == 'no_show' %}background-color: #795548;{% endif %}
+                  ">
                 {{ appointment.status|title }}
                       </span>
                     </td>
@@ -97,6 +116,23 @@
                 {% endfor %}
               </tbody>
             </table>
+            
+      <!-- Pagination -->
+      <div class="pilarease-admin-pagination">
+        <div class="pilarease-admin-step-links">
+          {% if recent_appointments.has_previous %}
+            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="pilarease-admin-pagination-link">First</a>
+            <a href="?page={{ recent_appointments.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pilarease-admin-pagination-link">Previous</a>
+          {% endif %}
+
+          <span class="pilarease-admin-current">Page {{ recent_appointments.number }} of {{ recent_appointments.paginator.num_pages }}</span>
+
+          {% if recent_appointments.has_next %}
+            <a href="?page={{ recent_appointments.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pilarease-admin-pagination-link">Next</a>
+            <a href="?page={{ recent_appointments.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pilarease-admin-pagination-link">Last</a>
+          {% endif %}
+        </div>
+      </div>
         {% else %}
     <div class="pilarease-admin-no-data">
       <i class="bx bx-info-circle"></i> No recent appointments.
@@ -150,9 +186,7 @@
           </div>
         {% endif %}
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -163,19 +197,23 @@
     const statusChart = new Chart(statusCtx, {
       type: 'doughnut',
       data: {
-        labels: ['Pending', 'Approved', 'Completed', 'Cancelled'],
+        labels: ['Pending', 'Approved', 'Completed', 'Cancelled', 'Rescheduled', 'No Show'],
         datasets: [{
           data: [
             {{ status_counts.pending|default:0 }}, 
             {{ status_counts.approved|default:0 }}, 
             {{ status_counts.completed|default:0 }}, 
-            {{ status_counts.cancelled|default:0 }}
+            {{ status_counts.cancelled|default:0 }},
+            {{ status_counts.rescheduled|default:0 }},
+            {{ status_counts.no_show|default:0 }}
           ],
           backgroundColor: [
             '#ff9800',  // Pending - Orange
             '#4caf50',  // Approved - Green
             '#2196f3',  // Completed - Blue
-            '#f44336'   // Cancelled - Red
+            '#f44336',  // Cancelled - Red
+            '#9c27b0',  // Rescheduled - Purple
+            '#795548'   // No Show - Brown
           ]
         }]
       },
@@ -192,19 +230,69 @@
 
     // Appointments Trend Chart
     const trendCtx = document.getElementById('appointmentsTrendChart').getContext('2d');
+    const trendData = JSON.parse('{{ trend_data|escapejs }}');
+    const trendLabels = JSON.parse('{{ trend_labels|escapejs }}');
+    
     const trendChart = new Chart(trendCtx, {
       type: 'line',
       data: {
-        labels: {{ trend_labels|safe }},
-        datasets: [{
-          label: 'Appointments',
-          data: {{ trend_data|safe }},
-          borderColor: '#4e73df',
-          backgroundColor: 'rgba(78, 115, 223, 0.1)',
-          pointBackgroundColor: '#4e73df',
-          borderWidth: 2,
-          tension: 0.3
-        }]
+        labels: trendLabels,
+        datasets: [
+          {
+            label: 'Pending',
+            data: trendData.pending,
+            borderColor: '#ff9800',
+            backgroundColor: 'rgba(255, 152, 0, 0.1)',
+            pointBackgroundColor: '#ff9800',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Approved',
+            data: trendData.approved,
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            pointBackgroundColor: '#4caf50',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Completed',
+            data: trendData.completed,
+            borderColor: '#2196f3',
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            pointBackgroundColor: '#2196f3',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Cancelled',
+            data: trendData.cancelled,
+            borderColor: '#f44336',
+            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+            pointBackgroundColor: '#f44336',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Rescheduled',
+            data: trendData.rescheduled,
+            borderColor: '#9c27b0',
+            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+            pointBackgroundColor: '#9c27b0',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'No Show',
+            data: trendData.no_show,
+            borderColor: '#795548',
+            backgroundColor: 'rgba(121, 85, 72, 0.1)',
+            pointBackgroundColor: '#795548',
+            borderWidth: 2,
+            tension: 0.3
+          }
+        ]
       },
       options: {
         responsive: true,

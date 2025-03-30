@@ -49,6 +49,8 @@ def appointment_dashboard(request):
     ).count()
     completed_count = Appointment.objects.filter(status=AppointmentStatus.COMPLETED).count()
     cancelled_count = Appointment.objects.filter(status=AppointmentStatus.CANCELLED).count()
+    rescheduled_count = Appointment.objects.filter(status=AppointmentStatus.RESCHEDULED).count()
+    no_show_count = Appointment.objects.filter(status=AppointmentStatus.NO_SHOW).count()
     total_appointments = Appointment.objects.count()
     
     # Get today's appointments
@@ -69,8 +71,22 @@ def appointment_dashboard(request):
         status=AppointmentStatus.APPROVED
     ).order_by('date', 'start_time')[:5]
     
-    # Get all recent appointments for the dashboard table
-    recent_appointments = Appointment.objects.all().order_by('-created_at')[:10]
+    # Get recent appointments with search and pagination
+    search_query = request.GET.get('search', '')
+    recent_appointments_query = Appointment.objects.all().order_by('-created_at')
+    
+    # Apply search filter if provided
+    if search_query:
+        recent_appointments_query = recent_appointments_query.filter(
+            Q(title__icontains=search_query) | 
+            Q(user__full_name__icontains=search_query) |
+            Q(status__icontains=search_query)
+        )
+    
+    # Paginate the results with 5 per page
+    paginator = Paginator(recent_appointments_query, 5)
+    page_number = request.GET.get('page', 1)
+    recent_appointments = paginator.get_page(page_number)
     
     # Get blocked time slots
     blocked_slots = BlockedTimeSlot.objects.filter(
@@ -88,12 +104,21 @@ def appointment_dashboard(request):
         'pending': pending_count,
         'approved': upcoming_count,
         'completed': completed_count,
-        'cancelled': cancelled_count
+        'cancelled': cancelled_count,
+        'rescheduled': rescheduled_count,
+        'no_show': no_show_count
     }
     
     # Prepare trend data for chart (last 6 months)
     months = []
-    trend_data = []
+    trend_data = {
+        'pending': [],
+        'approved': [],
+        'completed': [],
+        'cancelled': [],
+        'rescheduled': [],
+        'no_show': []
+    }
     
     for i in range(5, -1, -1):
         month_date = today - timedelta(days=30 * i)
@@ -107,17 +132,56 @@ def appointment_dashboard(request):
         else:
             month_end = today
         
-        count = Appointment.objects.filter(
+        # Count appointments by status for this month
+        pending_count = Appointment.objects.filter(
             date__gte=month_start,
-            date__lte=month_end
+            date__lte=month_end,
+            status=AppointmentStatus.PENDING
         ).count()
-        trend_data.append(count)
+        trend_data['pending'].append(pending_count)
+        
+        approved_count = Appointment.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end,
+            status=AppointmentStatus.APPROVED
+        ).count()
+        trend_data['approved'].append(approved_count)
+        
+        completed_count = Appointment.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end,
+            status=AppointmentStatus.COMPLETED
+        ).count()
+        trend_data['completed'].append(completed_count)
+        
+        cancelled_count = Appointment.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end,
+            status=AppointmentStatus.CANCELLED
+        ).count()
+        trend_data['cancelled'].append(cancelled_count)
+        
+        rescheduled_count = Appointment.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end,
+            status=AppointmentStatus.RESCHEDULED
+        ).count()
+        trend_data['rescheduled'].append(rescheduled_count)
+        
+        no_show_count = Appointment.objects.filter(
+            date__gte=month_start,
+            date__lte=month_end,
+            status=AppointmentStatus.NO_SHOW
+        ).count()
+        trend_data['no_show'].append(no_show_count)
     
     context = {
         'pending_count': pending_count,
         'upcoming_count': upcoming_count,
         'completed_count': completed_count,
         'cancelled_count': cancelled_count,
+        'rescheduled_count': rescheduled_count,
+        'no_show_count': no_show_count,
         'total_appointments': total_appointments,
         'todays_appointments': todays_appointments,
         'recent_notifications': recent_notifications,
@@ -126,9 +190,10 @@ def appointment_dashboard(request):
         'blocked_slots': blocked_slots,
         'available_slots': available_slots,
         'status_counts': status_counts,
-        'trend_labels': months,
-        'trend_data': trend_data,
-        'pending_appointments': pending_count  # Alias for dashboard summary card
+        'trend_labels': json.dumps(months),
+        'trend_data': json.dumps(trend_data),
+        'pending_appointments': pending_count,  # Alias for dashboard summary card
+        'search_query': search_query,
     }
     
     return render(request, 'appointment/dashboard.html', context)
