@@ -1228,12 +1228,55 @@ def delete_blocked_time(request, blocked_time_id):
         blocked_time.delete()
         messages.success(request, 'Blocked time slot deleted successfully.')
     
-    next_url = request.POST.get('next', 'appointment:calendar')
-    return redirect(next_url)
+    return redirect('appointment:calendar')
+
+@login_required
+@user_passes_test(is_counselor_or_staff)
+def mark_complete(request):
+    """Mark appointment as completed"""
+    if request.method == 'POST':
+        appointment_id = request.POST.get('appointment_id')
+        if appointment_id:
+            appointment = get_object_or_404(Appointment, id=appointment_id)
+            appointment.status = AppointmentStatus.COMPLETED
+            appointment.save()
+            
+            # Create notification for the user
+            AppointmentNotification.objects.create(
+                user=appointment.user,
+                appointment=appointment,
+                message=f"Your appointment '{appointment.title}' has been marked as completed."
+            )
+            
+            messages.success(request, 'Appointment marked as completed successfully.')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'appointment:appointment_history'))
+
+@login_required
+@user_passes_test(is_counselor_or_staff)
+def mark_cancel(request):
+    """Cancel an appointment"""
+    if request.method == 'POST':
+        appointment_id = request.POST.get('appointment_id')
+        if appointment_id:
+            appointment = get_object_or_404(Appointment, id=appointment_id)
+            appointment.status = AppointmentStatus.CANCELLED
+            appointment.save()
+            
+            # Create notification for the user
+            AppointmentNotification.objects.create(
+                user=appointment.user,
+                appointment=appointment,
+                message=f"Your appointment '{appointment.title}' has been cancelled."
+            )
+            
+            messages.success(request, 'Appointment cancelled successfully.')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'appointment:appointment_history'))
 
 @login_required
 def available_time_slots(request):
-    """Return available time slots for a specific date"""
+    """Get available time slots for a given date"""
     date_str = request.GET.get('date')
     
     try:

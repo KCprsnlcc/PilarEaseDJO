@@ -29,6 +29,10 @@ urlpatterns = [
     path('appointment/<int:appointment_id>/update-status/', views.update_appointment_status, name='update_appointment_status'),
     path('appointment/<int:appointment_id>/edit/', views.edit_appointment, name='edit_appointment'),
     
+    # Action handlers
+    path('appointment/mark-complete/', views.mark_complete, name='mark_complete'),
+    path('appointment/mark-cancel/', views.mark_cancel, name='mark_cancel'),
+    
     # Appointment History
     path('history/', views.appointment_history, name='appointment_history'),
     

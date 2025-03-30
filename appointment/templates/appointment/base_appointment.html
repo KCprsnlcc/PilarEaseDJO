@@ -7,6 +7,55 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+<style>
+  /* Navigation Buttons - Modern Design */
+  .appointment-pilarease-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+  
+  .appointment-pilarease-nav a {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #333;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .appointment-pilarease-nav a i {
+    font-size: 1.2rem;
+    color: #3F51B5;
+  }
+  
+  .appointment-pilarease-nav a:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .appointment-pilarease-nav a.active {
+    background-color: #EEF2FF;
+    border-color: #3F51B5;
+    color: #3F51B5;
+  }
+  
+  .appointment-pilarease-nav a.active i {
+    color: #3F51B5;
+  }
+</style>
+
 <div class="pilarease-admin-dashboard-container animate__animated animate__fadeIn">
   <!-- Dashboard Header with Tooltip -->
   <div class="pilarease-admin-dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -39,16 +88,16 @@
       {% endif %}
 
   <!-- Module Navigation -->
-  <div class="pilarease-admin-filter-form appointment-pilarease-nav">
-    <a href="{% url 'appointment:dashboard' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+  <div class="appointment-pilarease-nav">
+    <a href="{% url 'appointment:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
       <i class="bx bx-tachometer"></i>
       <span>Dashboard</span>
     </a>
-    <a href="{% url 'appointment:calendar' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+    <a href="{% url 'appointment:calendar' %}" class="{% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
       <i class="bx bx-calendar"></i>
       <span>Calendar</span>
     </a>
-    <a href="{% url 'appointment:appointment_history' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
+    <a href="{% url 'appointment:appointment_history' %}" class="{% if request.resolver_match.url_name == 'appointment_history' %}active{% endif %}">
       <i class="bx bx-history"></i>
       <span>History</span>
     </a>
