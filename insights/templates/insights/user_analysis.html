@@ -1,54 +1,651 @@
 {% extends "admin_tools/base_admin.html" %}
 {% load static %}
 
+
 {% block content %}
 <div class="pilarease-admin-dashboard-container animate__animated animate__fadeIn">
+  <!-- Dashboard Header with Tooltip -->
   <h1 class="pilarease-admin-title">
     User Analysis: {{ user.full_name }}
-    <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More info about User Analysis"></i>
+    <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
     <span class="pilarease-admin-tooltip">
-      This page shows the latest status of the user and flags any critical emotional states.
+      Comprehensive emotional analysis for {{ user.full_name }} ({{ user.username }})
     </span>
   </h1>
 
-  {% if latest_status %}
-    <div class="elevated-container" style="margin-bottom:20px;">
-      <h2 class="pilarease-admin-subtitle">
-        Latest Status
-        <i class="bx bx-info-circle pilarease-admin-info-icon" tabindex="0" aria-label="More info about this status"></i>
-        <span class="pilarease-admin-tooltip">
-          The latest status submitted by the user with its emotion metrics.
-        </span>
-      </h2>
-      <p><strong>Title:</strong> {{ latest_status.title }}</p>
-      <p><strong>Overall Emotion:</strong> {{ latest_status.emotion }}</p>
-      <ul>
-        <li>Anger: {{ latest_status.anger_percentage }}%</li>
-        <li>Disgust: {{ latest_status.disgust_percentage }}%</li>
-        <li>Fear: {{ latest_status.fear_percentage }}%</li>
-        <li>Happiness: {{ latest_status.happiness_percentage }}%</li>
-        <li>Sadness: {{ latest_status.sadness_percentage }}%</li>
-        <li>Neutral: {{ latest_status.neutral_percentage }}%</li>
-        <li>Surprise: {{ latest_status.surprise_percentage }}%</li>
-      </ul>
+  <!-- Top Stats Overview Section -->
+  <div class="dashboard-summary">
+    <div class="summary-card">
+      <h3>Total Statuses</h3>
+      <p>{{ statuses_count }}</p>
     </div>
+    <div class="summary-card">
+      <h3>Avg. Days Between</h3>
+      <p>{{ avg_days_between_statuses|default:"N/A" }}</p>
+    </div>
+    <div class="summary-card">
+      <h3>Current Emotion</h3>
+      <p>{{ latest_status.emotion|default:"N/A" }}</p>
+    </div>
+    <div class="summary-card">
+      <h3>Critical States</h3>
+      <p>{{ critical_count }}</p>
+    </div>
+  </div>
 
-    {% if critical %}
-      <div class="elevated-container" style="background-color: #f8d7da; color: #721c24;">
-        <strong>Critical Alert:</strong> Concerning emotional states detected:
-        {{ concerning_emotions|join:", " }}.
+  <!-- Latest Status Section -->
+  {% if latest_status %}
+  <div class="pilarease-admin-data-table-container">
+    <h2 class="pilarease-admin-section-title">
+      Latest Status
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        The user's most recent status with emotion analysis
+      </span>
+    </h2>
+    
+    <div class="pilarease-admin-card">
+      <div class="pilarease-admin-card-header">
+        <h3>{{ latest_status.title }}</h3>
+        <span class="pilarease-admin-timestamp">{{ latest_status.created_at|date:"F j, Y, g:i a" }}</span>
       </div>
-    {% else %}
-      <div class="elevated-container" style="background-color: #d4edda; color: #155724;">
-        No critical emotional states detected.
+      <div class="pilarease-admin-card-body">
+        <p class="pilarease-admin-description">{{ latest_status.description }}</p>
+        
+        <div class="pilarease-admin-emotion-grid">
+          <div class="pilarease-admin-emotion-item {% if latest_status.anger_percentage >= 70 %}pilarease-admin-emotion-critical{% endif %}">
+            <span class="pilarease-admin-emotion-label">Anger</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.anger_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.anger_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item {% if latest_status.sadness_percentage >= 70 %}pilarease-admin-emotion-critical{% endif %}">
+            <span class="pilarease-admin-emotion-label">Sadness</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.sadness_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.sadness_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item {% if latest_status.fear_percentage >= 70 %}pilarease-admin-emotion-critical{% endif %}">
+            <span class="pilarease-admin-emotion-label">Fear</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.fear_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.fear_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item {% if latest_status.disgust_percentage >= 70 %}pilarease-admin-emotion-critical{% endif %}">
+            <span class="pilarease-admin-emotion-label">Disgust</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.disgust_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.disgust_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item">
+            <span class="pilarease-admin-emotion-label">Happiness</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.happiness_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.happiness_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item">
+            <span class="pilarease-admin-emotion-label">Surprise</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.surprise_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.surprise_percentage }}%</span>
+          </div>
+          
+          <div class="pilarease-admin-emotion-item">
+            <span class="pilarease-admin-emotion-label">Neutral</span>
+            <div class="pilarease-admin-progress-bar-container">
+              <div class="pilarease-admin-progress-bar" style="width: {{ latest_status.neutral_percentage }}%;"></div>
+            </div>
+            <span class="pilarease-admin-emotion-value">{{ latest_status.neutral_percentage }}%</span>
+          </div>
+        </div>
       </div>
-    {% endif %}
+      
+      {% if critical %}
+      <div class="pilarease-admin-notification error">
+        <i class="bx bx-error"></i>
+        <div>
+          <h4>Critical Alert</h4>
+          <p>Concerning emotional states detected: {{ concerning_emotions|join:", " }}</p>
+        </div>
+      </div>
+      {% else %}
+      <div class="pilarease-admin-notification success">
+        <i class="bx bx-check-circle"></i>
+        <div>
+          <h4>Status Check</h4>
+          <p>No critical emotional states detected in this status.</p>
+        </div>
+      </div>
+      {% endif %}
+      
+      {% if flagged_words %}
+      <div class="pilarease-admin-notification error" style="margin-top: 10px;">
+        <i class="bx bx-message-square-error"></i>
+        <div>
+          <h4>Flagged Content</h4>
+          <p>This status contains potentially sensitive content: {{ flagged_words|join:", " }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
   {% else %}
-    <div class="pilarease-admin-no-data">No status available for this user.</div>
+  <div class="pilarease-admin-data-table-container">
+    <div class="pilarease-admin-no-data">
+      <i class="bx bx-info-circle"></i> No status available for this user.
+    </div>
+  </div>
   {% endif %}
 
-  <p style="margin-top:20px;">
-    <a href="{% url 'insights_dashboard' %}" class="pilarease-admin-action-button view-button">Back to Insights Dashboard</a>
-  </p>
+  <!-- Charts Container -->
+  <div class="pilarease-admin-statistics-charts">
+    <!-- Emotion Trends Chart -->
+    <div class="pilarease-admin-statistics-chart">
+      <div class="pilarease-admin-chart-header">
+        Emotion Trends
+        <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+        <span class="pilarease-admin-tooltip">
+          How this user's emotions have changed over time
+        </span>
+      </div>
+      <div class="pilarease-admin-chart-content">
+        <canvas id="emotionTrendsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Emotion Comparison Chart -->
+    <div class="pilarease-admin-statistics-chart">
+      <div class="pilarease-admin-chart-header">
+        Emotion Comparison
+        <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+        <span class="pilarease-admin-tooltip">
+          Comparing latest emotions with historical averages
+        </span>
+      </div>
+      <div class="pilarease-admin-chart-content">
+        <canvas id="emotionComparisonChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keywords Analysis Section -->
+  <div class="pilarease-admin-data-table-container">
+    <h2 class="pilarease-admin-section-title">
+      Keyword Analysis
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        Common keywords and potential emotional triggers from the user's statuses
+      </span>
+    </h2>
+    
+    <div class="pilarease-admin-card">
+      <div class="pilarease-admin-card-body">
+        <div class="pilarease-admin-keyword-cloud">
+          {% for keyword in keywords %}
+          <span class="pilarease-admin-keyword" style="font-size: {{ keyword.size }}px;">{{ keyword.text }}</span>
+          {% empty %}
+          <div class="pilarease-admin-no-data">
+            <i class="bx bx-info-circle"></i> No keyword data available.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status History Table -->
+  <div class="pilarease-admin-data-table-container">
+    <h2 class="pilarease-admin-section-title">
+      Status History
+      <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
+      <span class="pilarease-admin-tooltip">
+        All previous statuses submitted by this user
+      </span>
+    </h2>
+    
+    {% if statuses %}
+    <table class="pilarease-admin-data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Emotion</th>
+          <th>Critical</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for status in statuses %}
+        <tr>
+          <td>{{ status.created_at|date:"M d, Y" }}</td>
+          <td>{{ status.title }}</td>
+          <td>{{ status.emotion }}</td>
+          <td>
+            {% if status.anger_percentage >= 70 or status.sadness_percentage >= 70 or status.fear_percentage >= 70 or status.disgust_percentage >= 70 %}
+              <span class="pilarease-admin-status-label" style="background-color: #f44336;">Yes</span>
+            {% else %}
+              <span class="pilarease-admin-status-label" style="background-color: #4caf50;">No</span>
+            {% endif %}
+          </td>
+          <td>
+            <button class="pilarease-admin-action-button view-button" data-status-id="{{ status.id }}">
+              <i class="bx bx-detail"></i> View
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="pilarease-admin-no-data">
+      <i class="bx bx-info-circle"></i> No status history available.
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="margin-top:20px; text-align: center;">
+    <a href="{% url 'insights_dashboard' %}" class="pilarease-admin-action-button view-button">
+      <i class="bx bx-arrow-back"></i> Back to Insights Dashboard
+    </a>
+  </div>
 </div>
+
+<!-- Status detail modal -->
+<div id="statusDetailModal" class="pilarease-admin-modal">
+  <div class="pilarease-admin-modal-content">
+    <span class="pilarease-admin-close">&times;</span>
+    <div id="statusDetailContent"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Emotion Trends Chart
+    const emotionTrendsCtx = document.getElementById('emotionTrendsChart').getContext('2d');
+    const emotionTrendsChart = new Chart(emotionTrendsCtx, {
+      type: 'line',
+      data: {
+        labels: {{ dates_json|safe }},
+        datasets: [
+          {
+            label: 'Anger',
+            data: {{ anger_trends|safe }},
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Sadness',
+            data: {{ sadness_trends|safe }},
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Fear',
+            data: {{ fear_trends|safe }},
+            borderColor: 'rgba(255, 206, 86, 1)',
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: 'Happiness',
+            data: {{ happiness_trends|safe }},
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderWidth: 2,
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Emotion Trends Over Time'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Emotion Percentage'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          }
+        }
+      }
+    });
+
+    // Emotion Comparison Chart
+    const emotionComparisonCtx = document.getElementById('emotionComparisonChart').getContext('2d');
+    const emotionComparisonChart = new Chart(emotionComparisonCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Anger', 'Sadness', 'Fear', 'Disgust', 'Happiness', 'Surprise', 'Neutral'],
+        datasets: [
+          {
+            label: 'Latest Status',
+            data: [
+              {{ latest_status.anger_percentage|default:0 }},
+              {{ latest_status.sadness_percentage|default:0 }},
+              {{ latest_status.fear_percentage|default:0 }},
+              {{ latest_status.disgust_percentage|default:0 }},
+              {{ latest_status.happiness_percentage|default:0 }},
+              {{ latest_status.surprise_percentage|default:0 }},
+              {{ latest_status.neutral_percentage|default:0 }}
+            ],
+            backgroundColor: 'rgba(75, 192, 192, 0.6)'
+          },
+          {
+            label: 'Historical Average',
+            data: [
+              {{ avg_emotions.anger|default:0 }},
+              {{ avg_emotions.sadness|default:0 }},
+              {{ avg_emotions.fear|default:0 }},
+              {{ avg_emotions.disgust|default:0 }},
+              {{ avg_emotions.happiness|default:0 }},
+              {{ avg_emotions.surprise|default:0 }},
+              {{ avg_emotions.neutral|default:0 }}
+            ],
+            backgroundColor: 'rgba(153, 102, 255, 0.6)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Current vs. Average Emotions'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Percentage'
+            }
+          }
+        }
+      }
+    });
+
+    // Status detail modal functionality
+    const modal = document.getElementById('statusDetailModal');
+    const modalContent = document.getElementById('statusDetailContent');
+    const closeBtn = document.querySelector('.pilarease-admin-close');
+    const viewButtons = document.querySelectorAll('[data-status-id]');
+
+    viewButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const statusId = this.getAttribute('data-status-id');
+        
+        // Show the modal with loading state
+        modalContent.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <i class="bx bx-loader-alt bx-spin" style="font-size: 2rem; color: #4e73df;"></i>
+            <p>Loading status details...</p>
+          </div>
+        `;
+        
+        // Show the modal
+        modal.style.display = 'block';
+        
+        // Fetch status details
+        fetch(`{% url 'status_details_api' status_id=0 %}`.replace('0', statusId))
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Status error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Update modal with fetched data
+            modalContent.innerHTML = `
+              <h3>${data.title}</h3>
+              <p class="pilarease-admin-timestamp">${data.created_at}</p>
+              <div class="pilarease-admin-status-description">${data.description}</div>
+              
+              <h4 style="margin-top: 20px;">Emotion Analysis</h4>
+              <div class="pilarease-admin-emotion-grid">
+                <div class="pilarease-admin-emotion-item ${data.anger_percentage >= 70 ? 'pilarease-admin-emotion-critical' : ''}">
+                  <span class="pilarease-admin-emotion-label">Anger</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.anger_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.anger_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item ${data.sadness_percentage >= 70 ? 'pilarease-admin-emotion-critical' : ''}">
+                  <span class="pilarease-admin-emotion-label">Sadness</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.sadness_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.sadness_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item ${data.fear_percentage >= 70 ? 'pilarease-admin-emotion-critical' : ''}">
+                  <span class="pilarease-admin-emotion-label">Fear</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.fear_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.fear_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item ${data.disgust_percentage >= 70 ? 'pilarease-admin-emotion-critical' : ''}">
+                  <span class="pilarease-admin-emotion-label">Disgust</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.disgust_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.disgust_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item">
+                  <span class="pilarease-admin-emotion-label">Happiness</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.happiness_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.happiness_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item">
+                  <span class="pilarease-admin-emotion-label">Surprise</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.surprise_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.surprise_percentage}%</span>
+                </div>
+                
+                <div class="pilarease-admin-emotion-item">
+                  <span class="pilarease-admin-emotion-label">Neutral</span>
+                  <div class="pilarease-admin-progress-bar-container">
+                    <div class="pilarease-admin-progress-bar" style="width: ${data.neutral_percentage}%;"></div>
+                  </div>
+                  <span class="pilarease-admin-emotion-value">${data.neutral_percentage}%</span>
+                </div>
+              </div>
+            `;
+          })
+          .catch(error => {
+            console.error('Error fetching status details:', error);
+            modalContent.innerHTML = `
+              <div class="pilarease-admin-notification error">
+                <i class="bx bx-error"></i>
+                <div>
+                  <h4>Error</h4>
+                  <p>Could not load status details. Please try again later.</p>
+                  <p class="pilarease-admin-error-details">Error: ${error.message}</p>
+                </div>
+              </div>
+            `;
+          });
+      });
+    });
+
+    closeBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    // Additional CSS for the emotion data visualization
+    const style = document.createElement('style');
+    style.textContent = `
+      .pilarease-admin-emotion-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      
+      .pilarease-admin-emotion-item {
+        display: flex;
+        flex-direction: column;
+        background-color: #f8f9fc;
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      }
+      
+      .pilarease-admin-emotion-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      
+      .pilarease-admin-progress-bar-container {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        overflow: hidden;
+      }
+      
+      .pilarease-admin-progress-bar {
+        height: 100%;
+        background-color: #4e73df;
+        border-radius: 4px;
+      }
+      
+      .pilarease-admin-emotion-critical .pilarease-admin-progress-bar {
+        background-color: #e74a3b;
+      }
+      
+      .pilarease-admin-emotion-value {
+        font-weight: 600;
+        text-align: right;
+      }
+      
+      .pilarease-admin-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
+      
+      .pilarease-admin-card-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #e3e6f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #f8f9fc;
+      }
+      
+      .pilarease-admin-card-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      
+      .pilarease-admin-timestamp {
+        color: #6c757d;
+        font-size: 0.9rem;
+      }
+      
+      .pilarease-admin-card-body {
+        padding: 20px;
+      }
+      
+      .pilarease-admin-description {
+        margin-bottom: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      
+      .pilarease-admin-keyword-cloud {
+        text-align: center;
+        padding: 20px;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      }
+      
+      .pilarease-admin-keyword {
+        display: inline-block;
+        margin: 5px;
+        padding: 4px 8px;
+        background-color: #f8f9fc;
+        border-radius: 4px;
+        color: #4e73df;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      
+      .pilarease-admin-keyword:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      
+      .pilarease-admin-status-description {
+        white-space: pre-wrap;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>
 {% endblock %}
