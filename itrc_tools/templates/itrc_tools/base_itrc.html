@@ -32,7 +32,7 @@
   </head>
   <body>
     <!-- Sidebar -->
-    <div class="pilarease-itrc-sidebar animate__animated animate__fadeInLeft">
+    <div class="pilarease-itrc-sidebar">
       <div class="pilarease-itrc-sidebar-header">
         <img
           src="{% static 'images/PilarLogo.png' %}"
@@ -88,23 +88,17 @@
           </a>
         </li>
         <li>
-          <!-- Logout Button as a Form -->
-          <form
-            action="{% url 'itrc_logout' %}"
-            method="post"
-            class="pilarease-itrc-logout-form"
-          >
-            {% csrf_token %}
-            <button
-              type="submit"
-              class="pilarease-itrc-menu-item pilarease-itrc-logout-button"
-            >
-              <i class="bx bxs-log-out"></i>
-              <span class="pilarease-itrc-menu-text">Logout</span>
-            </button>
-          </form>
+          <a href="{% url 'itrc_logout' %}" class="pilarease-itrc-menu-item">
+            <i class="bx bxs-log-out"></i>
+            <span class="pilarease-itrc-menu-text">Logout</span>
+          </a>
         </li>
       </ul>
+      <div class="pilarease-itrc-sidebar-toggle">
+        <button id="sidebarToggleBtn" class="pilarease-itrc-sidebar-toggle-button">
+          <i class="bx bx-chevron-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -347,5 +341,58 @@
 
     <!-- Page Specific Scripts -->
     {% block extra_scripts %}{% endblock %}
+    
+    <!-- Sidebar Toggle Script -->
+    <script>
+      const sidebar = document.querySelector(".pilarease-itrc-sidebar");
+      const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+      const sidebarToggleIcon = sidebarToggleBtn.querySelector("i");
+      
+      // Function to toggle sidebar
+      function toggleSidebar() {
+        sidebar.classList.toggle("pilarease-itrc-sidebar-expanded");
+        
+        // Change button icon based on sidebar state
+        if (sidebar.classList.contains("pilarease-itrc-sidebar-expanded")) {
+          sidebarToggleIcon.classList.remove("bx-chevron-right");
+          sidebarToggleIcon.classList.add("bx-chevron-left");
+        } else {
+          sidebarToggleIcon.classList.remove("bx-chevron-left");
+          sidebarToggleIcon.classList.add("bx-chevron-right");
+        }
+        
+        // Save sidebar state to localStorage
+        localStorage.setItem("itrcSidebarExpanded", sidebar.classList.contains("pilarease-itrc-sidebar-expanded"));
+      }
+      
+      // Initialize sidebar state from localStorage
+      document.addEventListener("DOMContentLoaded", function() {
+        const savedState = localStorage.getItem("itrcSidebarExpanded");
+        
+        // If there's a saved state, apply it
+        if (savedState === "true") {
+          sidebar.classList.add("pilarease-itrc-sidebar-expanded");
+          sidebarToggleIcon.classList.remove("bx-chevron-right");
+          sidebarToggleIcon.classList.add("bx-chevron-left");
+        } else {
+          sidebar.classList.remove("pilarease-itrc-sidebar-expanded");
+          sidebarToggleIcon.classList.remove("bx-chevron-left");
+          sidebarToggleIcon.classList.add("bx-chevron-right");
+        }
+        
+        // Set active page in the sidebar based on URL path
+        const currentPath = window.location.pathname;
+        const menuItems = document.querySelectorAll('.pilarease-itrc-menu-item');
+        
+        menuItems.forEach(item => {
+          if (currentPath.includes(item.getAttribute('href'))) {
+            item.classList.add('active');
+          }
+        });
+      });
+      
+      // Toggle sidebar when button is clicked
+      sidebarToggleBtn.addEventListener("click", toggleSidebar);
+    </script>
   </body>
 </html>
