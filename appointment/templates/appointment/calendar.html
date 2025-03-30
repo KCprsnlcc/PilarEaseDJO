@@ -139,6 +139,37 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
   
+  /* Custom button colors */
+  .block-button {
+    background-color: #673AB7 !important; /* Purple */
+    color: white !important;
+    border-color: #5e35b1 !important;
+  }
+  
+  .block-button:hover {
+    background-color: #5e35b1 !important;
+  }
+  
+  .availability-button {
+    background-color: #2196F3 !important; /* Blue */
+    color: white !important;
+    border-color: #1976D2 !important;
+  }
+  
+  .availability-button:hover {
+    background-color: #1976D2 !important;
+  }
+  
+  .refresh-button {
+    background-color: #FF9800 !important; /* Orange */
+    color: white !important;
+    border-color: #F57C00 !important;
+  }
+  
+  .refresh-button:hover {
+    background-color: #F57C00 !important;
+  }
+  
   /* Time Slots */
   .appointment-pilarease-time-slots {
     display: grid;
@@ -340,6 +371,81 @@
     from { opacity: 1; }
     to { opacity: 0; }
   }
+  
+  /* Month Picker Styles */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .month-item {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .month-item:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+  }
+  
+  .month-item.selected {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+  }
+  
+  /* Year Picker Styles */
+  .year-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .year-item {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .year-item:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+  }
+  
+  .year-item.selected {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+  }
+
+  /* Make calendar title clickable */
+  .fc-toolbar-title {
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .fc-toolbar-title:hover {
+    color: #3F51B5;
+    text-decoration: underline;
+  }
 </style>
 
 
@@ -364,16 +470,16 @@
 </div>
 
 <div class="appointment-pilarease-actions">
-  <button class="pilarease-admin-action-button export-button" id="blockTimeBtn">
+  <button class="pilarease-admin-action-button block-button" id="blockTimeBtn">
     <i class="bx bx-time"></i> Block Time Slot
   </button>
   <button class="pilarease-admin-action-button approve-button" id="createAppointmentBtn">
     <i class="bx bx-calendar-plus"></i> Create Appointment
   </button>
-  <button class="pilarease-admin-action-button" id="setAvailabilityBtn">
+  <button class="pilarease-admin-action-button availability-button" id="setAvailabilityBtn">
     <i class="bx bx-calendar-check"></i> Set Regular Availability
   </button>
-  <button class="pilarease-admin-action-button export-button" id="refreshCalendarBtn">
+  <button class="pilarease-admin-action-button refresh-button" id="refreshCalendarBtn">
     <i class="bx bx-refresh"></i> Refresh Calendar
   </button>
 </div>
@@ -383,12 +489,6 @@
     <h2 class="appointment-pilarease-calendar-title">
       <i class="bx bx-calendar"></i> Appointment Calendar
     </h2>
-    <div class="appointment-pilarease-calendar-controls">
-      <button class="pilarease-admin-filter-button" id="today-btn">Today</button>
-      <button class="pilarease-admin-filter-button" id="month-btn">Month</button>
-      <button class="pilarease-admin-filter-button" id="week-btn">Week</button>
-      <button class="pilarease-admin-filter-button" id="day-btn">Day</button>
-    </div>
   </div>
   
   <div id="calendar"></div>
@@ -588,6 +688,51 @@
   </div>
 </div>
 
+<!-- Month Picker Modal -->
+<div class="pilarease-admin-modal" id="monthPickerModal">
+  <div class="pilarease-admin-modal-content" style="max-width: 400px;">
+    <span class="pilarease-admin-close">&times;</span>
+    <div class="pilarease-admin-modal-header">
+      <h2><i class="bx bx-calendar-alt"></i> Select Month</h2>
+    </div>
+    <div class="pilarease-admin-modal-body">
+      <div class="month-grid">
+        <div class="month-item" data-month="0">January</div>
+        <div class="month-item" data-month="1">February</div>
+        <div class="month-item" data-month="2">March</div>
+        <div class="month-item" data-month="3">April</div>
+        <div class="month-item" data-month="4">May</div>
+        <div class="month-item" data-month="5">June</div>
+        <div class="month-item" data-month="6">July</div>
+        <div class="month-item" data-month="7">August</div>
+        <div class="month-item" data-month="8">September</div>
+        <div class="month-item" data-month="9">October</div>
+        <div class="month-item" data-month="10">November</div>
+        <div class="month-item" data-month="11">December</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Year Picker Modal -->
+<div class="pilarease-admin-modal" id="yearPickerModal">
+  <div class="pilarease-admin-modal-content" style="max-width: 400px;">
+    <span class="pilarease-admin-close">&times;</span>
+    <div class="pilarease-admin-modal-header">
+      <h2><i class="bx bx-calendar-alt"></i> Select Year</h2>
+    </div>
+    <div class="pilarease-admin-modal-body">
+      <div class="year-navigation">
+        <button id="prevYearsBtn" class="pilarease-admin-filter-button"><i class="bx bx-chevron-left"></i></button>
+        <span id="yearRangeDisplay">2020 - 2029</span>
+        <button id="nextYearsBtn" class="pilarease-admin-filter-button"><i class="bx bx-chevron-right"></i></button>
+      </div>
+      <div class="year-grid" id="yearGrid">
+        <!-- Years will be dynamically populated -->
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
 <script>
@@ -599,8 +744,13 @@
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
-        right: ''
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
+      titleFormat: { 
+        year: 'numeric', 
+        month: 'long'
+      },
+      navLinks: true, // allow clicking on day/week names to navigate views
       dayMaxEvents: true,
       events: '{% url "appointment:calendar_events" %}',
       eventClassNames: function(arg) {
@@ -616,7 +766,6 @@
       height: 'auto',
       aspectRatio: 1.8,
       nowIndicator: true,
-      navLinks: true,
       businessHours: {
         daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
         startTime: '09:00',
@@ -674,26 +823,166 @@
       datesSet: function(dateInfo) {
         // Update the calendar whenever the view changes (e.g., month/week/day changes)
         // This is a good place to fetch updated data if needed
+        
+        // Make the title clickable after each rendering
+        setupTitleClickHandlers();
       }
     });
     
     calendar.render();
     
-    // Calendar Navigation Buttons
-    document.getElementById('today-btn').addEventListener('click', function() {
-      calendar.today();
+    // Set up clickable title for month/year selection
+    function setupTitleClickHandlers() {
+      setTimeout(() => {
+        const titleElement = document.querySelector('.fc-toolbar-title');
+        if (!titleElement) return;
+        
+        // Add click handler for title if not already set
+        if (!titleElement.dataset.handlerSet) {
+          titleElement.dataset.handlerSet = 'true';
+          
+          titleElement.addEventListener('click', function(e) {
+            const titleText = titleElement.textContent;
+            // Extract month and year from title text
+            const parts = titleText.split(' ');
+            if (parts.length >= 2) {
+              const monthName = parts[0];
+              const year = parts[1];
+              
+              // Determine if click was on month or year based on position
+              const rect = titleElement.getBoundingClientRect();
+              const clickX = e.clientX;
+              const halfwayPoint = rect.left + (rect.width / 2);
+              
+              if (clickX < halfwayPoint) {
+                // Month clicked
+                showMonthPicker(monthName);
+              } else {
+                // Year clicked
+                showYearPicker(parseInt(year));
+              }
+            }
+          });
+        }
+      }, 100);
+    }
+    
+    // Month Picker Modal
+    const monthPickerModal = document.getElementById('monthPickerModal');
+    const monthItems = document.querySelectorAll('.month-item');
+    
+    function showMonthPicker(currentMonth) {
+      // Reset selection
+      monthItems.forEach(item => item.classList.remove('selected'));
+      
+      // Get month index from name
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      const currentMonthIndex = months.indexOf(currentMonth);
+      
+      if (currentMonthIndex !== -1) {
+        const currentMonthItem = document.querySelector(`.month-item[data-month="${currentMonthIndex}"]`);
+        if (currentMonthItem) {
+          currentMonthItem.classList.add('selected');
+        }
+      }
+      
+      // Show modal
+      monthPickerModal.style.display = 'block';
+    }
+    
+    // Month selection handler
+    monthItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const monthIndex = parseInt(this.dataset.month);
+        const currentDate = calendar.getDate();
+        const newDate = new Date(currentDate);
+        newDate.setMonth(monthIndex);
+        
+        calendar.gotoDate(newDate);
+        monthPickerModal.style.display = 'none';
+      });
     });
     
-    document.getElementById('month-btn').addEventListener('click', function() {
-      calendar.changeView('dayGridMonth');
+    // Year Picker Modal
+    const yearPickerModal = document.getElementById('yearPickerModal');
+    const yearGrid = document.getElementById('yearGrid');
+    const prevYearsBtn = document.getElementById('prevYearsBtn');
+    const nextYearsBtn = document.getElementById('nextYearsBtn');
+    const yearRangeDisplay = document.getElementById('yearRangeDisplay');
+    let yearRangeStart = 2020;
+    
+    function showYearPicker(currentYear) {
+      // Calculate the decade range
+      yearRangeStart = Math.floor(currentYear / 10) * 10;
+      const yearRangeEnd = yearRangeStart + 9;
+      
+      // Update the year range display
+      yearRangeDisplay.textContent = `${yearRangeStart} - ${yearRangeEnd}`;
+      
+      // Generate the years grid
+      generateYearGrid(currentYear);
+      
+      // Show modal
+      yearPickerModal.style.display = 'block';
+    }
+    
+    function generateYearGrid(selectedYear) {
+      yearGrid.innerHTML = '';
+      
+      for (let year = yearRangeStart; year <= yearRangeStart + 9; year++) {
+        const yearItem = document.createElement('div');
+        yearItem.className = 'year-item';
+        if (year === selectedYear) {
+          yearItem.classList.add('selected');
+        }
+        yearItem.textContent = year;
+        yearItem.dataset.year = year;
+        
+        yearItem.addEventListener('click', function() {
+          const year = parseInt(this.dataset.year);
+          const currentDate = calendar.getDate();
+          const newDate = new Date(currentDate);
+          newDate.setFullYear(year);
+          
+          calendar.gotoDate(newDate);
+          yearPickerModal.style.display = 'none';
+        });
+        
+        yearGrid.appendChild(yearItem);
+      }
+    }
+    
+    // Year navigation handlers
+    prevYearsBtn.addEventListener('click', function() {
+      yearRangeStart -= 10;
+      const yearRangeEnd = yearRangeStart + 9;
+      yearRangeDisplay.textContent = `${yearRangeStart} - ${yearRangeEnd}`;
+      generateYearGrid();
     });
     
-    document.getElementById('week-btn').addEventListener('click', function() {
-      calendar.changeView('timeGridWeek');
+    nextYearsBtn.addEventListener('click', function() {
+      yearRangeStart += 10;
+      const yearRangeEnd = yearRangeStart + 9;
+      yearRangeDisplay.textContent = `${yearRangeStart} - ${yearRangeEnd}`;
+      generateYearGrid();
     });
     
-    document.getElementById('day-btn').addEventListener('click', function() {
-      calendar.changeView('timeGridDay');
+    // Close month/year picker when clicking on close button or outside
+    document.querySelectorAll('#monthPickerModal .pilarease-admin-close, #yearPickerModal .pilarease-admin-close').forEach(closeBtn => {
+      closeBtn.addEventListener('click', function() {
+        monthPickerModal.style.display = 'none';
+        yearPickerModal.style.display = 'none';
+      });
+    });
+    
+    window.addEventListener('click', function(event) {
+      if (event.target === monthPickerModal) {
+        monthPickerModal.style.display = 'none';
+      }
+      if (event.target === yearPickerModal) {
+        yearPickerModal.style.display = 'none';
+      }
     });
     
     // Refresh calendar button
@@ -709,11 +998,25 @@
     const saveBlockBtn = document.getElementById('saveBlockBtn');
     
     blockTimeBtn.addEventListener('click', function() {
-      // Set today's date as default
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('block_date').value = today;
-      document.getElementById('block_start_time').value = '09:00';
-      document.getElementById('block_end_time').value = '10:00';
+      // Set today's date as default using local browser time
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+      document.getElementById('block_date').value = formattedDate;
+      
+      // Set current time rounded to nearest half hour
+      const currentHour = today.getHours();
+      const currentMinute = today.getMinutes();
+      const roundedMinute = currentMinute >= 30 ? '30' : '00';
+      const formattedTime = `${currentHour.toString().padStart(2, '0')}:${roundedMinute}`;
+      
+      document.getElementById('block_start_time').value = formattedTime;
+      
+      // Set end time as 1 hour after start time
+      const endHour = currentMinute >= 30 ? currentHour + 1 : currentHour;
+      const endMinute = currentMinute >= 30 ? '30' : '00';
+      const formattedEndTime = `${endHour.toString().padStart(2, '0')}:${endMinute}`;
+      
+      document.getElementById('block_end_time').value = formattedEndTime;
       
       // Show modal
       blockTimeModal.style.display = 'block';
@@ -774,7 +1077,12 @@
     const saveAvailabilityBtn = document.getElementById('saveAvailabilityBtn');
     
     setAvailabilityBtn.addEventListener('click', function() {
-      // Set default start/end times
+      // Set default start/end times using local device time
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dayValue = currentDay === 0 ? 6 : currentDay - 1; // Convert to 0 = Monday format
+      
+      document.getElementById('day_of_week').value = dayValue.toString();
       document.getElementById('availability_start_time').value = '09:00';
       document.getElementById('availability_end_time').value = '17:00';
       
@@ -848,7 +1156,7 @@
     const appointmentDateInput = document.getElementById('appointment_date');
     
     createAppointmentBtn.addEventListener('click', function() {
-      // Set today's date as default
+      // Set today's date as default using local browser time
       const today = new Date().toISOString().split('T')[0];
       appointmentDateInput.value = today;
       
@@ -1066,8 +1374,13 @@
       
       if (eventType === 'appointment') {
         // Fetch event details
-        fetch(`/appointment/appointment/${eventId}/`)
-          .then(response => response.json())
+        fetch(`/appointment/appointment/${eventId}/?format=json`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             // Set title with appropriate icon
             eventTitle.innerHTML = `<i class="bx bx-calendar-check"></i> Appointment Details`;
@@ -1181,7 +1494,8 @@
             eventDetailContent.innerHTML = `
               <div class="error-message">
                 <i class="bx bx-error-circle"></i>
-                <p>Error loading appointment details. Please try again.</p>
+                <p>Error loading appointment details: ${error.message}</p>
+                <p>This could be because the appointment doesn't exist yet in the database.</p>
               </div>
             `;
           });
