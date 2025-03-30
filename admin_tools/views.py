@@ -16,9 +16,10 @@ from dateutil.relativedelta import relativedelta
 import matplotlib
 from django.db.models.functions import TruncMonth
 matplotlib.use('Agg')  # Must be set before importing pyplot
-from reportlab.lib.pagesizes import A4, landscape  
+from reportlab.lib.pagesizes import A4, landscape, letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 from reportlab.platypus import (
     SimpleDocTemplate,
     Table,
@@ -1283,19 +1284,44 @@ def download_statistics_report(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="statistics_report_{now().strftime("%Y-%m-%d")}.pdf"'
     
-    # Set up PDF document with landscape orientation
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4))
-    elements = []
+    # Set up PDF document with letter orientation (matching user analysis report style)
+    doc = SimpleDocTemplate(response, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    # Get styles
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='Centered', alignment=1))
+    title_style = styles["Title"]
+    heading_style = styles["Heading1"]
+    subheading_style = styles["Heading2"]
+    normal_style = styles["Normal"]
+    
+    # Custom styles
+    warning_style = ParagraphStyle(
+        'WarningStyle', 
+        parent=normal_style,
+        textColor=colors.red,
+        spaceAfter=12
+    )
+    
+    timestamp_style = ParagraphStyle(
+        'TimestampStyle',
+        parent=normal_style,
+        fontSize=8,
+        textColor=colors.grey,
+        alignment=1  # Center alignment
+    )
+    
+    # Create elements list for the PDF
+    elements = []
+    
+    # Add title and timestamp
+    elements.append(Paragraph("Statistics Report", title_style))
+    elements.append(Spacer(1, 0.25*inch))
+    
+    report_date = now().strftime("%B %d, %Y, %I:%M %p")
+    elements.append(Paragraph(f"Generated on: {report_date}", timestamp_style))
+    elements.append(Spacer(1, 0.5*inch))
 
-    # Title
-    elements.append(Paragraph("Statistics Report", styles['Title']))
-    elements.append(Spacer(1, 12))
-    elements.append(Paragraph(f"Generated on {now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Centered']))
-    elements.append(Spacer(1, 24))
-
-    # Retrieve and process Status data
+    # Retrieve and process Status data - This section stays the same as the original function
     statuses = Status.objects.all().values()
     df_statuses = pd.DataFrame(statuses)
     df_statuses.fillna(0, inplace=True)
@@ -1329,48 +1355,67 @@ def download_statistics_report(request):
     pie_labels = [label.replace('_percentage', '').capitalize() for label in emotion_percentage_columns]
     pie_data = emotion_percentages
 
-    # Section 1: Summary Metrics Table
-    elements.append(Paragraph("Summary Metrics", styles['Heading2']))
+    # Summary Overview section
+    elements.append(Paragraph("Summary Metrics", heading_style))
+    
+    # Summary data in a table
     summary_data = [
-        ['Metric', 'Value'],
-        ['Positive Percentage', f"{positive_percent:.2f}%"],
-        ['Neutral Percentage', f"{neutral_percent:.2f}%"],
-        ['Negative Percentage', f"{negative_percent:.2f}%"],
-        ['Total Students', total_students],
+        ["Metric", "Value"],
+        ["Positive Percentage", f"{positive_percent:.2f}%"],
+        ["Neutral Percentage", f"{neutral_percent:.2f}%"],
+        ["Negative Percentage", f"{negative_percent:.2f}%"],
+        ["Total Students", str(total_students)],
+        ["Total Statuses", str(len(df_statuses)) if not df_statuses.empty else "0"]
     ]
-    summary_table = Table(summary_data, hAlign='LEFT', colWidths=[200, 200])
+    
+    summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey),
+        ('BACKGROUND', (1, 1), (1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
+    
     elements.append(summary_table)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.25*inch))
 
-    # Section 2: Emotion Percentages Table
-    elements.append(Paragraph("Emotion Percentages", styles['Heading2']))
+    # Emotion Analysis Section
+    elements.append(Paragraph("Emotion Percentages", heading_style))
+    
+    # Emotion percentages in a table
     emotion_data = [['Emotion', 'Average Percentage']]
-    emotion_data.extend(zip(pie_labels, [f"{p}%" for p in pie_data]))
-    emotion_table = Table(emotion_data, hAlign='LEFT', colWidths=[200, 200])
+    emotion_data.extend(zip(pie_labels, [f"{p:.2f}%" for p in pie_data]))
+    
+    emotion_table = Table(emotion_data, colWidths=[2*inch, 2*inch])
     emotion_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
     ]))
+    
     elements.append(emotion_table)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.5*inch))
 
-    # Generate chart images and add them to the PDF
+    # Add visualization notes if needed
+    if positive_percent < 30:
+        elements.append(Paragraph("Note: Overall positive emotions are relatively low across the system.", warning_style))
+    
+    if negative_percent > 50:
+        elements.append(Paragraph("Alert: High levels of negative emotions detected across the system.", warning_style))
+    
+    elements.append(Spacer(1, 0.25*inch))
 
+    # Generate and add visualizations
     # Generate Pie Chart Image
+    elements.append(Paragraph("Emotion Percentages Chart", subheading_style))
     pie_chart_base64 = generate_chart_image(
         pie_labels,
         pie_data,
@@ -1378,13 +1423,14 @@ def download_statistics_report(request):
         title='Emotion Percentages'
     )
     pie_image_stream = io.BytesIO(base64.b64decode(pie_chart_base64))
-    pie_image = Image(pie_image_stream, width=300, height=200)
-    elements.append(Paragraph("Emotion Percentages Chart", styles['Heading2']))
+    pie_image = Image(pie_image_stream, width=400, height=250)
     elements.append(pie_image)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.5*inch))
 
     # Generate Bar Chart for Emotion Distribution by Title (if 'title' column exists)
     if 'title' in df_statuses.columns:
+        elements.append(Paragraph("Emotion Distribution by Title", heading_style))
+        
         df_melted = df_statuses.melt(
             id_vars=['title'],
             value_vars=emotion_percentage_columns,
@@ -1394,49 +1440,64 @@ def download_statistics_report(request):
         df_melted['emotion'] = df_melted['emotion'].str.replace('_percentage', '').str.capitalize()
         bar_chart_data = df_melted.groupby(['title', 'emotion'])['percentage'].mean().unstack().fillna(0).round(2)
         bar_labels = bar_chart_data.index.tolist()
-        bar_data = [bar_chart_data[emotion].tolist() for emotion in pie_labels]
+        bar_data = [bar_chart_data[emotion].tolist() for emotion in pie_labels if emotion in bar_chart_data.columns]
 
         # Adjust titles for length
-        bar_labels = [title[:30] + '...' if len(title) > 30 else title for title in bar_labels]
+        short_bar_labels = [title[:30] + '...' if len(title) > 30 else title for title in bar_labels]
 
         bar_chart_base64 = generate_chart_image(
-            bar_labels,
+            short_bar_labels,
             bar_data,
             chart_type='bar',
             title='Emotion Distribution by Title',
             dataset_labels=pie_labels
         )
         bar_image_stream = io.BytesIO(base64.b64decode(bar_chart_base64))
-        bar_image = Image(bar_image_stream, width=700, height=300)
-        elements.append(Paragraph("Emotion Distribution by Title", styles['Heading2']))
+        bar_image = Image(bar_image_stream, width=500, height=300)
         elements.append(bar_image)
-        elements.append(Spacer(1, 24))
+        elements.append(Spacer(1, 0.25*inch))
 
         # Include data table for Bar Chart
-        elements.append(Paragraph("Emotion Distribution by Title - Data", styles['Heading3']))
-        bar_table_data = [['Title'] + pie_labels]
-        for idx, title in enumerate(bar_labels):
-            row = [title]
-            row.extend([str(bar_chart_data.loc[bar_chart_data.index[idx], emotion]) for emotion in pie_labels])
+        elements.append(Paragraph("Emotion Distribution by Title - Data", subheading_style))
+        
+        # Limit the number of rows to fit in the page
+        max_rows = min(10, len(bar_labels))
+        bar_table_labels = short_bar_labels[:max_rows]
+        
+        available_emotions = [e for e in pie_labels if e in bar_chart_data.columns]
+        bar_table_data = [['Title'] + available_emotions]
+        
+        for idx, title in enumerate(bar_labels[:max_rows]):
+            row = [short_bar_labels[idx]]
+            for emotion in available_emotions:
+                row.append(f"{bar_chart_data.loc[title, emotion]:.2f}%")
             bar_table_data.append(row)
-        bar_table = Table(bar_table_data, hAlign='LEFT', repeatRows=1)
+            
+        # Add a row indicating there's more data if needed
+        if len(bar_labels) > max_rows:
+            bar_table_data.append([f"... and {len(bar_labels) - max_rows} more titles", *["..." for _ in available_emotions]])
+            
+        bar_table = Table(bar_table_data, repeatRows=1)
         bar_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
         ]))
         elements.append(bar_table)
-        elements.append(PageBreak())
+        elements.append(Spacer(1, 0.5*inch))
 
     # Generate Line Chart for Emotion Trend Over Time (if 'created_at' column exists)
-    if 'created_at' in df_statuses.columns:
+    if 'created_at' in df_statuses.columns and not df_statuses.empty:
+        elements.append(Paragraph("Emotion Trend Over Time", heading_style))
+        
         df_statuses['created_at'] = pd.to_datetime(df_statuses['created_at'])
         df_statuses['month_year'] = df_statuses['created_at'].dt.to_period('M').astype(str)
         sentiment_trends = df_statuses.groupby('month_year')[emotion_percentage_columns].mean().reset_index()
         line_labels = sentiment_trends['month_year'].tolist()
         line_data = [sentiment_trends[emotion].round(2).tolist() for emotion in emotion_percentage_columns]
+        
         line_chart_base64 = generate_chart_image(
             line_labels,
             line_data,
@@ -1445,30 +1506,42 @@ def download_statistics_report(request):
             dataset_labels=pie_labels
         )
         line_image_stream = io.BytesIO(base64.b64decode(line_chart_base64))
-        line_image = Image(line_image_stream, width=700, height=300)
-        elements.append(Paragraph("Emotion Trend Over Time", styles['Heading2']))
+        line_image = Image(line_image_stream, width=500, height=300)
         elements.append(line_image)
-        elements.append(Spacer(1, 24))
+        elements.append(Spacer(1, 0.25*inch))
 
         # Include data table for Line Chart
-        elements.append(Paragraph("Emotion Trend Over Time - Data", styles['Heading3']))
+        elements.append(Paragraph("Emotion Trend Over Time - Data", subheading_style))
+        
+        # Limit rows to fit the page if needed
+        max_rows = min(10, len(line_labels))
+        limited_labels = line_labels[:max_rows]
+        
         line_table_data = [['Month/Year'] + pie_labels]
-        for idx, month_year in enumerate(line_labels):
+        for idx, month_year in enumerate(limited_labels):
             row = [month_year]
-            row.extend([str(sentiment_trends.loc[idx, emotion]) for emotion in emotion_percentage_columns])
+            for emotion in emotion_percentage_columns:
+                row.append(f"{sentiment_trends.loc[idx, emotion]:.2f}%")
             line_table_data.append(row)
-        line_table = Table(line_table_data, hAlign='LEFT', repeatRows=1)
+            
+        # Add a row indicating there's more data if needed
+        if len(line_labels) > max_rows:
+            line_table_data.append([f"... and {len(line_labels) - max_rows} more periods", *["..." for _ in pie_labels]])
+            
+        line_table = Table(line_table_data, repeatRows=1)
         line_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0,0), (-1,-1), 1, colors.black),
         ]))
         elements.append(line_table)
-        elements.append(PageBreak())
+        elements.append(Spacer(1, 0.5*inch))
 
     # Generate Donut Chart for Emotion Intensity
+    elements.append(Paragraph("Emotion Intensity", heading_style))
+    
     intensity_labels = ['Happiness', 'Neutral', 'Anger', 'Fear', 'Sadness']
     intensity_data = [
         int(df_statuses['happiness_percentage'].mean()) if 'happiness_percentage' in df_statuses.columns else 0,
@@ -1484,27 +1557,28 @@ def download_statistics_report(request):
         title='Emotion Intensity'
     )
     intensity_image_stream = io.BytesIO(base64.b64decode(intensity_chart_base64))
-    intensity_image = Image(intensity_image_stream, width=300, height=200)
-    elements.append(Paragraph("Emotion Intensity", styles['Heading2']))
+    intensity_image = Image(intensity_image_stream, width=400, height=250)
     elements.append(intensity_image)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.25*inch))
 
     # Include data table for Emotion Intensity
-    elements.append(Paragraph("Emotion Intensity - Data", styles['Heading3']))
+    elements.append(Paragraph("Emotion Intensity - Data", subheading_style))
     intensity_table_data = [['Emotion', 'Intensity']]
-    intensity_table_data.extend(zip(intensity_labels, [str(value) for value in intensity_data]))
-    intensity_table = Table(intensity_table_data, hAlign='LEFT', colWidths=[200, 200])
+    intensity_table_data.extend(zip(intensity_labels, [f"{value}%" for value in intensity_data]))
+    intensity_table = Table(intensity_table_data, colWidths=[2*inch, 2*inch])
     intensity_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
     ]))
     elements.append(intensity_table)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.5*inch))
 
     # Generate Emotion Frequency Chart
+    elements.append(Paragraph("Emotion Frequency", heading_style))
+    
     frequency_labels = [label.replace('_percentage', '').capitalize() for label in emotion_percentage_columns]
     if not df_statuses.empty:
         frequency_data = df_statuses[emotion_percentage_columns].count().tolist()
@@ -1517,28 +1591,29 @@ def download_statistics_report(request):
         title='Emotion Frequency'
     )
     frequency_image_stream = io.BytesIO(base64.b64decode(frequency_chart_base64))
-    frequency_image = Image(frequency_image_stream, width=700, height=300)
-    elements.append(Paragraph("Emotion Frequency", styles['Heading2']))
+    frequency_image = Image(frequency_image_stream, width=500, height=300)
     elements.append(frequency_image)
-    elements.append(Spacer(1, 24))
+    elements.append(Spacer(1, 0.25*inch))
 
     # Include data table for Emotion Frequency
-    elements.append(Paragraph("Emotion Frequency - Data", styles['Heading3']))
+    elements.append(Paragraph("Emotion Frequency - Data", subheading_style))
     frequency_table_data = [['Emotion', 'Frequency']]
     frequency_table_data.extend(zip(frequency_labels, [str(value) for value in frequency_data]))
-    frequency_table = Table(frequency_table_data, hAlign='LEFT', colWidths=[200, 200])
+    frequency_table = Table(frequency_table_data, colWidths=[2*inch, 2*inch])
     frequency_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
     ]))
     elements.append(frequency_table)
-    elements.append(PageBreak())
+    elements.append(Spacer(1, 0.5*inch))
 
     # Generate Emotion Pulse Chart
     if 'created_at' in df_statuses.columns and not df_statuses.empty:
+        elements.append(Paragraph("Emotion Pulse", heading_style))
+        
         pulse_labels = sentiment_trends['month_year'].tolist()
         intensity_columns = ['happiness_percentage', 'neutral_percentage', 'anger_percentage', 'fear_percentage', 'sadness_percentage']
         pulse_data = [sentiment_trends[emotion].round(2).tolist() for emotion in intensity_columns]
@@ -1550,41 +1625,65 @@ def download_statistics_report(request):
             dataset_labels=intensity_labels
         )
         pulse_image_stream = io.BytesIO(base64.b64decode(pulse_chart_base64))
-        pulse_image = Image(pulse_image_stream, width=700, height=300)
-        elements.append(Paragraph("Emotion Pulse", styles['Heading2']))
+        pulse_image = Image(pulse_image_stream, width=500, height=300)
         elements.append(pulse_image)
-        elements.append(Spacer(1, 24))
-
-        # Include data table for Emotion Pulse
-        elements.append(Paragraph("Emotion Pulse - Data", styles['Heading3']))
-        pulse_table_data = [['Month/Year'] + intensity_labels]
-        for idx, month_year in enumerate(pulse_labels):
-            row = [month_year]
-            row.extend([str(sentiment_trends.loc[idx, emotion]) for emotion in intensity_columns])
-            pulse_table_data.append(row)
-        pulse_table = Table(pulse_table_data, hAlign='LEFT', repeatRows=1)
-        pulse_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-        ]))
-        elements.append(pulse_table)
-        elements.append(PageBreak())
+        elements.append(Spacer(1, 0.25*inch))
 
     # Generate Word Cloud
-    if 'plain_description' in df_statuses.columns and not df_statuses['plain_description'].isnull().all():
+    if 'plain_description' in df_statuses.columns and not df_statuses.empty and not df_statuses['plain_description'].isnull().all():
+        elements.append(Paragraph("Word Cloud", heading_style))
         text = " ".join(df_statuses['plain_description'].astype(str).tolist())
         wordcloud_image_base64 = generate_wordcloud_image(text)
         wordcloud_image_stream = io.BytesIO(base64.b64decode(wordcloud_image_base64))
-        wordcloud_image = Image(wordcloud_image_stream, width=700, height=300)
-        elements.append(Paragraph("Word Cloud", styles['Heading2']))
+        wordcloud_image = Image(wordcloud_image_stream, width=500, height=300)
         elements.append(wordcloud_image)
-        elements.append(Spacer(1, 24))
+        elements.append(Spacer(1, 0.5*inch))
+    
+    # Observations & Recommendations section
+    elements.append(Paragraph("Observations & Recommendations", heading_style))
+    
+    recommendations = []
+    
+    # Generate observations based on data
+    if negative_percent > 60:
+        recommendations.append(Paragraph("⚠️ High levels of negative emotions detected across the system. Consider implementing additional emotional support resources.", warning_style))
+    
+    if df_statuses.empty:
+        recommendations.append(Paragraph("No status data available in the system. User engagement may need to be encouraged.", normal_style))
+    elif len(df_statuses) < 5:
+        recommendations.append(Paragraph("Limited status data available for analysis. More user engagement would provide better insights.", normal_style))
+    
+    if positive_percent < 25:
+        recommendations.append(Paragraph("Low positive emotion levels detected. Consider implementing more activities that promote positive engagement and wellbeing.", normal_style))
+    
+    if 'created_at' in df_statuses.columns and not df_statuses.empty:
+        # Get the latest status date
+        latest_date = pd.to_datetime(df_statuses['created_at']).max()
+        
+        # Handle timezone-aware datetime objects for comparison
+        # Check if timestamp is already timezone-aware
+        if latest_date.tzinfo is not None:
+            # Convert to the current timezone if already timezone-aware
+            latest_datetime = latest_date.to_pydatetime()
+        else:
+            # Localize if timestamp is naive
+            latest_datetime = latest_date.tz_localize(timezone.get_current_timezone()).to_pydatetime()
+        
+        # Calculate days difference using timezone-aware objects
+        days_since_latest = (timezone.now() - latest_datetime).days
+        
+        if days_since_latest > 7:
+            recommendations.append(Paragraph(f"System engagement has been low recently. The latest status was posted {days_since_latest} days ago.", normal_style))
+    
+    if not recommendations:
+        recommendations.append(Paragraph("Overall system health appears normal. Continue monitoring for any changes in emotion trends.", normal_style))
+    
+    for recommendation in recommendations:
+        elements.append(recommendation)
 
-    # Build and return the PDF
+    # Build the PDF
     doc.build(elements)
+    
     return response
 
 
@@ -1749,7 +1848,6 @@ def statistics_view(request):
     # Exclude users who are counselors or ITRC staff
     users = CustomUser.objects.filter(is_counselor=False, is_itrc_staff=False).values()
 
-
     # Create DataFrames from the statuses and users
     df_statuses = pd.DataFrame(statuses)
     df_users = pd.DataFrame(users)
@@ -1784,15 +1882,17 @@ def statistics_view(request):
         df_melted['emotion'] = df_melted['emotion'].str.replace('_percentage', '').str.capitalize()
         bar_chart_data = df_melted.groupby(['title', 'emotion'])['percentage'].mean().unstack().fillna(0).round(2)
         bar_labels = bar_chart_data.index.tolist()
+        
+        # Prepare datasets for bar chart
         bar_datasets = []
         colors = {
             'Anger': '#f44336',
             'Disgust': '#9c27b0',
             'Fear': '#3f51b5',
             'Happiness': '#ffeb3b',
-            'Sadness': '#2196f3',
-            'Surprise': '#ff9800',
-            'Neutral': '#9e9e9e',
+            'Sadness': '#ff9800',
+            'Surprise': '#9e9e9e',
+            'Neutral': '#2196f3',
         }
 
         for emotion in pie_labels:
@@ -1898,7 +1998,7 @@ def statistics_view(request):
         intensity_data = [0, 0, 0, 0, 0]
 
     # New: Emotion Pulse (Area Chart)
-    if not df_statuses.empty and not sentiment_trends.empty:
+    if not df_statuses.empty and 'created_at' in df_statuses.columns:
         pulse_labels = sentiment_trends['month_year'].tolist()
         pulse_datasets = []
         pulse_colors = {
@@ -1943,8 +2043,6 @@ def statistics_view(request):
         'pulse_datasets': json.dumps(pulse_datasets),
     }
     return render(request, 'admin_tools/statistics.html', context)
-
-# admin_tools/views.py
 
 @login_required
 def sentiment_analytics_view(request):

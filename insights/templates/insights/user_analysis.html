@@ -150,31 +150,31 @@
 
   <!-- Charts Container -->
   <div class="pilarease-admin-statistics-charts">
-    <!-- Emotion Trends Chart -->
+  <!-- Emotion Trends Chart -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">
-        Emotion Trends
+      Emotion Trends
         <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
-        <span class="pilarease-admin-tooltip">
-          How this user's emotions have changed over time
-        </span>
+      <span class="pilarease-admin-tooltip">
+        How this user's emotions have changed over time
+      </span>
       </div>
       <div class="pilarease-admin-chart-content">
-        <canvas id="emotionTrendsChart"></canvas>
-      </div>
+      <canvas id="emotionTrendsChart"></canvas>
     </div>
+  </div>
 
     <!-- Emotion Comparison Chart -->
     <div class="pilarease-admin-statistics-chart">
       <div class="pilarease-admin-chart-header">
-        Emotion Comparison
+      Emotion Comparison
         <i class="bx bx-info-circle pilarease-admin-info-icon"></i>
-        <span class="pilarease-admin-tooltip">
-          Comparing latest emotions with historical averages
-        </span>
+      <span class="pilarease-admin-tooltip">
+        Comparing latest emotions with historical averages
+      </span>
       </div>
       <div class="pilarease-admin-chart-content">
-        <canvas id="emotionComparisonChart"></canvas>
+      <canvas id="emotionComparisonChart"></canvas>
       </div>
     </div>
   </div>
@@ -191,14 +191,14 @@
     
     <div class="pilarease-admin-card">
       <div class="pilarease-admin-card-body">
-        <div class="pilarease-admin-keyword-cloud">
-          {% for keyword in keywords %}
-          <span class="pilarease-admin-keyword" style="font-size: {{ keyword.size }}px;">{{ keyword.text }}</span>
-          {% empty %}
+    <div class="pilarease-admin-keyword-cloud">
+      {% for keyword in keywords %}
+      <span class="pilarease-admin-keyword" style="font-size: {{ keyword.size }}px;">{{ keyword.text }}</span>
+      {% empty %}
           <div class="pilarease-admin-no-data">
             <i class="bx bx-info-circle"></i> No keyword data available.
           </div>
-          {% endfor %}
+      {% endfor %}
         </div>
       </div>
     </div>
@@ -514,7 +514,7 @@
                 <i class="bx bx-error"></i>
                 <div>
                   <h4>Error</h4>
-                  <p>Could not load status details. Please try again later.</p>
+              <p>Could not load status details. Please try again later.</p>
                   <p class="pilarease-admin-error-details">Error: ${error.message}</p>
                 </div>
               </div>
