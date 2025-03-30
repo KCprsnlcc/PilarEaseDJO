@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
-from django.db.models import Q, Count, Avg
+from django.db.models import Q, Count, Avg, Sum
 from django.core.paginator import Paginator
 from django.urls import reverse
 from datetime import datetime, timedelta
@@ -14,7 +14,6 @@ import xlsxwriter
 from .models import (
     AppointmentSchedule,
     Appointment,
-    AppointmentFeedback,
     BlockedTimeSlot,
     AppointmentNotification,
     AppointmentReport,
@@ -24,7 +23,6 @@ from .forms import (
     AppointmentScheduleForm,
     AppointmentForm,
     UpdateAppointmentStatusForm,
-    AppointmentFeedbackForm,
     BlockedTimeSlotForm,
     AppointmentReportForm,
     DateRangeFilterForm
@@ -453,90 +451,60 @@ def appointment_history(request):
     if search:
         upcoming_query = upcoming_query.filter(
             Q(title__icontains=search) | 
+            Q(description__icontains=search) |
+            Q(counselor__full_name__icontains=search) |
             Q(user__full_name__icontains=search)
         )
         past_query = past_query.filter(
             Q(title__icontains=search) | 
+            Q(description__icontains=search) |
+            Q(counselor__full_name__icontains=search) |
             Q(user__full_name__icontains=search)
         )
     
     # Order the results
-    upcoming_query = upcoming_query.order_by('date', 'start_time')
-    past_query = past_query.order_by('-date', '-start_time')
+    upcoming_appointments = upcoming_query.order_by('date', 'start_time')
+    past_appointments = past_query.order_by('-date', 'start_time')
+
+    # Check if JSON format is requested
+    if request.GET.get('format') == 'json':
+        # Return JSON data
+        all_appointments = list(upcoming_appointments) + list(past_appointments)
+        appointments_data = []
+        
+        for appointment in all_appointments:
+            appointment_data = {
+                'id': appointment.id,
+                'title': appointment.title,
+                'description': appointment.description,
+                'date': appointment.date.isoformat(),
+                'start_time': appointment.start_time.strftime('%H:%M'),
+                'end_time': appointment.end_time.strftime('%H:%M'),
+                'status': dict(AppointmentStatus.choices)[appointment.status],
+                'counselor_name': appointment.counselor.get_full_name() or appointment.counselor.username,
+                'counselor_id': appointment.counselor.id,
+                'user_name': appointment.user.get_full_name() or appointment.user.username,
+                'user_id': appointment.user.id,
+                'created_at': appointment.created_at.isoformat(),
+                'updated_at': appointment.updated_at.isoformat(),
+                'is_past': appointment.is_past,
+                'can_be_cancelled': appointment.can_be_cancelled
+            }
+            appointments_data.append(appointment_data)
+        
+        return JsonResponse({'appointments': appointments_data})
     
-    # Paginate results
-    upcoming_paginator = Paginator(upcoming_query, 10)
-    past_paginator = Paginator(past_query, 10)
-    
-    page_number = request.GET.get('page', 1)
-    history_page_number = request.GET.get('history_page', 1)
-    
-    upcoming_appointments = upcoming_paginator.get_page(page_number)
-    past_appointments = past_paginator.get_page(history_page_number)
-    
+    # For regular HTML view
     context = {
         'upcoming_appointments': upcoming_appointments,
         'past_appointments': past_appointments,
-        'selected_status': status,
+        'status_filter': status,
         'date_from': date_from,
         'date_to': date_to,
         'search': search
     }
     
     return render(request, 'appointment/history.html', context)
-
-# Feedback views
-@login_required
-@user_passes_test(is_counselor_or_staff)
-def feedback_list(request):
-    """View feedback from appointments"""
-    feedback_query = AppointmentFeedback.objects.all().order_by('-created_at')
-    
-    # Filter by rating if specified
-    rating = request.GET.get('rating')
-    if rating and rating.isdigit():
-        feedback_query = feedback_query.filter(rating=int(rating))
-    
-    # Filter by comment content
-    comment = request.GET.get('comment')
-    if comment:
-        feedback_query = feedback_query.filter(comments__icontains=comment)
-    
-    # Paginate results
-    paginator = Paginator(feedback_query, 10)
-    page_number = request.GET.get('page', 1)
-    feedback = paginator.get_page(page_number)
-    
-    # Calculate average rating and statistics
-    avg_rating = AppointmentFeedback.objects.aggregate(
-        avg_rating=Avg('rating')
-    )['avg_rating'] or 0
-    
-    total_feedback = AppointmentFeedback.objects.count()
-    positive_feedback = AppointmentFeedback.objects.filter(rating__gte=4).count()
-    negative_feedback = AppointmentFeedback.objects.filter(rating__lte=2).count()
-    
-    # Calculate percentages
-    positive_percentage = round((positive_feedback / total_feedback) * 100) if total_feedback > 0 else 0
-    negative_percentage = round((negative_feedback / total_feedback) * 100) if total_feedback > 0 else 0
-    
-    # Calculate rating distribution
-    rating_distribution = {}
-    for i in range(1, 6):
-        rating_distribution[i] = AppointmentFeedback.objects.filter(rating=i).count()
-    
-    context = {
-        'feedback': feedback,
-        'avg_rating': round(avg_rating, 1),
-        'total_feedback': total_feedback,
-        'positive_percentage': positive_percentage,
-        'negative_percentage': negative_percentage,
-        'rating_distribution': rating_distribution,
-        'selected_rating': rating,
-        'comment_filter': comment
-    }
-    
-    return render(request, 'appointment/feedback.html', context)
 
 # Reports views
 @login_required
@@ -557,12 +525,6 @@ def reports(request):
                 date__gte=start_date,
                 date__lte=end_date
     ).order_by('date', 'start_time')
-    
-    # Get feedback in the date range
-    feedback_list = AppointmentFeedback.objects.filter(
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
-    ).order_by('-created_at')
     
     # Get blocked slots in the date range
     blocked_slots = BlockedTimeSlot.objects.filter(
@@ -587,19 +549,6 @@ def reports(request):
             minutes = (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute)
             total_minutes += minutes
         avg_duration = total_minutes / total_appointments
-    
-    # Calculate feedback statistics
-    avg_rating = feedback_list.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
-    total_feedback = feedback_list.count()
-    positive_feedback = feedback_list.filter(rating__gte=4).count()
-    negative_feedback = feedback_list.filter(rating__lte=2).count()
-    positive_percentage = round((positive_feedback / total_feedback) * 100) if total_feedback > 0 else 0
-    negative_percentage = round((negative_feedback / total_feedback) * 100) if total_feedback > 0 else 0
-    
-    # Calculate rating distribution
-    rating_distribution = {}
-    for i in range(1, 6):
-        rating_distribution[i] = feedback_list.filter(rating=i).count()
     
     # Calculate availability statistics
     total_available_hours = 0
@@ -637,82 +586,36 @@ def reports(request):
         
         current_date += timedelta(days=1)
     
-    # Prepare feedback over time data
-    feedback_count_by_time = []
-    avg_rating_by_time = []
-    
-    for month in months:
-        month_obj = datetime.strptime(month, '%b')
-        month_number = month_obj.month
-        year = today.year
-        
-        # Check if month is in the future (e.g., Dec when current month is Jan)
-        if month_number > today.month:
-            year -= 1
-            
-        month_start = datetime(year, month_number, 1).date()
-        if month_number == 12:
-            next_month = datetime(year + 1, 1, 1).date()
-        else:
-            next_month = datetime(year, month_number + 1, 1).date()
-        month_end = next_month - timedelta(days=1)
-        
-        month_feedback = AppointmentFeedback.objects.filter(
-            created_at__date__gte=month_start,
-            created_at__date__lte=month_end
-        )
-        
-        feedback_count_by_time.append(month_feedback.count())
-        avg_month_rating = month_feedback.aggregate(avg=Avg('rating'))['avg'] or 0
-        avg_rating_by_time.append(round(avg_month_rating, 1))
-    
-    # Prepare availability by day data
-    days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    available_hours_by_day = [8, 8, 8, 8, 8, 0, 0]  # Example data
-    booked_hours_by_day = [4, 5, 3, 6, 2, 0, 0]     # Example data
-    blocked_hours_by_day = [1, 0, 2, 1, 1, 0, 0]    # Example data
-    
-    # Booking rate over time
-    booking_rate_by_time = []
-    for i in range(len(time_labels)):
-        booking_rate_by_time.append(min(100, random.randint(50, 95)))  # Example data
-    
-    # Combined stats for template
-    stats = {
+    context = {
+        'report_type': report_type,
+        'date_from': start_date,
+        'date_to': end_date,
+        'today': today.strftime('%Y-%m-%d'),
+        'time_labels': time_labels,
+        'time_data': time_data,
         'total_appointments': total_appointments,
         'completed_appointments': completed_appointments,
         'cancelled_appointments': cancelled_appointments,
         'approved_appointments': approved_appointments,
         'pending_appointments': pending_appointments,
-        'average_duration': round(avg_duration),
-        'average_rating': round(avg_rating, 1),
-        'total_feedback': total_feedback,
-        'positive_percentage': positive_percentage,
-        'negative_percentage': negative_percentage,
-        'total_available_hours': sum(available_hours_by_day),
-        'total_blocked_slots': total_blocked_slots,
-        'total_booked_hours': sum(booked_hours_by_day),
-        'booking_rate': round((sum(booked_hours_by_day) / sum(available_hours_by_day) * 100) if sum(available_hours_by_day) > 0 else 0)
+        'appointments_per_day': round(total_appointments / ((end_date - start_date).days or 1), 1),
+        'avg_duration': round(avg_duration) if avg_duration else 0,
+        'booking_rate': booking_rate,
+        'appointments': appointments,
+        'blocked_slots': blocked_slots
     }
     
-    context = {
-        'report_type': report_type,
-        'date_from': date_from,
-        'date_to': date_to,
-        'appointments': appointments,
-        'feedback_list': feedback_list,
-        'blocked_slots': blocked_slots,
-        'stats': stats,
-        'time_labels': json.dumps(time_labels),
-        'time_data': json.dumps(time_data),
-        'rating_distribution': rating_distribution,
-        'feedback_count_by_time': json.dumps(feedback_count_by_time),
-        'avg_rating_by_time': json.dumps(avg_rating_by_time),
-        'available_hours_by_day': json.dumps(available_hours_by_day),
-        'booked_hours_by_day': json.dumps(booked_hours_by_day),
-        'blocked_hours_by_day': json.dumps(blocked_hours_by_day),
-        'booking_rate_by_time': json.dumps(booking_rate_by_time)
-    }
+    # Generate report or return template
+    if request.GET.get('generate') == 'true':
+        report = Report.objects.create(
+            title=f"Appointment Report {start_date} to {end_date}",
+            report_type=report_type,
+            date_range_start=start_date,
+            date_range_end=end_date,
+            generated_by=request.user,
+            data=json.dumps(context, default=str)
+        )
+        return redirect('appointment:report_detail', report_id=report.id)
     
     return render(request, 'appointment/reports.html', context)
 
@@ -730,8 +633,8 @@ def report_detail(request, report_id):
 
 @login_required
 @user_passes_test(is_counselor_or_staff)
-def download_report(request, report_id, format='csv'):
-    """Download report in various formats (CSV, Excel)"""
+def download_report(request, report_id, format):
+    """Download appointment report in specified format"""
     report = get_object_or_404(AppointmentReport, id=report_id)
     
     # Get appointments for the report period
@@ -848,7 +751,6 @@ def notifications(request):
     return render(request, 'appointment/notifications.html', context)
 
 @login_required
-@user_passes_test(is_counselor_or_staff)
 def mark_notification_read(request, notification_id):
     """Mark a notification as read"""
     notification = get_object_or_404(
@@ -862,52 +764,149 @@ def mark_notification_read(request, notification_id):
     return redirect(request.META.get('HTTP_REFERER', 'appointment:notifications'))
 
 @login_required
-@user_passes_test(is_counselor_or_staff)
 def create_appointment(request):
     """Create a new appointment"""
     if request.method == 'POST':
         form = AppointmentForm(request.POST)
-        if form.is_valid():
+        
+        # For students, assign the current user and find an available counselor
+        if not (request.user.is_counselor or request.user.is_itrc_staff):
+            # Get form data
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            date_str = request.POST.get('date')
+            start_time_str = request.POST.get('start_time')
+            end_time_str = request.POST.get('end_time')
+            
+            try:
+                # Parse date and time
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                start_time = datetime.strptime(start_time_str, '%H:%M').time()
+                end_time = datetime.strptime(end_time_str, '%H:%M').time()
+                
+                # Find an available counselor for this time slot
+                User = get_user_model()
+                counselors = User.objects.filter(is_counselor=True)
+                
+                available_counselor = None
+                for counselor in counselors:
+                    # Check if counselor has any blocked slots for this time
+                    blocked = BlockedTimeSlot.objects.filter(
+                        counselor=counselor,
+                        date=date
+                    ).filter(
+                        Q(start_time__lte=start_time, end_time__gt=start_time) |
+                        Q(start_time__lt=end_time, end_time__gte=end_time) |
+                        Q(start_time__gte=start_time, end_time__lte=end_time)
+                    ).exists()
+                    
+                    if blocked:
+                        continue
+                    
+                    # Check if counselor has any existing appointments for this time
+                    booked = Appointment.objects.filter(
+                        counselor=counselor,
+                        date=date
+                    ).exclude(
+                        status=AppointmentStatus.CANCELLED
+                    ).filter(
+                        Q(start_time__lte=start_time, end_time__gt=start_time) |
+                        Q(start_time__lt=end_time, end_time__gte=end_time) |
+                        Q(start_time__gte=start_time, end_time__lte=end_time)
+                    ).exists()
+                    
+                    if not booked:
+                        available_counselor = counselor
+                        break
+                
+                if not available_counselor:
+                    if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'No counselors are available for this time slot. Please select another time.'
+                        })
+                    else:
+                        messages.error(request, 'No counselors are available for this time slot. Please select another time.')
+                        return redirect('appointment:calendar')
+                
+                # Create the appointment
+                appointment = Appointment.objects.create(
+                    user=request.user,
+                    counselor=available_counselor,
+                    title=title,
+                    description=description,
+                    date=date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    status=AppointmentStatus.PENDING
+                )
+                
+                # Create notification for the counselor
+                notification = AppointmentNotification.objects.create(
+                    user=available_counselor,
+                    appointment=appointment,
+                    message=f"New appointment request: {title} on {date} at {start_time} from {request.user.get_full_name() or request.user.username}"
+                )
+                
+                if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Appointment scheduled successfully! Please wait for counselor confirmation.'
+                    })
+                else:
+                    messages.success(request, 'Appointment scheduled successfully! Please wait for counselor confirmation.')
+                    return redirect('main:home')
+                
+            except Exception as e:
+                if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Error creating appointment: {str(e)}'
+                    })
+                else:
+                    messages.error(request, f'Error creating appointment: {str(e)}')
+                    return redirect('appointment:calendar')
+        
+        # For counselors and staff, proceed with the regular form process
+        elif form.is_valid():
             appointment = form.save(commit=False)
             appointment.counselor = request.user
             appointment.save()
             
-            messages.success(request, 'Appointment created successfully.')
+            # Create notification for the user
+            notification = AppointmentNotification.objects.create(
+                user=appointment.user,
+                appointment=appointment,
+                message=f"Your appointment '{appointment.title}' has been scheduled for {appointment.date} at {appointment.start_time}."
+            )
+            
+            if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': appointment.id,
+                    'message': 'Appointment created successfully!'
+                })
+            else:
+                messages.success(request, 'Appointment created successfully.')
             return redirect('appointment:calendar')
         else:
-            messages.error(request, 'There was an error creating the appointment.')
-    
-    return redirect('appointment:calendar')
+            if 'HTTP_X_REQUESTED_WITH' in request.META and request.META['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Invalid form data',
+                    'errors': form.errors
+                })
+            else:
+                messages.error(request, 'There was an error creating the appointment.')
+            return redirect('appointment:calendar')
 
-@login_required
-@user_passes_test(is_counselor_or_staff)
-def feedback_detail(request, feedback_id):
-    """View detailed feedback information"""
-    feedback = get_object_or_404(AppointmentFeedback, id=feedback_id)
-    data = {
-        'id': feedback.id,
-        'rating': feedback.rating,
-        'comment': feedback.comment,
-        'created_at': feedback.created_at.strftime('%Y-%m-%d %H:%M'),
-        'appointment': {
-            'id': feedback.appointment.id,
-            'title': feedback.appointment.title,
-            'date': feedback.appointment.date.strftime('%Y-%m-%d'),
-            'start_time': feedback.appointment.start_time.strftime('%H:%M'),
-            'end_time': feedback.appointment.end_time.strftime('%H:%M'),
-            'user': {
-                'id': feedback.appointment.user.id,
-                'full_name': feedback.appointment.user.full_name,
-                'email': feedback.appointment.user.email,
-            }
-        }
-    }
-    return JsonResponse(data)
+    form = AppointmentForm(initial={'counselor': request.user} if request.user.is_counselor else {})
+    return render(request, 'appointment/appointment_form.html', {'form': form})
 
 @login_required
 @user_passes_test(is_counselor_or_staff)
 def export_csv(request):
-    """Export report data to CSV"""
+    """Export appointment data to CSV"""
     report_type = request.GET.get('report_type', 'appointments')
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
@@ -943,31 +942,6 @@ def export_csv(request):
                 appointment.get_status_display(),
                 appointment.created_at.strftime('%Y-%m-%d %H:%M:%S')
             ])
-        
-    elif report_type == 'feedback':
-        # Export feedback
-        feedback_list = AppointmentFeedback.objects.filter(
-            created_at__date__gte=start_date,
-            created_at__date__lte=end_date
-        ).order_by('-created_at')
-        
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="feedback_{start_date}_to_{end_date}.csv"'
-        
-        writer = csv.writer(response)
-        writer.writerow([
-            'Date', 'Appointment', 'User', 'Rating', 'Comment'
-        ])
-        
-        for feedback in feedback_list:
-            writer.writerow([
-                feedback.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                feedback.appointment.title,
-                feedback.appointment.user.full_name,
-                feedback.rating,
-                feedback.comment
-            ])
-    
     else:
         # Export availability
         blocked_slots = BlockedTimeSlot.objects.filter(
@@ -1056,7 +1030,6 @@ def delete_blocked_time(request, blocked_time_id):
     return redirect(next_url)
 
 @login_required
-@user_passes_test(is_counselor_or_staff)
 def available_time_slots(request):
     """API endpoint to get available time slots for a specific date"""
     date_str = request.GET.get('date')
@@ -1067,9 +1040,81 @@ def available_time_slots(request):
         # If date is invalid, use today
         date = timezone.now().date()
     
-    # Get the counselor (current user)
-    counselor = request.user
+    # For counselors, get their own slots
+    if request.user.is_counselor:
+        counselor = request.user
+    # For students, get slots from all counselors
+    else:
+        # Get all counselors and find available slots from any of them
+        User = get_user_model()
+        counselors = User.objects.filter(is_counselor=True)
+        available_slots = []
+        
+        for counselor in counselors:
+            # Get blocked time slots for this date and counselor
+            blocked_slots = BlockedTimeSlot.objects.filter(
+                date=date,
+                counselor=counselor
+            )
+            
+            # Get existing appointments for this date and counselor
+            existing_appointments = Appointment.objects.filter(
+                date=date,
+                counselor=counselor
+            ).exclude(status=AppointmentStatus.CANCELLED)
+            
+            # Generate time slots (9 AM to 5 PM in 30 minute increments)
+            start_hour, end_hour = 9, 17
+            
+            for hour in range(start_hour, end_hour):
+                for minute in [0, 30]:
+                    start_time = timezone.datetime.combine(
+                        date, 
+                        timezone.time(hour, minute)
+                    ).time()
+                    
+                    end_minute = (minute + 30) % 60
+                    end_hour = hour + 1 if minute + 30 >= 60 else hour
+                    end_time = timezone.datetime.combine(
+                        date, 
+                        timezone.time(end_hour, end_minute)
+                    ).time()
+                    
+                    # Check if this time slot is blocked
+                    is_blocked = any(
+                        blocked.start_time <= start_time < blocked.end_time or
+                        blocked.start_time < end_time <= blocked.end_time or
+                        (start_time <= blocked.start_time and end_time >= blocked.end_time)
+                        for blocked in blocked_slots
+                    )
+                    
+                    # Check if there's an existing appointment
+                    is_booked = any(
+                        appt.start_time <= start_time < appt.end_time or
+                        appt.start_time < end_time <= appt.end_time or
+                        (start_time <= appt.start_time and end_time >= appt.end_time)
+                        for appt in existing_appointments
+                    )
+                    
+                    # Check if slot already exists in available_slots
+                    slot_exists = any(
+                        slot['start_time'] == start_time.strftime('%H:%M') and 
+                        slot['end_time'] == end_time.strftime('%H:%M')
+                        for slot in available_slots
+                    )
+                    
+                    # Add to available slots if not blocked or booked and not already added
+                    if not (is_blocked or is_booked) and not slot_exists:
+                        slot = {
+                            'start_time': start_time.strftime('%H:%M'),
+                            'end_time': end_time.strftime('%H:%M'),
+                            'available': True
+                        }
+                        available_slots.append(slot)
+        
+        return JsonResponse(available_slots, safe=False)
     
+    # Original code for counselor-specific slots
     # Get blocked time slots for this date and counselor
     blocked_slots = BlockedTimeSlot.objects.filter(
         date=date,
@@ -1132,3 +1177,274 @@ def available_time_slots(request):
             available_slots.append(slot)
     
     return JsonResponse(available_slots, safe=False)
+
+@login_required
+def available_dates(request):
+    """API endpoint to get available dates for a specific month"""
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    
+    try:
+        year = int(year)
+        month = int(month)
+    except (ValueError, TypeError):
+        # If invalid, use current month/year
+        today = timezone.now().date()
+        year = today.year
+        month = today.month
+    
+    # Get all counselors
+    counselors = get_user_model().objects.filter(is_counselor=True)
+    
+    # Get all available schedules for this month
+    start_date = datetime(year, month, 1).date()
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
+    
+    # Get dates that have available slots
+    available_dates = []
+    
+    # Check each day in the month
+    current_date = start_date
+    while current_date <= end_date:
+        # For each counselor, check if they have available time slots
+        has_available_slot = False
+        
+        for counselor in counselors:
+            # Check if there are any blocked slots for this date and counselor
+            blocked_slots = BlockedTimeSlot.objects.filter(
+                date=current_date,
+                counselor=counselor
+            )
+            
+            # Check if there are existing appointments for this date and counselor
+            existing_appointments = Appointment.objects.filter(
+                date=current_date,
+                counselor=counselor
+            ).exclude(status=AppointmentStatus.CANCELLED)
+            
+            # Generate time slots (9 AM to 5 PM in 30 minute increments)
+            start_hour, end_hour = 9, 17
+            
+            for hour in range(start_hour, end_hour):
+                for minute in [0, 30]:
+                    start_time = timezone.datetime.combine(
+                        current_date, 
+                        timezone.time(hour, minute)
+                    ).time()
+                    
+                    end_minute = (minute + 30) % 60
+                    end_hour = hour + 1 if minute + 30 >= 60 else hour
+                    end_time = timezone.datetime.combine(
+                        current_date, 
+                        timezone.time(end_hour, end_minute)
+                    ).time()
+                    
+                    # Check if this time slot is blocked
+                    is_blocked = any(
+                        blocked.start_time <= start_time < blocked.end_time or
+                        blocked.start_time < end_time <= blocked.end_time or
+                        (start_time <= blocked.start_time and end_time >= blocked.end_time)
+                        for blocked in blocked_slots
+                    )
+                    
+                    # Check if there's an existing appointment
+                    is_booked = any(
+                        appt.start_time <= start_time < appt.end_time or
+                        appt.start_time < end_time <= appt.end_time or
+                        (start_time <= appt.start_time and end_time >= appt.end_time)
+                        for appt in existing_appointments
+                    )
+                    
+                    # If not blocked or booked, this time slot is available
+                    if not (is_blocked or is_booked):
+                        has_available_slot = True
+                        break
+                
+                if has_available_slot:
+                    break
+            
+            if has_available_slot:
+                break
+        
+        # If at least one time slot is available, add this date to the list
+        if has_available_slot:
+            available_dates.append(current_date.isoformat())
+        
+        # Move to next day
+        current_date += timedelta(days=1)
+    
+    return JsonResponse({'available_dates': available_dates})
+
+# API endpoints for student appointment booking
+@login_required
+def api_available_dates(request):
+    """API endpoint to get available dates for a specific month"""
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    
+    try:
+        year = int(year)
+        month = int(month)
+    except (ValueError, TypeError):
+        # If invalid, use current month/year
+        today = timezone.now().date()
+        year = today.year
+        month = today.month
+    
+    # Get all counselors
+    counselors = get_user_model().objects.filter(is_counselor=True)
+    
+    # Get all available schedules for this month
+    start_date = datetime(year, month, 1).date()
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
+    
+    # Get dates that have available slots
+    available_dates = []
+    
+    # Check each day in the month
+    current_date = start_date
+    while current_date <= end_date:
+        # For each counselor, check if they have available time slots
+        has_available_slot = False
+        
+        for counselor in counselors:
+            # Check if there are any blocked slots for this date and counselor
+            blocked_slots = BlockedTimeSlot.objects.filter(
+                date=current_date,
+                counselor=counselor
+            )
+            
+            # Check if there are existing appointments for this date and counselor
+            existing_appointments = Appointment.objects.filter(
+                date=current_date,
+                counselor=counselor
+            ).exclude(status=AppointmentStatus.CANCELLED)
+            
+            # Generate time slots (9 AM to 5 PM in 30 minute increments)
+            start_hour, end_hour = 9, 17
+            
+            for hour in range(start_hour, end_hour):
+                for minute in [0, 30]:
+                    start_time = timezone.datetime.combine(
+                        current_date, 
+                        timezone.time(hour, minute)
+                    ).time()
+                    
+                    end_minute = (minute + 30) % 60
+                    end_hour = hour + 1 if minute + 30 >= 60 else hour
+                    end_time = timezone.datetime.combine(
+                        current_date, 
+                        timezone.time(end_hour, end_minute)
+                    ).time()
+                    
+                    # Check if this time slot is blocked
+                    is_blocked = any(
+                        blocked.start_time <= start_time < blocked.end_time or
+                        blocked.start_time < end_time <= blocked.end_time or
+                        (start_time <= blocked.start_time and end_time >= blocked.end_time)
+                        for blocked in blocked_slots
+                    )
+                    
+                    # Check if there's an existing appointment
+                    is_booked = any(
+                        appt.start_time <= start_time < appt.end_time or
+                        appt.start_time < end_time <= appt.end_time or
+                        (start_time <= appt.start_time and end_time >= appt.end_time)
+                        for appt in existing_appointments
+                    )
+                    
+                    # If not blocked or booked, this time slot is available
+                    if not (is_blocked or is_booked):
+                        has_available_slot = True
+                        break
+                
+                if has_available_slot:
+                    break
+            
+            if has_available_slot:
+                break
+        
+        # If at least one time slot is available, add this date to the list
+        if has_available_slot:
+            available_dates.append(current_date.isoformat())
+        
+        # Move to next day
+        current_date += timedelta(days=1)
+    
+    return JsonResponse({'available_dates': available_dates})
+
+@login_required
+def api_user_appointments(request):
+    """API endpoint to get user's appointments"""
+    # Get user's appointments, ordered by date (upcoming first)
+    appointments = Appointment.objects.filter(
+        user=request.user
+    ).order_by('date', 'start_time')
+    
+    # Format appointments for JSON response
+    appointment_list = []
+    for appointment in appointments:
+        appointment_data = {
+            'id': appointment.id,
+            'title': appointment.title,
+            'description': appointment.description,
+            'date': appointment.date.isoformat(),
+            'start_time': appointment.start_time.strftime('%H:%M'),
+            'end_time': appointment.end_time.strftime('%H:%M'),
+            'status': dict(AppointmentStatus.choices)[appointment.status],
+            'counselor_name': appointment.counselor.get_full_name() or appointment.counselor.username,
+            'created_at': appointment.created_at.isoformat()
+        }
+        appointment_list.append(appointment_data)
+    
+    return JsonResponse({'appointments': appointment_list})
+
+@login_required
+def api_cancel_appointment(request, appointment_id):
+    """API endpoint to cancel an appointment"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+    try:
+        # Get the appointment
+        appointment = get_object_or_404(Appointment, id=appointment_id, user=request.user)
+        
+        # Check if it can be cancelled
+        if not appointment.can_be_cancelled:
+            return JsonResponse({'success': False, 'message': 'This appointment cannot be cancelled'})
+        
+        # Check if it's within 24 hours of the appointment
+        appointment_datetime = datetime.combine(appointment.date, appointment.start_time)
+        now = timezone.now()
+        if appointment_datetime - now < timedelta(hours=24):
+            return JsonResponse({'success': False, 'message': 'Appointments can only be cancelled at least 24 hours in advance'})
+        
+        # Get cancellation reason
+        data = json.loads(request.body)
+        reason = data.get('reason', '')
+        
+        # Update appointment status
+        appointment.status = AppointmentStatus.CANCELLED
+        appointment.save()
+        
+        # Create a notification for the counselor
+        notification_message = f"Appointment '{appointment.title}' has been cancelled by {request.user.get_full_name() or request.user.username}."
+        if reason:
+            notification_message += f" Reason: {reason}"
+        
+        notification = AppointmentNotification.objects.create(
+            user=appointment.counselor,
+            appointment=appointment,
+            message=notification_message
+        )
+        
+        return JsonResponse({'success': True, 'message': 'Appointment cancelled successfully'})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})

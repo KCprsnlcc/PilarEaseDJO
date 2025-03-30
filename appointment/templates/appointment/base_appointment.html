@@ -59,10 +59,7 @@
       <i class="bx bx-history"></i>
       <span>History</span>
     </a>
-    <a href="{% url 'appointment:feedback' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'feedback' %}active{% endif %}">
-      <i class="bx bx-star"></i>
-      <span>Feedback</span>
-    </a>
+
     <a href="{% url 'appointment:reports' %}" class="pilarease-admin-button {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
       <i class="bx bx-bar-chart-alt-2"></i>
       <span>Reports</span>

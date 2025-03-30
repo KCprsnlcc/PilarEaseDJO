@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import get_user_model
 
 class AppointmentSchedule(models.Model):
     """Model for storing available appointment slots"""
@@ -12,6 +13,15 @@ class AppointmentSchedule(models.Model):
         limit_choices_to={'is_counselor': True}
     )
     date = models.DateField()
+    day_of_week = models.IntegerField(choices=[
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday')
+    ], null=True, blank=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
     is_available = models.BooleanField(default=True)
@@ -94,52 +104,8 @@ class Appointment(models.Model):
     def can_be_cancelled(self):
         return self.status in [AppointmentStatus.PENDING, AppointmentStatus.APPROVED]
         
-class AppointmentFeedback(models.Model):
-    """Model for user feedback after appointments"""
-    appointment = models.OneToOneField(
-        Appointment,
-        on_delete=models.CASCADE,
-        related_name='feedback'
-    )
-    rating = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
-    comments = models.TextField(blank=True, null=True)
-    suggestions = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Appointment Feedback'
-        verbose_name_plural = 'Appointment Feedback'
-        
-    def __str__(self):
-        return f"Feedback for {self.appointment}"
-
-class BlockedTimeSlot(models.Model):
-    """Model for blocking specific time slots"""
-    counselor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='blocked_slots',
-        limit_choices_to={'is_counselor': True}
-    )
-    date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    reason = models.CharField(max_length=255, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['date', 'start_time']
-        verbose_name = 'Blocked Time Slot'
-        verbose_name_plural = 'Blocked Time Slots'
-        
-    def __str__(self):
-        return f"{self.counselor.full_name} - {self.date} ({self.start_time} to {self.end_time})"
-
 class AppointmentNotification(models.Model):
-    """Model for appointment-related notifications"""
+    """Model for notifications related to appointments"""
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -158,7 +124,7 @@ class AppointmentNotification(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Appointment Notification'
         verbose_name_plural = 'Appointment Notifications'
-        
+    
     def __str__(self):
         return f"Notification for {self.user.username} about {self.appointment}"
 
@@ -192,3 +158,25 @@ class AppointmentReport(models.Model):
         
     def __str__(self):
         return f"{self.title} ({self.start_date} to {self.end_date})"
+
+class BlockedTimeSlot(models.Model):
+    """Model for blocking specific time slots"""
+    counselor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='blocked_slots',
+        limit_choices_to={'is_counselor': True}
+    )
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    reason = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['date', 'start_time']
+        verbose_name = 'Blocked Time Slot'
+        verbose_name_plural = 'Blocked Time Slots'
+        
+    def __str__(self):
+        return f"{self.counselor.full_name} - {self.date} ({self.start_time} to {self.end_time})"

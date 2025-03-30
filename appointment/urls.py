@@ -17,6 +17,7 @@ urlpatterns = [
     path('calendar/schedule/', views.add_available_schedule, name='add_available_schedule'),
     path('calendar/appointment/create/', views.create_appointment, name='create_appointment'),
     path('calendar/available-slots/', views.available_time_slots, name='available_time_slots'),
+    path('calendar/available-slots/dates/', views.available_dates, name='available_dates'),
     
     # Appointment Requests
     path('requests/', views.appointment_requests, name='appointment_requests'),
@@ -27,10 +28,6 @@ urlpatterns = [
     # Appointment History
     path('history/', views.appointment_history, name='appointment_history'),
     
-    # Feedback
-    path('feedback/', views.feedback_list, name='feedback'),
-    path('feedback/<int:feedback_id>/', views.feedback_detail, name='feedback_detail'),
-    
     # Reports
     path('reports/', views.reports, name='reports'),
     path('reports/export-csv/', views.export_csv, name='export_csv'),
@@ -40,4 +37,9 @@ urlpatterns = [
     # Notifications
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/<int:notification_id>/mark-read/', views.mark_notification_read, name='mark_notification_read'),
+    
+    # API Endpoints for Student Appointment Booking
+    path('api/available-dates/', views.api_available_dates, name='api_available_dates'),
+    path('api/user-appointments/', views.api_user_appointments, name='api_user_appointments'),
+    path('api/cancel-appointment/<int:appointment_id>/', views.api_cancel_appointment, name='api_cancel_appointment'),
 ]

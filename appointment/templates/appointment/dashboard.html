@@ -133,7 +133,7 @@
             <td>{{ slot.reason }}</td>
             <td>{{ slot.created_by.full_name }}</td>
             <td>
-              <form method="post" action="{% url 'appointment:remove_blocked_slot' blocked_id=slot.id %}">
+              <form method="post" action="{% url 'appointment:remove_blocked_slot' slot_id=slot.id %}">
                 {% csrf_token %}
                 <button type="submit" class="pilarease-admin-action-button delete-button">
                   <i class="bx bx-trash"></i> Remove

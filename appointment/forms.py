@@ -3,10 +3,12 @@ from django.utils import timezone
 from .models import (
     AppointmentSchedule, 
     Appointment, 
-    AppointmentFeedback, 
     BlockedTimeSlot, 
     AppointmentReport
 )
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class DateInput(forms.DateInput):
     input_type = 'date'
@@ -17,43 +19,59 @@ class TimeInput(forms.TimeInput):
 class AppointmentScheduleForm(forms.ModelForm):
     class Meta:
         model = AppointmentSchedule
-        fields = ['counselor', 'date', 'start_time', 'end_time', 'is_available']
+        fields = ['counselor', 'day_of_week', 'start_time', 'end_time']
         widgets = {
-            'date': DateInput(),
-            'start_time': TimeInput(),
-            'end_time': TimeInput(),
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
         }
-        
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['counselor'].queryset = User.objects.filter(is_counselor=True)
+    
     def clean(self):
         cleaned_data = super().clean()
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
-        date = cleaned_data.get('date')
         
-        if date and date < timezone.now().date():
-            raise forms.ValidationError("Cannot create schedule in the past")
-            
         if start_time and end_time and start_time >= end_time:
-            raise forms.ValidationError("Start time must be before end time")
-            
+            raise forms.ValidationError("End time must be later than start time.")
+        
         return cleaned_data
 
 class AppointmentForm(forms.ModelForm):
     class Meta:
         model = Appointment
-        fields = [
-            'user', 'counselor', 'schedule', 'title', 
-            'description', 'date', 'start_time', 'end_time', 
-            'status', 'counselor_notes'
-        ]
+        fields = ['counselor', 'title', 'description', 'date', 'start_time', 'end_time']
         widgets = {
-            'date': DateInput(),
-            'start_time': TimeInput(),
-            'end_time': TimeInput(),
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
             'description': forms.Textarea(attrs={'rows': 4}),
-            'counselor_notes': forms.Textarea(attrs={'rows': 4}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if 'counselor' in self.fields:
+            self.fields['counselor'].queryset = User.objects.filter(is_counselor=True)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        date = cleaned_data.get('date')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
         
+        # Ensure date is not in the past
+        if date and date < timezone.now().date():
+            raise forms.ValidationError("Cannot schedule appointments in the past.")
+        
+        # Ensure end_time is after start_time
+        if start_time and end_time and start_time >= end_time:
+            raise forms.ValidationError("End time must be later than start time.")
+        
+        return cleaned_data
+
 class UpdateAppointmentStatusForm(forms.ModelForm):
     send_notification = forms.BooleanField(
         required=False, 
@@ -68,33 +86,34 @@ class UpdateAppointmentStatusForm(forms.ModelForm):
             'counselor_notes': forms.Textarea(attrs={'rows': 3}),
         }
 
-class AppointmentFeedbackForm(forms.ModelForm):
-    class Meta:
-        model = AppointmentFeedback
-        fields = ['rating', 'comments', 'suggestions']
-        widgets = {
-            'comments': forms.Textarea(attrs={'rows': 3}),
-            'suggestions': forms.Textarea(attrs={'rows': 3}),
-        }
-
 class BlockedTimeSlotForm(forms.ModelForm):
     class Meta:
         model = BlockedTimeSlot
         fields = ['counselor', 'date', 'start_time', 'end_time', 'reason']
         widgets = {
-            'date': DateInput(),
-            'start_time': TimeInput(),
-            'end_time': TimeInput(),
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
         }
-        
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['counselor'].queryset = User.objects.filter(is_counselor=True)
+    
     def clean(self):
         cleaned_data = super().clean()
+        date = cleaned_data.get('date')
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
         
+        # Ensure date is not in the past
+        if date and date < timezone.now().date():
+            raise forms.ValidationError("Cannot block slots in the past.")
+        
+        # Ensure end_time is after start_time
         if start_time and end_time and start_time >= end_time:
-            raise forms.ValidationError("Start time must be before end time")
-            
+            raise forms.ValidationError("End time must be later than start time.")
+        
         return cleaned_data
 
 class AppointmentReportForm(forms.ModelForm):
