@@ -929,8 +929,8 @@
       // Show loading
       timeSlotsContainer.innerHTML = '<div class="appointment-pilarease-time-slot"><span>Loading time slots...</span></div>';
       
-      // Call API to get available time slots - make sure we use the correct URL
-      fetch(`/appointment/calendar/available-slots/?date=${date}`)
+      // Call API to get available time slots - with the corrected URL
+      fetch(`/appointment/api/available-slots/?date=${date}`)
         .then(response => {
           // Log the response status for debugging
           console.log(`Time slots fetch status: ${response.status} ${response.statusText}`);

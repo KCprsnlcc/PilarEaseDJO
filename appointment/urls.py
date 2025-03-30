@@ -16,8 +16,12 @@ urlpatterns = [
     path('calendar/block/<int:blocked_time_id>/delete/', views.delete_blocked_time, name='delete_blocked_time'),
     path('calendar/schedule/', views.add_available_schedule, name='add_available_schedule'),
     path('calendar/appointment/create/', views.create_appointment, name='create_appointment'),
-    path('calendar/available-slots/', views.available_time_slots, name='available_time_slots'),
-    path('calendar/available-slots/dates/', views.available_dates, name='available_dates'),
+    
+    # API endpoints for time slots
+    path('api/available-slots/', views.available_time_slots, name='available_time_slots'),
+    path('api/available-dates/', views.available_dates, name='available_dates'),
+    path('api/user-appointments/', views.appointment_history, name='api_user_appointments'),
+    path('api/cancel-appointment/<int:appointment_id>/', views.update_appointment_status, name='api_cancel_appointment'),
     
     # Appointment Requests
     path('requests/', views.appointment_requests, name='appointment_requests'),
@@ -37,9 +41,4 @@ urlpatterns = [
     # Notifications
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/<int:notification_id>/mark-read/', views.mark_notification_read, name='mark_notification_read'),
-    
-    # API Endpoints for Student Appointment Booking
-    path('api/available-dates/', views.api_available_dates, name='api_available_dates'),
-    path('api/user-appointments/', views.api_user_appointments, name='api_user_appointments'),
-    path('api/cancel-appointment/<int:appointment_id>/', views.api_cancel_appointment, name='api_cancel_appointment'),
 ]

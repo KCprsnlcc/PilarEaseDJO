@@ -275,10 +275,10 @@
 </div>
 
 <!-- Appointment Booking Modal Overlay -->
-<div id="appointmentModalOverlay" class="modal-overlay"></div>
+<div id="appointmentModalOverlay" class="modal-overlay" style="display: none;"></div>
 
 <!-- Appointment Booking Modal -->
-<div id="appointmentModal" class="modal-content appointment">
+<div id="appointmentModal" class="modal-content appointment" style="display: none;">
   <span class="close" id="closeAppointmentModal">&times;</span>
   <form id="appointmentForm" method="post" action="{% url 'appointment:create_appointment' %}">
     {% csrf_token %}
@@ -345,7 +345,7 @@
   </div>
   
   <!-- Confirmation Dialog -->
-  <div id="confirmAppointmentModal" class="flat-ui-dialog confirmappointment">
+  <div id="confirmAppointmentModal" class="flat-ui-dialog confirmappointment" style="display: none;">
     <p>Are you sure you want to book this appointment?</p>
     <button id="confirmAppointmentBtn">Confirm</button>
     <button id="cancelAppointmentBtn">Cancel</button>
@@ -920,14 +920,19 @@ function insertEmojiAtCaret(emoji) {
       // Get CSRF token
       const csrftoken = getCookie('csrftoken');
       
-      fetch(`/appointment/calendar/available-slots/dates/?year=${year}&month=${month}`, {
+      fetch(`/appointment/api/available-dates/?year=${year}&month=${month}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrftoken,
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         // Mark available days in the calendar
         if (data.available_dates && data.available_dates.length > 0) {
@@ -952,14 +957,19 @@ function insertEmojiAtCaret(emoji) {
       // Get CSRF token
       const csrftoken = getCookie('csrftoken');
       
-      fetch(`/appointment/calendar/available-slots/?date=${date}`, {
+      fetch(`/appointment/api/available-slots/?date=${date}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrftoken,
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         // Clear time slots container
         timeSlotsContainer.innerHTML = '';
@@ -1009,7 +1019,7 @@ function insertEmojiAtCaret(emoji) {
       })
       .catch(error => {
         console.error('Error fetching available time slots:', error);
-        timeSlotsContainer.innerHTML = '<p class="no-slots-message">Error loading time slots. Please try again.</p>';
+        timeSlotsContainer.innerHTML = `<p class="no-slots-message">Error loading time slots: ${error.message}</p>`;
       });
     }
     
@@ -1033,7 +1043,12 @@ function insertEmojiAtCaret(emoji) {
         },
         body: formData
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         // Hide loading indicator
         document.getElementById("appointmentLoader").style.display = "none";
@@ -1071,14 +1086,19 @@ function insertEmojiAtCaret(emoji) {
       // Get CSRF token
       const csrftoken = getCookie('csrftoken');
       
-      fetch('/appointment/history/?format=json', {
+      fetch('/appointment/api/user-appointments/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrftoken,
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         // Clear appointments list
         appointmentsList.innerHTML = '';
@@ -1160,7 +1180,7 @@ function insertEmojiAtCaret(emoji) {
       const csrftoken = getCookie('csrftoken');
       
       // Send cancel request
-      fetch(`/appointment/appointment/${appointmentId}/update-status/`, {
+      fetch(`/appointment/api/cancel-appointment/${appointmentId}/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1171,7 +1191,12 @@ function insertEmojiAtCaret(emoji) {
           reason: reason 
         })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then(data => {
         // Hide loading indicator
         document.getElementById("appointmentLoader").style.display = "none";
