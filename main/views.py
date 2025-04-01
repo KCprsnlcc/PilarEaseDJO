@@ -1102,10 +1102,13 @@ def get_user_statuses(request):
 
     statuses_data = []
     for status in page_obj.object_list:
+        user_profile = getattr(request.user, 'profile', None)  # Check if profile exists
+        avatar_url = user_profile.avatar.url if user_profile and user_profile.avatar else '/static/images/avatars/placeholder.png'
+
         statuses_data.append({
             'id': status.id,
             'username': request.user.username,
-            'avatar_url': request.user.profile.avatar.url if request.user.profile.avatar else '/static/images/avatars/placeholder.png',
+            'avatar_url': avatar_url,
             'title': status.title,
             'description': status.description,
             'created_at': status.created_at.strftime('%Y-%m-%d %H:%M:%S'),

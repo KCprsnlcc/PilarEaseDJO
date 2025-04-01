@@ -177,7 +177,6 @@ tenacity
 tensorboard
 tensorboard-data-server
 tensorflow
-tensorflow-intel
 termcolor
 textblob
 tf_keras

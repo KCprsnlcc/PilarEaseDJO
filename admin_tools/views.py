@@ -113,9 +113,9 @@ nltk_logger.setLevel(logging.CRITICAL)
 # silent_nltk_download('punkt_tab')  # <-- Add this line
 # silent_nltk_download('stopwords')
 # For Mac OS
-nltk.download('punkt_tab', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
-nltk.download('punkt', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
-nltk.download('stopwords', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# nltk.download('punkt_tab', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# nltk.download('punkt', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
+# nltk.download('stopwords', download_dir='/Users/Daff/Downloads/PilarEaseDJO/.venv/nltk_data')
 # Now you can use NLTK in your views like this
 
 

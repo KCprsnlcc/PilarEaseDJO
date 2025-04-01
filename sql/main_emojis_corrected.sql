@@ -1,13 +1,3 @@
-
-CREATE TABLE `main_emojis` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `emoji` TEXT NULL,
-    `name` TEXT NULL,
-    `group` TEXT NULL,
-    `sub_group` TEXT NULL,
-    `codepoints` TEXT NULL
-);
-
 INSERT INTO `main_emojis` (`emoji`, `name`, `group`, `sub_group`, `codepoints`) VALUES ('😀', 'grinning face', 'Smileys & Emotion', 'face-smiling', '1F600');
 INSERT INTO `main_emojis` (`emoji`, `name`, `group`, `sub_group`, `codepoints`) VALUES ('😃', 'grinning face with big eyes', 'Smileys & Emotion', 'face-smiling', '1F603');
 INSERT INTO `main_emojis` (`emoji`, `name`, `group`, `sub_group`, `codepoints`) VALUES ('😄', 'grinning face with smiling eyes', 'Smileys & Emotion', 'face-smiling', '1F604');
