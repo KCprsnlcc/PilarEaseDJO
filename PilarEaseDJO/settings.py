@@ -184,18 +184,17 @@ WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pilarease_db',
-        'USER': 'root',
-        'PASSWORD': '',  # Add your MySQL root password if you have one, otherwise leave it empty
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': 'pilarease_db',  # Your database name
+        'USER': 'root',          # Default MAMP MySQL user
+        'PASSWORD': 'root',      # Default MAMP MySQL password
+        'HOST': 'localhost',     # Use 'localhost' for MAMP
+        'PORT': '8889',          # Default MAMP MySQL port
         'OPTIONS': {
+            'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4'
-        }
+        },
     }
 }
-
 
 import pymysql
 pymysql.install_as_MySQLdb()
