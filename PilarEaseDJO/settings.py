@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -43,12 +44,12 @@ LOGGING = {
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-r&=lu-6-+chjserq1w2z%0kselz_^a7bxn@m%9vxs$4jhg&x4('
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-r&=lu-6-+chjserq1w2z%0kselz_^a7bxn@m%9vxs$4jhg&x4(')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', '.up.railway.app']
 
 # Application definition
 
@@ -76,7 +77,8 @@ AUTH_USER_MODEL = 'main.CustomUser'
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000/',
-    'http://127.0.0.1:8000/'
+    'http://127.0.0.1:8000/',
+    'https://*.up.railway.app'
 ]
 
 LOGIN_URL = '/itrc/'  # or whatever your login URL is
@@ -95,6 +97,7 @@ AUTHENTICATION_BACKENDS = [
 MIDDLEWARE = [
     # 'django.middleware.cache.UpdateCacheMiddleware',  # Must be first
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.gzip.GZipMiddleware',
@@ -167,45 +170,41 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 
-# ASGI_APPLICATION = 'PilarEaseDJO.asgi.application'
-
-# # Set up the Channels layer (you can use Redis for production)
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("127.0.0.1", 6379)],  # Make sure Redis is running on this host/port
-#         },
-#     },
-# }
-
-# Database
+# Database configuration for Railway
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pilarease_db',  # Your database name
-        'USER': 'root',          # Default MAMP MySQL user
-        'PASSWORD': 'root',      # Default MAMP MySQL password
-        'HOST': 'localhost',     # Use 'localhost' for MAMP
-        'PORT': '8889',          # Default MAMP MySQL port
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'pilarease_db',  # Your database name
+            'USER': 'root',          # Default MAMP MySQL user
+            'PASSWORD': 'root',      # Default MAMP MySQL password
+            'HOST': 'localhost',     # Use 'localhost' for MAMP
+            'PORT': '8889',          # Default MAMP MySQL port
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
 
 import pymysql
 pymysql.install_as_MySQLdb()
 
+# Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'pilareasecounseling@gmail.com'
-DEFAULT_FROM_EMAIL = 'pilareasecounseling@gmail.com'
-EMAIL_HOST_PASSWORD = 'anlf kmbe xkqu pdbg'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'pilareasecounseling@gmail.com')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'pilareasecounseling@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'anlf kmbe xkqu pdbg')
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -248,33 +247,11 @@ STATICFILES_FINDERS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'admin_tools', 'static'),
-    os.path.join(BASE_DIR, 'itrc_tools', 'static'),
-    os.path.join(BASE_DIR, 'appointment', 'static'),
-    # Add other static directories if necessary
+    os.path.join(BASE_DIR, 'main', 'static'),
 ]
 
-COMPRESS_ENABLED = True
-COMPRESS_URL = STATIC_URL
-COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_OFFLINE = True
-
-def get_hashed_css_files():
-    css_dir = os.path.join(BASE_DIR, 'main', 'static', 'css')
-    hashed_files = []
-    if os.path.exists(css_dir):
-        for file_name in os.listdir(css_dir):
-            if file_name.startswith('main.') and file_name.endswith('.css'):
-                hashed_files.append(f'css/{file_name}')
-            elif file_name.startswith('custom.') and file_name.endswith('.css'):
-                hashed_files.append(f'css/{file_name}')
-    else:
-        print(f"Directory does not exist: {css_dir}")
-    return hashed_files
-
-
-# Set hashed CSS files to be used in templates
-HASHED_CSS_FILES = get_hashed_css_files()
+# Whitenoise configuration for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

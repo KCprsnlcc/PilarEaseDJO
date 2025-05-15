@@ -35,6 +35,7 @@ cycler
 datasets
 diff-match-patch
 dill
+dj-database-url
 Django
 django-allauth
 django-appconf
@@ -70,6 +71,7 @@ gobject
 google-pasta
 greenlet
 grpcio
+gunicorn
 h11
 h2
 h5py
