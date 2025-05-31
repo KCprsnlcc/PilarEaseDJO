@@ -5,6 +5,8 @@
     <p><b>PilarEase - An Emotional Support Platform for Pilar College students, providing resources and a supportive community to foster emotional well-being.</b></p>
 </div>
 
+## 📱 Interface Preview
+
 <div align="center">
   <table>
     <tr>
@@ -52,156 +54,348 @@
   </table>
 </div>
 
-PilarEaseDJO is a Django-based emotional support platform designed to help Pilar College students manage their emotional well-being. The platform provides features such as emotion-based status posting, sentiment analysis, chatbot assistance, and administrative tools. PilarEase leverages machine learning to create a supportive and secure environment for students.
+## 🔍 Overview
+
+PilarEaseDJO is a comprehensive Django-based emotional support platform designed specifically for Pilar College students. The platform combines modern web technologies with machine learning to provide a safe, supportive environment where students can express themselves, receive guidance, and access mental health resources.
+
+Key components include:
+
+- Emotion-based status sharing with sentiment analysis
+- AI-powered chatbot for emotional assessment and support
+- Profanity filtering and content moderation
+- Counselor referral system for professional support
+- Comprehensive administrative tools for the ITRC team
 
 ---
 
-## Installation
+## ⚙️ Installation
+
+### Prerequisites
+
+- Python 3.8+
+- MySQL or PostgreSQL
+- XAMPP/MAMP (for local development with MySQL)
+- Git
 
 ### 1. Clone the Repository
-
-To begin, clone the PilarEaseDJO repository:
 
 ```sh
 git clone https://github.com/KCprsnlcc/PilarEaseDJO.git
 cd PilarEaseDJO
 ```
 
-### 2. Set Up a Python Virtual Environment
+### 2. Set Up Virtual Environment
 
-It’s recommended to use a Python virtual environment to manage dependencies:
-
-#### For macOS/Linux:
+**For macOS/Linux:**
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### For Windows:
-
-Optionally, set the PowerShell execution policy:
+**For Windows:**
 
 ```sh
+# Optional: Set PowerShell execution policy
 Set-ExecutionPolicy RemoteSigned -Scope Process -Force
-```
 
-Create and activate the virtual environment:
-
-```sh
+# Create and activate virtual environment
 python -m venv .venv
 .venv\Scripts\activate
 ```
 
 ### 3. Install Dependencies
 
-Install the dependencies listed in `requirements.txt`:
-
 ```sh
 pip install -r requirements.txt --progress-bar on
 ```
 
-### 4. Apply Database Migrations
+### 4. Configure Database
 
-Set up the database by applying migrations:
+Create a MySQL database named `pilarease_db` or configure your database settings in `PilarEaseDJO/settings.py`.
+
+The default configuration works with XAMPP/MAMP:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pilarease_db',
+        'USER': 'root',
+        'PASSWORD': 'root',
+        'HOST': 'localhost',
+        'PORT': '8889',  # MAMP default port (3306 for XAMPP)
+    }
+}
+```
+
+### 5. Apply Database Migrations
 
 ```sh
 python manage.py migrate
 ```
 
-### 5. Start the Development Server
-
-Launch the Django development server:
+### 6. Start Development Server
 
 ```sh
 python manage.py runserver
 ```
 
-### 6. Access the Application
+### 7. Access the Application
 
-Open a web browser and navigate to:
+Open your browser and navigate to:
 
 ```
 http://localhost:8000
 ```
 
-### 7. Deactivate the Virtual Environment (Optional)
+### 8. Docker Deployment (Alternative)
 
-When finished, deactivate the virtual environment:
+You can also use Docker for deployment:
 
 ```sh
-deactivate
+docker-compose up --build
 ```
 
 ---
 
-## Features
+## ✨ Features
 
-### 1. User Authentication & Management
+### 🔐 User Authentication & Management
 
-- **Login/Logout**: Secure login with session tracking and logout features, including session end auditing.
-- **Registration**: User registration with masterlist verification, supporting auto-verification, manual approval, or rejection based on the enrollment masterlist.
-- **Forgot Password**: Password reset through email verification and rate-limiting to prevent spam.
-- **Email Verification**: Users can verify email addresses and request email changes, including verification link expiry management.
+<table>
+  <tr>
+    <td width="50%"><strong>Secure Login/Logout</strong></td>
+    <td width="50%">Session tracking with audit trails and secure session termination</td>
+  </tr>
+  <tr>
+    <td><strong>Smart Registration</strong></td>
+    <td>Enrollment masterlist verification with auto/manual approval workflows</td>
+  </tr>
+  <tr>
+    <td><strong>Password Recovery</strong></td>
+    <td>Email-based reset with rate limiting and expiring tokens</td>
+  </tr>
+  <tr>
+    <td><strong>Email Verification</strong></td>
+    <td>Account verification and email change management</td>
+  </tr>
+</table>
 
-### 2. User Profile Management
+### 👤 User Profile & Personalization
 
-- **Profile Editing**: Users can update their profile information, including usernames, contact numbers, and academic year levels.
-- **Password Management**: Provides a secure password update with current password verification.
-- **Avatar Upload**: Supports customizable avatars with file size validation and storage.
-- **Session Tracking**: Tracks user sessions for analytics and session-based actions.
+<table>
+  <tr>
+    <td width="50%"><strong>Profile Management</strong></td>
+    <td width="50%">Update personal details, contact info, and academic information</td>
+  </tr>
+  <tr>
+    <td><strong>Password Security</strong></td>
+    <td>Secure password updates with current password verification</td>
+  </tr>
+  <tr>
+    <td><strong>Customizable Avatars</strong></td>
+    <td>Upload and select from various avatar options with validation</td>
+  </tr>
+  <tr>
+    <td><strong>Session Analytics</strong></td>
+    <td>Track login sessions and device information</td>
+  </tr>
+</table>
 
-### 3. Main Interface
+### 🏠 Interface & Navigation
 
-- **Home & About Pages**: Provides access to main platform features, including testimonials on the About page.
-- **Contact Us**: Users can submit inquiries, which are saved for admin review.
-- **Dashboard**: Displays recent activity, statuses, and analytics.
+<table>
+  <tr>
+    <td width="50%"><strong>Modern UI/UX</strong></td>
+    <td width="50%">Intuitive navigation with responsive design</td>
+  </tr>
+  <tr>
+    <td><strong>Information Pages</strong></td>
+    <td>Comprehensive About page with platform details and testimonials</td>
+  </tr>
+  <tr>
+    <td><strong>Contact System</strong></td>
+    <td>User inquiry submission with admin review functionality</td>
+  </tr>
+  <tr>
+    <td><strong>Dynamic Dashboard</strong></td>
+    <td>Personalized activity feed with status updates and analytics</td>
+  </tr>
+</table>
 
-### 4. Status Management
+### 📝 Status & Content Management
 
-- **Status Posting**: Allows users to post statuses, with custom profanity filtering, text sanitization, and emotion analysis.
-- **Status Moderation**: Admins can delete statuses flagged as inappropriate.
-- **View Statuses by Categories**: Filter statuses based on categories like recent, popular, or emotion-based categories.
-- **Referral Module**: Allows users to flag content for counselor review, with referral options for content highlighting.
+<table>
+  <tr>
+    <td width="50%"><strong>Emotion-Based Posting</strong></td>
+    <td width="50%">Share statuses with automatic emotion analysis</td>
+  </tr>
+  <tr>
+    <td><strong>Content Moderation</strong></td>
+    <td>AI-powered profanity filtering and inappropriate content detection</td>
+  </tr>
+  <tr>
+    <td><strong>Categorized Views</strong></td>
+    <td>Filter content by recency, popularity, or emotional categories</td>
+  </tr>
+  <tr>
+    <td><strong>Counselor Referrals</strong></td>
+    <td>Flag concerning content for professional review</td>
+  </tr>
+</table>
 
-### 5. Emotion & Chat Management
+### 🤖 Emotional Intelligence & Chatbot
 
-- **Emotion-Based Status Analysis**: Each status is analyzed for emotional tone, with a breakdown of emotion scores such as anger, happiness, sadness, etc.
-- **Chatbot Questionnaire**: Users can initiate a guided emotional assessment using a chatbot, with customizable questions, response validation, and counselor referral options.
-- **Chat History & Analytics**: Includes chat history pagination, tracking user progress, and storing bot responses.
+<table>
+  <tr>
+    <td width="50%"><strong>Sentiment Analysis</strong></td>
+    <td width="50%">ML-powered emotion detection with detailed breakdown</td>
+  </tr>
+  <tr>
+    <td><strong>Interactive Chatbot</strong></td>
+    <td>Guided emotional assessment with adaptive questioning</td>
+  </tr>
+  <tr>
+    <td><strong>Response Validation</strong></td>
+    <td>Smart response processing with follow-up recommendations</td>
+  </tr>
+  <tr>
+    <td><strong>Chat History</strong></td>
+    <td>Comprehensive interaction logs with pagination</td>
+  </tr>
+</table>
 
-### 6. Data Collection & Machine Learning Integration
+### 🧠 AI & Machine Learning
 
-- **Emotion Model**: Integrates a pre-trained transformer model for emotion classification, supporting emotion percentages.
-- **Profanity Filtering**: Uses both built-in and custom profanity lists for content moderation.
-- **Feedback Analysis**: User feedback is analyzed with sentiment scores for auto-approval of positive feedback.
+<table>
+  <tr>
+    <td width="50%"><strong>Emotion Classification</strong></td>
+    <td width="50%">Transformer-based model for accurate emotion detection</td>
+  </tr>
+  <tr>
+    <td><strong>Content Safety</strong></td>
+    <td>Multi-layered profanity filtering with custom dictionaries</td>
+  </tr>
+  <tr>
+    <td><strong>Sentiment Scoring</strong></td>
+    <td>Analyze feedback and user content for tone and intent</td>
+  </tr>
+</table>
 
-### 7. Notifications & Recent Activity
+### 🔔 Notifications & Activity Tracking
 
-- **Notification System**: Tracks user interactions, including status updates, replies, and flagged content, providing alerts in real-time.
-- **Recent Activity Feed**: Displays recent replies to user statuses and other interactions.
-- **Notification Settings**: Users can customize notification preferences, and unread notifications are highlighted.
+<table>
+  <tr>
+    <td width="50%"><strong>Real-time Alerts</strong></td>
+    <td width="50%">Instant notifications for interactions and updates</td>
+  </tr>
+  <tr>
+    <td><strong>Activity Feed</strong></td>
+    <td>Chronological display of status replies and interactions</td>
+  </tr>
+  <tr>
+    <td><strong>Preference Settings</strong></td>
+    <td>Customizable notification options with highlight system</td>
+  </tr>
+</table>
 
-### 8. ITRC Administrative Tools
+### 🛠️ Administrative Tools
 
-- **Admin Authentication**: Admin-only login, audit-logging, and session tracking.
-- **Verification Dashboard**: ITRC staff can review and approve user verification requests manually or automatically.
-- **Bulk Actions**: ITRC staff can bulk-verify, activate, deactivate, or delete user accounts as needed.
-- **Masterlist Uploads**: Enables admins to upload, review, and filter enrollment masterlists to manage student accounts.
-- **Audit Log**: Comprehensive logging of admin actions, including user modifications, setting updates, and role assignments.
+<table>
+  <tr>
+    <td width="50%"><strong>Admin Dashboard</strong></td>
+    <td width="50%">Comprehensive control panel with secure access</td>
+  </tr>
+  <tr>
+    <td><strong>User Verification</strong></td>
+    <td>Streamlined review and approval workflows</td>
+  </tr>
+  <tr>
+    <td><strong>Bulk Operations</strong></td>
+    <td>Efficient management of multiple accounts simultaneously</td>
+  </tr>
+  <tr>
+    <td><strong>Enrollment Management</strong></td>
+    <td>Upload and manage student enrollment data</td>
+  </tr>
+  <tr>
+    <td><strong>Audit System</strong></td>
+    <td>Detailed activity logging for administrative actions</td>
+  </tr>
+</table>
 
-### 9. Counselor Features
+### 👩‍⚕️ Counselor Support System
 
-- **Referral Management**: Counselors can review and respond to user referrals flagged for support.
-- **User Chat Review**: Counselors have access to user-chatbot interaction history to assess and provide further assistance if needed.
+<table>
+  <tr>
+    <td width="50%"><strong>Referral Dashboard</strong></td>
+    <td width="50%">Organized interface for managing student referrals</td>
+  </tr>
+  <tr>
+    <td><strong>Interaction Review</strong></td>
+    <td>Access to chatbot histories for comprehensive assessment</td>
+  </tr>
+  <tr>
+    <td><strong>Appointment Scheduling</strong></td>
+    <td>Calendar integration for counseling sessions</td>
+  </tr>
+</table>
 
-### 10. Analytics & Reports
+### 📊 Analytics & Reporting
 
-- **User Activity Analytics**: Tracks logins, daily activity, and session metrics for user engagement insights.
-- **Emotion Analysis Reports**: Graphical emotion distribution breakdowns on statuses and interactions.
-- **Feedback Analysis**: Visualization of feedback sentiment (positive, neutral, negative) for quality assurance.
-- **System Performance Metrics**: API response times, error rates, and system uptime analysis.
-- **Report Download**: PDF download options for offline report viewing of all key analytics.
+<table>
+  <tr>
+    <td width="50%"><strong>Engagement Metrics</strong></td>
+    <td width="50%">Comprehensive user activity and session analytics</td>
+  </tr>
+  <tr>
+    <td><strong>Emotional Insights</strong></td>
+    <td>Visual representations of emotion trends and distributions</td>
+  </tr>
+  <tr>
+    <td><strong>Usage Reports</strong></td>
+    <td>Exportable data for institutional reporting</td>
+  </tr>
+</table>
+## 🚀 Deployment
+
+### Local Deployment
+
+Follow the installation instructions above to set up a local development environment.
+
+### Docker Deployment
+
+A `Dockerfile` and `docker-compose.yml` are provided for containerized deployment:
+
+```sh
+docker-compose up --build
+```
+
+### Railway Deployment
+
+This project is configured for deployment on Railway with `railway.json` configuration.
+
+## 🔧 Technology Stack
+
+- **Backend**: Django 5.0+, Python 3.8+
+- **Database**: MySQL/PostgreSQL
+- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap
+- **AI/ML**: Hugging Face Transformers, NLTK, TextBlob
+- **Containerization**: Docker
+- **Security**: Django security middleware, CSRF protection, rate limiting
+
+## 👥 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) for details.
+
+## 📞 Support
+
+For support or inquiries, please contact the development team at pilarease@pilarcollege.edu.
 
 ### 11. System Notifications & Alerts for ITRC Staff
 
