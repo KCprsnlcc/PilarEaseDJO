@@ -170,31 +170,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 
-# Database configuration for Railway
+# Database configuration - Supabase PostgreSQL backend
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+
+# For production/deployment
 DATABASE_URL = os.environ.get('DATABASE_URL')
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+
 if DATABASE_URL:
+    # Use the DATABASE_URL if provided (e.g. on Railway)
     DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, engine='django.db.backends.postgresql')
     }
 else:
+    # Local development - you need to create a local .env file with these values
+    # or set them as environment variables
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'pilarease_db',  # Your database name
-            'USER': 'root',          # Default MAMP MySQL user
-            'PASSWORD': 'root',      # Default MAMP MySQL password
-            'HOST': 'localhost',     # Use 'localhost' for MAMP
-            'PORT': '8889',          # Default MAMP MySQL port
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'pilarease_db'),
+            'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
         }
     }
-
-import pymysql
-pymysql.install_as_MySQLdb()
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

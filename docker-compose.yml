@@ -13,17 +13,18 @@ services:
       - redis
 
   db:
-    image: mysql:8.0
+    image: postgres:15
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      MYSQL_DATABASE: pilarease_db
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 
-      MYSQL_ROOT_PASSWORD: 
+      POSTGRES_DB: pilarease_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
 
   redis:
     image: "redis:alpine"
 
 volumes:
-  mysql_data:
+  postgres_data:

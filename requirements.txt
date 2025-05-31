@@ -108,9 +108,9 @@ mpmath
 msgpack
 multidict
 multiprocess
-mysql
-mysql-connector-python
-mysqlclient
+psycopg2-binary
+supabase
+django-environ
 namex
 networkx
 nltk
