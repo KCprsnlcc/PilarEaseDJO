@@ -173,29 +173,20 @@ WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 # Database configuration - Supabase PostgreSQL backend
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# For production/deployment
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Supabase connection
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
 
-if DATABASE_URL:
-    # Use the DATABASE_URL if provided (e.g. on Railway)
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, engine='django.db.backends.postgresql')
+# For deployment on Railway or other platforms
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+# Use the Supabase PostgreSQL connection
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
-else:
-    # Local development - you need to create a local .env file with these values
-    # or set them as environment variables
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', 'pilarease_db'),
-            'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        }
-    }
+}
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
