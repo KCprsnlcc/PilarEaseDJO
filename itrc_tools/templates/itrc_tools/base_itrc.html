@@ -1,5 +1,5 @@
 <!-- itrc_tools/templates/itrc_tools/base_itrc.html -->
-{% load static %} {% load compress %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -26,9 +26,9 @@
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
 
-    {% compress css %}
+
     <link rel="stylesheet" href="{% static 'css/itrc.css' %}" />
-    {% endcompress %}
+
   </head>
   <body>
     <!-- Sidebar -->
@@ -169,9 +169,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <!-- Include Custom JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    {% compress js %}
+
     <script src="{% static 'js/scripts.js' %}"></script>
-    {% endcompress %}
+
     <!-- In your base_itrc.html head section -->
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
 

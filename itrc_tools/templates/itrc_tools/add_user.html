@@ -1,7 +1,7 @@
 <!-- itrc_tools/templates/itrc_tools/add_user.html -->
 {% extends "itrc_tools/base_itrc.html" %}
 {% load static %}
-{% load compress %}
+
 
 {% block page_title %}Add New User{% endblock %}
 
@@ -171,8 +171,6 @@
     </form>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script src="{% static 'js/add_user_validation.js' %}"></script>
 {% endblock %}

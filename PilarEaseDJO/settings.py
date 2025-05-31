@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     'itrc_tools',
     'corsheaders',
     'debug_toolbar',
-    'compressor',
+
     'import_export',
     'admin_tools.apps.AdminToolsConfig',
     'insights',
@@ -231,8 +231,10 @@ USE_TZ = True
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'compressor.finders.CompressorFinder',
+
 ]
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

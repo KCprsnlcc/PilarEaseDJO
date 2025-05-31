@@ -1,4 +1,4 @@
-{% load static %} {% load compress %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -38,9 +38,9 @@
     />
 
     <!-- Compressed CSS -->
-    {% compress css %}
+
     <link rel="stylesheet" href="{% static 'css/admin_login.css' %}?v=1.0" />
-    {% endcompress %}
+
   </head>
   <body>
     <!-- SVG Background Lines -->
@@ -136,8 +136,8 @@
     </div>
 
     <!-- Compressed JS -->
-    {% compress js %}
+
     <script src="{% static 'js/admin_login.js' %}?v=1.0"></script>
-    {% endcompress %}
+
   </body>
 </html>

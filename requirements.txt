@@ -41,7 +41,7 @@ django-allauth
 django-appconf
 django-axes
 django-cachebuster
-django-compressor
+
 django-cors-headers
 django-crispy-forms
 django-debug-toolbar
