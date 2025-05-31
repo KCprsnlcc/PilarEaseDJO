@@ -177,15 +177,16 @@ WSGI_APPLICATION = 'PilarEaseDJO.wsgi.application'
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
 
-# For deployment on Railway or other platforms
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Configure database to use Supabase PostgreSQL
+# Extract database connection details from the Supabase URL
+# Format: postgresql://postgres:[PASSWORD]@db.[PROJECT_ID].supabase.co:5432/postgres
 
-# Use the Supabase PostgreSQL connection
+# Set password for Supabase
+# Construct database URL for Supabase
+supabase_db_url = 'postgresql://postgres:root@db.gfyydtlvatxifmioilya.supabase.co:5432/postgres'
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': dj_database_url.config(default=supabase_db_url, conn_max_age=600)
 }
 
 # Email settings
