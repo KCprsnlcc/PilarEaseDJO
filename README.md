@@ -56,7 +56,7 @@
 
 ## 🔍 Overview
 
-PilarEaseDJO is a comprehensive Django-based emotional support platform designed specifically for Pilar College students. The platform combines modern web technologies with machine learning to provide a safe, supportive environment where students can express themselves, receive guidance, and access mental health resources.
+PilarEaseDJO is a Django-based emotional support platform designed specifically for Pilar College students. The platform combines modern web technologies with machine learning to provide a safe, supportive environment where students can express themselves, receive guidance, and access mental health resources.
 
 Key components include:
 
@@ -64,7 +64,7 @@ Key components include:
 - AI-powered chatbot for emotional assessment and support
 - Profanity filtering and content moderation
 - Counselor referral system for professional support
-- Comprehensive administrative tools for the ITRC team
+- Administrative tools for the ITRC team
 
 ---
 
@@ -73,8 +73,7 @@ Key components include:
 ### Prerequisites
 
 - Python 3.8+
-- MySQL or PostgreSQL
-- XAMPP/MAMP (for local development with MySQL)
+- Supabase account (PostgreSQL)
 - Git
 
 ### 1. Clone the Repository
@@ -112,21 +111,25 @@ pip install -r requirements.txt --progress-bar on
 
 ### 4. Configure Database
 
-Create a MySQL database named `pilarease_db` or configure your database settings in `PilarEaseDJO/settings.py`.
+Set up a Supabase project and configure your environment variables.
 
-The default configuration works with XAMPP/MAMP:
+The application connects to Supabase using direct API integration. Create a `.env` file in your project root with the following variables (replace with your Supabase credentials):
 
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'pilarease_db',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '8889',  # MAMP default port (3306 for XAMPP)
-    }
-}
+```
+# Supabase credentials
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+
+# Django settings
+SECRET_KEY=your_django_secret_key
+DEBUG=True
+
+# Email settings
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
+EMAIL_USE_TLS=True
 ```
 
 ### 5. Apply Database Migrations
@@ -212,7 +215,7 @@ docker-compose up --build
   </tr>
   <tr>
     <td><strong>Information Pages</strong></td>
-    <td>Comprehensive About page with platform details and testimonials</td>
+    <td>About page with platform details and testimonials</td>
   </tr>
   <tr>
     <td><strong>Contact System</strong></td>
@@ -262,7 +265,7 @@ docker-compose up --build
   </tr>
   <tr>
     <td><strong>Chat History</strong></td>
-    <td>Comprehensive interaction logs with pagination</td>
+    <td>Interaction logs with pagination</td>
   </tr>
 </table>
 
@@ -305,11 +308,11 @@ docker-compose up --build
 <table>
   <tr>
     <td width="50%"><strong>Admin Dashboard</strong></td>
-    <td width="50%">Comprehensive control panel with secure access</td>
+    <td width="50%">Control panel with secure access</td>
   </tr>
   <tr>
     <td><strong>User Verification</strong></td>
-    <td>Streamlined review and approval workflows</td>
+    <td>Review and approval workflows</td>
   </tr>
   <tr>
     <td><strong>Bulk Operations</strong></td>
@@ -334,7 +337,7 @@ docker-compose up --build
   </tr>
   <tr>
     <td><strong>Interaction Review</strong></td>
-    <td>Access to chatbot histories for comprehensive assessment</td>
+    <td>Access to chatbot histories for assessment</td>
   </tr>
   <tr>
     <td><strong>Appointment Scheduling</strong></td>
@@ -347,7 +350,7 @@ docker-compose up --build
 <table>
   <tr>
     <td width="50%"><strong>Engagement Metrics</strong></td>
-    <td width="50%">Comprehensive user activity and session analytics</td>
+    <td width="50%">User activity and session analytics</td>
   </tr>
   <tr>
     <td><strong>Emotional Insights</strong></td>
@@ -366,9 +369,10 @@ Follow the installation instructions above to set up a local development environ
 
 ### Docker Deployment
 
-A `Dockerfile` and `docker-compose.yml` are provided for containerized deployment:
+A `Dockerfile` and `docker-compose.yml` are provided for containerized deployment with Supabase integration:
 
 ```sh
+# Make sure your .env file contains the required variables (SUPABASE_URL, SUPABASE_KEY, etc.)
 docker-compose up --build
 ```
 
@@ -379,7 +383,7 @@ This project is configured for deployment on Railway with `railway.json` configu
 ## 🔧 Technology Stack
 
 - **Backend**: Django 5.0+, Python 3.8+
-- **Database**: MySQL/PostgreSQL
+- **Database**: PostgreSQL (via Supabase)
 - **Frontend**: HTML5, CSS3, JavaScript, Bootstrap
 - **AI/ML**: Hugging Face Transformers, NLTK, TextBlob
 - **Containerization**: Docker
